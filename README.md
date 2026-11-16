@@ -32,7 +32,7 @@ Use `windows-release` for Release. Windows instructions and CI are configured, n
 
 ## Research
 
-Place the original ELF at `input/linux/bedrock_server` (ignored). No original executables, PDBs, game assets, raw disassemblies or generated symbol databases are committed.
+Place the original ELF at `input/linux/bedrock_server` (ignored). Original executables, PDBs, raw disassemblies and generated symbol databases are excluded from Git. At the user's request, the four original data directories from the supplied Linux server ZIP are included; see [bundled data provenance](docs/BUNDLED_DATA.md). The current engine does not load these packs, definitions or structures yet.
 
 ```sh
 python3 reverse/scripts/index_elf.py input/linux/bedrock_server
