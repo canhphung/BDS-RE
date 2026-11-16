@@ -1,0 +1,14 @@
+{
+  "sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+  "confidence": "VERIFIED_BINARY",
+  "vtable": "0x3282fe0",
+  "address_point": "0x3282ff0",
+  "slot_offset": "0x98",
+  "slot_address": "0x3283088",
+  "target": "0x25e36f0",
+  "symbols": [
+    "ServerLevel::tick()"
+  ],
+  "dispatch_site": "0x1b189de",
+  "scope": "ServerLevel primary vtable slot resolution; does not prove every Level object has this dynamic type"
+}

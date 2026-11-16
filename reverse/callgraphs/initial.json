@@ -454,6 +454,611 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "Minecraft::update(bool)",
+      "address": "0x1af5060",
+      "size": 2701,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1af5082",
+          "operand": "1af5af0 <Minecraft::getServerNetworkHandler()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af50a2",
+          "operand": "187f810 <NetworkHandler::runEvents()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af50c1",
+          "operand": "180e370 <std::chrono::duration<long, std::ratio<1l, 1l> >::count() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af50d4",
+          "operand": "1af77b0 <std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af50d9",
+          "operand": "1757880 <std::chrono::_V2::steady_clock::now()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af50f0",
+          "operand": "1881670 <NetworkHandler::getConnections() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af50fd",
+          "operand": "1883ed0 <std::vector<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >, std::allocator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > > >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af510a",
+          "operand": "1883f10 <std::vector<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >, std::allocator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af511b",
+          "operand": "1883f50 <bool __gnu_cxx::operator!=<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > const*, std::vector<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >, std::allocator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > > > >(__gnu_cxx::__normal_iterator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > const*, std::vector<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >, std::allocator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > > > > const&, __gnu_cxx::__normal_iterator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > const*, std::vector<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >, std::allocator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > > > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5131",
+          "operand": "1883f90 <__gnu_cxx::__normal_iterator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > const*, std::vector<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >, std::allocator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > > > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af513e",
+          "operand": "1883550 <std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5150",
+          "operand": "18e91c0 <std::common_type<std::chrono::duration<long, std::ratio<1l, 1000000000l> >, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >::type std::chrono::operator-<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> >, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >(std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&, std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af516d",
+          "operand": "18e9190 <bool std::chrono::operator><long, std::ratio<1l, 1000000000l>, long, std::ratio<1l, 1l> >(std::chrono::duration<long, std::ratio<1l, 1000000000l> > const&, std::chrono::duration<long, std::ratio<1l, 1l> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5183",
+          "operand": "1883550 <std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af518f",
+          "operand": "1af77d0 <std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> >::push_back(NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af519d",
+          "operand": "1883fb0 <__gnu_cxx::__normal_iterator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > const*, std::vector<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> >, std::allocator<std::unique_ptr<NetworkHandler::Connection, std::default_delete<NetworkHandler::Connection> > > > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af51ba",
+          "operand": "1af7840 <std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> >::begin()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af51c7",
+          "operand": "1af7870 <std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af51d8",
+          "operand": "1af78b0 <bool __gnu_cxx::operator!=<NetworkIdentifier*, std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> > >(__gnu_cxx::__normal_iterator<NetworkIdentifier*, std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> > > const&, __gnu_cxx::__normal_iterator<NetworkIdentifier*, std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af51ee",
+          "operand": "1af78f0 <__gnu_cxx::__normal_iterator<NetworkIdentifier*, std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5209",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5223",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af523d",
+          "operand": "1af5b60 <Minecraft::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5249",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5255",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af525e",
+          "operand": "1af7910 <__gnu_cxx::__normal_iterator<NetworkIdentifier*, std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5273",
+          "operand": "1af7930 <std::vector<NetworkIdentifier, std::allocator<NetworkIdentifier> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af52a2",
+          "operand": "1756cd0 <__cxa_guard_acquire@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af52f5",
+          "operand": "180c2f0 <std::vector<ProfilerLite::ScopedData*, std::allocator<ProfilerLite::ScopedData*> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af533a",
+          "operand": "1756880 <__cxa_atexit@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af534c",
+          "operand": "1757df0 <__cxa_guard_release@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5351",
+          "operand": "199e5d0 <std::this_thread::get_id()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5372",
+          "operand": "180c330 <_ProfilerLiteTimer::_ProfilerLiteTimer(ProfilerLite::ScopedData&, std::thread::id)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5387",
+          "operand": "1af5bd0 <Minecraft::tickSimtime(int, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af53a0",
+          "operand": "1756cd0 <__cxa_guard_acquire@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af53f3",
+          "operand": "180c2f0 <std::vector<ProfilerLite::ScopedData*, std::allocator<ProfilerLite::ScopedData*> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5438",
+          "operand": "1756880 <__cxa_atexit@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af544a",
+          "operand": "1757df0 <__cxa_guard_release@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af544f",
+          "operand": "199e5d0 <std::this_thread::get_id()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5470",
+          "operand": "180c330 <_ProfilerLiteTimer::_ProfilerLiteTimer(ProfilerLite::ScopedData&, std::thread::id)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5485",
+          "operand": "1af5c30 <Minecraft::tickRealtime(int, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af54a4",
+          "operand": "1956570 <Timer::getTicks() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af54b5",
+          "operand": "189d3c0 <Range<int, 1> range<int, 1>(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af54d6",
+          "operand": "189d050 <Range<int, 1>::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af54e8",
+          "operand": "189d080 <Range<int, 1>::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5501",
+          "operand": "189d0b0 <Range<int, 1>::iterator::operator!=(Range<int, 1>::iterator const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af551a",
+          "operand": "189d0e0 <Range<int, 1>::iterator::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5543",
+          "operand": "1756cd0 <__cxa_guard_acquire@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5596",
+          "operand": "180c2f0 <std::vector<ProfilerLite::ScopedData*, std::allocator<ProfilerLite::ScopedData*> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af55db",
+          "operand": "1756880 <__cxa_atexit@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af55ed",
+          "operand": "1757df0 <__cxa_guard_release@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5618",
+          "operand": "180c330 <_ProfilerLiteTimer::_ProfilerLiteTimer(ProfilerLite::ScopedData&, std::thread::id)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5635",
+          "operand": "1af5bd0 <Minecraft::tickSimtime(int, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5653",
+          "operand": "1756cd0 <__cxa_guard_acquire@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af56a6",
+          "operand": "180c2f0 <std::vector<ProfilerLite::ScopedData*, std::allocator<ProfilerLite::ScopedData*> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af56eb",
+          "operand": "1756880 <__cxa_atexit@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af56fd",
+          "operand": "1757df0 <__cxa_guard_release@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5702",
+          "operand": "199e5d0 <std::this_thread::get_id()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5723",
+          "operand": "180c330 <_ProfilerLiteTimer::_ProfilerLiteTimer(ProfilerLite::ScopedData&, std::thread::id)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5740",
+          "operand": "1af5bd0 <Minecraft::tickSimtime(int, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5751",
+          "operand": "189d0f0 <Range<int, 1>::iterator::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5769",
+          "operand": "1956570 <Timer::getTicks() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af577a",
+          "operand": "189d3c0 <Range<int, 1> range<int, 1>(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af579b",
+          "operand": "189d050 <Range<int, 1>::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af57ad",
+          "operand": "189d080 <Range<int, 1>::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af57c6",
+          "operand": "189d0b0 <Range<int, 1>::iterator::operator!=(Range<int, 1>::iterator const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af57df",
+          "operand": "189d0e0 <Range<int, 1>::iterator::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5808",
+          "operand": "1756cd0 <__cxa_guard_acquire@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af585b",
+          "operand": "180c2f0 <std::vector<ProfilerLite::ScopedData*, std::allocator<ProfilerLite::ScopedData*> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af58a0",
+          "operand": "1756880 <__cxa_atexit@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af58b2",
+          "operand": "1757df0 <__cxa_guard_release@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af58dd",
+          "operand": "180c330 <_ProfilerLiteTimer::_ProfilerLiteTimer(ProfilerLite::ScopedData&, std::thread::id)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af58fa",
+          "operand": "1af5c30 <Minecraft::tickRealtime(int, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5918",
+          "operand": "1756cd0 <__cxa_guard_acquire@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af596b",
+          "operand": "180c2f0 <std::vector<ProfilerLite::ScopedData*, std::allocator<ProfilerLite::ScopedData*> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af59b0",
+          "operand": "1756880 <__cxa_atexit@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af59c2",
+          "operand": "1757df0 <__cxa_guard_release@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af59c7",
+          "operand": "199e5d0 <std::this_thread::get_id()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af59e8",
+          "operand": "180c330 <_ProfilerLiteTimer::_ProfilerLiteTimer(ProfilerLite::ScopedData&, std::thread::id)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5a05",
+          "operand": "1af5c30 <Minecraft::tickRealtime(int, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5a18",
+          "operand": "189d0f0 <Range<int, 1>::iterator::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5a27",
+          "operand": "26e50c0 <getTimeS()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5a63",
+          "operand": "1af5cd0 <Minecraft::getLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5a79",
+          "operand": "1af5cd0 <Minecraft::getLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5a81",
+          "operand": "1c87150 <Level::hasLevelStorage() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5a9a",
+          "operand": "1af5cd0 <Minecraft::getLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5aa2",
+          "operand": "1c87180 <Level::getLevelStorage()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5abb",
+          "operand": "*0x88(%rax)",
+          "kind": "indirect"
+        }
+      ]
+    },
+    {
+      "symbol": "Minecraft::tickSimtime(int, int)",
+      "address": "0x1af5bd0",
+      "size": 88,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1af5bf6",
+          "operand": "1af76e0 <std::unique_ptr<GameSession, std::default_delete<GameSession> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5c15",
+          "operand": "1af7710 <std::unique_ptr<GameSession, std::default_delete<GameSession> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5c1d",
+          "operand": "1b18970 <GameSession::tick()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "Minecraft::tickRealtime(int, int)",
+      "address": "0x1af5c30",
+      "size": 153,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1af5c65",
+          "operand": "*0x10(%rdx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1af5c73",
+          "operand": "1af7980 <std::unique_ptr<NetworkStatistics, std::default_delete<NetworkStatistics> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5c90",
+          "operand": "1af79b0 <std::unique_ptr<NetworkStatistics, std::default_delete<NetworkStatistics> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5c98",
+          "operand": "189a040 <NetworkStatistics::tick()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5ca8",
+          "operand": "187f6d0 <NetworkHandler::update()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1af5cc1",
+          "operand": "*%rcx",
+          "kind": "indirect"
+        }
+      ]
+    },
+    {
+      "symbol": "GameSession::tick()",
+      "address": "0x1b18970",
+      "size": 122,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1b1898e",
+          "operand": "1b18c10 <std::unique_ptr<Level, std::default_delete<Level> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1b189ab",
+          "operand": "1af7e80 <std::unique_ptr<Level, std::default_delete<Level> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1b189b3",
+          "operand": "1c8d8d0 <Level::getTearingDown() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1b189cb",
+          "operand": "1af7e80 <std::unique_ptr<Level, std::default_delete<Level> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1b189de",
+          "operand": "*0x98(%rax)",
+          "kind": "indirect"
+        }
+      ]
+    },
+    {
+      "symbol": "Timer::advanceTime(float)",
+      "address": "0x1956630",
+      "size": 619,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1956649",
+          "operand": "19568a0 <Timer::stepping() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19566a5",
+          "operand": "1956c20 <std::function<int ()>::operator()() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19567c9",
+          "operand": "1838170 <mce::Math::clamp(float, float, float)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ChunkPos::ChunkPos(BlockPos const&)",
+      "address": "0x1b18fa0",
+      "size": 42,
+      "confidence": "VERIFIED_BINARY",
+      "calls": []
+    },
+    {
+      "symbol": "LevelChunk::getBlock(ChunkBlockPos const&) const",
+      "address": "0x1de24a0",
+      "size": 179,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1de24df",
+          "operand": "1c64600 <static_vector<SubChunk, 16ul>::size() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1de2515",
+          "operand": "1deb260 <static_vector<SubChunk, 16ul>::operator[](unsigned long) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1de2526",
+          "operand": "1c7c630 <SubChunkBlockPos::SubChunkBlockPos(ChunkBlockPos const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1de252f",
+          "operand": "1deb0c0 <SubChunkBlockPos::index() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1de2540",
+          "operand": "1deb290 <SubChunk::getBlock(unsigned short) const>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }

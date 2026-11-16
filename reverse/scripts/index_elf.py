@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Index symbols locally; emit reproducible, bounded direct/indirect call evidence."""
-import argparse, hashlib, json, re, sqlite3, subprocess
+import argparse, hashlib, json, re, sqlite3, struct, subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('binary',type=Path);p.add_argument('--output',type=Path,default=Path('reverse/symbols/generated'));a=p.parse_args()
 digest=hashlib.sha256(a.binary.read_bytes()).hexdigest()
@@ -15,11 +15,11 @@ for line in raw.splitlines():
  m=re.match(r'^([0-9a-f]+)\s+([0-9a-f]+)\s+(\S)\s+(.+)$',line)
  if m: rows.append((int(m[1],16),int(m[2],16),m[3],m[4]))
 con.executemany('INSERT INTO symbols VALUES (?,?,?,?)',rows);con.commit()
-targets=['ServerInstance::_update()','ServerInstance::startServerThread()', 'ServerInstance::startServerThread()::$_3::operator()() const','ServerLevel::tick()']
+targets=['ServerInstance::_update()','ServerInstance::startServerThread()', 'ServerInstance::startServerThread()::$_3::operator()() const','ServerLevel::tick()', 'Minecraft::update(bool)', 'Minecraft::tickSimtime(int, int)', 'Minecraft::tickRealtime(int, int)', 'GameSession::tick()', 'Timer::advanceTime(float)', 'ChunkPos::ChunkPos(BlockPos const&)', 'LevelChunk::getBlock(ChunkBlockPos const&) const']
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)
 for i,name in enumerate(targets):
- matches=[r for r in rows if r[3]==name];assert len(matches)==1,name
+ matches=list(dict.fromkeys(r for r in rows if r[3]==name));assert len(matches)==1,name
  address,size,kind,_=matches[0]
  text=subprocess.check_output(['objdump','-d','-C',f'--start-address={address}',f'--stop-address={address+size}',str(a.binary)],text=True)
  (local/f'function_{i}.asm').write_text(text)
@@ -31,3 +31,26 @@ for i,name in enumerate(targets):
 Path('reverse/callgraphs').mkdir(parents=True,exist_ok=True)
 Path('reverse/callgraphs/initial.json').write_text(json.dumps({'sha256':digest,'tool':'GNU nm/objdump','scope':'outgoing call sites only; indirect targets unresolved; not a complete graph','functions':functions},indent=2)+'\n')
 print(json.dumps({'sha256':digest,'indexed_symbols':len(rows),'database':str(db),'functions':len(functions)}))
+
+# Map virtual addresses using ELF64 PT_LOAD entries, not a guessed image bias.
+blob=a.binary.read_bytes()
+phoff=struct.unpack_from('<Q',blob,32)[0]
+phsize,phcount=struct.unpack_from('<HH',blob,54)
+def pointer_at(va):
+ for i in range(phcount):
+  kind,flags,offset,address,physical,filesz,memsz,align=struct.unpack_from('<IIQQQQQQ',blob,phoff+i*phsize)
+  if kind==1 and address<=va and va+8<=address+filesz:
+   return struct.unpack_from('<Q',blob,offset+va-address)[0]
+ raise ValueError('unmapped address')
+vtable=con.execute("SELECT address FROM symbols WHERE name='vtable for ServerLevel'").fetchone()[0]
+slot=vtable+16+0x98
+target=pointer_at(slot)
+names=[r[0] for r in con.execute('SELECT name FROM symbols WHERE address=?',(target,))]
+assert 'ServerLevel::tick()' in names
+Path('reverse/callgraphs/level_dispatch.json').write_text(json.dumps({
+ 'sha256':digest,'confidence':'VERIFIED_BINARY','vtable':hex(vtable),
+ 'address_point':hex(vtable+16),'slot_offset':'0x98','slot_address':hex(slot),
+ 'target':hex(target),'symbols':names,
+ 'dispatch_site':'0x1b189de',
+ 'scope':'ServerLevel primary vtable slot resolution; does not prove every Level object has this dynamic type'
+},indent=2)+'\n')

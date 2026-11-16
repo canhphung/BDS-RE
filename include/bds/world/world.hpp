@@ -1,19 +1,50 @@
 #pragma once
+
+#include "bds/world/chunk.hpp"
 #include <cstdint>
 #include <map>
 #include <tuple>
+#include <utility>
+
 namespace bds {
-// Independent sparse test world; IDs are internal, not Bedrock wire IDs.
-// Owned exclusively by the simulation thread. Missing blocks are air (0).
+// The simulation thread is the sole owner. Missing columns/sections are air.
 class World {
 public:
- using Position=std::tuple<int,int,int>;
- using Block=std::uint16_t;
- Block block(Position p) const {auto i=blocks_.find(p); return i==blocks_.end()?0:i->second;}
- void set_block(Position p,Block b) {if(b==0) blocks_.erase(p); else blocks_.insert_or_assign(p,b);}
- void tick() {++age_;}
- std::uint64_t age() const {return age_;}
- std::size_t stored_blocks() const {return blocks_.size();}
-private: std::map<Position,Block> blocks_; std::uint64_t age_=0;
+    using Position = std::tuple<int, int, int>;
+    using Block = BlockId;
+
+    Block block(Position position) const {
+        const auto [x, y, z] = position;
+        if (y < 0 || y >= static_cast<int>(Chunk::height)) return 0;
+        auto column = columns_.find({chunk_coordinate(x), chunk_coordinate(z)});
+        if (column == columns_.end()) return 0;
+        return column->second.block(local_coordinate(x), static_cast<unsigned>(y), local_coordinate(z));
+    }
+
+    void set_block(Position position, Block value) {
+        const auto [x, y, z] = position;
+        if (y < 0 || y >= static_cast<int>(Chunk::height))
+            throw std::out_of_range("block outside world height");
+        const auto key = std::pair{chunk_coordinate(x), chunk_coordinate(z)};
+        auto column = columns_.find(key);
+        if (column == columns_.end()) {
+            if (value == 0) return;
+            column = columns_.try_emplace(key).first;
+        }
+        const auto before = column->second.stored_blocks();
+        column->second.set_block(local_coordinate(x), static_cast<unsigned>(y), local_coordinate(z), value);
+        count_ = count_ - before + column->second.stored_blocks();
+        if (column->second.stored_blocks() == 0) columns_.erase(column);
+    }
+
+    void tick() { ++age_; }
+    std::uint64_t age() const { return age_; }
+    std::size_t stored_blocks() const { return count_; }
+    std::size_t loaded_chunks() const { return columns_.size(); }
+
+private:
+    std::map<std::pair<int, int>, Chunk> columns_;
+    std::size_t count_ = 0;
+    std::uint64_t age_ = 0;
 };
 }
