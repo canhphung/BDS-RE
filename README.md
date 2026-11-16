@@ -1,7 +1,7 @@
 # BDS-RE
 
 Independent C++20 server research targeting Bedrock Dedicated Server 1.6.0.15.
-Currently a tested runtime bootstrap and chunked internal world, **not a Minecraft-compatible server**. No networking, client login, network chunk streaming or gameplay yet. Original server.properties, world-directory selection and console commands are not implemented. See the [original BDS compatibility contract](docs/COMPATIBILITY.md).
+Currently a tested runtime bootstrap and chunked internal world, **not a Minecraft-compatible server**. No networking, client login, network chunk streaming or gameplay yet. The original `server.properties` is included as reference configuration; its parsing, world-directory selection and console commands are not implemented yet. See the [original BDS compatibility contract](docs/COMPATIBILITY.md).
 
 ## Build
 
