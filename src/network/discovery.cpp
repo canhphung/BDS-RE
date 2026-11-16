@@ -198,7 +198,10 @@ std::string server_advertisement(const Properties &p, std::uint64_t guid) {
     constexpr const char *modes[] = {"Survival", "Creative", "Adventure"};
     return "MCPE;" + field(p.server_name) + ";282;1.6.0;0;" + std::to_string(p.max_players) + ";" +
            std::to_string(guid) + ";" + field(p.level_name) + ";" +
-           modes[p.gamemode <= 2 ? p.gamemode : 0] + ";0;";
+           // Final field: the original Linux dedicated server advertises 1
+           // (reference capture); its AppPlatform comparison at 0x1827a75 is
+           // otherwise unresolved.
+           modes[p.gamemode <= 2 ? p.gamemode : 0] + ";1;";
 }
 struct DiscoveryServer::Impl {
     std::array<Socket, 2> sockets{invalid, invalid};
@@ -234,7 +237,8 @@ struct DiscoveryServer::Impl {
                                                  : protocol::Generator::Overworld;
         s.game_type = static_cast<std::int32_t>(p.gamemode);
         s.difficulty = static_cast<std::int32_t>(p.difficulty);
-        s.time = static_cast<std::int32_t>(world_age % 24000); // time of day (policy)
+        // The original sent time == current tick for a fresh world (reference capture).
+        s.time = static_cast<std::int32_t>(world_age);
         s.commands_enabled = p.cheats;
         s.texture_packs_required = p.texturepack_required;
         s.default_player_permission = p.permission == "visitor" ? 0 : p.permission == "operator" ? 2 : 1;
@@ -245,6 +249,17 @@ struct DiscoveryServer::Impl {
         game.level_id = p.level_name;
         game.level_name = p.level_name;
         game.current_tick = world_age;
+        // The original sends a random version-4 UUID here (reference capture).
+        auto bytes = secrets->random.bytes(16);
+        bytes[6] = static_cast<std::uint8_t>((bytes[6] & 0x0f) | 0x40);
+        bytes[8] = static_cast<std::uint8_t>((bytes[8] & 0x3f) | 0x80);
+        static constexpr char digits[] = "0123456789abcdef";
+        for (std::size_t i = 0; i < bytes.size(); ++i) {
+            if (i == 4 || i == 6 || i == 8 || i == 10)
+                game.multiplayer_correlation_id.push_back('-');
+            game.multiplayer_correlation_id.push_back(digits[bytes[i] >> 4]);
+            game.multiplayer_correlation_id.push_back(digits[bytes[i] & 15]);
+        }
         return game;
     }
     std::optional<std::string> admit(const auth::Identity &identity) {

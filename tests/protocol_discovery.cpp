@@ -15,6 +15,10 @@ int main() {
   ping[0]=1;check(bds::discovery_pong(ping,1,std::string(1025,'x')).empty());
   bds::Properties p;p.server_name="Test;Injected\nName";
   check(bds::server_advertisement(p,1).starts_with("MCPE;Test Injected Name;282;1.6.0;0;10;1;"));
+  // Same field layout and trailing flag as the original BDS advertisement captured on Linux:
+  // MCPE;Dedicated Server;282;1.6.0;0;10;<guid>;Reference;Survival;1;
+  bds::Properties d;d.level_name="Reference";
+  check(bds::server_advertisement(d,9968884998189047337ULL)=="MCPE;Dedicated Server;282;1.6.0;0;10;9968884998189047337;Reference;Survival;1;");
   return 0;
  } catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

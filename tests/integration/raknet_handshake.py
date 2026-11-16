@@ -10,19 +10,9 @@ import threading
 import time
 import json
 import zlib
-import hashlib
-import base64
 
-try:  # The encrypted-session scenario needs an independent crypto stack.
-    from cryptography.hazmat.primitives import serialization
+try:  # Encrypted joins use the reference client, which needs Python cryptography.
     from cryptography.hazmat.primitives.asymmetric import ec
-    from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
-    try:
-        from cryptography.hazmat.decrepit.ciphers.modes import CFB8
-    except ImportError:
-        from cryptography.hazmat.primitives.ciphers.modes import CFB8
 except ImportError:
     sys.exit("raknet_handshake needs the Python 'cryptography' package (pip install cryptography)")
 
@@ -95,50 +85,6 @@ class Sender:
         self.order += 1
 
 
-class Session:
-    """Reconstructed EncryptedNetworkPeer, written against Python cryptography."""
-
-    def __init__(self, key):
-        self.key, self.sent, self.received = key, 0, 0
-        self.encryptor = Cipher(algorithms.AES(key), CFB8(key[:16])).encryptor()
-        self.decryptor = Cipher(algorithms.AES(key), CFB8(key[:16])).decryptor()
-
-    def checksum(self, counter, payload):
-        return hashlib.sha256(counter.to_bytes(8, "little") + payload + self.key).digest()[:8]
-
-    def seal(self, payload):
-        sealed = self.encryptor.update(payload + self.checksum(self.sent, payload))
-        self.sent += 1
-        return sealed
-
-    def open(self, data):
-        plain = self.decryptor.update(data)
-        payload, checksum = plain[:-8], plain[-8:]
-        require(checksum == self.checksum(self.received, payload), "server packet checksum")
-        self.received += 1
-        return payload
-
-
-def b64url(text):
-    return base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
-
-
-def compressed_packets(packets):
-    data = b"".join(varint(len(varint(header) + body)) + varint(header) + body for header, body in packets)
-    return zlib.compress(data, 7)
-
-
-def packets_of(payload):
-    data = zlib.decompress(payload)
-    packets, at = [], 0
-    while at < len(data):
-        length, at = read_varint(data, at)
-        header, body_at = read_varint(data, at)
-        packets.append((header, data[body_at:at + length]))
-        at += length
-    return packets
-
-
 class Reader:
     """Independent protocol-282 reader for the level packets checked here."""
 
@@ -185,7 +131,10 @@ def parse_start_game(body):
     r.boolean(); game["time"] = r.varint(); r.boolean(); r.boolean(); r.f32(); r.f32()
     r.boolean(); r.boolean(); r.boolean()
     game["commands"], game["texture_packs_required"] = r.boolean(), r.boolean()
-    require(r.uvarint() == 0, "no game rules expected")
+    for _ in range(r.uvarint()):  # game rules: name, type (1 bool, 2 zigzag varint, 3 float), value
+        r.string()
+        kind = r.uvarint()
+        r.boolean() if kind == 1 else r.varint() if kind == 2 else r.f32()
     r.boolean(); r.boolean(); r.boolean()
     game["permission"], _ = r.varint(), r.varint()
     game["tick_range"] = struct.unpack("<i", r.take(4))[0]
@@ -198,20 +147,6 @@ def parse_start_game(body):
     r.string()
     require(r.at == len(body), "StartGame fully consumed")
     return game
-
-
-def next_application(client, remote, seen):
-    """Next new reliable-ordered application message from the server."""
-    while True:
-        data, _ = client.recvfrom(2048)
-        if data[0] & 0xE0 != 0x80:
-            continue
-        seq, body = incoming_frame(data)
-        client.sendto(ack(seq), remote)
-        if body[0] == 0x10 or body in seen:
-            continue  # late retransmissions
-        seen.append(body)
-        return body
 
 
 def ack(sequence):
@@ -311,6 +246,7 @@ def until_disconnect(client, remote):
 
 
 fixtures = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools" / "reference"))
 
 with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
     root = Path(directory)
@@ -429,8 +365,6 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
             client_token = fixtures["client_token"]
             client_key = ec.derive_private_key(int(fixtures["client_private_key"], 16), ec.SECP384R1())
             scenarios = [
-                ("self-signed login", 282, fixtures["self_signed_chain"], "Offline"),
-                ("chain via self-signed path", 282, fixtures["chain"], "Steve"),
                 ("forged leaf", 282, fixtures["cases"]["untrusted_leaf_signer"], [(0x05, "disconnectionScreen.notAuthenticated")]),
                 ("old client", 281, fixtures["chain"], [(0x02, 1), (0x05, "disconnectionScreen.outdatedClient")]),
                 ("new client", 283, fixtures["chain"], [(0x02, 2), (0x05, "disconnectionScreen.outdatedServer")]),
@@ -441,54 +375,6 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                     sender, seen = Sender(client, remote, sequence), []
                     # Signed logins exceed the MTU, so this also exercises split reassembly.
                     sender.send(login_batch(protocol, chain, client_token))
-                    if isinstance(expected, str):
-                        # ServerToClientHandshake arrives unencrypted.
-                        packets = game_packets(next_application(client, remote, seen))
-                        require(len(packets) == 1 and packets[0][0] == 0x03, f"{scenario}: ServerToClientHandshake")
-                        length, at = read_varint(packets[0][1], 0)
-                        token = packets[0][1][at:at + length].decode()
-                        head, payload, signature = token.split(".")
-                        header, claims = json.loads(b64url(head)), json.loads(b64url(payload))
-                        server_key = serialization.load_der_public_key(base64.b64decode(header["x5u"]))
-                        raw = b64url(signature)
-                        server_key.verify(encode_dss_signature(int.from_bytes(raw[:48], "big"), int.from_bytes(raw[48:], "big")),
-                                          f"{head}.{payload}".encode(), ec.ECDSA(hashes.SHA384()))
-                        require(header["alg"] == "ES384", f"{scenario}: token algorithm")
-                        salt = base64.b64decode(claims["salt"])
-                        require(len(salt) == 16, f"{scenario}: salt length")
-                        session = Session(hashlib.sha256(salt + client_key.exchange(ec.ECDH(), server_key)).digest())
-                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x04, b"")])))
-                        def receive_packets():
-                            message = next_application(client, remote, seen)
-                            require(message[0] == 0xFE, f"{scenario}: encrypted batch id")
-                            return packets_of(session.open(message[1:]))
-
-                        packets = receive_packets()
-                        require(packets == [(0x02, struct.pack(">i", 0)), (0x06, bytes(5))],
-                                f"{scenario}: PlayStatus LoginSuccess + empty ResourcePacksInfo {packets}")
-                        # ResourcePackClientResponse: HaveAllPacks (3), then Completed (4).
-                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x08, b"\x03\x00\x00")])))
-                        require(receive_packets() == [(0x07, bytes(3))], f"{scenario}: empty ResourcePackStack")
-                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x08, b"\x04\x00\x00")])))
-                        packets = receive_packets()
-                        require([header for header, _ in packets] == [0x0B, 0x2B, 0x0A, 0x3C, 0x3B],
-                                f"{scenario}: StartGame, SetSpawnPosition, SetTime, SetDifficulty, SetCommandsEnabled {packets}")
-                        game = parse_start_game(packets[0][1])
-                        require(game["runtime_id"] >= 1 and game["unique_id"] == game["runtime_id"], f"{scenario}: entity ids {game}")
-                        require(game["level_name"] == "Transport Test" and game["generator"] == 1 and game["dimension"] == 0,
-                                f"{scenario}: level settings {game}")
-                        require(game["spawn"] == (0, 64, 0) and abs(game["position"][1] - 65.62) < 1e-3, f"{scenario}: spawn {game}")
-                        require(game["tick_range"] == 4 and game["permission"] == 1 and game["palette"][0] == ("minecraft:air", 0),
-                                f"{scenario}: defaults {game}")
-                        # A movement packet before spawning is ignored; the radius request is answered.
-                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x13, b"\x00")])))
-                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x45, varint(32 << 1))])))
-                        packets = receive_packets()
-                        require(packets[0] == (0x46, varint(10 << 1)), f"{scenario}: ChunkRadiusUpdated {packets}")
-                        require(len(packets) == 2 and packets[1][0] == 0x05 and expected.encode() in packets[1][1] and
-                                b"Chunk streaming" in packets[1][1], f"{scenario}: encrypted disconnect {packets}")
-                        require(next_application(client, remote, seen) == b"\x15", f"{scenario}: RakNet disconnect")
-                        continue
                     messages = until_disconnect(client, remote)
                     require(len(messages) == 1, f"{scenario}: one batch before disconnect, got {messages}")
                     packets = game_packets(messages[0])
@@ -502,6 +388,39 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                             length, at = read_varint(body, 1)
                             require(value in body[at:at + length].decode() and at + length == len(body),
                                     f"{scenario}: disconnect message {body!r}")
+        # Encrypted joins through StartGame with the same client that completed
+        # a reference capture against the original BDS (tools/reference).
+        from bedrock_client import BedrockClient, ProtocolFailure, uvarint as client_uvarint
+        for name, chain in [("Offline", fixtures["self_signed_chain"]), ("Steve", fixtures["chain"])]:
+            joining = BedrockClient("127.0.0.1", p4, key=client_key)
+            try:
+                packets = joining.join(chain, fixtures["client_token"])
+                ids = [entry["id"] for entry in joining.log]
+                require(ids[:4] == [0x03, 0x02, 0x06, 0x07], f"{name}: handshake, PlayStatus, packs info, stack {ids}")
+                level = [packet for packet in packets if packet[0] in (0x0B, 0x2B, 0x0A, 0x3C, 0x3B)]
+                require([packet_id for packet_id, _ in level] == [0x0B, 0x2B, 0x0A, 0x3C, 0x3B], f"{name}: level data {ids}")
+                game = parse_start_game(level[0][1])
+                require(game["runtime_id"] >= 1 and game["unique_id"] == game["runtime_id"], f"{name}: entity ids")
+                require(game["level_name"] == "Transport Test" and game["generator"] == 1 and game["dimension"] == 0,
+                        f"{name}: level settings")
+                require(game["spawn"] == (0, 64, 0) and abs(game["position"][1] - 65.62) < 1e-3, f"{name}: spawn")
+                require(game["tick_range"] == 4 and game["permission"] == 1 and len(game["palette"]) == 4493 and
+                        ("minecraft:air", 0) in game["palette"], f"{name}: defaults")
+                # A movement packet before spawning is ignored; the radius request is answered.
+                joining.send_packets([(0x13, b"\x00")])
+                joining.send_packets([(0x45, client_uvarint(32 << 1))])
+                packets = joining.receive_packets()
+                require(packets[0] == (0x46, client_uvarint(10 << 1)), f"{name}: ChunkRadiusUpdated {packets}")
+                require(len(packets) == 2 and packets[1][0] == 0x05 and name.encode() in packets[1][1] and
+                        b"Chunk streaming" in packets[1][1], f"{name}: encrypted disconnect {packets}")
+                try:
+                    joining.receive_packets(timeout=3)
+                    raise AssertionError(f"{name}: expected RakNet disconnect")
+                except ProtocolFailure as closed:
+                    require("closed" in str(closed), f"{name}: {closed}")
+            finally:
+                joining.raknet.close()
+
         # Whitelist admission, toggled at runtime through the console: the
         # self-signed player has no XUID and no listed UUID, so it is refused in
         # plaintext before any key exchange.
@@ -525,7 +444,8 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
         reader.join(timeout=2)
         require(any('login authenticated: "Offline" self-signed' in line for line in transcript),
                 f"self-signed login not logged: {transcript}")
-        require(any("Player connected: Steve" in line for line in transcript), f"handshake completion not logged: {transcript}")
+        # Original format: "Player connected: <xuid>" (empty XUID for self-signed players).
+        require(sum(line.endswith("Player connected:") for line in transcript) >= 2, f"handshake completion not logged: {transcript}")
         require(any("login refused: Offline (disconnectionScreen.notAllowed)" in line for line in transcript),
                 f"whitelist refusal not logged: {transcript}")
         require(any("login not authenticated" in line for line in transcript), f"forged login not logged: {transcript}")

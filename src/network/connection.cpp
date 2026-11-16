@@ -200,8 +200,9 @@ ConnectionOutput GameConnection::handle_handshake() {
     return {{message({packet(PacketId::PlayStatus, play_status_body(PlayStatus::LoginSuccess)),
                       packet(PacketId::ResourcePacksInfo, resource_packs_info_body(options_.texture_packs_required))})},
             false,
-            "Player connected: " + printable(who.display_name) +
-                (who.xbox_authenticated ? ", xuid: " + printable(who.xuid) : std::string())};
+            // Same text as the original: the %s is the XUID (getXuid at 0x18297e6),
+            // empty for self-signed players (reference capture).
+            "Player connected: " + printable(who.xuid)};
 }
 
 ConnectionOutput GameConnection::handle_pack_response(const GamePacket &received) {
@@ -238,7 +239,7 @@ ConnectionOutput GameConnection::start_game() {
     state_ = State::spawning;
     auto game = options_.start_game ? options_.start_game() : StartGame{};
     if (game.palette.empty())
-        game.palette = internal_block_palette();
+        game.palette = vanilla_block_palette();
     const auto &settings = game.settings;
     const auto &who = *identity_;
     return {{message({packet(PacketId::StartGame, start_game_body(game)),

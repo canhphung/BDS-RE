@@ -55,7 +55,9 @@ settings = b"".join([
     f32(0.25), f32(0.5),       # rain, lightning
     boolean(True), boolean(True), boolean(False),  # multiplayer, LAN, XBL broadcast
     boolean(True), boolean(False),  # commands enabled, texture packs required
-    uvarint(0),                # game rules
+    uvarint(3) + string("pvp") + uvarint(1) + boolean(True)            # game rules: bool,
+    + string("maxcommandchainlength") + uvarint(2) + varint(65535)      # zigzag int,
+    + string("x") + uvarint(3) + f32(0.5),                              # float
     boolean(False), boolean(False), boolean(False),  # bonus chest, start with map, constant false
     varint(2),                 # default player permission: operator
     varint(0),                 # XBL broadcast mode

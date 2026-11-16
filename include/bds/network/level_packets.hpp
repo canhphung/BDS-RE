@@ -1,6 +1,9 @@
 #pragma once
 #include "bds/network/binary.hpp"
 #include <cstdint>
+#include <optional>
+#include <string_view>
+#include <variant>
 #include <span>
 #include <string>
 #include <vector>
@@ -17,6 +20,17 @@ struct BlockPosition {
 // GeneratorType from LevelSettings::generatorTypeToString (0x1c697c0).
 enum class Generator : std::int32_t { Legacy = 0, Overworld = 1, Flat = 2, Nether = 3, TheEnd = 4 };
 
+// GameRule as written in GameRulesChangedPacketData: name, unsigned varint
+// type (1 bool, 2 zigzag varint, 3 float), value. Type ids, encodings and
+// the default list are DIFFERENTIAL_VERIFIED from a StartGame capture of the
+// original (maxcommandchainlength 65535 arrives as zigzag 131070).
+struct GameRule {
+    std::string name;
+    std::variant<bool, std::int32_t, float> value;
+};
+// The 21 rules the original sends for a new default world, in its order.
+std::vector<GameRule> default_game_rules();
+
 // serialize<LevelSettings>::write (0x184b8b0), in wire order.
 struct LevelSettings {
     std::int32_t seed = 0;
@@ -25,7 +39,7 @@ struct LevelSettings {
     std::int32_t game_type = 0;
     std::int32_t difficulty = 1;
     BlockPosition spawn{0, 64, 0};
-    bool achievements_disabled = true;
+    bool achievements_disabled = false;
     std::int32_t time = 0;
     bool education_world = false;
     bool education_features = false;
@@ -36,15 +50,15 @@ struct LevelSettings {
     bool xbl_broadcast = false;
     bool commands_enabled = false;
     bool texture_packs_required = false;
-    // Game rules: GameRulesChangedPacketData, unsigned-varint counted; none sent.
+    std::vector<GameRule> game_rules = default_game_rules();
     bool bonus_chest = false;
     bool start_with_map = false;
     // One constant false is written here (xor %esi at 0x184bbf2).
     std::int32_t default_player_permission = 1; // PlayerPermissionLevel: visitor 0, member 1, operator 2
-    std::int32_t xbl_broadcast_mode = 0;
+    std::int32_t xbl_broadcast_mode = 3; // value the original dedicated server sends
     std::int32_t server_chunk_tick_range = 4; // signed 32-bit little-endian
     bool platform_broadcast = false;
-    std::int32_t platform_broadcast_mode = 0;
+    std::int32_t platform_broadcast_mode = 3; // value the original dedicated server sends
     bool xbl_broadcast_intent = false;
     bool locked_behavior_pack = false;
     bool locked_resource_pack = false;
@@ -67,7 +81,7 @@ struct StartGame {
     LevelSettings settings;
     std::string level_id;
     std::string level_name;
-    std::string premium_template;
+    std::string premium_template = "00000000-0000-0000-0000-000000000000"; // empty ContentIdentity
     bool trial = false;
     std::uint64_t current_tick = 0;
     std::int32_t enchantment_seed = 0;
@@ -88,9 +102,13 @@ std::int32_t decode_request_chunk_radius(std::span<const std::uint8_t> body);   
 // unresolved virtual call and is not applied here.
 std::int32_t client_chunk_radius(std::int32_t requested, std::int32_t view_distance);
 
-// The blocks this server's internal World can contain, by internal id.
-// Not the original's complete palette (built at runtime by
-// BlockPalette::initFromBlockDefinitions); compatibility with a real client
-// is unverified.
+// Names of the blocks this server's internal World can contain, by internal id.
 const std::vector<PaletteEntry> &internal_block_palette();
+
+// The original's complete 4493-state block palette, captured from its
+// StartGame (generated src/network/block_palette_282.inc). The original builds
+// it at runtime (BlockPalette::initFromBlockDefinitions), so it is not a
+// static table in the binary. Index = runtime id sent by this server.
+const std::vector<PaletteEntry> &vanilla_block_palette();
+std::optional<std::uint32_t> runtime_id(std::string_view name, std::int16_t data);
 } // namespace bds::protocol

@@ -268,7 +268,7 @@ void connection(const Json &fixtures) {
     const auto done = accepted.receive(encrypted);
     check(!done.close && done.messages.size() == 1 && accepted.state() == protocol::GameConnection::State::awaiting_packs,
           "handshake completion moves to the pack exchange");
-    check(done.reason == "Player connected: Steve, xuid: 2535400000000001", "player connected log");
+    check(done.reason == "Player connected: 2535400000000001", "player connected log (original format: XUID)");
     const auto opened = client_cipher.open(std::span(done.messages[0]).subspan(1));
     check(opened.has_value(), "server reply decrypts with the client key");
     const auto after_handshake = protocol::decompress_packets(*opened);
@@ -309,7 +309,7 @@ void connection(const Json &fixtures) {
     check(level_packets[0].header.id == id_of(PacketId::StartGame) &&
               level_packets[0].body == protocol::start_game_body([] {
                   protocol::StartGame game;
-                  game.palette = protocol::internal_block_palette();
+                  game.palette = protocol::vanilla_block_palette();
                   return game;
               }()),
           "StartGame (default contents without a provider)");

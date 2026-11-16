@@ -109,3 +109,13 @@ New test `auth`: RFC 4648 base64 vectors and strictness, FIPS 180-2 SHA-256/384 
 | Clang 18.1.3 | Release | PASS, 17/17 CTest |
 
 New test `level_packets` compares StartGame (all LevelSettings fields, negative/extreme values, palette) and the small level packets with golden bytes from an independent Python encoder, plus zigzag varints and the chunk radius clamp. `auth` covers the Completed → level data sequence, ignored packets while spawning and the radius reply. `raknet_handshake` parses StartGame with an independent Python reader over UDP and checks ChunkRadiusUpdated. No Minecraft client was used.
+
+## Reference-run slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 17/17 CTest |
+| GCC 13.3.0 | Release | PASS, 17/17 CTest |
+| Clang 18.1.3 | Release | PASS, 17/17 CTest |
+
+The original BDS 1.6.0.15 ran locally (OpenSSL 1.0.2u, IPv6 shim) and the independent client in tools/reference joined it through StartGame and 113 FullChunkData packets. `level_packets` now also checks byte equality with the captured StartGame; `raknet_handshake` runs encrypted joins against BDS-RE with that same client (StartGame now spans split RakNet messages). `discovery` checks the original advertisement format. No Minecraft client was used.

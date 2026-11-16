@@ -451,5 +451,36 @@
       "handler": "ServerNetworkHandler::handle(RequestChunkRadiusPacket) 0x1825e50 -> ServerPlayer::setClientChunkRadius 0x25fd6e0 -> ChunkRadiusUpdatedPacket",
       "find": "ServerPlayer::findClientChunkRadius 0x25fd620: clamp(requested, 5, min(field +0x1b34, dimension value / 16.0 + 8.0)); dimension virtual +0x120 unresolved"
     }
+  },
+  "reference_run": {
+    "confidence": "DIFFERENTIAL_VERIFIED / VERIFIED_RUNTIME (original BDS 1.6.0.15 executed locally, 2026-11-16)",
+    "procedure": "tools/reference/README.md",
+    "advertisement": "MCPE;Dedicated Server;282;1.6.0;0;10;<guid>;Reference;Survival;1;",
+    "identical_bytes": {
+      "ResourcePacksInfo": "0000000000",
+      "ResourcePackStack": "000000",
+      "PlayStatus_LoginSuccess": "00000000",
+      "PlayStatus_PlayerSpawn": "00000003",
+      "StartGame": "tests/reference/start_game_bds_1.6.0.15.bin reproduced exactly by start_game_body"
+    },
+    "start_game_values": {
+      "xbl_broadcast_mode": 3,
+      "platform_broadcast_mode": 3,
+      "premium_template": "00000000-0000-0000-0000-000000000000",
+      "achievements_disabled": false,
+      "game_rules": 21,
+      "maxcommandchainlength": "zigzag varint 65535",
+      "palette_entries": 4493,
+      "palette_names": 409,
+      "multiplayer_correlation_id": "random UUID",
+      "time": "equal to current tick in a fresh world"
+    },
+    "chunk_radius": "request 4 -> ChunkRadiusUpdated 5",
+    "logs": {
+      "player_connected": "'Player connected: %s' with the XUID (empty for self-signed)",
+      "ops_file": "'Error opening ops file: ops.json' (guide says opsfile.json)"
+    },
+    "ipv6_less_host": "strace: dual-stack startup, IPv4-only retry and third attempt all call socket(AF_INET6) -> EAFNOSUPPORT; no socket remains open",
+    "post_start_game_order": "0x0b StartGame, 0x2b, 0x0a, 0x3c, 0x3b, 0x37, 0x48, 0x3f, 0x37, 0x1d, 0x31 x4, 0x30, 0x31, 0x34, 0x4c; after RequestChunkRadius: 0x46 then FullChunkData 0x3a, entity packets, PlayStatus 3"
   }
 }
