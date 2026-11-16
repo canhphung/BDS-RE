@@ -28,7 +28,7 @@ if(WIN32)
 endif()
 add_library(bds_core src/core/runtime.cpp src/core/config.cpp src/core/atomic_file.cpp src/world/store.cpp src/world/terrain.cpp src/world/random.cpp src/core/console.cpp
  src/server/properties.cpp src/server/access.cpp src/server/backup.cpp src/server/control.cpp src/network/discovery.cpp src/network/login.cpp src/network/raknet.cpp
- src/network/binary.cpp src/network/batch.cpp src/network/connection.cpp src/network/crypto.cpp src/network/auth.cpp src/network/encryption.cpp src/network/level_packets.cpp src/network/chunk.cpp src/network/spawn.cpp src/game/protocol.cpp src/game/server.cpp src/game/item_actor.cpp)
+ src/network/binary.cpp src/network/batch.cpp src/network/connection.cpp src/network/crypto.cpp src/network/auth.cpp src/network/encryption.cpp src/network/level_packets.cpp src/network/chunk.cpp src/network/spawn.cpp src/game/protocol.cpp src/game/server.cpp src/game/item_actor.cpp src/game/attributes.cpp)
 target_include_directories(bds_core PUBLIC include)
 target_include_directories(bds_core SYSTEM PRIVATE third_party)
 target_link_libraries(bds_core PUBLIC Threads::Threads PRIVATE bds_zlib bds_mbedtls)

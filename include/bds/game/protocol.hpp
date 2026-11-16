@@ -4,6 +4,7 @@
 #include "bds/network/packet_ids.hpp"
 #include "bds/world/world.hpp"
 #include "bds/game/item_actor.hpp"
+#include "bds/game/attributes.hpp"
 namespace bds::game {
 using protocol::ByteReader;
 using protocol::Bytes;
@@ -42,9 +43,17 @@ Bytes add_player(const auth::Identity &identity, const protocol::StartGame &game
 Bytes actor_flags(std::uint64_t runtime, std::uint64_t flags);
 // SetActorDataPacket with the complete player metadata (first dirty data).
 Bytes player_data(std::uint64_t runtime, const std::string &name, std::uint64_t flags);
+// UpdateAttributesPacket for a list of attribute handles (dirty list order).
+Bytes update_attributes(std::uint64_t runtime, const Attributes &attributes, const std::vector<int> &ids);
 // The original's first dirty UpdateAttributesPacket for a joining player.
-Bytes spawn_attributes(std::uint64_t runtime);
-Bytes movement_attribute(std::uint64_t runtime, float value);
+Bytes spawn_attributes(std::uint64_t runtime, const Attributes &attributes);
+Bytes actor_bounding_box(std::uint64_t runtime, float width, float height);
+Bytes respawned_data(std::uint64_t runtime, std::uint64_t flags);
+Bytes player_died_event(std::int64_t unique, int cause);
+Bytes death_message(const std::string &key, const std::string &player_token);
+Bytes respawn_position(float x, float y, float z);
+Bytes set_health(int health);
+
 Bytes remove_player_list(const auth::Identity &identity);
 struct Action {
     unsigned source = 0, slot = 0;

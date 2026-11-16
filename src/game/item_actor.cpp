@@ -183,6 +183,21 @@ ItemActor pop_resource(World::Position block, ItemStack item, Random &level_rand
     return a;
 }
 
+ItemActor drop_item(Vec3 at, ItemStack item, Random &actor_random) {
+    ItemActor a;
+    a.item = item;
+    a.bob = actor_random.next_float() * pi * 2.0f;
+    a.y_rot = actor_random.next_float() * 360.0f;
+    a.motion.x = actor_random.next_float() * 0.2f - 0.1f;
+    a.motion.z = actor_random.next_float() * 0.2f - 0.1f;
+    a.motion.y = 0.2f;
+    a.set_pos(at);
+    a.pos_prev = a.pos;
+    a.pickup_delay = 40;
+    a.throw_time = 10;
+    return a;
+}
+
 void move(ItemActor &a, const World &world, Vec3 delta) {
     if (!has_chunk(world, a.pos))
         return;

@@ -276,17 +276,89 @@ Bytes player_data(std::uint64_t runtime, const std::string &name, std::uint64_t 
     write_player_metadata(out, name, flags);
     return out.take();
 }
-Bytes spawn_attributes(std::uint64_t runtime) {
-    // The first dirty UpdateAttributesPacket the original sends to a joining
-    // player (input/reference/bds_1.6.0.15_join.json, packet 26): every
-    // registered attribute instance in map order, duplicates included.
-    static const char *hex = "2e000000000000a0410000a0410000a041106d696e6563726166743a6865616c746800000000000080410000000000000000146d696e6563726166743a6162736f727074696f6e00000000ffff7f7fcdcccc3dcdcccc3d126d696e6563726166743a6d6f76656d656e7400000000ffff7f7f0ad7a33c0ad7a33c1d6d696e6563726166743a756e64657277617465725f6d6f76656d656e74000080c40000804400000000000000000e6d696e6563726166743a6c75636b00000000ffff7f7f0000803f0000803f156d696e6563726166743a66616c6c5f64616d61676500000000ffff7f7f0ad7a33c0ad7a33c1d6d696e6563726166743a756e64657277617465725f6d6f76656d656e7400000000ffff7f7fcdcccc3dcdcccc3d126d696e6563726166743a6d6f76656d656e7400000000ffff7f7f0000803f0000803f156d696e6563726166743a66616c6c5f64616d616765000080c40000804400000000000000000e6d696e6563726166743a6c75636b00000000000080410000000000000000146d696e6563726166743a6162736f727074696f6e000000000000a0410000a0410000a041106d696e6563726166743a6865616c7468000000000000a0410000a0410000a041106d696e6563726166743a6865616c7468000000000000a0410000a0410000a0411b6d696e6563726166743a706c617965722e73617475726174696f6e0000000000aec1460000000000000000166d696e6563726166743a706c617965722e6c6576656c000000000000803f00000000000000001b6d696e6563726166743a706c617965722e657870657269656e6365000000000000a0410000a0410000a041176d696e6563726166743a706c617965722e68756e676572000000000000804000000000000000001b6d696e6563726166743a706c617965722e65786861757374696f6e00000000ffff7f7fcdcccc3dcdcccc3d126d696e6563726166743a6d6f76656d656e7400000000ffff7f7fcdcccc3dcdcccc3d126d696e6563726166743a6d6f76656d656e74000000000000804000000000000000001b6d696e6563726166743a706c617965722e65786861757374696f6e000000000000a0410000a0410000a0411b6d696e6563726166743a706c617965722e73617475726174696f6e000000000000a0410000a0410000a041106d696e6563726166743a6865616c7468000000000000803f00000000000000001b6d696e6563726166743a706c617965722e657870657269656e636500000000000080410000000000000000146d696e6563726166743a6162736f727074696f6e000080c40000804400000000000000000e6d696e6563726166743a6c75636b00000000ffff7f7f0000803f0000803f156d696e6563726166743a66616c6c5f64616d61676500000000ffff7f7fcdcccc3dcdcccc3d126d696e6563726166743a6d6f76656d656e7400000000ffff7f7f0ad7a33c0ad7a33c1d6d696e6563726166743a756e64657277617465725f6d6f76656d656e74000000000000a0410000a0410000a041176d696e6563726166743a706c617965722e68756e676572000000000000804000000000000000001b6d696e6563726166743a706c617965722e65786861757374696f6e000000000000a0410000a0410000a0411b6d696e6563726166743a706c617965722e73617475726174696f6e0000000000aec1460000000000000000166d696e6563726166743a706c617965722e6c6576656c000000000000a0410000a0410000a041106d696e6563726166743a6865616c7468000000000000803f00000000000000001b6d696e6563726166743a706c617965722e657870657269656e636500000000000080410000000000000000146d696e6563726166743a6162736f727074696f6e000080c40000804400000000000000000e6d696e6563726166743a6c75636b00000000ffff7f7f0000803f0000803f156d696e6563726166743a66616c6c5f64616d61676500000000ffff7f7fcdcccc3dcdcccc3d126d696e6563726166743a6d6f76656d656e7400000000ffff7f7f0ad7a33c0ad7a33c1d6d696e6563726166743a756e64657277617465725f6d6f76656d656e74000000000000a0410000a0410000a041176d696e6563726166743a706c617965722e68756e676572000000000000804000000000000000001b6d696e6563726166743a706c617965722e65786861757374696f6e000000000000a0410000a0410000a0411b6d696e6563726166743a706c617965722e73617475726174696f6e0000000000aec1460000000000000000166d696e6563726166743a706c617965722e6c6576656c0000000000aec1460000000000000000166d696e6563726166743a706c617965722e6c6576656c000000000000803f00000000000000001b6d696e6563726166743a706c617965722e657870657269656e6365";
+Bytes update_attributes(std::uint64_t runtime, const Attributes &attributes, const std::vector<int> &ids) {
+    // UpdateAttributesPacket: one entry per handle in the list, each written
+    // with the instance's current value (min, max, value, default, name).
     ByteWriter out;
     out.varint64(runtime);
-    for (const char *c = hex; c[0] && c[1]; c += 2) {
-        const auto digit = [](char ch) { return ch <= '9' ? ch - '0' : ch - 'a' + 10; };
-        out.byte(static_cast<std::uint8_t>(digit(c[0]) << 4 | digit(c[1])));
+    out.varint(static_cast<std::uint32_t>(ids.size()));
+    for (int id : ids) {
+        const auto &a = attributes.values[static_cast<std::size_t>(id)];
+        out.float32(a.min);
+        out.float32(a.max);
+        out.float32(a.value);
+        out.float32(a.fallback);
+        out.string(a.name);
     }
+    return out.take();
+}
+Bytes spawn_attributes(std::uint64_t runtime, const Attributes &attributes) {
+    // The first dirty UpdateAttributesPacket the original sends to a joining
+    // player (input/reference/bds_1.6.0.15_join.json, packet 26).
+    return update_attributes(runtime, attributes, spawn_attribute_order());
+}
+Bytes actor_bounding_box(std::uint64_t runtime, float width, float height) {
+    // SetActorDataPacket with keys 53/54 (bounding box width/height).
+    ByteWriter out;
+    out.varint64(runtime);
+    out.varint(2);
+    out.varint(53);
+    out.varint(3);
+    out.float32(width);
+    out.varint(54);
+    out.varint(3);
+    out.float32(height);
+    return out.take();
+}
+Bytes respawned_data(std::uint64_t runtime, std::uint64_t flags) {
+    // SetActorDataPacket after a respawn: flags, then the 0.6 x 1.8 box.
+    ByteWriter out;
+    out.varint64(runtime);
+    out.varint(3);
+    out.varint(0);
+    out.varint(7);
+    out.signed_varint64(static_cast<std::int64_t>(flags));
+    out.varint(53);
+    out.varint(3);
+    out.float32(0.6f);
+    out.varint(54);
+    out.varint(3);
+    out.float32(1.8f);
+    return out.take();
+}
+Bytes player_died_event(std::int64_t unique, int cause) {
+    // EventPacket (type 12) as the original sends it on death:
+    // unique id, type, uses player id, then 1 and the damage cause.
+    ByteWriter out;
+    out.signed_varint64(unique);
+    out.varint(12);
+    out.byte(1);
+    out.signed_varint(1);
+    out.signed_varint(cause);
+    return out.take();
+}
+Bytes death_message(const std::string &key, const std::string &player_token) {
+    // TextPacket type 2 (translation) with the player's name token.
+    ByteWriter out;
+    out.byte(2);
+    out.boolean(true);
+    out.string(key);
+    out.varint(1);
+    out.string(player_token);
+    out.string("");
+    out.string("");
+    return out.take();
+}
+Bytes respawn_position(float x, float y, float z) {
+    ByteWriter out;
+    out.float32(x);
+    out.float32(y);
+    out.float32(z);
+    return out.take();
+}
+Bytes set_health(int health) {
+    ByteWriter out;
+    out.signed_varint(health);
     return out.take();
 }
 Bytes actor_flags(std::uint64_t runtime, std::uint64_t flags) {
@@ -297,18 +369,6 @@ Bytes actor_flags(std::uint64_t runtime, std::uint64_t flags) {
     out.varint(0);
     out.varint(7);
     out.signed_varint64(static_cast<std::int64_t>(flags));
-    return out.take();
-}
-Bytes movement_attribute(std::uint64_t runtime, float value) {
-    // UpdateAttributesPacket for the dirty minecraft:movement attribute.
-    ByteWriter out;
-    out.varint64(runtime);
-    out.varint(1);
-    out.float32(0.0f);
-    out.float32(std::numeric_limits<float>::max());
-    out.float32(value);
-    out.float32(0.1f);
-    out.string("minecraft:movement");
     return out.take();
 }
 Transaction transaction(std::span<const std::uint8_t> bytes) {

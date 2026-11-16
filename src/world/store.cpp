@@ -95,7 +95,8 @@ std::vector<std::uint8_t> WorldStore::encode(const World &world) {
                                         {"rot", {p.pitch, p.yaw, p.head_yaw}},
                                         {"selected", p.selected},
                                         {"inventory", inventory},
-                                        {"cursor", {p.cursor.block, p.cursor.count}}};
+                                        {"cursor", {p.cursor.block, p.cursor.count}},
+                                        {"attributes", {p.health, p.hunger, p.saturation, p.exhaustion}}};
         }
         const auto text = metadata.dump();
         require(text.size() <= 16 * 1024 * 1024, "world metadata limit exceeded");
@@ -226,6 +227,20 @@ World WorldStore::decode(std::span<const std::uint8_t> bytes, Limits limits) {
                 p.cursor = {static_cast<std::uint16_t>(integer(cursor[0], 0, 4)),
                             static_cast<std::uint8_t>(integer(cursor[1], 0, 64))};
                 require((p.cursor.block == 0) == (p.cursor.count == 0), "invalid cursor stack");
+            }
+            if (value.contains("attributes")) {
+                const auto &a = value["attributes"];
+                require(a.is_array() && a.size() == 4, "invalid player attributes");
+                const auto ranged = [&](const Json &j, float hi) {
+                    require(j.is_number(), "invalid player attribute");
+                    const auto n = j.get<float>();
+                    require(std::isfinite(n) && n >= 0 && n <= hi, "invalid player attribute");
+                    return n;
+                };
+                p.health = ranged(a[0], 20);
+                p.hunger = ranged(a[1], 20);
+                p.saturation = ranged(a[2], 20);
+                p.exhaustion = ranged(a[3], 4);
             }
             world.players_.emplace(it.key(), p);
         }
