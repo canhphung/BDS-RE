@@ -1,5 +1,10 @@
 # Actual build status — 2026-11-16
 
+Latest verified source: `a16671bb8b386e58edcf280a175bb314d35b6485` —
+[CI run 43879299098](https://github.com/canhphung/BDS-RE/actions/runs/43879299098),
+all seven jobs successful, 19/19 CTest including native Windows Debug/Release.
+Older sections below retain the results for their original source revisions.
+
 | Platform/toolchain | Debug | Release | Sanitizers | Notes |
 |---|---|---|---|---|
 | Linux x86-64 GCC 14.2.0 | PASS, 13/13 CTest | PASS, 13/13 CTest | ASan+UBSan PASS, 13/13 CTest | CMake 4.4.5, Ninja 1.13.2 |
@@ -155,5 +160,8 @@ UDP test exceed its existing 45-second timeout. Encoding now reads only allocate
 World columns/sections; the final sanitizer UDP test passes in 2.62 seconds and the
 full sanitizer suite in 8.09 seconds on this host. The timeout was not increased,
 and no test was disabled. See reverse/reports/CHUNKS.md for wire evidence,
-spawn readiness policy and features still pending. Native CI results for this
-source will be recorded after the run completes. No actual Minecraft client was run.
+spawn readiness policy and features still pending. Native CI run [43879299098](https://github.com/canhphung/BDS-RE/actions/runs/43879299098)
+for source `a16671bb8b386e58edcf280a175bb314d35b6485` passed all seven jobs:
+GCC/Clang Debug/Release, Linux sanitizers and Windows MSVC Debug/Release.
+Both Windows job logs explicitly report 100% tests passed, 0 failed out of 19.
+No actual Minecraft client was run.
