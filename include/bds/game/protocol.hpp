@@ -40,6 +40,10 @@ Bytes equipment(std::uint64_t runtime, const PlayerData &p);
 Bytes add_player(const auth::Identity &identity, const protocol::StartGame &game,
                  const PlayerData &data, std::uint64_t flags);
 Bytes actor_flags(std::uint64_t runtime, std::uint64_t flags);
+// SetActorDataPacket with the complete player metadata (first dirty data).
+Bytes player_data(std::uint64_t runtime, const std::string &name, std::uint64_t flags);
+// The original's first dirty UpdateAttributesPacket for a joining player.
+Bytes spawn_attributes(std::uint64_t runtime);
 Bytes movement_attribute(std::uint64_t runtime, float value);
 Bytes remove_player_list(const auth::Identity &identity);
 struct Action {
@@ -53,6 +57,8 @@ struct Transaction {
     World::Position block{};
     int face = 0, slot = 0;
     ItemStack held;
+    float from[3] = {0, 0, 0};  // player position as the client saw it
+    float click[3] = {0, 0, 0}; // click position on the face
 };
 Transaction transaction(std::span<const std::uint8_t> bytes);
 

@@ -457,6 +457,11 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                             require(body == struct.pack('>i', 3) and not spawned and len(seen_chunks) >= 81, f"PlayerSpawn after chunks: {len(seen_chunks)}")
                             spawned = True
                             joining.send_packets([(0x71, client_uvarint(game['runtime_id']))])
+                        elif packet_id == 0x27 and spawned:
+                            # Flag 14 added once the player is initialized, as in
+                            # the original join capture (packet 247).
+                            require(body == client_uvarint(game['runtime_id']) + bytes.fromhex('0100078080c280808160'),
+                                    f'initialized flags {body.hex()}')
                         elif packet_id == 0x1b and spawned:
                             # ServerPlayer::normalTick: ActorEvent 66 (structure
                             # feature) every 80 ticks from the first tick.
