@@ -1,0 +1,459 @@
+{
+  "sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+  "tool": "GNU nm/objdump",
+  "scope": "outgoing call sites only; indirect targets unresolved; not a complete graph",
+  "functions": [
+    {
+      "symbol": "ServerInstance::_update()",
+      "address": "0x25ea120",
+      "size": 571,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25ea148",
+          "operand": "1756cd0 <__cxa_guard_acquire@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea19b",
+          "operand": "180c2f0 <std::vector<ProfilerLite::ScopedData*, std::allocator<ProfilerLite::ScopedData*> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea1e0",
+          "operand": "1756880 <__cxa_atexit@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea1ef",
+          "operand": "1757df0 <__cxa_guard_release@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea1f4",
+          "operand": "199e5d0 <std::this_thread::get_id()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea20c",
+          "operand": "180c330 <_ProfilerLiteTimer::_ProfilerLiteTimer(ProfilerLite::ScopedData&, std::thread::id)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea221",
+          "operand": "1931f20 <std::atomic<bool>::operator=(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea229",
+          "operand": "1756ec0 <std::chrono::_V2::system_clock::now()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea23d",
+          "operand": "25ee510 <std::unique_ptr<Timer, std::default_delete<Timer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea248",
+          "operand": "1956630 <Timer::advanceTime(float)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea258",
+          "operand": "25ee510 <std::unique_ptr<Timer, std::default_delete<Timer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea263",
+          "operand": "1956630 <Timer::advanceTime(float)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea273",
+          "operand": "25ed860 <std::unique_ptr<Minecraft, std::default_delete<Minecraft> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea280",
+          "operand": "1af5060 <Minecraft::update(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea296",
+          "operand": "25ee4f0 <std::atomic<ServerInstance::InstanceState>::operator ServerInstance::InstanceState() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea2af",
+          "operand": "25ed860 <std::unique_ptr<Minecraft, std::default_delete<Minecraft> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea2b7",
+          "operand": "1af4ee0 <Minecraft::isLeaveGameDone() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea2db",
+          "operand": "25ee530 <std::atomic<ServerInstance::InstanceState>::operator=(ServerInstance::InstanceState)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea2f3",
+          "operand": "19f88e0 <std::unique_ptr<Scheduler, std::default_delete<Scheduler> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea310",
+          "operand": "1934750 <std::unique_ptr<Scheduler, std::default_delete<Scheduler> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea319",
+          "operand": "1756ec0 <std::chrono::_V2::system_clock::now()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea32a",
+          "operand": "180c5b0 <std::common_type<std::chrono::duration<long, std::ratio<1l, 1000000000l> >, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >::type std::chrono::operator-<std::chrono::_V2::system_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> >, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >(std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&, std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea33b",
+          "operand": "2749920 <Scheduler::processCoroutines(std::chrono::duration<long, std::ratio<1l, 1000000000l> >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea34d",
+          "operand": "1931f20 <std::atomic<bool>::operator=(bool)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerInstance::startServerThread()",
+      "address": "0x25ea3c0",
+      "size": 115,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25ea3e2",
+          "operand": "25ee530 <std::atomic<ServerInstance::InstanceState>::operator=(ServerInstance::InstanceState)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea3ea",
+          "operand": "25ee5d0 <RandomThreadCheckManager::invalidateThreadIndex()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea40e",
+          "operand": "25ea440 <std::thread::thread<ServerInstance::startServerThread()::$_3>(ServerInstance::startServerThread()::$_3&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea41b",
+          "operand": "181b950 <std::thread::operator=(std::thread&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ea428",
+          "operand": "181b9a0 <std::thread::~thread()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerInstance::startServerThread()::$_3::operator()() const",
+      "address": "0x25ec0a0",
+      "size": 535,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25ec0c9",
+          "operand": "1931f20 <std::atomic<bool>::operator=(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec0d8",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec0ec",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec0f5",
+          "operand": "26d9200 <DebugUtils::SET_THREAD_NAME(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec0fe",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec107",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec11a",
+          "operand": "1934750 <std::unique_ptr<Scheduler, std::default_delete<Scheduler> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec126",
+          "operand": "199e5d0 <std::this_thread::get_id()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec13a",
+          "operand": "2749cc0 <Scheduler::changeThread(std::thread::id)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec13f",
+          "operand": "199e5d0 <std::this_thread::get_id()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec14c",
+          "operand": "27589b0 <ASSIGN_SERVER_THREAD(std::thread::id const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec15c",
+          "operand": "2758a20 <ThreadUtil::setCurrentThreadPriority(OSThreadPriority const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec161",
+          "operand": "1757880 <std::chrono::_V2::steady_clock::now()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec17a",
+          "operand": "25ee4f0 <std::atomic<ServerInstance::InstanceState>::operator ServerInstance::InstanceState() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec188",
+          "operand": "1757880 <std::chrono::_V2::steady_clock::now()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec19c",
+          "operand": "25f3f50 <std::chrono::time_point<std::chrono::_V2::steady_clock, std::common_type<std::chrono::duration<long, std::ratio<1l, 1000000000l> >, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >::type> std::chrono::operator-<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> >, long, std::ratio<1l, 1000000000l> >(std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&, std::chrono::duration<long, std::ratio<1l, 1000000000l> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec1ad",
+          "operand": "18859f0 <bool std::chrono::operator< <std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> >, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >(std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&, std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec1ca",
+          "operand": "25f3f50 <std::chrono::time_point<std::chrono::_V2::steady_clock, std::common_type<std::chrono::duration<long, std::ratio<1l, 1000000000l> >, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >::type> std::chrono::operator-<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> >, long, std::ratio<1l, 1000000000l> >(std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&, std::chrono::duration<long, std::ratio<1l, 1000000000l> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec1e6",
+          "operand": "25f3fa0 <std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >::operator+=(std::chrono::duration<long, std::ratio<1l, 1000000000l> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec1f9",
+          "operand": "25ea120 <ServerInstance::_update()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec205",
+          "operand": "1837530 <std::function<void ()>::function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec221",
+          "operand": "25f3fe0 <bool SPSCQueue<std::function<void ()>, 512ul>::try_dequeue<std::function<void ()> >(std::function<void ()>&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec23a",
+          "operand": "1874100 <std::function<void ()>::operator()() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec248",
+          "operand": "25f42a0 <void std::this_thread::sleep_until<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >(std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec254",
+          "operand": "1804310 <std::function<void ()>::~function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec270",
+          "operand": "25f14c0 <std::unique_ptr<Minecraft, std::default_delete<Minecraft> >::reset(Minecraft*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec283",
+          "operand": "19346f0 <std::unique_ptr<NetworkHandler, std::default_delete<NetworkHandler> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec28b",
+          "operand": "187f370 <NetworkHandler::flushAndDestroyReceiveTaskGroup()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25ec2a3",
+          "operand": "1931f20 <std::atomic<bool>::operator=(bool)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerLevel::tick()",
+      "address": "0x25e36f0",
+      "size": 498,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25e370d",
+          "operand": "1c86000 <Level::tick()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e371f",
+          "operand": "1c9a0e0 <std::unique_ptr<Scoreboard, std::default_delete<Scoreboard> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e373e",
+          "operand": "1c9a110 <std::unique_ptr<Scoreboard, std::default_delete<Scoreboard> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e3751",
+          "operand": "*0x68(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x25e3761",
+          "operand": "1c96880 <std::unordered_map<int, std::unique_ptr<Dimension, std::default_delete<Dimension> >, std::hash<int>, std::equal_to<int>, std::allocator<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > > > >::begin()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e3780",
+          "operand": "1c968e0 <std::unordered_map<int, std::unique_ptr<Dimension, std::default_delete<Dimension> >, std::hash<int>, std::equal_to<int>, std::allocator<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > > > >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e3794",
+          "operand": "1c968b0 <bool std::__detail::operator!=<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false>(std::__detail::_Node_iterator_base<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false> const&, std::__detail::_Node_iterator_base<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false> const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e37aa",
+          "operand": "1c96910 <std::__detail::_Node_iterator<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false, false>::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e37b6",
+          "operand": "1c96930 <std::unique_ptr<Dimension, std::default_delete<Dimension> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e37c9",
+          "operand": "*0xf8(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x25e37d3",
+          "operand": "1c96950 <std::__detail::_Node_iterator<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false, false>::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e37e8",
+          "operand": "1c8d920 <Level::getVillages()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e37f0",
+          "operand": "1e31f70 <std::unique_ptr<Villages, std::default_delete<Villages> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e3803",
+          "operand": "*0x28(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x25e380a",
+          "operand": "25e35e0 <ServerLevel::allPlayersSleeping() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e3823",
+          "operand": "1c86a80 <Level::getGameRules()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e3835",
+          "operand": "1d1b690 <GameRuleId::GameRuleId(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e3842",
+          "operand": "1d1ace0 <GameRules::getBool(GameRuleId) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e385b",
+          "operand": "1c86b00 <Level::getTime() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e3886",
+          "operand": "1c86ab0 <Level::setTime(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e388f",
+          "operand": "1c86b00 <Level::getTime() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e389a",
+          "operand": "1839290 <SetTimePacket::SetTimePacket(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e38a3",
+          "operand": "1c8dd30 <Level::getPacketSender() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e38c4",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x25e38cb",
+          "operand": "1839cd0 <SetTimePacket::~SetTimePacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e38d4",
+          "operand": "25e3460 <ServerLevel::awakenAllPlayers()>",
+          "kind": "direct"
+        }
+      ]
+    }
+  ]
+}
