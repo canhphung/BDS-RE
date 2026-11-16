@@ -545,27 +545,38 @@ struct Transport::Impl {
             integer(reply, peer.request_time, 8);
             integer(reply, peer.accepted_time, 8);
             peer.stage = Stage::incoming;
+            result.events.push_back("connection request accepted; awaiting NewIncomingConnection");
         } else if (id == 0x13 && peer.stage == Stage::incoming) {
             address(r);
             for (unsigned i = 0; i < 20; ++i)
                 address(r);
-            require(r.integer(8) == peer.request_time);
-            require(r.integer(8) == peer.accepted_time);
+            // NewIncomingConnection carries timing samples, not an echo of
+            // ConnectionRequestAccepted's pair. Native RakNet writes the
+            // received server pong time followed by its current local time.
+            // The original reads both and calls OnConnectedPong, without
+            // comparing either against the original request timestamp.
+            r.integer(8);
+            r.integer(8);
             r.finish();
             peer.stage = Stage::connected;
-        } else if (id == 0 && peer.stage == Stage::connected) {
+            result.events.push_back("connected; awaiting Login");
+        } else if (id == 0 && peer.stage != Stage::closing) {
             const auto ping = r.integer(8);
             r.finish();
             reply = {3};
             integer(reply, ping, 8);
             integer(reply, now, 8);
+        } else if (id == 3 && peer.stage != Stage::closing) {
+            // Connected control traffic can race NewIncomingConnection.
+            r.integer(8); r.integer(8); r.finish();
         } else if (id == 0x15) {
             r.finish();
             peer.stage = Stage::closing;
+            result.events.push_back("client disconnected");
         } else if (id >= 0x80 && peer.stage == Stage::connected) {
             result.applications.push_back({from, body});
         } else
-            throw std::invalid_argument("unexpected connection phase");
+            throw std::invalid_argument("unexpected control message id=" + std::to_string(id));
         if (!reply.empty())
             for (auto &bytes : peer.channel.send(reply, now, id == 0 ? 0 : 3))
                 result.outgoing.push_back({from, std::move(bytes)});
@@ -592,6 +603,7 @@ TransportResult Transport::receive(const Address &from, std::span<const std::uin
             r.magic_bytes();
             const auto protocol = r.byte();
             if (protocol != 9) {
+                result.events.push_back("unsupported transport protocol=" + std::to_string(protocol) + "; expected 9");
                 Bytes reply{0x19, 9};
                 append(reply, magic);
                 integer(reply, state.guid, 8);
@@ -599,6 +611,7 @@ TransportResult Transport::receive(const Address &from, std::span<const std::uin
                 return result;
             }
             require(bytes.size() + 28 >= 576);
+            result.events.push_back("open request 1 accepted (protocol 9)");
             auto reply = offline(6, state.guid);
             reply.push_back(0);
             integer(reply, std::min<std::size_t>(1400, bytes.size() + 28), 2);
@@ -619,6 +632,7 @@ TransportResult Transport::receive(const Address &from, std::span<const std::uin
             if (peer == state.peers.end()) {
                 require(state.peers.size() < state.limit);
                 peer = state.peers.try_emplace(from, guid, now, mtu).first;
+                result.events.push_back("open request 2 accepted; mtu=" + std::to_string(mtu));
             } else
                 require(peer->second.guid == guid && peer->second.mtu == mtu);
             peer->second.last = now;
@@ -636,6 +650,7 @@ TransportResult Transport::receive(const Address &from, std::span<const std::uin
         auto &peer = item->second;
         auto incoming = peer.channel.receive(bytes, now);
         if (!incoming.valid || !peer.channel.alive()) {
+            result.events.push_back("dropped peer: invalid reliability datagram");
             state.peers.erase(item);
             return result;
         }
@@ -648,7 +663,8 @@ TransportResult Transport::receive(const Address &from, std::span<const std::uin
         }
         if (!peer.channel.alive())
             state.peers.erase(item);
-    } catch (const std::invalid_argument &) {
+    } catch (const std::invalid_argument &error) {
+        result.events.push_back("rejected datagram id=" + std::to_string(bytes[0]) + ": " + error.what());
         result.applications.clear();
         if (connected_packet)
             state.peers.erase(from);

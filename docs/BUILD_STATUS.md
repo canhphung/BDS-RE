@@ -165,3 +165,15 @@ for source `a16671bb8b386e58edcf280a175bb314d35b6485` passed all seven jobs:
 GCC/Clang Debug/Release, Linux sanitizers and Windows MSVC Debug/Release.
 Both Windows job logs explicitly report 100% tests passed, 0 failed out of 19.
 No actual Minecraft client was run.
+
+## Native timestamp regression fix
+
+The native-style NewIncomingConnection timing regression failed against the
+previous server before the correction. After the fix, GCC Debug and ASan+UBSan
+pass 19/19 tests, including UDP encrypted Login, chunk delivery and initialization
+with updated native-style client timestamps. The unit regression additionally
+exercises ping/pong before NewIncomingConnection and confirms authentication is
+still required to lift the absolute peer deadline. The updated reference client
+also reached StartGame against the original BDS. The actual Minecraft 1.6.0.14
+reported by the user still needs a retry with this source; no successful real-client
+connection is claimed from these tests.

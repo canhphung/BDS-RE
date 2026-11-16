@@ -223,7 +223,7 @@ def connected_session(family, host, target_port, client_guid):
     for _ in range(20):
         at = skip_address(body, at)
     request_time, accepted_time = struct.unpack_from(">QQ", body, at)
-    incoming = b"\x13" + address(host, target_port) + address("0.0.0.0", 0) * 20 + struct.pack(">QQ", request_time, accepted_time)
+    incoming = b"\x13" + address(host, target_port) + address("0.0.0.0", 0) * 20 + struct.pack(">QQ", accepted_time, int(time.time() * 1000))
     client.sendto(frame(1, 1, 1, incoming), remote)
     return client, remote, 2
 
@@ -352,7 +352,7 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                 retransmitted = data_packet(0x10)
                 require(retransmitted == accepted, "reliable retransmission")
                 client.sendto(ack(seq), remote)
-                incoming = b"\x13" + address(host, target_port) + address("0.0.0.0", 0) * 20 + struct.pack(">QQ", request_time, accepted_time)
+                incoming = b"\x13" + address(host, target_port) + address("0.0.0.0", 0) * 20 + struct.pack(">QQ", accepted_time, int(time.time() * 1000))
                 client.sendto(frame(1, 1, 1, incoming), remote)
                 # Connected ping cannot be answered before NewIncomingConnection.
                 ping = b"\x00" + struct.pack(">Q", 7654321)

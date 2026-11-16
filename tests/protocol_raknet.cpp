@@ -156,13 +156,20 @@ int main() {
                 const auto decoded = client.receive(datagram.bytes, 2);
                 for (const auto &receipt : decoded.outgoing) session.receive(remote, receipt, 2);
             }
+            const Bytes early_ping{0,0,0,0,0,0,0,0,9};
+            check(!session.receive(remote, client.send(early_ping, 2, 0)[0], 2).outgoing.empty());
+            check(session.peers() == 1 && !session.connected(remote));
+            Bytes early_pong(17, 0); early_pong[0] = 3;
+            session.receive(remote, client.send(early_pong, 2, 0)[0], 2);
+            check(session.peers() == 1 && !session.connected(remote));
             Bytes incoming{0x13};
             const auto target = encode_address(a), internal = encode_address(Address{});
             incoming.insert(incoming.end(), target.begin(), target.end());
             for (unsigned i = 0; i < 20; ++i) incoming.insert(incoming.end(), internal.begin(), internal.end());
-            incoming.insert(incoming.end(), 15, 0); incoming.push_back(1); // request time 0, accepted time 1
-            session.receive(remote, client.send(incoming, 3)[0], 3);
-            check(session.connected(remote));
+            incoming.insert(incoming.end(), 7, 0); incoming.push_back(1); // echo server pong time, not original request time
+            incoming.insert(incoming.end(), 7, 0); incoming.push_back(23); // current client time
+            const auto joined = session.receive(remote, client.send(incoming, 3)[0], 3);
+            check(session.connected(remote) && joined.events == std::vector<std::string>{"connected; awaiting Login"});
             if (authenticated) session.authenticated(remote);
             const Bytes ping{0,0,0,0,0,0,0,0,0};
             session.receive(remote, client.send(ping, 29000, 0)[0], 29000);

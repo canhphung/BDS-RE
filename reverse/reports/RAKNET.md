@@ -31,3 +31,33 @@ DatagramHeaderFormat::Deserialize at 0x27b4b70 reads valid, ACK, optional bandwi
 The implementation is a bounded transport foundation, not a copy of CCRakNetSlidingWindow congestion control. It uses fixed exponential retry intervals 250..2000 ms, eight send attempts, a 256-datagram reliable send window, 4096-sequence duplicate windows, 32 ordering channels and a 1024-order gap limit. Reassembly is limited to eight active split messages, 1024 fragments each and 1 MiB buffered bytes per peer; incomplete splits expire at 10 seconds. Byte-aligned payloads are supported; arbitrary bit-length messages are rejected. Peer count is capped at 64; idle peers expire at 15 seconds and all currently unauthenticated transport peers have a 30-second absolute lifetime. These are deliberate implementation policies, not reconstructed original timing/capacity settings.
 
 No authenticated Minecraft session is created by a transport handshake. Until batching/authentication is implemented, application traffic after connection produces a RakNet disconnect. The independent Python test client verifies both address families, version rejection, open requests, 20-address connection acceptance, forced retransmission, connected ping and this rejection. Unit tests cover exact wire fixtures, ACK/NACK, loss, duplicates, ordering, sequenced-vs-ordered interaction, reassembly, malformed data and limits. Neither test suite is a Minecraft client or differential reference test.
+
+## Native-client timestamp correction
+
+A real Minecraft 1.6.0.14 test reported a silent disconnect before Login. The
+previous implementation incorrectly required NewIncomingConnection's two times
+to equal the original connection-request and server-accept times. Our synthetic
+clients echoed that pair, masking the mismatch.
+
+Original `RunUpdateCycle` at `0x2796d80` reads the NewIncomingConnection timing
+samples at `0x27987f8` and `0x2798816`, then calls `OnConnectedPong` at
+`0x279883f`; there is no comparison against the original request timestamp.
+The original client-side path writes the received server pong time at
+`0x2799349`, calls `GetTime` at `0x2799353`, and writes that current local time
+at `0x2799380`. These are timing samples, not authentication proofs.
+
+The independent server now consumes both bounded fields without the erroneous
+equality checks, and accepts connected ping/pong control traffic during the
+connection exchange without advancing the authentication state. Login chain,
+client-proof and encryption verification still gate the Minecraft session.
+The reference and integration clients now send the native timestamp pair.
+The new unit regression fails on the previous implementation, and passes with
+the correction, including early ping/pong and the unauthenticated-peer timeout.
+An updated reference client completed encrypted Login through StartGame against
+the original BDS during this fix. This confirms the timestamp semantics against
+the original; it does not confirm the user's actual client now connects.
+
+DiscoveryServer logs handshake stage changes and malformed/unsupported transport
+traffic (at most eight events per second globally), without logging packet bodies,
+JWTs or keys. The stale startup message claiming Login/world streaming was absent
+has been replaced with `independent runtime starting; Bedrock protocol=282`.

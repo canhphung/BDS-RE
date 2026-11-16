@@ -207,6 +207,8 @@ std::string server_advertisement(const Properties &p, std::uint64_t guid) {
 struct DiscoveryServer::Impl {
     std::array<Socket, 2> sockets{invalid, invalid};
     std::uint64_t guid = 0;
+    std::uint64_t trace_window = 0;
+    unsigned trace_count = 0;
     std::unique_ptr<raknet::Transport> transport;
     // Minecraft protocol state per transport peer; never touches the World.
     std::map<raknet::Address, protocol::GameConnection> connections;
@@ -397,6 +399,12 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access, const World
                 continue;
             }
             auto result = impl_->transport->receive(from, incoming, now);
+            if (now - impl_->trace_window >= 1000) { impl_->trace_window = now; impl_->trace_count = 0; }
+            for (const auto &event : result.events)
+                if (impl_->trace_count < 8) {
+                    ++impl_->trace_count;
+                    log("RakNet peer port=" + std::to_string(from.port) + ": " + event);
+                }
             for (const auto &outgoing : result.outgoing)
                 send_packet(socket, outgoing.address, outgoing.bytes);
             // A transport connection is not a login: only 0xfe batches reach the

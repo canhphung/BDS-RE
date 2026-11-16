@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <string>
 #include <vector>
 
 namespace bds::raknet {
@@ -50,6 +51,8 @@ struct Application {
 struct TransportResult {
     std::vector<Outgoing> outgoing;
     std::vector<Application> applications;
+    // Bounded by one received datagram; no payloads, tokens or keys.
+    std::vector<std::string> events;
 };
 // A connected transport peer is NOT an authenticated Minecraft player.
 class Transport {

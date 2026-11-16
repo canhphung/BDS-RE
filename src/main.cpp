@@ -12,7 +12,7 @@ int main(int argc,char** argv) {
   for(int i=1;i<argc;++i) args.emplace_back(argv[i]);
   auto config=bds::parse_config(args);
   std::signal(SIGINT,stop_handler); std::signal(SIGTERM,stop_handler);
-  bds::log("independent runtime starting; Minecraft login/world streaming not implemented");
+  bds::log("independent runtime starting; Bedrock protocol=282");
   bds::ServerRuntime runtime(config);
   auto ticks=runtime.run([]{return stopping!=0;});
   bds::log("stopped ticks="+std::to_string(ticks));

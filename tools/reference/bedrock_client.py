@@ -207,7 +207,7 @@ class RakNetClient:
         for _ in range(20):
             at += 7 if accepted[at] == 4 else 29
         request_time, accepted_time = struct.unpack_from(">QQ", accepted, at)
-        incoming = b"\x13" + address(*self.remote) + address("0.0.0.0", 0) * 20 + struct.pack(">QQ", request_time, accepted_time)
+        incoming = b"\x13" + address(*self.remote) + address("0.0.0.0", 0) * 20 + struct.pack(">QQ", accepted_time, int(time.time() * 1000))
         self.send(incoming)
 
     def send(self, body):
