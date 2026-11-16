@@ -5,7 +5,10 @@
 #include <deque>
 #include <map>
 #include <random>
+#include <set>
 namespace bds::game {
+// Level client ticking offsets (Level::Level 0x1c814e9) for a tick range.
+std::vector<std::pair<int, int>> client_ticking_offsets(int range);
 class Server {
   public:
     Server(World &world, const Properties &properties, AccessLists &access)
@@ -31,6 +34,18 @@ class Server {
         bool active = false;
         std::deque<GamePacket> queue;
         bool overflow = false;
+        // ServerPlayer +0x1bb8: entities this client has been sent (runtime ids).
+        std::set<std::uint64_t> known;
+        // MovementInterpolator (Mob +0x129c): target position/rotation, steps.
+        struct Lerp {
+            float x = 0, y = 0, z = 0, pitch = 0, yaw = 0;
+            int steps = 0;
+        } lerp;
+        bool was_on_ground = false; // Actor +0x125, written at the end of each tick
+        bool sneaking = false, sprinting = false; // actor flags 1 and 3
+        bool flags_dirty = false, movement_dirty = false;
+        int feature_timer = 0;                    // ServerPlayer +0x1b5c
+        std::uint64_t flags() const;
     };
     World &world_;
     const Properties &properties_;
@@ -46,6 +61,13 @@ class Server {
     void tick_item(ItemActor &a);
     void touch(Session &s, ItemActor &a);
     void enqueue(std::uint64_t runtime, GamePacket packet);
+    // Dimension::sendPacketForEntity (0x1d69020): players for whom the entity
+    // is relevant (itself, or in their known set), except `except`.
+    void send_for_entity(std::uint64_t entity, const GamePacket &packet, std::uint64_t except = 0);
+    void tick_player(std::uint64_t id, Session &s);
+    void update_nearby(std::uint64_t id, Session &s);
+    std::vector<std::pair<int, int>> ticking_offsets() const;
+    std::set<std::uint64_t> fresh_items_; // added to the level this tick
     void broadcast(GamePacket packet, std::uint64_t exclude = 0);
     bool collides(const PlayerData &p) const;
     bool reach(const PlayerData &p, World::Position block) const;

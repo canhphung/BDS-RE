@@ -108,26 +108,41 @@ permission; self-signed clients cannot claim an operator XUID.
 
 ## Movement and synchronization
 
-MovePlayer is translated from the original handler (ServerNetworkHandler::handle
-0x182bcf0): a packet for another runtime ID is ignored, Y is clamped to [-128, 512]
-with mce::Math::clamp (NaN becomes -128), position and rotation are taken as sent in
-every mode, and the received packet is relayed unchanged to other players. Like the
-original, there is no speed, distance or collision validation and no correction is
-sent (ServerPlayer::checkMovementStats only feeds telemetry). One documented safety
-deviation: packets with non-finite or |coordinate| > 1e9 X/Z are ignored, because
-BDS-RE converts them to chunk coordinates. The earlier invented motion budgets,
-collision rejection and coordinate limits were removed. Riding and dimension changes
-do not exist yet, so those branches of the original are not reachable. Verified with
-tools/reference/movement_oracle.py against the original (test `movement_reference`). Other initialized players receive AddPlayer/PlayerList,
-movement, held-item updates and RemoveActor/PlayerList removal on disconnect.
+Translated from the original and checked against it with three oracles
+(movement_reference, player_actions_reference, gdb traces):
 
-The streamed chunk circle follows the accepted player position and radius, bounded
-to 5..32 and view-distance. Pending view coordinates are replaced when the center
-changes; leaving/re-entering a view resends needed chunks. Existing reliable-window
-and send-budget bounds apply. Movement broadcasts coalesce by actor. Per-player
-pending gameplay queues are bounded; a slow peer that overflows must reconnect to
-resynchronize. Capacity and duplicate persistent player identities are checked
-before StartGame.
+- MovePlayer (ServerNetworkHandler::handle 0x182bcf0): a packet for another
+  runtime ID is ignored; Y is clamped to [-128, 512] with mce::Math::clamp (NaN
+  becomes -128); there is no speed, distance or collision validation and no
+  correction. Mode 2 (teleport) sets position and rotation at once; otherwise
+  Mob::lerpTo hands the target to the MovementInterpolator: one step on the tick
+  the player lands (on ground now, not on ground last tick), else three. Each
+  tick the server position moves 1/steps of the remaining way (the last step is
+  exact); rotations use mce::Math::lerpRotate. The packet is relayed unchanged.
+  One documented safety deviation: packets with non-finite or |X|/|Z| > 1e9 are
+  ignored, because BDS-RE converts them to chunk coordinates.
+- Visibility (ServerPlayer::_updateNearbyEntities): every tick each player knows
+  the other players and item entities whose chunk lies within the client ticking
+  offsets around it (57 chunk offsets for tick-distance 4, generated like
+  Level::Level). Entering sends AddPlayer (full player metadata and device id)
+  plus MobArmorEquipment, and MobEquipment when the carried item is not empty, or
+  AddItemActor; leaving or disappearing sends RemoveActor. Entity packets
+  (MovePlayer and PlayerAction relays, MobEquipment, item replication, actor data)
+  go only to players that know the entity (Dimension::sendPacketForEntity).
+- PlayerAction (0x182d140): start/stop sneak set actor flag 1 and are not relayed;
+  start/stop sprint set flag 3 and the +30% minecraft:movement modifier (0.1 to
+  0.13) and are relayed; both reach the player and its viewers at the next tick
+  as UpdateAttributes and SetActorData. Jump, respawn and actions 13/14 are not
+  relayed; break actions, 17 and 18 (crack particles/progress) are handled as in
+  the original and relayed with every other action.
+- Every 80 ticks ActorEvent 66 carries the structure feature at the player
+  (always none in BDS-RE).
+- Outgoing packets are never merged; a client more than 4096 packets behind is
+  disconnected.
+- Not modelled yet: food exhaustion from walking, sprinting and jumping, and fall
+  damage — they belong to the attribute/hunger/health system, which BDS-RE does
+  not have. Riding, sleeping, gliding, swimming and dimension changes have no
+  state in BDS-RE.
 
 ## Persistence
 

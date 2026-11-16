@@ -77,23 +77,47 @@ void Server::enqueue(std::uint64_t id, GamePacket packet) {
     if (i == sessions_.end())
         return;
     auto &s = i->second;
-    if (packet.header.id == static_cast<unsigned>(PacketId::MovePlayer)) {
-        ByteReader incoming(packet.body);
-        const auto actor = incoming.varint64();
-        for (auto &old : s.queue)
-            if (old.header.id == packet.header.id) {
-                ByteReader reader(old.body);
-                if (reader.varint64() == actor) {
-                    old = std::move(packet);
-                    return;
-                }
-            }
-    }
-    if (s.queue.size() >= 128) {
+    // Every packet is delivered in order (the original never merges queued
+    // movement); a client that falls this far behind is disconnected.
+    if (s.queue.size() >= 4096) {
         s.overflow = true;
         return;
     }
     s.queue.push_back(std::move(packet));
+}
+std::uint64_t Server::Session::flags() const {
+    // Actor flags of a standing survival player in the original (bits 14, 19,
+    // 34, 46, 47), plus SNEAKING (1) and SPRINTING (3).
+    std::uint64_t f = 0xc00400084000ULL;
+    if (sneaking)
+        f |= 1ULL << 1;
+    if (sprinting)
+        f |= 1ULL << 3;
+    return f;
+}
+void Server::send_for_entity(std::uint64_t entity, const GamePacket &packet, std::uint64_t except) {
+    for (auto &[id, s] : sessions_)
+        if (s.active && id != except && (id == entity || s.known.contains(entity)))
+            enqueue(id, packet);
+}
+std::vector<std::pair<int, int>> client_ticking_offsets(int r) {
+    // Level::Level (0x1c814e9): for tick range r, rows z = ±(r - i) with
+    // |x| <= i + 1 for i < r, plus the z = 0 row with |x| <= r (57 offsets for
+    // r = 4, equal to the list dumped from the original).
+    std::vector<std::pair<int, int>> out;
+    for (int i = 0; i < r; ++i)
+        for (int x = -i - 1; x <= i + 1; ++x) {
+            out.emplace_back(x, r - i);
+            out.emplace_back(x, -r + i);
+            if (i == r - 1)
+                out.emplace_back(x, 0);
+        }
+    return out;
+}
+std::vector<std::pair<int, int>> Server::ticking_offsets() const {
+    // r is server.properties tick-distance (min with AppPlatform::
+    // getMaxSimRadiusInChunks, which the 4..12 range does not reach).
+    return client_ticking_offsets(static_cast<int>(properties_.tick_distance));
 }
 void Server::broadcast(GamePacket packet, std::uint64_t exclude) {
     for (auto &[id, s] : sessions_)
@@ -108,7 +132,7 @@ std::vector<GamePacket> Server::drain(std::uint64_t id) {
     require(!s.overflow);
     std::vector<GamePacket> out;
     std::size_t bytes = 0;
-    while (!s.queue.empty() && out.size() < 16 &&
+    while (!s.queue.empty() && out.size() < 64 &&
            (out.empty() || bytes + s.queue.front().body.size() < 65536)) {
         bytes += s.queue.front().body.size();
         out.push_back(std::move(s.queue.front()));
@@ -224,12 +248,10 @@ void Server::leave(std::uint64_t runtime) {
     auto i = sessions_.find(runtime);
     if (i == sessions_.end())
         return;
-    if (i->second.active) {
-        ByteWriter removed;
-        removed.signed_varint64(i->second.game.unique_id);
-        broadcast(packet(PacketId::RemoveActor, removed.take()), runtime);
+    // RemoveActor reaches the players who knew this one at their next
+    // _updateNearbyEntities (the entity no longer exists).
+    if (i->second.active)
         broadcast(packet(PacketId::PlayerList, remove_player_list(i->second.identity)), runtime);
-    }
     sessions_.erase(i);
 }
 std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
@@ -293,22 +315,23 @@ void Server::tick_item(ItemActor &a) {
         for (auto &other : items_)
             if (!other.removed && other.bb.intersects(area))
                 if (auto *kept = merge(self, other))
-                    broadcast(packet(PacketId::ActorEvent, actor_event(kept->runtime_id, 69, kept->item.count)));
+                    send_for_entity(kept->runtime_id,
+                                    packet(PacketId::ActorEvent, actor_event(kept->runtime_id, 69, kept->item.count)));
     });
     if (a.removed)
         return;
     if (!a.added) {
-        // The entity reaches clients after its first tick: dirty actor data,
-        // then AddItemActorPacket built from the last sent position.
+        // After its first tick the entity is in its chunk: players see it at
+        // their next _updateNearbyEntities, which sends AddItemActorPacket
+        // built from the last sent position (preceded by the dirty actor data).
         a.sent_pos = a.pos;
         a.sent_on_ground = a.on_ground;
-        broadcast(packet(PacketId::SetActorData, item_actor_data(a.runtime_id)));
-        broadcast(packet(PacketId::AddItemActor, add_item_actor(a)));
         a.added = true;
+        fresh_items_.insert(a.runtime_id);
         return;
     }
     for (auto &q : replicate(a))
-        broadcast(std::move(q));
+        send_for_entity(a.runtime_id, q);
 }
 void Server::touch(Session &s, ItemActor &a) {
     // ItemActor::playerTouch (0x23ff130): no throw time, no pickup delay and
@@ -347,7 +370,7 @@ void Server::touch(Session &s, ItemActor &a) {
     if (!left.count)
         left = {};
     enqueue(s.game.runtime_id, packet(PacketId::InventoryTransaction, pickup_transaction(changes, a.item, left)));
-    broadcast(packet(PacketId::TakeItemActor, take_item_actor(a.runtime_id, s.game.runtime_id)));
+    send_for_entity(a.runtime_id, packet(PacketId::TakeItemActor, take_item_actor(a.runtime_id, s.game.runtime_id)));
     if (left.count) {
         // INFERRED: a partially taken stack keeps the remainder on the ground.
         a.item = left;
@@ -355,27 +378,148 @@ void Server::touch(Session &s, ItemActor &a) {
     }
     a.removed = true;
 }
+void Server::tick_player(std::uint64_t id, Session &s) {
+    auto &p = world_.players().at(s.key);
+    // Mob::normalTick -> MovementInterpolator::tick (0x23cf280): move a
+    // 1/steps share towards the MovePlayer target, the last step exactly.
+    if (s.lerp.steps > 0) {
+        if (s.lerp.steps == 1) {
+            p.x = s.lerp.x;
+            p.y = s.lerp.y;
+            p.z = s.lerp.z;
+            p.pitch = s.lerp.pitch;
+            p.yaw = s.lerp.yaw;
+        } else {
+            const float t = 1.0f / static_cast<float>(s.lerp.steps);
+            p.x = p.x + (s.lerp.x - p.x) * t;
+            p.y = p.y + (s.lerp.y - p.y) * t;
+            p.z = p.z + (s.lerp.z - p.z) * t;
+            // mce::Math::lerpRotate: a + wrapDegrees(b - a) * t
+            // mce::Math::wrapDegrees (0x26dde50): fmod(180 + d, 360), +360 if
+            // negative, minus 180.
+            const auto wrap = [](float d) {
+                float x = std::fmod(180.0f + d, 360.0f);
+                if (x < 0.0f)
+                    x = x + 360.0f;
+                return x - 180.0f;
+            };
+            p.pitch = p.pitch + wrap(s.lerp.pitch - p.pitch) * t;
+            p.yaw = p.yaw + wrap(s.lerp.yaw - p.yaw) * t;
+        }
+        --s.lerp.steps;
+    }
+    // Player::aiStep (0x22ebd40): living players touch every entity whose box
+    // meets their box grown by (1, 0.5, 1).
+    const float feet = p.y - 1.62f;
+    const AABB area{{p.x - 0.3f - 1.0f, feet - 0.5f, p.z - 0.3f - 1.0f},
+                    {p.x + 0.3f + 1.0f, feet + 1.8f + 0.5f, p.z + 0.3f + 1.0f}};
+    for (auto &a : items_)
+        if (!a.removed && a.added && area.intersects(a.bb))
+            touch(s, a);
+    // ServerPlayer::normalTick (0x25fad17): every 80 ticks ActorEvent 66 with
+    // the world generator's structure feature at the player (none in BDS-RE).
+    if (--s.feature_timer <= 0) {
+        s.feature_timer = 80;
+        send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 66, 0)));
+    }
+    // Actor::_sendDirtyActorData (0x21bd970): dirty attributes, then dirty
+    // synched data, to the player and every player that knows it.
+    if (s.movement_dirty)
+        send_for_entity(id, packet(PacketId::UpdateAttributes,
+                                   movement_attribute(id, s.sprinting ? 0.13f : 0.1f)));
+    if (s.flags_dirty)
+        send_for_entity(id, packet(PacketId::SetActorData, actor_flags(id, s.flags())));
+    s.movement_dirty = s.flags_dirty = false;
+    s.was_on_ground = p.on_ground; // 0x25fb074
+}
+void Server::update_nearby(std::uint64_t id, Session &s) {
+    // ServerPlayer::_updateNearbyEntities (0x25f90e0) / _scanForNewEntities
+    // (0x25fe670): entities in loaded chunks at the client ticking offsets
+    // around the player, and other players whose chunk is at such an offset.
+    const auto &p = world_.players().at(s.key);
+    const int cx = chunk_coordinate(static_cast<int>(std::floor(p.x)));
+    const int cz = chunk_coordinate(static_cast<int>(std::floor(p.z)));
+    std::set<std::pair<int, int>> chunks;
+    for (auto [dx, dz] : ticking_offsets())
+        chunks.insert({cx + dx, cz + dz});
+    const auto near = [&](float x, float z) {
+        return chunks.contains({chunk_coordinate(static_cast<int>(std::floor(x))),
+                                chunk_coordinate(static_cast<int>(std::floor(z)))});
+    };
+    std::set<std::uint64_t> scan;
+    for (const auto &[other_id, other] : sessions_)
+        if (other_id != id && other.active) {
+            const auto &o = world_.players().at(other.key);
+            if (near(o.x, o.z))
+                scan.insert(other_id);
+        }
+    for (const auto &a : items_)
+        if (a.added && !a.removed && near(a.pos.x, a.pos.z) &&
+            world_.chunk(chunk_coordinate(static_cast<int>(std::floor(a.pos.x))),
+                         chunk_coordinate(static_cast<int>(std::floor(a.pos.z)))))
+            scan.insert(a.runtime_id);
+    for (auto entity : scan) {
+        if (s.known.contains(entity))
+            continue;
+        s.known.insert(entity);
+        if (auto other = sessions_.find(entity); other != sessions_.end()) {
+            // tryCreateAddActorPacket, then for mobs MobArmorEquipment (four
+            // armor slots, always empty in BDS-RE) and, when the carried item is
+            // not empty, MobEquipment (slot 0, selected 0, container 0). The
+            // offhand is always empty and players here are alive.
+            const auto &o = world_.players().at(other->second.key);
+            enqueue(id, packet(PacketId::AddPlayer,
+                               add_player(other->second.identity, other->second.game, o, other->second.flags())));
+            ByteWriter armor;
+            armor.varint64(entity);
+            for (int slot = 0; slot < 4; ++slot)
+                item(armor, {});
+            enqueue(id, packet(PacketId::MobArmorEquipment, armor.take()));
+            if (o.inventory[o.selected].block) {
+                ByteWriter held;
+                held.varint64(entity);
+                item(held, o.inventory[o.selected]);
+                held.byte(0);
+                held.byte(0);
+                held.byte(0);
+                enqueue(id, packet(PacketId::MobEquipment, held.take()));
+            }
+        } else
+            for (const auto &a : items_)
+                if (a.runtime_id == entity) {
+                    if (fresh_items_.contains(entity))
+                        enqueue(id, packet(PacketId::SetActorData, item_actor_data(entity)));
+                    enqueue(id, packet(PacketId::AddItemActor, add_item_actor(a)));
+                }
+    }
+    for (auto it = s.known.begin(); it != s.known.end();) {
+        if (scan.contains(*it)) {
+            ++it;
+            continue;
+        }
+        // Left the area or no longer exists: RemoveActorPacket(unique id).
+        std::int64_t unique = static_cast<std::int64_t>(*it);
+        for (const auto &a : items_)
+            if (a.runtime_id == *it)
+                unique = a.unique_id;
+        if (auto other = sessions_.find(*it); other != sessions_.end())
+            unique = other->second.game.unique_id;
+        enqueue(id, packet(PacketId::RemoveActor, remove_actor(unique)));
+        it = s.known.erase(it);
+    }
+}
 void Server::tick() {
     for (std::size_t i = 0; i < items_.size(); ++i)
         if (!items_[i].removed)
             tick_item(items_[i]);
-    // Player::aiStep (0x22ebd40): living players touch every entity whose box
-    // meets their box grown by (1, 0.5, 1).
-    for (auto &[id, s] : sessions_) {
-        if (!s.active)
-            continue;
-        const auto &p = world_.players().at(s.key);
-        const float feet = p.y - 1.62f;
-        const AABB area{{p.x - 0.3f - 1.0f, feet - 0.5f, p.z - 0.3f - 1.0f},
-                        {p.x + 0.3f + 1.0f, feet + 1.8f + 0.5f, p.z + 0.3f + 1.0f}};
-        for (auto &a : items_)
-            if (!a.removed && a.added && area.intersects(a.bb))
-                touch(s, a);
-    }
-    for (const auto &a : items_)
-        if (a.removed && a.added)
-            broadcast(packet(PacketId::RemoveActor, remove_actor(a.unique_id)));
+    for (auto &[id, s] : sessions_)
+        if (s.active)
+            tick_player(id, s);
     std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
+    for (auto &[id, s] : sessions_)
+        if (s.active)
+            update_nearby(id, s);
+    fresh_items_.clear();
 }
 std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
     auto &p = world_.players().at(s.key);
@@ -419,7 +563,7 @@ std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
             stack = {};
     }
     broadcast(packet(PacketId::UpdateBlock, block_update(target, held.block)));
-    broadcast(packet(PacketId::MobEquipment, equipment(s.game.runtime_id, p)), s.game.runtime_id);
+    send_for_entity(s.game.runtime_id, packet(PacketId::MobEquipment, equipment(s.game.runtime_id, p)), s.game.runtime_id);
     return {packet(PacketId::InventoryContent, inventory(p)),
             packet(PacketId::InventoryContent, cursor_inventory(p))};
 }
@@ -437,24 +581,17 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             if (s.active)
                 return {};
             s.active = true;
+            // Player list entries are exchanged at once; AddPlayer and item
+            // entities follow at the next tick through _updateNearbyEntities.
             for (const auto &[other_id, other] : sessions_)
                 if (other.active && other_id != id) {
                     enqueue(id, packet(PacketId::PlayerList,
                                        protocol::player_list_body(other.identity,
                                                                   other.game.unique_id)));
-                    enqueue(id, packet(PacketId::AddPlayer,
-                                       add_player(other.identity, other.game,
-                                                  world_.players().at(other.key))));
                     enqueue(other_id,
                             packet(PacketId::PlayerList,
                                    protocol::player_list_body(s.identity, s.game.unique_id)));
-                    enqueue(other_id,
-                            packet(PacketId::AddPlayer, add_player(s.identity, s.game, p)));
                 }
-            // Item entities already in the level become visible to the new player.
-            for (const auto &a : items_)
-                if (a.added)
-                    enqueue(id, packet(PacketId::AddItemActor, add_item_actor(a)));
             return {};
         }
         if (!s.active)
@@ -488,18 +625,28 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             // mce::Math::clamp(v, lo, hi) (0x1838170): v > hi ? hi : v > lo ? v : lo,
             // so a NaN Y becomes -128.
             const auto clamp = [](float v, float lo, float hi) { return v > hi ? hi : v > lo ? v : lo; };
-            p.x = m.data.x;
-            p.y = clamp(m.data.y, -128.0f, 512.0f);
-            p.z = m.data.z;
-            p.pitch = m.data.pitch;
-            p.yaw = m.data.yaw;
+            const float y = clamp(m.data.y, -128.0f, 512.0f);
+            p.on_ground = m.grounded; // +0x124 (mode 1 with a dead player cannot occur)
+            if (m.mode == 2) {
+                // Teleport mode: position and rotation are set at once.
+                p.x = m.data.x;
+                p.y = y;
+                p.z = m.data.z;
+                p.pitch = m.data.pitch;
+                p.yaw = m.data.yaw;
+            } else {
+                // checkMovementStats only feeds telemetry. Mob::lerpTo
+                // (MovementInterpolator::lerpTo 0x23cf1d0): one step on the tick
+                // the player lands (on ground now, not on ground last tick,
+                // +0x125), otherwise three (0x182c087).
+                s.lerp = {m.data.x, y, m.data.z, m.data.pitch, m.data.yaw,
+                          !s.was_on_ground && p.on_ground ? 1 : 3};
+            }
             p.head_yaw = m.data.head_yaw; // +0x11c0 = packet head yaw
-            // onGround (+0x124) is stored by every path except mode 1 with a
-            // dead player, which BDS-RE cannot have.
-            p.on_ground = m.grounded;
             // Dimension::sendPacketForEntity(player, packet, player): the
-            // received packet is relayed unchanged to everyone else.
-            broadcast(packet(PacketId::MovePlayer, packet_in.body), id);
+            // received packet is relayed unchanged to the players that know
+            // this one.
+            send_for_entity(id, packet(PacketId::MovePlayer, packet_in.body), id);
             return {};
         }
         if (type == PacketId::MobEquipment) {
@@ -512,7 +659,7 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
                 (slot == selected || slot == selected + 9 || (slot == 255 && stack.block == 0)) &&
                 stack == p.inventory[selected]);
             p.selected = selected;
-            broadcast(packet(PacketId::MobEquipment, equipment(id, p)), id);
+            send_for_entity(id, packet(PacketId::MobEquipment, equipment(id, p)), id);
             return {};
         }
         if (type == PacketId::PlayerHotbar) {
@@ -522,7 +669,7 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             in.finish();
             require(selected < 9);
             p.selected = selected;
-            broadcast(packet(PacketId::MobEquipment, equipment(id, p)), id);
+            send_for_entity(id, packet(PacketId::MobEquipment, equipment(id, p)), id);
             return {};
         }
         if (type == PacketId::ContainerClose) {
@@ -549,35 +696,84 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
                     packet(PacketId::InventoryContent, cursor_inventory(p))};
         }
         if (type == PacketId::PlayerAction) {
-            // ServerNetworkHandler::handle(PlayerActionPacket) 0x182d140. Only the
-            // block-breaking actions are translated; the others (jump, sprint,
-            // sneak, dimension change, gliding, ...) have no state in BDS-RE yet.
+            // ServerNetworkHandler::handle(PlayerActionPacket) 0x182d140.
             if (in.varint64() != id)
                 return {}; // _getPlayer returns null
             const auto action = in.signed_varint();
             const auto x = in.signed_varint();
             const auto y = static_cast<std::int32_t>(in.varint());
             const auto z = in.signed_varint();
-            in.signed_varint(); // face
+            const auto face = in.signed_varint();
             in.finish();
             const float fx = static_cast<float>(x), fy = static_cast<float>(y),
                         fz = static_cast<float>(z);
-            if (action == 0) {
+            const auto block_at = [&] { return y >= 0 && y < 256 ? world_.block({x, y, z}) : BlockId{0}; };
+            switch (action) {
+            case 0:
                 // StartBreak (0x182d6d3): Level::extinguishFire and Block::attack have
                 // no effect on the internal palette. Unless the player is creative,
                 // broadcastLevelEvent(StartBlockCracking, Vec3(pos),
                 // floor(65535 * GameMode::getDestroyRate(block)), null) reaches
                 // every player, the sender included. No reach check.
-                if (s.game.player_game_type != 1) {
-                    const auto block = y >= 0 && y < 256 ? world_.block({x, y, z}) : BlockId{0};
-                    const auto rate = std::floor(65535.0f * destroy_rate(p, block));
+                if (s.game.player_game_type != 1)
                     broadcast(level_event(LevelEventStartBlockCracking, fx, fy, fz,
-                                          static_cast<int>(rate)));
-                }
-            } else if (action == 1 || action == 2) {
-                // AbortBreak / StopBreak: broadcastLevelEvent(StopBlockCracking, Vec3(pos), 0).
+                                          static_cast<int>(std::floor(65535.0f * destroy_rate(p, block_at())))));
+                break;
+            case 1: // AbortBreak
+            case 2: // StopBreak: broadcastLevelEvent(StopBlockCracking, Vec3(pos), 0)
                 broadcast(level_event(LevelEventStopBlockCracking, fx, fy, fz, 0));
+                break;
+            case 7:  // Respawn: only for dead players, which BDS-RE cannot have; not relayed
+            case 13: // dimension change acknowledgement; not relayed
+            case 14:
+                return {};
+            case 8:
+                // Jump: Player::handleJumpEffects only causes food exhaustion
+                // (attributes/hunger are not modelled yet); not relayed.
+                return {};
+            case 9:  // StartSprint: Mob::setSprinting(true)
+            case 10: // StopSprint
+                // Status flag 3 and the +30% minecraft:movement modifier
+                // (0.1 -> 0.13); both go out as dirty data at the next tick.
+                if (s.sprinting != (action == 9)) {
+                    s.sprinting = action == 9;
+                    s.flags_dirty = true;
+                    s.movement_dirty = true;
+                }
+                break;
+            case 11: // StartSneak: Mob::setSneaking -> status flag 1; not relayed
+            case 12: // StopSneak
+                if (s.sneaking != (action == 11)) {
+                    s.sneaking = action == 11;
+                    s.flags_dirty = true;
+                }
+                return {};
+            case 17:
+                // broadcastLevelEvent(2008, pos + 0.5, 0)
+                broadcast(level_event(2008, fx + 0.5f, fy + 0.5f, fz + 0.5f, 0));
+                break;
+            case 18: {
+                // ContinueBreak: nothing (and no relay) on air; otherwise the
+                // punch particles (2014, runtime id + face << 24) and, unless
+                // creative, UpdateBlockCracking (3602) with the destroy rate.
+                const auto id_here = block_at();
+                if (!id_here)
+                    return {};
+                broadcast(level_event(2014, fx + 0.5f, fy + 0.5f, fz + 0.5f,
+                                      static_cast<int>(block_runtime_id(id_here) +
+                                                       (static_cast<std::uint32_t>(face) << 24))));
+                if (s.game.player_game_type != 1)
+                    broadcast(level_event(3602, fx, fy, fz,
+                                          static_cast<int>(std::floor(65535.0f * destroy_rate(p, id_here)))));
+                break;
             }
+            default:
+                // Sleeping (5, 6), gliding (15, 16), enchantment seed (20),
+                // swimming and spin attack (21-24) change no state BDS-RE has.
+                break;
+            }
+            // Dimension::sendPacketForEntity(player, packet, player) (0x182de67).
+            send_for_entity(id, packet(PacketId::PlayerAction, packet_in.body), id);
             return {};
         }
         if (type == PacketId::InventoryTransaction) {
@@ -610,7 +806,7 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
                     std::all_of(balance.begin() + 1, balance.end(), [](int n) { return n == 0; }));
             p.inventory = next;
             p.cursor = cursor;
-            broadcast(packet(PacketId::MobEquipment, equipment(id, p)), id);
+            send_for_entity(id, packet(PacketId::MobEquipment, equipment(id, p)), id);
             return {packet(PacketId::InventoryContent, inventory(p)),
                     packet(PacketId::InventoryContent, cursor_inventory(p))};
         }

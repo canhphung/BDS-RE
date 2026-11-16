@@ -457,6 +457,10 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                             require(body == struct.pack('>i', 3) and not spawned and len(seen_chunks) >= 81, f"PlayerSpawn after chunks: {len(seen_chunks)}")
                             spawned = True
                             joining.send_packets([(0x71, client_uvarint(game['runtime_id']))])
+                        elif packet_id == 0x1b and spawned:
+                            # ServerPlayer::normalTick: ActorEvent 66 (structure
+                            # feature) every 80 ticks from the first tick.
+                            require(body == client_uvarint(game['runtime_id']) + b'\x42\x00', 'feature event')
                         else:
                             raise AssertionError(f"unexpected packet during streaming: {packet_id:#x}")
                 require(lost and retried, f"{name}: chunk retransmission was exercised")

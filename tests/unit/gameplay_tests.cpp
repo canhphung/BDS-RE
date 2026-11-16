@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <set>
 using namespace bds;
 using namespace bds::game;
 using namespace bds::protocol;
@@ -104,6 +105,20 @@ void terrain() {
 }
 int main() {
     try {
+        {
+            // 57 offsets dumped from the original Level (tick-distance 4).
+            const std::set<std::pair<int, int>> original{
+                {-4, -1}, {-1, 4}, {4, 1}, {-2, -2}, {4, 0}, {2, -3}, {2, 3}, {0, -1}, {1, 1}, {-1, 1},
+                {1, -3}, {0, 0}, {0, -4}, {-1, 3}, {2, 1}, {-4, 1}, {-1, -1}, {-3, 2}, {-3, 0}, {4, -1},
+                {-3, -1}, {1, 0}, {3, 2}, {1, 3}, {-2, -1}, {-3, 1}, {-2, -3}, {3, 0}, {0, -2}, {-1, -2},
+                {3, 1}, {1, -4}, {-4, 0}, {3, -1}, {2, 0}, {1, -2}, {-2, 1}, {-2, 2}, {1, 2}, {-2, 0},
+                {-3, -2}, {-1, -3}, {2, -1}, {-1, 0}, {0, 4}, {1, 4}, {0, 2}, {0, 1}, {2, -2}, {2, 2},
+                {0, -3}, {3, -2}, {-2, 3}, {0, 3}, {1, -1}, {-1, 2}, {-1, -4}};
+            const auto offsets = client_ticking_offsets(4);
+            check(offsets.size() == 57 &&
+                      std::set<std::pair<int, int>>(offsets.begin(), offsets.end()) == original,
+                  "client ticking offsets equal the original's");
+        }
         terrain();
         ByteWriter simple;
         item(simple, {1, 1});
@@ -121,8 +136,23 @@ int main() {
         server.handle(1, packet(PacketId::SetLocalPlayerAsInitialized, {1}), 0);
         server.handle(2, packet(PacketId::SetLocalPlayerAsInitialized, {2}), 0);
         const auto joined = server.drain(1);
-        check(joined.size() == 2 && joined[0].header.id == 63 && joined[1].header.id == 12,
-              "two-player visibility");
+        check(joined.size() == 1 && joined[0].header.id == 63, "player list on initialization");
+        server.drain(2);
+        // ServerPlayer::_updateNearbyEntities at the next tick: AddPlayer and the
+        // carried item (MobEquipment) of every player within the ticking offsets.
+        server.tick();
+        const auto visible = server.drain(1);
+        const auto ids = [](const std::vector<GamePacket> &v) {
+            std::vector<unsigned> out;
+            for (const auto &q : v)
+                out.push_back(q.header.id);
+            return out;
+        };
+        const auto seen_ids = ids(visible);
+        check(std::count(seen_ids.begin(), seen_ids.end(), 12u) == 1 &&
+                  std::count(seen_ids.begin(), seen_ids.end(), 32u) == 1 &&
+                  std::count(seen_ids.begin(), seen_ids.end(), 31u) == 0,
+              "two-player visibility: AddPlayer, MobArmorEquipment, no MobEquipment for an empty hand");
         server.drain(2);
         auto &pa = w.players().at("uuid:" + identity(1).identity),
              &pb = w.players().at("uuid:" + identity(2).identity);
@@ -164,9 +194,11 @@ int main() {
         expected.float32(3);
         expected.float32(1);
         expected.signed_varint(3640);
+        const auto other = server.drain(1);
         check(crack.size() == 1 && crack[0].header.id == 25 && crack[0].body == expected.bytes() &&
-                  server.drain(1).size() == 1,
-              "StartBreak crack rate broadcast");
+                  other.size() == 2 && other[0].header.id == 25 && other[1].header.id == 36 &&
+                  other[1].body == action(2, 0, {5, 3, 1}).body,
+              "StartBreak crack rate broadcast, PlayerAction relayed to the other player");
         // No destroy-time gate: the break immediately after StartBreak succeeds.
         server.handle(2, use(2, {5, 3, 1}), 1001);
         check(w.block({5, 3, 1}) == 0 && pb.inventory[0].count == 0 && server.items().size() == 1 &&
@@ -206,7 +238,11 @@ int main() {
         into_hole.data.y = 5.62f;
         into_hole.data.z = 0.5f;
         server.handle(2, packet(PacketId::MovePlayer, motion(into_hole)), 1001);
+        for (int i = 0; i < 3; ++i)
+            server.tick();
+        check(pb.y == 5.62f && pb.z == 0.5f, "back on the surface after interpolation");
         server.drain(1);
+        server.drain(2);
         // Reach: Actor::distanceTo(Vec3(BlockPos)) > 12.5 is error 7.
         w.set_block({17, 3, 1}, 1);
         w.set_block({18, 3, 1}, 1);
@@ -242,29 +278,45 @@ int main() {
         // Movement follows ServerNetworkHandler::handle(MovePlayerPacket): no
         // speed/collision validation, Y clamped to [-128, 512], packet relayed
         // unchanged to other players.
+        // The server position follows through Mob::lerpTo: three ticks unless
+        // the player just landed (one tick).
+        const auto settle = [&] {
+            for (int i = 0; i < 3; ++i)
+                server.tick();
+        };
         Motion m;
         m.runtime = 1;
         m.data = pa;
         const float standing_y = pa.y;
-        m.data.x = 1.5f;
+        const float start_x = pa.x;
+        m.data.x = 3.5f;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2000);
-        check(pa.x == 1.5f, "valid movement");
+        check(pa.x == start_x, "position is not applied by the packet itself");
         auto moved = server.drain(2);
         check(moved.size() == 1 && moved[0].header.id == 19 && moved[0].body == motion(m),
               "movement relayed unchanged");
-        m.data.x = 100;
+        server.tick();
+        check(pa.x == start_x + (3.5f - start_x) * (1.0f / 3.0f), "first interpolation step");
+        server.tick();
+        server.tick();
+        check(pa.x == 3.5f, "valid movement");
+        m.data.x = 40;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2000);
-        check(pa.x == 100.0f, "large moves are accepted like the original");
+        settle();
+        check(pa.x == 40.0f, "large moves are accepted like the original");
         m.data = pa;
         m.data.x = 1.5f;
         m.data.y = 3;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2200);
+        settle();
         check(pa.x == 1.5f && pa.y == 3.0f, "no collision rejection");
         m.data.y = 1000;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2210);
+        settle();
         check(pa.y == 512.0f, "Y clamped to 512");
         m.data.y = std::numeric_limits<float>::quiet_NaN();
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2220);
+        settle();
         check(pa.y == -128.0f, "NaN Y becomes -128 (mce::Math::clamp)");
         server.drain(2);
         m.data.y = 4;
@@ -275,7 +327,7 @@ int main() {
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2230);
         auto relayed = server.drain(2);
         check(pa.y == 4.0f && relayed.size() == 1 && relayed[0].body == motion(m),
-              "teleport mode, riding id and teleport fields relayed");
+              "teleport mode sets the position at once; riding id and teleport fields relayed");
         m.mode = 0;
         m.riding = 0;
         m.data.x = std::numeric_limits<float>::quiet_NaN();
@@ -292,9 +344,12 @@ int main() {
             m.data.y = standing_y; // stand on the surface again before rejoining
             m.data.x += 1;
             server.handle(1, packet(PacketId::MovePlayer, motion(m)), 3000 + i * 200);
+            settle();
         }
         check(server.center(1)->first == 1, "movement crosses chunk boundary");
+        server.drain(2);
         server.leave(1);
+        server.tick();
         auto removed = server.drain(2);
         check(
             std::any_of(removed.begin(), removed.end(), [](auto &p) { return p.header.id == 14; }),
@@ -336,6 +391,35 @@ int main() {
             duplicate = true;
         }
         check(duplicate, "duplicate identity rejected");
+        {
+            // MovementInterpolator against the original (gdb trace of
+            // ServerPlayer::normalTick): a grounded move right after spawn takes
+            // one step (landing), the next one three: 0.5, 10.5, 20.5, 30.5.
+            World lw;
+            lw.configure_terrain({1, 123});
+            Server ls(lw, properties, access);
+            auto g = make_game(1);
+            ls.prepare(identity(7), g);
+            ls.handle(1, packet(PacketId::SetLocalPlayerAsInitialized, {1}), 0);
+            auto &lp = lw.players().at("uuid:" + identity(7).identity);
+            Motion lm;
+            lm.runtime = 1;
+            lm.data = lp;
+            lm.data.x = 0.5f;
+            lm.data.y = 5.62f;
+            lm.data.z = 0.5f;
+            lm.grounded = true;
+            ls.handle(1, packet(PacketId::MovePlayer, motion(lm)), 0);
+            ls.tick();
+            check(lp.x == 0.5f && lp.y == 5.62f, "landing move in one step");
+            lm.data.x = 30.5f;
+            ls.handle(1, packet(PacketId::MovePlayer, motion(lm)), 0);
+            const float expected[] = {10.5f, 20.5f, 30.5f};
+            for (float e : expected) {
+                ls.tick();
+                check(lp.x == e, "interpolation steps equal the original's");
+            }
+        }
         std::cout << "terrain, sparse restart, movement, collision, two-player broadcasts, "
                      "building and transactional inventory passed\n";
         return 0;
