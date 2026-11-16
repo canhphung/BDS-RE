@@ -11,6 +11,8 @@ struct PlayerData {
     float x = 0.5f, y = 65.62f, z = 0.5f, pitch = 0, yaw = 0, head_yaw = 0;
     bool on_ground = false; // Actor +0x124, from MovePlayer; not persisted
     unsigned selected = 0;
+    // Persisted attribute values (minecraft:health, player.hunger, .saturation, .exhaustion).
+    float health = 20, hunger = 20, saturation = 20, exhaustion = 0;
     ItemStack cursor;
     std::array<ItemStack, 36> inventory{};
 };

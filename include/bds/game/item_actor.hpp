@@ -51,6 +51,11 @@ struct ItemActor {
 // thread-local Random used by the ItemActor constructor (0x23fe150).
 ItemActor pop_resource(World::Position block, ItemStack item, Random &level_random, Random &actor_random);
 
+// Actor::drop (0x21bfbc0) through Spawner::spawnItem: an item at `at` with
+// pickup delay 40 and throw time 10 (setDefaultPickUpDelay); the caller sets
+// the throw motion.
+ItemActor drop_item(Vec3 at, ItemStack item, Random &actor_random);
+
 // ItemActor::_merge (0x23ff7f0): returns the absorbing item (the larger
 // stack, `b` on a tie) or nullptr; the absorbed one is marked removed.
 ItemActor *merge(ItemActor &a, ItemActor &b);

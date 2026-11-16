@@ -43,7 +43,8 @@ Select one, place it, break it, and check the changes from a second client.
 In Survival, break grass/dirt: a dirt item entity drops, falls, and is picked up
 when you walk over it; place it; placement consumes one item. Bare-hand stone breaking yields no item. Tools,
 normal item drops/entities, ores, liquids, biomes, trees/caves, recipes/crafting,
-chests, armor, damage, hunger and mobs are not implemented.
+chests, armor, combat and mobs are not implemented. Hunger, regeneration, fall
+and void damage, starvation, death and respawn work as described below.
 
 ## Block breaking
 
@@ -132,7 +133,7 @@ Translated from the original and checked against it with three oracles
 - PlayerAction (0x182d140): start/stop sneak set actor flag 1 and are not relayed;
   start/stop sprint set flag 3 and the +30% minecraft:movement modifier (0.1 to
   0.13) and are relayed; both reach the player and its viewers at the next tick
-  as UpdateAttributes and SetActorData. Jump, respawn and actions 13/14 are not
+  as UpdateAttributes and SetActorData. Jump (exhaustion), respawn and actions 13/14 are not
   relayed; break actions, 17 and 18 (crack particles/progress) are handled as in
   the original and relayed with every other action.
 - Spawn: like the original, the joining player receives its first dirty
@@ -146,10 +147,42 @@ Translated from the original and checked against it with three oracles
   (always none in BDS-RE).
 - Outgoing packets are never merged; a client more than 4096 packets behind is
   disconnected.
-- Not modelled yet: food exhaustion from walking, sprinting and jumping, and fall
-  damage — they belong to the attribute/hunger/health system, which BDS-RE does
-  not have. Riding, sleeping, gliding, swimming and dimension changes have no
-  state in BDS-RE.
+- Riding, sleeping, gliding, swimming and dimension changes have no state in
+  BDS-RE.
+
+## Attributes, hunger and health
+
+Translated from the original (AttributeInstance::addBuff 0x24a7760 and tick
+0x24a7950, the attribute delegates, Mob::_hurt 0x22b37f0, Mob::baseTick
+0x22b1770) and checked byte for byte against
+`tests/reference/hunger_health_bds_1.6.0.15.json`:
+
+- Every attribute change is queued in the original's dirty list (duplicates
+  kept) and sent at the player's next tick as one UpdateAttributes packet, then
+  SetActorData.
+- Exhaustion: walking on the ground (Player::_applyExhaustion: the rounded
+  horizontal distance in centimetres) 0.01 per block, sprinting 0.1, jump 0.2,
+  sprint-jump 0.8, breaking a block 0.025. At 4, exhaustion drops by 4 and
+  saturation, or food when saturation is 0 (not on peaceful), loses 1.
+- Regeneration: with food at least 18 and health below the maximum, +1 health
+  and +3 exhaustion every 80 ticks; peaceful heals 1 health every 20 ticks and
+  restores 1 food every 10. Healing sets the hurt cooldown to at least 5 ticks,
+  so a hit right after a heal can be ignored, as in the original.
+- Starvation: with food 0, every 80 ticks -1 health while health is above 10,
+  or above 1 on normal, or always on hard (cause STARVE).
+- Fall damage comes from the client's ActorFallPacket (ServerNetworkHandler
+  0x182de80): ceil(distance - 3), cause FALL; a void fall deals 20 (cause
+  VOID). The hurt cooldown (10 ticks, only larger hits pass) is the original's.
+- Hurt players get ActorEvent HURT with the cause. On death the inventory and
+  cursor are dropped with the Actor::drop throw (pickup delay 40) and cleared,
+  the client receives its inventories three times, ActorEvent DEATH, the death
+  event, the death message (death.attack.fall/starve/outOfWorld/generic) and
+  Respawn at the spawn point + 1.62001014 (Player::recheckSpawnPosition). The
+  dead player's box shrinks to 0.2 x 0.2.
+- PlayerAction 7 respawns: ActorEvent RESPAWN, SetHealth 20, health, food,
+  saturation, exhaustion, level and experience reset, the living box restored.
+- Health, food, saturation and exhaustion are persisted with the player.
+- Not modelled: combat, effects, armor, absorption and food items.
 
 ## Persistence
 

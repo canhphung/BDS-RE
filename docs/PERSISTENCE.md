@@ -39,7 +39,9 @@ the LE CRC32 of the entire preceding file. Metadata is limited to 16 MiB and sto
 `kind` (0 explicit/1 flat/2 rolling), uint64 `seed`, `legacy` column coordinates,
 `edits` arrays `[x,y,z,internal_id]` (air 0 is valid here), and `players` keyed by
 trusted XUID or self-signed UUID. Player entries contain finite position/rotation,
-selected slot, 36 supported block stacks and a cursor stack. Bounds and duplicate
+selected slot, 36 supported block stacks, a cursor stack and an optional
+`attributes` array `[health, food, saturation, exhaustion]` (absent in older
+files: full values). Bounds and duplicate
 legacy/edit rejection are checked before replacing live state. Generated cache
 columns are never serialized.
 

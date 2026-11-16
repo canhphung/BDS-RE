@@ -128,3 +128,14 @@ python3 tools/reference/trace_item_actor.py \
 sprints, jumps, walks out of B's ticking area and back. `about_actor` holds the
 normalised packets concerning A per step; tests/reference/player_actions_bds_1.6.0.15.json
 is the original's result and test `player_actions_reference` compares BDS-RE.
+
+## Hunger and health oracle
+
+`hunger_health_oracle.py HOST PORT OUT.json` joins one survival client
+(difficulty normal) and steps through a 19.8-block ActorFall, natural
+regeneration, jumping, walking drain, waiting, a 40-block fatal fall and the
+respawn action, recording UpdateAttributes, ActorEvent, SetActorData, Text,
+Respawn and SetHealth per step. tests/reference/hunger_health_bds_1.6.0.15.json
+holds the original's packets (runtime id 1) that `gameplay_tests` compares byte
+for byte. Run it against the original with the same runtime options as the
+other oracles.

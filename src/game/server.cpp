@@ -3,9 +3,15 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <limits>
+#include <numbers>
 #include <set>
 namespace bds::game {
 namespace {
+// The eye offset Player::recheckSpawnPosition (0x22f28fb) adds to the spawn
+// point before setTeleportDestination / RespawnPacket: 0x3fcf5c7e (1.62001014),
+// not the 1.62001002 heightOffset.
+constexpr float kSpawnEyeOffset = std::bit_cast<float>(0x3fcf5c7eu);
 void require(bool ok) {
     if (!ok)
         throw protocol::ProtocolError("invalid gameplay request");
@@ -88,7 +94,10 @@ void Server::enqueue(std::uint64_t id, GamePacket packet) {
 std::uint64_t Server::Session::flags() const {
     // Actor flags of a standing survival player in the original (bits 14, 19,
     // 34, 46, 47), plus SNEAKING (1) and SPRINTING (3).
-    // Bit 14 is added once the client has initialized (join capture packet 247).
+    // Bit 14 is added once the client has initialized (join capture packet 247);
+    // a dead player loses it and gains INVISIBLE (bit 5).
+    if (dead)
+        return 0xc00400080020ULL;
     std::uint64_t f = active ? 0xc00400084000ULL : 0xc00400080000ULL;
     if (sneaking)
         f |= 1ULL << 1;
@@ -235,6 +244,12 @@ std::vector<GamePacket> Server::prepare(const auth::Identity &identity, protocol
     s.identity = identity;
     s.game = g;
     s.key = k;
+    s.attributes.values[kHealth].value = p.health;
+    s.attributes.values[kHunger].value = p.hunger;
+    s.attributes.values[kSaturation].value = p.saturation;
+    s.attributes.values[kExhaustion].value = p.exhaustion;
+    s.attributes.last_food = p.hunger;
+    const auto spawn_attributes_body = spawn_attributes(g.runtime_id, s.attributes);
     sessions_.emplace(g.runtime_id, std::move(s));
     ByteWriter hotbar;
     hotbar.varint(p.selected);
@@ -250,7 +265,7 @@ std::vector<GamePacket> Server::prepare(const auth::Identity &identity, protocol
             packet(PacketId::InventoryContent, creative_inventory()),
             packet(PacketId::InventoryContent, cursor_inventory(p)),
             packet(PacketId::PlayerHotbar, hotbar.take()),
-            packet(PacketId::UpdateAttributes, spawn_attributes(g.runtime_id)),
+            packet(PacketId::UpdateAttributes, spawn_attributes_body),
             packet(PacketId::SetActorData, player_data(g.runtime_id, identity.display_name, 0xc00000080000ULL)),
             packet(PacketId::SetActorData, actor_flags(g.runtime_id, 0xc00400080000ULL))};
 }
@@ -303,6 +318,8 @@ std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
         // holds (stone by hand drops nothing) and calls spawnResources: grass
         // and dirt drop one dirt item entity.
         spawn_item(b, {3, 1});
+        // Block::playerDestroy ends with Player::causeFoodExhaustion(EXHAUSTION_MINE).
+        cause_food_exhaustion(s.game.runtime_id, s, 0.025f);
     }
     return out;
 }
@@ -390,6 +407,24 @@ void Server::touch(Session &s, ItemActor &a) {
 }
 void Server::tick_player(std::uint64_t id, Session &s) {
     auto &p = world_.players().at(s.key);
+    // Mob::baseTick (0x22b1770): hurt time countdown (0x22b1989),
+    // Mob::tickAttributes (0x22b1fc0), then Actor::_sendDirtyActorData
+    // (0x21bd970): dirty attributes, then dirty synched data, to the player and
+    // every player that knows it.
+    if (s.hurt_time > 0)
+        --s.hurt_time;
+    tick_attributes(id, s);
+    if (!s.attributes.dirty.empty()) {
+        send_for_entity(id, packet(PacketId::UpdateAttributes,
+                                   update_attributes(id, s.attributes, s.attributes.dirty)));
+        s.attributes.dirty.clear();
+    }
+    if (s.death_data_dirty)
+        send_for_entity(id, packet(PacketId::SetActorData, actor_bounding_box(id, 0.2f, 0.2f)));
+    if (s.flags_dirty)
+        send_for_entity(id, packet(PacketId::SetActorData, actor_flags(id, s.flags())));
+    s.flags_dirty = s.death_data_dirty = false;
+    const float before[3] = {p.x, p.y, p.z};
     // Mob::normalTick -> MovementInterpolator::tick (0x23cf280): move a
     // 1/steps share towards the MovePlayer target, the last step exactly.
     if (s.lerp.steps > 0) {
@@ -420,27 +455,279 @@ void Server::tick_player(std::uint64_t id, Session &s) {
     }
     // Player::aiStep (0x22ebd40): living players touch every entity whose box
     // meets their box grown by (1, 0.5, 1).
-    const float feet = p.y - 1.62f;
-    const AABB area{{p.x - 0.3f - 1.0f, feet - 0.5f, p.z - 0.3f - 1.0f},
-                    {p.x + 0.3f + 1.0f, feet + 1.8f + 0.5f, p.z + 0.3f + 1.0f}};
-    for (auto &a : items_)
-        if (!a.removed && a.added && area.intersects(a.bb))
-            touch(s, a);
+    if (s.attributes[kHealth] > 0.0f) {
+        const float feet = p.y - 1.62f;
+        const AABB area{{p.x - 0.3f - 1.0f, feet - 0.5f, p.z - 0.3f - 1.0f},
+                        {p.x + 0.3f + 1.0f, feet + 1.8f + 0.5f, p.z + 0.3f + 1.0f}};
+        for (auto &a : items_)
+            if (!a.removed && a.added && area.intersects(a.bb))
+                touch(s, a);
+    }
+    // Player::normalTick -> Player::_applyExhaustion (0x22e9e20) with this
+    // tick's movement: on ground, 0.01 (walk) or EXHAUSTION_SPRINT (sprint) per
+    // centimetre-rounded horizontal metre. Water branches cannot occur.
+    {
+        const float dx = p.x - before[0], dz = p.z - before[2];
+        const int horizontal = static_cast<int>(std::round(static_cast<double>(std::sqrt(dx * dx + dz * dz) * 100.0f)));
+        if (p.on_ground && horizontal > 0) {
+            const float rate = s.sprinting ? std::bit_cast<float>(0x3dccccccU)  // FoodConstants::EXHAUSTION_SPRINT
+                                           : std::bit_cast<float>(0x3c23d70aU); // EXHAUSTION_WALK
+            cause_food_exhaustion(id, s, rate * static_cast<float>(horizontal) * 0.01f);
+        }
+    }
     // ServerPlayer::normalTick (0x25fad17): every 80 ticks ActorEvent 66 with
     // the world generator's structure feature at the player (none in BDS-RE).
     if (--s.feature_timer <= 0) {
         s.feature_timer = 80;
         send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 66, 0)));
     }
-    // Actor::_sendDirtyActorData (0x21bd970): dirty attributes, then dirty
-    // synched data, to the player and every player that knows it.
-    if (s.movement_dirty)
-        send_for_entity(id, packet(PacketId::UpdateAttributes,
-                                   movement_attribute(id, s.sprinting ? 0.13f : 0.1f)));
-    if (s.flags_dirty)
-        send_for_entity(id, packet(PacketId::SetActorData, actor_flags(id, s.flags())));
-    s.movement_dirty = s.flags_dirty = false;
     s.was_on_ground = p.on_ground; // 0x25fb074
+    p.health = s.attributes[kHealth];
+    p.hunger = s.attributes[kHunger];
+    p.saturation = s.attributes[kSaturation];
+    p.exhaustion = s.attributes[kExhaustion];
+}
+void Server::add_buff(std::uint64_t id, Session &s, int attribute, float amount, int type) {
+    // AttributeInstance::addBuff (0x24a7760) for an InstantaneousAttributeBuff:
+    // value = clamp(value + amount), the delegate may reject the change
+    // (HealthAttributeDelegate::change), and a changed value is marked dirty.
+    // HealthAttributeDelegate::getBuffValue only alters harm/heal types for
+    // inverted (undead) mobs and the magic damage types, none of which occur.
+    auto &a = s.attributes.values[static_cast<std::size_t>(attribute)];
+    const float old = a.value;
+    a.value = Attributes::apply(a, amount);
+    if (attribute == kHealth && !health_change(id, s, old, a.value, type))
+        a.value = old;
+    if (old != a.value)
+        s.attributes.mark(attribute);
+}
+bool Server::health_change(std::uint64_t id, Session &s, float old_value, float new_value, int type) {
+    // HealthAttributeDelegate::change (0x24a3330): integer health before and
+    // after (floor(v + FLT_EPSILON)); damage types run Mob::hurtEffects.
+    const float eps = std::numeric_limits<float>::epsilon();
+    const int before = static_cast<int>(std::floor(old_value + eps));
+    const int after = static_cast<int>(std::floor(new_value + eps));
+    const int diff = before - after;
+    if (before == after)
+        return true;
+    switch (type) {
+    case kBuffStarve: // cause STARVE (AttributeBuff::buffTypeToDamageCause 0 -> 16)
+        return hurt_effects(id, s, 16, diff);
+    case kBuffHeal:
+        if (s.hurt_time < 5) // Actor::healEffects (0x21bdcb0)
+            s.hurt_time = 5;
+        return true;
+    case kBuffNone:
+        if (-diff > 0) {
+            if (s.hurt_time < 5)
+                s.hurt_time = 5;
+        } else if (-diff < 0)
+            hurt_effects(id, s, -1, diff);
+        return true;
+    default: // types 1, 2 and 10 (Mob::actuallyHurt) are accepted as they are
+        return true;
+    }
+}
+void Server::cause_food_exhaustion(std::uint64_t id, Session &s, float amount) {
+    // Player::causeFoodExhaustion (0x22eb710): not for creative players.
+    if (s.game.player_game_type == 1)
+        return;
+    add_buff(id, s, kExhaustion, amount, kBuffNone);
+}
+void Server::tick_attributes(std::uint64_t id, Session &s) {
+    // Mob::tickAttributes: AttributeInstance::tick (0x24a7950) for each
+    // instance in map order; an instance whose value changed during its
+    // delegate's tick is marked dirty again.
+    auto &a = s.attributes;
+    const int difficulty = static_cast<int>(properties_.difficulty);
+    const bool creative = s.game.player_game_type == 1;
+    const bool natural_regeneration = true; // game rule 15, not configurable in BDS-RE
+    const auto health = [&] { return static_cast<int>(a[kHealth]); };
+    for (int attribute = 0; attribute < kAttributeCount; ++attribute) {
+        const float old = a[attribute];
+        if (attribute == kHealth) {
+            // HealthAttributeDelegate::tick (0x24a31e0): peaceful regeneration.
+            ++a.health_ticks;
+            if (difficulty == 0 && natural_regeneration && a.health_ticks % 20 == 0)
+                add_buff(id, s, kHealth, 1.0f, kBuffHeal);
+        } else if (attribute == kHunger && !creative) {
+            // HungerAttributeDelegate::tick (0x24a2a10)
+            a.last_food = a[kHunger];
+            const float food = a[kHunger];
+            ++a.hunger_ticks;
+            if (difficulty == 0 && a.hunger_ticks % 10 == 0)
+                add_buff(id, s, kHunger, 1.0f, kBuffNone);
+            const bool hurt_now = health() > 0 && a[kHealth] < a.values[kHealth].max; // Player::isHurt
+            if (natural_regeneration && food >= 18.0f && hurt_now) { // FoodConstants::HEAL_LEVEL
+                if (++a.heal_timer >= 80) {                         // HEALTH_TICK_COUNT
+                    add_buff(id, s, kHealth, 1.0f, kBuffHeal);
+                    add_buff(id, s, kExhaustion, 3.0f, kBuffNone); // EXHAUSTION_HEAL
+                    a.heal_timer = 0;
+                }
+            } else if (0.0f >= food) { // STARVE_LEVEL
+                if (++a.heal_timer >= 80) {
+                    if (health() > 10 || difficulty == 3 || (health() > 1 && difficulty == 2)) {
+                        add_buff(id, s, kHealth, -1.0f, kBuffStarve);
+                        hurt(id, s, 16, 1);
+                    }
+                    a.heal_timer = 0;
+                }
+            } else
+                a.heal_timer = 0;
+        } else if (attribute == kExhaustion) {
+            // ExhaustionAttributeDelegate::tick (0x24a43a0): at MAX_EXHAUSTION
+            // (4) take 4 and notify the hunger delegate
+            // (HungerAttributeDelegate::notify 0x24a2e50): saturation first,
+            // then food unless peaceful.
+            if (a[kExhaustion] >= 4.0f) {
+                add_buff(id, s, kExhaustion, -4.0f, kBuffNone);
+                if (!creative) {
+                    if (a[kSaturation] > 0.0f)
+                        add_buff(id, s, kSaturation, -1.0f, kBuffNone);
+                    else if (difficulty != 0)
+                        add_buff(id, s, kHunger, -1.0f, kBuffNone);
+                }
+            }
+        }
+        if (a[attribute] != old)
+            a.mark(attribute);
+    }
+}
+bool Server::hurt(std::uint64_t id, Session &s, int cause, int damage) {
+    // Actor::hurt -> Player::_hurt (0x22f0ec0) -> Mob::_hurt (0x22b37f0).
+    if (s.attributes[kHealth] <= 0.0f || s.dead)
+        return false;
+    // INFERRED: creative players (invulnerable ability) only take void damage.
+    if (s.game.player_game_type == 1 && cause != 12)
+        return false;
+    if (cause == 13)
+        s.last_hurt = 0;
+    else if (s.hurt_time > 5) {
+        if (damage <= s.last_hurt)
+            return false;
+    } else if (s.hurt_time > 0)
+        return false;
+    else
+        s.last_hurt = 0;
+    // Mob::actuallyHurt (0x22b44c0): no armor, enchantments, resistance or
+    // absorption here, so health takes the remaining damage (buff type 10).
+    const int dealt = damage - s.last_hurt;
+    if (dealt != 0)
+        add_buff(id, s, kHealth, static_cast<float>(-dealt), kBuffDamage);
+    return hurt_effects(id, s, cause, damage);
+}
+bool Server::hurt_effects(std::uint64_t id, Session &s, int cause, int damage) {
+    // Mob::hurtEffects (0x22b3b60) for a damage source without an entity.
+    bool animate = false;
+    if (cause == 13 || s.hurt_time <= 5) {
+        animate = true;
+        s.last_hurt = damage;
+        s.hurt_time = 10;
+    } else if (s.hurt_time > 5) {
+        if (damage <= s.last_hurt)
+            return false;
+        s.last_hurt = damage;
+    }
+    // Level::broadcastEntityEvent(HURT, cause), only while still alive (or
+    // saved by a totem, which does not exist here).
+    if (animate && s.attributes[kHealth] > 0.0f)
+        send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 2, cause)));
+    if (s.attributes[kHealth] <= 0.0f) // no totem of undying exists here
+        die(id, s, cause);
+    return true;
+}
+void Server::cause_fall_damage(std::uint64_t id, Session &s, float distance) {
+    // Mob::causeFallDamage (0x22b5190): ceil(distance * fall_damage - 3 - jump boost).
+    const float scaled = s.attributes[kFallDamage] * distance - 3.0f - 0.0f;
+    const float damage = static_cast<float>(std::ceil(static_cast<double>(scaled)));
+    if (damage > 0.0f)
+        hurt(id, s, 5, static_cast<int>(damage)); // ActorDamageCause FALL
+}
+void Server::die(std::uint64_t id, Session &s, int cause) {
+    // ServerPlayer::die -> Player::die (0x22ec9b0) -> Mob::die (0x22b4a00), as
+    // observed on the original (tools/reference/hunger_health_oracle.py).
+    if (s.dead)
+        return;
+    s.dead = true;
+    auto &p = world_.players().at(s.key);
+    // keepInventory is false: the cursor item and every inventory slot are
+    // dropped (Actor::drop with random throw) and the inventory cleared; the
+    // client receives its inventory three times.
+    std::vector<ItemStack> drops;
+    if (p.cursor.block)
+        drops.push_back(p.cursor);
+    for (const auto &stack : p.inventory)
+        if (stack.block)
+            drops.push_back(stack);
+    for (const auto &stack : drops) {
+        // Actor::drop (0x21bfbc0): at getAttachPos(4) (0.3 below the eyes, 0.15
+        // ahead, measured under gdb) plus the motion, pickup delay 40, throw
+        // time 10, speed nextFloat * 0.5 in a random direction, 0.2 upwards.
+        const float yaw = p.yaw * std::numbers::pi_v<float> / 180.0f;
+        const Vec3 at{p.x - std::sin(yaw) * 0.15f + s.motion[0], p.y - 0.3f + s.motion[1],
+                      p.z + std::cos(yaw) * 0.15f + s.motion[2]};
+        auto a = drop_item(at, stack, actor_random_);
+        const float speed = actor_random_.next_float() * 0.5f;
+        const float angle = actor_random_.next_float() * std::numbers::pi_v<float> * 2.0f;
+        a.motion = {-std::sin(angle) * speed, 0.2f, std::cos(angle) * speed};
+        const auto entity = allocate_entity_id();
+        a.runtime_id = static_cast<std::uint64_t>(entity);
+        a.unique_id = entity;
+        items_.push_back(a);
+    }
+    p.cursor = {};
+    p.inventory.fill({});
+    ByteWriter hotbar;
+    hotbar.varint(p.selected);
+    hotbar.byte(0);
+    hotbar.boolean(true);
+    const auto hotbar_body = hotbar.take();
+    for (int i = 0; i < 3; ++i) {
+        enqueue(id, packet(PacketId::InventoryContent, inventory(p)));
+        enqueue(id, packet(PacketId::InventoryContent, protocol::empty_inventory_body(120, 4)));
+        enqueue(id, packet(PacketId::InventoryContent, cursor_inventory(p)));
+        enqueue(id, packet(PacketId::InventoryContent, protocol::empty_inventory_body(119, 1)));
+        enqueue(id, packet(PacketId::PlayerHotbar, hotbar_body));
+    }
+    send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 3, 0))); // DEATH
+    enqueue(id, packet(PacketId::Event, player_died_event(s.game.unique_id, cause)));
+    const char *key = cause == 5    ? "death.attack.fall"
+                      : cause == 16 ? "death.attack.starve"
+                      : cause == 12 ? "death.attack.outOfWorld"
+                                    : "death.attack.generic";
+    // The name argument is Player::getPlayerNameLocToken: "\x01" + player UUID.
+    broadcast(packet(PacketId::Text, death_message(key, std::string("\x01") + s.identity.identity)));
+    const auto &spawn = s.game.settings.spawn;
+    enqueue(id, packet(PacketId::Respawn,
+                       respawn_position(static_cast<float>(spawn.x) + 0.5f, static_cast<float>(spawn.y) + kSpawnEyeOffset,
+                                        static_cast<float>(spawn.z) + 0.5f)));
+    s.death_data_dirty = true;
+    s.flags_dirty = true;
+}
+void Server::respawn(std::uint64_t id, Session &s) {
+    // PlayerAction 7 for a dead player (0x182d4b3): ActorEvent RESPAWN,
+    // SetHealth, the reset attributes, the living actor data, and the player
+    // back at the spawn point (observed on the original).
+    if (!s.dead)
+        return;
+    s.dead = false;
+    s.hurt_time = s.last_hurt = 0;
+    send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 18, 0)));
+    enqueue(id, packet(PacketId::SetHealth, set_health(20)));
+    auto &a = s.attributes;
+    for (int attribute : {kHealth, kHunger, kExhaustion, kSaturation, kLevel, kExperience}) {
+        auto &v = a.values[static_cast<std::size_t>(attribute)];
+        v.value = attribute == kExhaustion || attribute == kLevel || attribute == kExperience ? 0.0f : v.max;
+    }
+    enqueue(id, packet(PacketId::UpdateAttributes,
+                       update_attributes(id, a, {kHealth, kHunger, kExhaustion, kSaturation, kLevel, kExperience})));
+    send_for_entity(id, packet(PacketId::SetActorData, respawned_data(id, s.flags())));
+    auto &p = world_.players().at(s.key);
+    const auto &spawn = s.game.settings.spawn;
+    p.x = static_cast<float>(spawn.x) + 0.5f;
+    p.y = static_cast<float>(spawn.y) + kSpawnEyeOffset;
+    p.z = static_cast<float>(spawn.z) + 0.5f;
+    s.lerp.steps = 0;
 }
 void Server::update_nearby(std::uint64_t id, Session &s) {
     // ServerPlayer::_updateNearbyEntities (0x25f90e0) / _scanForNewEntities
@@ -651,6 +938,11 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             // so a NaN Y becomes -128.
             const auto clamp = [](float v, float lo, float hi) { return v > hi ? hi : v > lo ? v : lo; };
             const float y = clamp(m.data.y, -128.0f, 512.0f);
+            // The position delta is kept as the actor's motion (+0xa0); it
+            // shifts items dropped before the interpolation catches up.
+            s.motion[0] = m.data.x - p.x;
+            s.motion[1] = y - p.y;
+            s.motion[2] = m.data.z - p.z;
             p.on_ground = m.grounded; // +0x124 (mode 1 with a dead player cannot occur)
             if (m.mode == 2) {
                 // Teleport mode: position and rotation are set at once.
@@ -720,6 +1012,24 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             return {packet(PacketId::InventoryContent, inventory(p)),
                     packet(PacketId::InventoryContent, cursor_inventory(p))};
         }
+        if (type == PacketId::ActorFall) {
+            // ServerNetworkHandler::handle(ActorFallPacket) (0x182de80):
+            // Level::getRuntimeEntity(runtime id), then
+            // ServerPlayer::handleFallDistanceOnServer (0x25fb2e0): in the void
+            // 20 VOID damage, otherwise Mob::causeFallDamage(distance).
+            const auto target = in.varint64();
+            const float distance = std::bit_cast<float>(fixed(in, 4));
+            const bool void_fall = in.boolean();
+            in.finish();
+            auto other = sessions_.find(target);
+            if (other == sessions_.end() || !other->second.active)
+                return {};
+            if (void_fall)
+                hurt(target, other->second, 12, 20);
+            else if (std::isfinite(distance))
+                cause_fall_damage(target, other->second, distance);
+            return {};
+        }
         if (type == PacketId::PlayerAction) {
             // ServerNetworkHandler::handle(PlayerActionPacket) 0x182d140.
             if (in.varint64() != id)
@@ -748,13 +1058,17 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             case 2: // StopBreak: broadcastLevelEvent(StopBlockCracking, Vec3(pos), 0)
                 broadcast(level_event(LevelEventStopBlockCracking, fx, fy, fz, 0));
                 break;
-            case 7:  // Respawn: only for dead players, which BDS-RE cannot have; not relayed
+            case 7: // Respawn (dead players only); not relayed
+                respawn(id, s);
+                return {};
             case 13: // dimension change acknowledgement; not relayed
             case 14:
                 return {};
             case 8:
-                // Jump: Player::handleJumpEffects only causes food exhaustion
-                // (attributes/hunger are not modelled yet); not relayed.
+                // Jump: Player::handleJumpEffects (0x22eb7c0) causes food
+                // exhaustion, EXHAUSTION_SPRINT_JUMP (0.8) or EXHAUSTION_JUMP (0.2);
+                // not relayed.
+                cause_food_exhaustion(id, s, s.sprinting ? 0.8f : 0.2f);
                 return {};
             case 9:  // StartSprint: Mob::setSprinting(true)
             case 10: // StopSprint
@@ -763,7 +1077,7 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
                 if (s.sprinting != (action == 9)) {
                     s.sprinting = action == 9;
                     s.flags_dirty = true;
-                    s.movement_dirty = true;
+                    s.attributes.set(kMovement, s.sprinting ? 0.13f : 0.1f);
                 }
                 break;
             case 11: // StartSneak: Mob::setSneaking -> status flag 1; not relayed

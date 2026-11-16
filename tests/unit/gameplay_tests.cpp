@@ -225,8 +225,10 @@ int main() {
         // First tick: actor data and AddItemActor; the pickup delay of 10 ticks
         // then expires and player 2, standing on the hole, takes the item.
         server.tick();
+        // The first tick also flushes player 1's dirty attribute list (UpdateAttributes).
         auto added = server.drain(1);
-        check(added.size() == 2 && added[0].header.id == 0x27 && added[1].header.id == 0x0f,
+        check(added.size() == 3 && added[0].header.id == 0x1d && added[1].header.id == 0x27 &&
+                  added[2].header.id == 0x0f,
               "item entity added after its first tick");
         // Player::aiStep touches entities within the player box grown by
         // (1, 0.5, 1): player 2 steps into the hole the item fell into.
@@ -455,6 +457,110 @@ int main() {
             check(pw.block({0, 4, 0}) == 0, "placement into the player's own block is refused");
             ps.handle(1, use_from({0, 3, 0}, {3, 64}, 0.5f, 6.82f, 0.5f), 0);
             check(pw.block({0, 4, 0}) == 3, "pillar placement uses the client's fromPosition");
+        }
+        {
+            // Hunger, regeneration, fall damage, death and respawn, byte for byte
+            // with the original (tests/reference/hunger_health_bds_1.6.0.15.json:
+            // survival, difficulty normal, runtime id 1, standing still).
+            const auto hex = [](const Bytes &b) {
+                std::string out;
+                for (auto c : b) {
+                    out += "0123456789abcdef"[c >> 4];
+                    out += "0123456789abcdef"[c & 15];
+                }
+                return out;
+            };
+            const auto fall = [](float distance) {
+                ByteWriter f;
+                f.varint64(1);
+                f.float32(distance);
+                f.boolean(false);
+                return packet(PacketId::ActorFall, f.take());
+            };
+            World hw;
+            hw.configure_terrain({1, 123});
+            Server hs(hw, properties, access);
+            auto g = make_game(1, 0);
+            hs.prepare(identity(9), g);
+            hs.handle(1, packet(PacketId::SetLocalPlayerAsInitialized, {1}), 0);
+            hs.tick();
+            hs.drain(1);
+            // ActorFallPacket 19.8: Mob::causeFallDamage ceil(19.8 - 3) = 17.
+            hs.handle(1, fall(19.8f), 0);
+            auto hurt = hs.drain(1);
+            check(hurt.size() == 1 && hurt[0].header.id == 0x1b && hex(hurt[0].body) == "01020a",
+                  "fall hurt ActorEvent (cause FALL)");
+            std::vector<std::string> attributes;
+            for (int t = 0; t < 200 && attributes.size() < 3; ++t) {
+                hs.tick();
+                for (auto &out : hs.drain(1))
+                    if (out.header.id == 0x1d)
+                        attributes.push_back(hex(out.body));
+            }
+            check(attributes.size() == 3 &&
+                      attributes[0] == "0101000000000000a041000040400000a041106d696e6563726166743a6865616c7468",
+                  "health 3 after the fall");
+            check(attributes[1] == "0102000000000000a041000080400000a041106d696e6563726166743a6865616c7468000000000000804000004040000000001b6d696e6563726166743a706c617965722e65786861757374696f6e",
+                  "natural regeneration: health +1, exhaustion +3");
+            check(attributes[2].rfind("0105000000000000a0410000a0400000a041106d696e6563726166743a6865616c7468000000000000804000000000000000001b6d696e6563726166743a706c617965722e65786861757374696f6e", 0) == 0,
+                  "exhaustion overflow drains saturation");
+            for (int t = 0; t < 10; ++t)
+                hs.tick();
+            hs.drain(1);
+            // A 40-block fall kills: drops, inventories, death event, message, Respawn.
+            hs.handle(1, fall(40.0f), 0);
+            hs.tick();
+            const auto died = hs.drain(1);
+            std::vector<unsigned> ids;
+            for (auto &out : died)
+                ids.push_back(out.header.id);
+            const auto at = [&](unsigned id) {
+                auto it = std::find_if(died.begin(), died.end(), [&](auto &o) { return o.header.id == id; });
+                check(it != died.end(), "death packet present");
+                return hex(it->body);
+            };
+            check(at(0x1b) == "010300", "ActorEvent DEATH");
+            check(at(0x2d) == "0000003f20d7b3400000003f", "Respawn at the spawn point (recheckSpawnPosition offset)");
+            check(at(0x1d).rfind("0101000000000000a041000000000000a041106d696e6563726166743a6865616c7468", 0) == 0,
+                  "health 0 after death");
+            check(at(0x27) == "01023503cdcc4c3e3603cdcc4c3e", "dead bounding box");
+            check(std::count(ids.begin(), ids.end(), 0x31u) == 12 && std::count(ids.begin(), ids.end(), 0x30u) == 3,
+                  "inventories sent three times on death");
+            // PlayerAction 7 (respawn).
+            hs.handle(1, action(1, 7, {0, 0, 0}), 0);
+            auto respawned = hs.drain(1);
+            std::vector<std::string> bodies;
+            for (auto &out : respawned)
+                if (out.header.id != 0x0e)
+                    bodies.push_back(hex(out.body));
+            check(bodies.size() == 4 && bodies[0] == "011200" && bodies[1] == "28" &&
+                      bodies[2].rfind("0106000000000000a0410000a0410000a041106d696e6563726166743a6865616c7468", 0) == 0 &&
+                      bodies[3] == "010300078080c28080816035039a99193f36036666e63f",
+                  "respawn ActorEvent, SetHealth, attributes and actor data");
+        }
+        {
+            // HungerAttributeDelegate::tick (0x24a2a10) starvation on normal
+            // difficulty: food 0 and health > 10 lose 1 health every 80 ticks
+            // (buff type STARVE -> hurtEffects cause STARVE 16).
+            World sw;
+            sw.configure_terrain({1, 123});
+            Server ss(sw, properties, access);
+            PlayerData starving;
+            starving.hunger = 0;
+            starving.saturation = 0;
+            sw.players()["uuid:" + identity(10).identity] = starving;
+            auto g = make_game(1, 0);
+            ss.prepare(identity(10), g);
+            auto &sp = sw.players().at("uuid:" + identity(10).identity);
+            ss.handle(1, packet(PacketId::SetLocalPlayerAsInitialized, {1}), 0);
+            int hurts = 0;
+            for (int t = 0; t < 161; ++t) {
+                ss.tick();
+                for (auto &out : ss.drain(1))
+                    if (out.header.id == 0x1b && out.body == Bytes({1, 2, 0x20}))
+                        ++hurts;
+            }
+            check(hurts == 2 && sp.health == 18, "starvation: -1 health per 80 ticks above 10 health");
         }
         {
             // The player's own first SetActorData packets at spawn, byte for byte

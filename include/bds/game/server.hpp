@@ -43,7 +43,12 @@ class Server {
         } lerp;
         bool was_on_ground = false; // Actor +0x125, written at the end of each tick
         bool sneaking = false, sprinting = false; // actor flags 1 and 3
-        bool flags_dirty = false, movement_dirty = false;
+        bool flags_dirty = false;
+        // Attributes, hurt state (Mob +0x20c hurt time, +0x12c0 last hurt) and death.
+        Attributes attributes;
+        int hurt_time = 0, last_hurt = 0;
+        bool dead = false, death_data_dirty = false;
+        float motion[3] = {0, 0, 0}; // Actor +0xa0, set by MovePlayer to the move delta
         int feature_timer = 0;                    // ServerPlayer +0x1b5c
         std::uint64_t flags() const;
     };
@@ -65,6 +70,16 @@ class Server {
     // is relevant (itself, or in their known set), except `except`.
     void send_for_entity(std::uint64_t entity, const GamePacket &packet, std::uint64_t except = 0);
     void tick_player(std::uint64_t id, Session &s);
+    // Attribute system (see src/game/server.cpp for the original functions).
+    void add_buff(std::uint64_t id, Session &s, int attribute, float amount, int type);
+    bool health_change(std::uint64_t id, Session &s, float old_value, float new_value, int type);
+    void cause_food_exhaustion(std::uint64_t id, Session &s, float amount);
+    void tick_attributes(std::uint64_t id, Session &s);
+    bool hurt(std::uint64_t id, Session &s, int cause, int damage);
+    bool hurt_effects(std::uint64_t id, Session &s, int cause, int damage);
+    void cause_fall_damage(std::uint64_t id, Session &s, float distance);
+    void die(std::uint64_t id, Session &s, int cause);
+    void respawn(std::uint64_t id, Session &s);
     void update_nearby(std::uint64_t id, Session &s);
     std::vector<std::pair<int, int>> ticking_offsets() const;
     std::set<std::uint64_t> fresh_items_; // added to the level this tick
