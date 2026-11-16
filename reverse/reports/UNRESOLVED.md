@@ -16,3 +16,7 @@ Current implementation verification: operational controls, backup, discovery and
 RakNet follow-up: open/connected handshake and a bounded reliability implementation now exist. Original congestion control, security extensions, arbitrary bit-length payload support, application batching, trusted login/certificate validation and real Minecraft interoperability remain unresolved. Supplied module source paths support navigation only; raw metadata is kept locally and no Windows GUID/Age match was independently verified.
 
 Native CI run 43843720476 at 4cdd95e verifies the RakNet foundation with all seven jobs passed, including 13/13 tests on both Windows configurations. It remains an independent implementation/synthetic-client result, not Minecraft client or differential verification.
+
+Windows artifacts: a BDS-windows.rar (31,278,032 bytes, SHA256 968d889368e40369afe188b34013bcf5d36bd43ecd667856acb115bc4083f420) was supplied, but this environment has no RAR extractor (package install failed), so EXE/PDB GUID+Age remain uninspected. A ZIP or 7z re-pack would unblock it.
+
+Address-family fallback: RakPeerHelper::peerStartup handling of result 5 (port in use) and the meaning of IPSupportInterface slots +0x10/+0x18 are not reconstructed; the independent server treats a port conflict as fatal.

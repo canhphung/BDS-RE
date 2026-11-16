@@ -2,6 +2,7 @@
 #include "bds/server/properties.hpp"
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <vector>
@@ -15,6 +16,8 @@ public:
  DiscoveryServer(const DiscoveryServer&)=delete;
  DiscoveryServer& operator=(const DiscoveryServer&)=delete;
  void poll(const Properties& properties);
+ // Port actually bound for the family, or nullopt when the host lacks it.
+ std::optional<unsigned> bound_port(bool ipv6) const;
 private: struct Impl;std::unique_ptr<Impl> impl_;
 };
 }

@@ -47,3 +47,15 @@ The initial operational CI at 250e810 passed all Linux GCC/Clang/sanitizer jobs 
 Linux GCC Debug, Release and ASan+UBSan each execute 13/13 CTest cases successfully. New tests are raknet (wire fixtures, sequence wrap arithmetic, padding, ACK/NACK, loss/retry, duplicates, ordered/sequenced delivery, bounded split reassembly, peer limits/expiry) and raknet_handshake (independent Python client over real IPv4/IPv6 UDP, protocol 9 negotiation, 20-address acceptance, forced retransmission, ping/pong and unauthenticated-application rejection). These do not count as Minecraft client or differential verification. The accompanying local source-map correlator processed 2,500 supplied module rows and produced 1,429 INFERRED navigation candidates; its raw input/output remain ignored.
 
 [Run 43843720476](https://github.com/canhphung/BDS-RE/actions/runs/43843720476) completed successfully for source commit `4cdd95e317bb311e52eb64478bdf6d225c509578`. All seven jobs passed: GCC/Clang Debug/Release, Linux sanitizers, native Windows MSVC Debug/Release. Both Windows logs explicitly report 100% tests passed, 0 tests failed out of 13. This includes actual IPv4/IPv6 UDP handshake tests with an independent protocol client, not a Minecraft client. No authenticated login, spawn or gameplay verification is claimed.
+
+## Network robustness slice (local, IPv4-only host)
+
+Verified in a cloud container whose kernel rejects AF_INET6 sockets (EAFNOSUPPORT). Before this change the server exited 1 with "cannot create UDP socket" and both Python integration tests failed creating IPv6 sockets (11/13). Now:
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 14/14 CTest |
+| GCC 13.3.0 | Release | PASS, 14/14 CTest |
+| Clang 18.1.3 | Release | PASS, 14/14 CTest |
+
+CMake 3.28.3, Ninja 1.11.1. On this host the integration tests exercise the IPv4-only fallback path and assert the `IPv6 not supported` log; dual-stack hosts (CI) still exercise both families. New test runtime_failure forces an in-loop exception (world age exhaustion three ticks after load) and checks exit 1, the logged cause, and a persisted emergency snapshot with the advanced age. Windows receive-error classification (WSAECONNRESET/WSAEMSGSIZE skip one datagram) compiles only on Windows and awaits native CI.

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <optional>
+#include <string>
 #include <random>
 #include <stdexcept>
 #ifdef _WIN32
@@ -43,10 +45,24 @@ void close_socket(Socket s) {
     if (s != invalid)
         closesocket(s);
 }
-bool would_block() {
+enum class ReceiveError { drained, skip, fatal };
+ReceiveError receive_error() {
+    switch (WSAGetLastError()) {
+    case WSAEWOULDBLOCK:
+        return ReceiveError::drained;
+    // An ICMP port-unreachable for an earlier send, or an oversized datagram,
+    // concerns one peer only; keep draining the queue for everyone else.
+    case WSAEINTR:
+    case WSAECONNRESET:
+    case WSAEMSGSIZE:
+        return ReceiveError::skip;
+    default:
+        return ReceiveError::fatal;
+    }
+}
+bool family_unavailable() {
     const auto error = WSAGetLastError();
-    return error == WSAEWOULDBLOCK || error == WSAEINTR || error == WSAEMSGSIZE ||
-           error == WSAECONNRESET;
+    return error == WSAEAFNOSUPPORT || error == WSAEPROTONOSUPPORT || error == WSAEADDRNOTAVAIL;
 }
 #else
 using Socket = int;
@@ -55,10 +71,23 @@ void close_socket(Socket s) {
     if (s != invalid)
         ::close(s);
 }
-bool would_block() {
-    return errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR;
+enum class ReceiveError { drained, skip, fatal };
+ReceiveError receive_error() {
+    if (errno == EAGAIN || errno == EWOULDBLOCK)
+        return ReceiveError::drained;
+    if (errno == EINTR || errno == ECONNREFUSED)
+        return ReceiveError::skip;
+    return ReceiveError::fatal;
+}
+bool family_unavailable() {
+    return errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT || errno == EADDRNOTAVAIL;
 }
 #endif
+// The host lacks this address family (e.g. IPv6 disabled). Distinct from a
+// port conflict, which stays fatal.
+struct FamilyUnavailable : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
 raknet::Address peer_address(const sockaddr_storage &storage) {
     raknet::Address out;
     if (storage.ss_family == AF_INET) {
@@ -96,9 +125,13 @@ void send_packet(Socket socket, const raknet::Address &to, std::span<const std::
 }
 
 Socket bind_socket(int family, unsigned port) {
+    const char *name = family == AF_INET ? "IPv4" : "IPv6";
     Socket s = ::socket(family, SOCK_DGRAM, IPPROTO_UDP);
-    if (s == invalid)
-        throw std::runtime_error("cannot create UDP socket");
+    if (s == invalid) {
+        if (family_unavailable())
+            throw FamilyUnavailable(std::string(name) + " not supported");
+        throw std::runtime_error(std::string("cannot create ") + name + " UDP socket");
+    }
     try {
 #ifdef _WIN32
         BOOL exclusive = TRUE;
@@ -128,8 +161,11 @@ Socket bind_socket(int family, unsigned port) {
             address.sin6_family = AF_INET6;
             address.sin6_port = htons(static_cast<unsigned short>(port));
             address.sin6_addr = in6addr_any;
-            if (::bind(s, reinterpret_cast<const sockaddr *>(&address), sizeof(address)) != 0)
+            if (::bind(s, reinterpret_cast<const sockaddr *>(&address), sizeof(address)) != 0) {
+                if (family_unavailable())
+                    throw FamilyUnavailable("IPv6 not supported");
                 throw std::runtime_error("cannot bind configured IPv6 port");
+            }
         }
     } catch (...) {
         close_socket(s);
@@ -176,8 +212,20 @@ struct DiscoveryServer::Impl {
         try {
             std::random_device random;
             guid = (static_cast<std::uint64_t>(random()) << 32) | random();
-            sockets[0] = bind_socket(AF_INET, p.port);
-            sockets[1] = bind_socket(AF_INET6, p.port_v6);
+            // Mirrors RakPeerHelper::peerStartup (0x192f670): when one family is
+            // unsupported the original retries with the other family only. Other
+            // bind failures, such as a port already in use, remain fatal here.
+            const std::array<int, 2> families{AF_INET, AF_INET6};
+            const std::array<unsigned, 2> ports{p.port, p.port_v6};
+            for (std::size_t i = 0; i < sockets.size(); ++i) {
+                try {
+                    sockets[i] = bind_socket(families[i], ports[i]);
+                } catch (const FamilyUnavailable &) {
+                    sockets[i] = invalid;
+                }
+            }
+            if (sockets[0] == invalid && sockets[1] == invalid)
+                throw std::runtime_error("neither IPv4 nor IPv6 UDP is supported");
             transport = std::make_unique<raknet::Transport>(guid);
         } catch (...) {
             cleanup();
@@ -207,10 +255,14 @@ void DiscoveryServer::poll(const Properties &p) {
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
                                        std::chrono::steady_clock::now().time_since_epoch())
                                        .count());
-    for (const auto &outgoing : impl_->transport->poll(now))
-        send_packet(impl_->sockets[outgoing.address.ipv6 ? 1 : 0], outgoing.address,
-                    outgoing.bytes);
-    for (auto socket : impl_->sockets)
+    for (const auto &outgoing : impl_->transport->poll(now)) {
+        const auto socket = impl_->sockets[outgoing.address.ipv6 ? 1 : 0];
+        if (socket != invalid)
+            send_packet(socket, outgoing.address, outgoing.bytes);
+    }
+    for (auto socket : impl_->sockets) {
+        if (socket == invalid)
+            continue;
         for (unsigned packet = 0; packet < 32; ++packet) {
             std::array<std::uint8_t, 2048> bytes{};
             sockaddr_storage sender{};
@@ -225,8 +277,11 @@ void DiscoveryServer::poll(const Properties &p) {
                                         reinterpret_cast<sockaddr *>(&sender), &length);
 #endif
             if (count < 0) {
-                if (would_block())
+                const auto error = receive_error();
+                if (error == ReceiveError::drained)
                     break;
+                if (error == ReceiveError::skip)
+                    continue;
                 throw std::runtime_error("UDP receive failed");
             }
             const auto incoming = std::span(bytes).first(static_cast<std::size_t>(count));
@@ -245,5 +300,20 @@ void DiscoveryServer::poll(const Properties &p) {
                 for (const auto &outgoing : impl_->transport->disconnect(from, now))
                     send_packet(socket, outgoing.address, outgoing.bytes);
         }
+    }
+}
+std::optional<unsigned> DiscoveryServer::bound_port(bool ipv6) const {
+    const auto socket = impl_->sockets[ipv6 ? 1 : 0];
+    if (socket == invalid)
+        return std::nullopt;
+    sockaddr_storage storage{};
+#ifdef _WIN32
+    int length = sizeof(storage);
+#else
+    socklen_t length = sizeof(storage);
+#endif
+    if (getsockname(socket, reinterpret_cast<sockaddr *>(&storage), &length) != 0)
+        throw std::runtime_error("cannot query bound UDP port");
+    return peer_address(storage).port;
 }
 } // namespace bds

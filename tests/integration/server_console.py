@@ -25,10 +25,24 @@ def available_port(family, host):
         return s.getsockname()[1]
 
 
+def ipv6_available():
+    """True when the host can bind IPv6 loopback; the server must cope either way."""
+    if not socket.has_ipv6:
+        return False
+    try:
+        with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s:
+            s.bind(("::1", 0))
+        return True
+    except OSError:
+        return False
+
+
 with tempfile.TemporaryDirectory(prefix="bds-console-") as directory:
     root = Path(directory)
     port = available_port(socket.AF_INET, "127.0.0.1")
-    port6 = available_port(socket.AF_INET6, "::1")
+    has_ipv6 = ipv6_available()
+    # Without IPv6 any configured port is fine: the server must log and continue.
+    port6 = available_port(socket.AF_INET6, "::1") if has_ipv6 else 19133
     properties = (f"server-name=Integration Server\nlevel-name=World With Spaces\n"
                   f"server-port={port}\nserver-portv6={port6}\nwhite-list=false\nallow-cheats=false\n")
     (root / "server.properties").write_text(properties, encoding="utf-8")
@@ -64,6 +78,8 @@ with tempfile.TemporaryDirectory(prefix="bds-console-") as directory:
         process.stdin.flush()
 
     try:
+        wait_for(f"IPv4 supported, port: {port}")
+        wait_for(f"IPv6 supported, port: {port6}" if has_ipv6 else "IPv6 not supported")
         wait_for("console ready")
         command('whitelist add "Example Name"')
         wait_for("whitelist updated")
@@ -78,7 +94,10 @@ with tempfile.TemporaryDirectory(prefix="bds-console-") as directory:
         wait_for("setting changed: allow-cheats")
         magic = bytes.fromhex("00ffff00fefefefefdfdfdfd12345678")
         ping = b"\x01" + struct.pack(">Q", 0x0102030405060708) + magic + struct.pack(">Q", 99)
-        for family, address in [(socket.AF_INET, ("127.0.0.1", port)), (socket.AF_INET6, ("::1", port6))]:
+        endpoints = [(socket.AF_INET, ("127.0.0.1", port))]
+        if has_ipv6:
+            endpoints.append((socket.AF_INET6, ("::1", port6)))
+        for family, address in endpoints:
             with socket.socket(family, socket.SOCK_DGRAM) as client:
                 client.settimeout(2)
                 client.sendto(ping, address)
@@ -143,7 +162,7 @@ with tempfile.TemporaryDirectory(prefix="bds-console-") as directory:
         require(original.returncode == 1 and "original Bedrock storage is not supported" in original.stdout,
                 "original world was accepted by internal storage")
         require(snapshot.read_bytes() == preserved, "original world guard modified checkpoint")
-        print("Native console, restart, whitelist/operator files, asynchronous backup and dual-stack discovery passed")
+        print(f"Native console, restart, whitelist/operator files, asynchronous backup and {'dual-stack' if has_ipv6 else 'IPv4-only fallback'} discovery passed")
     finally:
         if process.poll() is None:
             process.kill()

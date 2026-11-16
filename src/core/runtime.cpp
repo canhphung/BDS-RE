@@ -3,6 +3,7 @@
 #include "bds/world/world.hpp"
 #include "bds/world/store.hpp"
 #include "bds/core/logger.hpp"
+#include <string>
 #include <thread>
 #include "bds/core/console.hpp"
 #include "bds/server/control.hpp"
@@ -37,11 +38,19 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
  AccessLists access(config_.root);access.reload_whitelist();access.reload_operators();
  Backup backup(world_dir);ServerControl control(properties,access,backup);ConsoleInput console;
  std::unique_ptr<DiscoveryServer> network;
- if(config_.network)network=std::make_unique<DiscoveryServer>(properties);
+ if(config_.network) {
+  network=std::make_unique<DiscoveryServer>(properties);
+  // Wording follows RakPeerHelper::LogIPSupport (0x192fce0).
+  for(const bool ipv6:{false,true}) {
+   const auto port=network->bound_port(ipv6);
+   log(std::string(ipv6?"IPv6 ":"IPv4 ")+(port?"supported, port: "+std::to_string(*port):"not supported"));
+  }
+ }
  log("world directory: "+world_dir.string());
  log("console ready; storage is BDS-RE internal; Minecraft login/gameplay unavailable");
  auto last=Clock::now();
  std::uint64_t ticks=0;
+ try {
  while(!stop() && !control.stopping() && (config_.ticks==0 || ticks<config_.ticks)) {
   if(network)network->poll(properties);
   backup.poll();
@@ -58,10 +67,16 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
   if(config_.ticks!=0 && ticks==config_.ticks) break;
   std::this_thread::sleep_until(last+scheduler.remaining());
  }
- {
-  WorldStore::save(world,world_file);
-  log("saved world age="+std::to_string(world.age()));
+ } catch(const std::exception& e) {
+  // Only the simulation thread mutates World, between whole ticks, so the
+  // state is consistent here even when networking or console handling failed.
+  log(std::string("runtime failure: ")+e.what()+"; attempting emergency save");
+  try {WorldStore::save(world,world_file);log("emergency save world age="+std::to_string(world.age()));}
+  catch(const std::exception& save) {log(std::string("emergency save failed: ")+save.what());}
+  throw;
  }
+ WorldStore::save(world,world_file);
+ log("saved world age="+std::to_string(world.age()));
  return ticks;
 }
 }

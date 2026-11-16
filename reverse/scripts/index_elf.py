@@ -28,7 +28,9 @@ targets += [
  'RakNet::RakPeer::OnConnectionRequest(RakNet::RakPeer::RemoteSystemStruct*, unsigned long)',
  'RakNet::RakPeer::ParseConnectionRequestPacket(RakNet::RakPeer::RemoteSystemStruct*, RakNet::SystemAddress const&, char const*, int)',
  'LoginPacket::read(BinaryStream&)',
- 'ConnectionRequest::fromString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)'
+ 'ConnectionRequest::fromString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)',
+ 'RakPeerHelper::peerStartup(RakNet::RakPeerInterface*, int, unsigned short, unsigned short)',
+ 'RakPeerHelper::LogIPSupport()'
 ]
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)

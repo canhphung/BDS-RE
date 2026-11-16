@@ -25,6 +25,18 @@ def port(family, host):
         return sock.getsockname()[1]
 
 
+def ipv6_available():
+    """True when the host can bind IPv6 loopback; the server must cope either way."""
+    if not socket.has_ipv6:
+        return False
+    try:
+        with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as s:
+            s.bind(("::1", 0))
+        return True
+    except OSError:
+        return False
+
+
 def triad(n):
     return n.to_bytes(3, "little")
 
@@ -60,7 +72,9 @@ def incoming_frame(data):
 
 with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
     root = Path(directory)
-    p4, p6 = port(socket.AF_INET, "127.0.0.1"), port(socket.AF_INET6, "::1")
+    has_ipv6 = ipv6_available()
+    p4 = port(socket.AF_INET, "127.0.0.1")
+    p6 = port(socket.AF_INET6, "::1") if has_ipv6 else 19133
     (root / "server.properties").write_text(f"level-name=Transport Test\nserver-port={p4}\nserver-portv6={p6}\n", encoding="utf-8")
     server = subprocess.Popen([sys.argv[1], "--root", str(root), "--tick-ms", "2"],
                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -84,7 +98,12 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                     break
             except queue.Empty:
                 continue
-        for family, host, target_port in [(socket.AF_INET, "127.0.0.1", p4), (socket.AF_INET6, "::1", p6)]:
+        families = [(socket.AF_INET, "127.0.0.1", p4)]
+        if has_ipv6:
+            families.append((socket.AF_INET6, "::1", p6))
+        else:
+            require(any("IPv6 not supported" in line for line in transcript), f"IPv6 fallback log: {transcript}")
+        for family, host, target_port in families:
             with socket.socket(family, socket.SOCK_DGRAM) as client:
                 client.settimeout(3)
                 client.bind((host, 0))
@@ -165,7 +184,7 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
         server.stdin.close()
         require(server.wait(timeout=8) == 0, f"stop failed: {transcript}")
         reader.join(timeout=2)
-        print("Independent IPv4/IPv6 RakNet 9 open/connected handshake, retransmission and unauthenticated-data rejection passed")
+        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 open/connected handshake, retransmission and unauthenticated-data rejection passed")
     finally:
         if server.poll() is None:
             server.kill()

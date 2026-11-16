@@ -6956,6 +6956,242 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "RakPeerHelper::peerStartup(RakNet::RakPeerInterface*, int, unsigned short, unsigned short)",
+      "address": "0x192f670",
+      "size": 1457,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x192f6e7",
+          "operand": "2775030 <RakNet::SocketDescriptor::SocketDescriptor(unsigned short, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192f702",
+          "operand": "2775030 <RakNet::SocketDescriptor::SocketDescriptor(unsigned short, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192f70e",
+          "operand": "192fc30 <RakPeerHelper::isIPv4Supported() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192f761",
+          "operand": "192fc50 <RakPeerHelper::isIPv6Supported() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192f809",
+          "operand": "*0x10(%rdx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192f872",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192f893",
+          "operand": "*0x18(%rdx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192f8b5",
+          "operand": "192fc70 <RakPeerHelper::_resetToIPv6Only(RakNet::SocketDescriptor*, int&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192f8eb",
+          "operand": "*%r9",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192f93b",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192f9a5",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192f9db",
+          "operand": "192fc70 <RakPeerHelper::_resetToIPv6Only(RakNet::SocketDescriptor*, int&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fa11",
+          "operand": "*%r9",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192fac3",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192fb64",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192fbc6",
+          "operand": "*%rcx",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x192fc04",
+          "operand": "192fce0 <RakPeerHelper::LogIPSupport()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "RakPeerHelper::LogIPSupport()",
+      "address": "0x192fce0",
+      "size": 639,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x192fd06",
+          "operand": "1804fe0 <std::operator|(std::_Ios_Openmode, std::_Ios_Openmode)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fd14",
+          "operand": "1757410 <std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >::basic_stringstream(std::_Ios_Openmode)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fd2b",
+          "operand": "1757e00 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fd3e",
+          "operand": "192fc30 <RakPeerHelper::isIPv4Supported() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fd65",
+          "operand": "1757e00 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fd78",
+          "operand": "192ff60 <RakPeerHelper::getIPv4BoundPort() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fd87",
+          "operand": "1756540 <std::ostream::operator<<(unsigned short)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fdad",
+          "operand": "1757e00 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fdc7",
+          "operand": "1757ed0 <std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >::str() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fdd3",
+          "operand": "1756b10 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::c_str() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fdfa",
+          "operand": "26d7100 <BedrockLog::log(unsigned int, unsigned int, char const*, int, char const*, ...)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fe06",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fe25",
+          "operand": "17581f0 <std::basic_ios<char, std::char_traits<char> >::clear(std::_Ios_Iostate)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fe31",
+          "operand": "1757ca0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fe44",
+          "operand": "17566d0 <std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >::str(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fe50",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fe6a",
+          "operand": "1757e00 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fe7d",
+          "operand": "192fc50 <RakPeerHelper::isIPv6Supported() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fea4",
+          "operand": "1757e00 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192feb7",
+          "operand": "192ffb0 <RakPeerHelper::getIPv6BoundPort() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192fec6",
+          "operand": "1756540 <std::ostream::operator<<(unsigned short)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192feec",
+          "operand": "1757e00 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192ff06",
+          "operand": "1757ed0 <std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >::str() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192ff12",
+          "operand": "1756b10 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::c_str() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192ff39",
+          "operand": "26d7100 <BedrockLog::log(unsigned int, unsigned int, char const*, int, char const*, ...)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192ff45",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192ff51",
+          "operand": "1756c80 <std::__cxx11::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >::~basic_stringstream()@plt>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }
