@@ -29,3 +29,12 @@ Same target SHA256 and VERIFIED_BINARY confidence as above. Expanded script reco
 - `LevelChunk::getBlock(ChunkBlockPos const&) const` VA `0x1de24a0`, size `0xb3`: signed Y >>4 at `0x1de24bc`, static_vector<SubChunk,16> size check at `0x1de24df`, out-of-range returns BedrockBlocks::mAir at `0x1de24f1`, otherwise calls SubChunkBlockPos::index and SubChunk::getBlock at `0x1de252f`/`0x1de2540`. Supports section organization; does not establish serialized ordering or mutator policy.
 
 The initial unresolved update-to-level edge is now resolved through GameSession plus ServerLevel vtable slot. Full startup and other virtual subsystems remain unresolved. Independent world uses 16 vertical sections, internal uint16 IDs and its own array ordering; no binary struct or palette layout was copied.
+
+## Persistence entry points
+
+Same target SHA256 and VERIFIED_BINARY confidence as above; script now indexes 13 bounded functions.
+
+- `Level::saveDirtyChunks()` VA `0x1c87240`, size `0x1cb`: iterates dimensions, calls `Dimension::getChunkSource()` at `0x1c872b8`, then an unresolved virtual slot +0x90 at `0x1c872d3`. Iterates a map of weak_ptr<LevelChunk>, locks at `0x1c87333`, tests pointer and `LevelChunk::isDirty()` at `0x1c87360`, reads ChunkState at `0x1c87389`, then conditionally calls an unresolved virtual target at `0x1c873c0`. Does not prove a disk schema, queue policy or write durability.
+- `DBStorage::saveLevelData(LevelData const&)` VA `0x1cdbc00`, size `0x13e`: calls `ExternalFileLevelStorage::saveLevelData` at `0x1cdbc2f`, constructs path components, iterates LevelStorageObserver unique_ptrs and invokes `LevelStorageObserver::onSave` at `0x1cdbd0c`. Callers and detailed external file encoding remain untraced.
+
+The new WorldStore snapshot is independent implementation policy, not a recovered LevelDB or level.dat format. Original dirty-chunk asynchronous/synchronous save semantics remain under investigation.

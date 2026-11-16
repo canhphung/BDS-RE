@@ -15,7 +15,7 @@ for line in raw.splitlines():
  m=re.match(r'^([0-9a-f]+)\s+([0-9a-f]+)\s+(\S)\s+(.+)$',line)
  if m: rows.append((int(m[1],16),int(m[2],16),m[3],m[4]))
 con.executemany('INSERT INTO symbols VALUES (?,?,?,?)',rows);con.commit()
-targets=['ServerInstance::_update()','ServerInstance::startServerThread()', 'ServerInstance::startServerThread()::$_3::operator()() const','ServerLevel::tick()', 'Minecraft::update(bool)', 'Minecraft::tickSimtime(int, int)', 'Minecraft::tickRealtime(int, int)', 'GameSession::tick()', 'Timer::advanceTime(float)', 'ChunkPos::ChunkPos(BlockPos const&)', 'LevelChunk::getBlock(ChunkBlockPos const&) const']
+targets=['ServerInstance::_update()','ServerInstance::startServerThread()', 'ServerInstance::startServerThread()::$_3::operator()() const','ServerLevel::tick()', 'Minecraft::update(bool)', 'Minecraft::tickSimtime(int, int)', 'Minecraft::tickRealtime(int, int)', 'GameSession::tick()', 'Timer::advanceTime(float)', 'ChunkPos::ChunkPos(BlockPos const&)', 'LevelChunk::getBlock(ChunkBlockPos const&) const', 'Level::saveDirtyChunks()', 'DBStorage::saveLevelData(LevelData const&)']
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)
 for i,name in enumerate(targets):
@@ -36,11 +36,11 @@ print(json.dumps({'sha256':digest,'indexed_symbols':len(rows),'database':str(db)
 blob=a.binary.read_bytes()
 phoff=struct.unpack_from('<Q',blob,32)[0]
 phsize,phcount=struct.unpack_from('<HH',blob,54)
-def pointer_at(va):
+def pointer_at(va, width=8):
  for i in range(phcount):
   kind,flags,offset,address,physical,filesz,memsz,align=struct.unpack_from('<IIQQQQQQ',blob,phoff+i*phsize)
-  if kind==1 and address<=va and va+8<=address+filesz:
-   return struct.unpack_from('<Q',blob,offset+va-address)[0]
+  if kind==1 and address<=va and va+width<=address+filesz:
+   return int.from_bytes(blob[offset+va-address:offset+va-address+width], 'little')
  raise ValueError('unmapped address')
 vtable=con.execute("SELECT address FROM symbols WHERE name='vtable for ServerLevel'").fetchone()[0]
 slot=vtable+16+0x98
@@ -53,4 +53,18 @@ Path('reverse/callgraphs/level_dispatch.json').write_text(json.dumps({
  'target':hex(target),'symbols':names,
  'dispatch_site':'0x1b189de',
  'scope':'ServerLevel primary vtable slot resolution; does not prove every Level object has this dynamic type'
+},indent=2)+'\n')
+
+constants=[]
+for suffix in ['MajorVersion','MinorVersion','PatchVersion','RevisionVersion',
+               'NetworkProtocolVersion','NetworkDefaultGamePort','NetworkDefaultGamePortv6']:
+ name='SharedConstants::'+suffix
+ address,size=con.execute('SELECT address,size FROM symbols WHERE name=?',(name,)).fetchone()
+ assert size in (2,4)
+ constants.append({'symbol':name,'address':hex(address),'width':size,'value':pointer_at(address,size)})
+Path('reverse/evidence').mkdir(parents=True,exist_ok=True)
+Path('reverse/evidence/network_constants.json').write_text(json.dumps({
+ 'sha256':digest,'confidence':'VERIFIED_BINARY','encoding':'little-endian integers at sized symbol addresses',
+ 'constants':constants,
+ 'scope':'static constants only; login and discovery formats and actual bound ports not yet verified'
 },indent=2)+'\n')

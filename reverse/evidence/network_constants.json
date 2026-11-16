@@ -1,0 +1,50 @@
+{
+  "sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+  "confidence": "VERIFIED_BINARY",
+  "encoding": "little-endian integers at sized symbol addresses",
+  "constants": [
+    {
+      "symbol": "SharedConstants::MajorVersion",
+      "address": "0x282c388",
+      "width": 4,
+      "value": 1
+    },
+    {
+      "symbol": "SharedConstants::MinorVersion",
+      "address": "0x282c38c",
+      "width": 4,
+      "value": 6
+    },
+    {
+      "symbol": "SharedConstants::PatchVersion",
+      "address": "0x282c390",
+      "width": 4,
+      "value": 0
+    },
+    {
+      "symbol": "SharedConstants::RevisionVersion",
+      "address": "0x282c394",
+      "width": 4,
+      "value": 15
+    },
+    {
+      "symbol": "SharedConstants::NetworkProtocolVersion",
+      "address": "0x282c39c",
+      "width": 4,
+      "value": 282
+    },
+    {
+      "symbol": "SharedConstants::NetworkDefaultGamePort",
+      "address": "0x282c3b6",
+      "width": 2,
+      "value": 19132
+    },
+    {
+      "symbol": "SharedConstants::NetworkDefaultGamePortv6",
+      "address": "0x282c3b8",
+      "width": 2,
+      "value": 19133
+    }
+  ],
+  "scope": "static constants only; login and discovery formats and actual bound ports not yet verified"
+}

@@ -1059,6 +1059,202 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "Level::saveDirtyChunks()",
+      "address": "0x1c87240",
+      "size": 459,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1c87262",
+          "operand": "1c96880 <std::unordered_map<int, std::unique_ptr<Dimension, std::default_delete<Dimension> >, std::hash<int>, std::equal_to<int>, std::allocator<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > > > >::begin()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c8726f",
+          "operand": "1c968e0 <std::unordered_map<int, std::unique_ptr<Dimension, std::default_delete<Dimension> >, std::hash<int>, std::equal_to<int>, std::allocator<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > > > >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c87286",
+          "operand": "1c968b0 <bool std::__detail::operator!=<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false>(std::__detail::_Node_iterator_base<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false> const&, std::__detail::_Node_iterator_base<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false> const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c8729c",
+          "operand": "1c96b90 <std::__detail::_Node_iterator<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false, false>::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c872b0",
+          "operand": "1c96930 <std::unique_ptr<Dimension, std::default_delete<Dimension> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c872b8",
+          "operand": "1d64a90 <Dimension::getChunkSource() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c872d3",
+          "operand": "*0x90(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1c872e1",
+          "operand": "1c98180 <std::unordered_map<ChunkPos, std::weak_ptr<LevelChunk>, std::hash<ChunkPos>, std::equal_to<ChunkPos>, std::allocator<std::pair<ChunkPos const, std::weak_ptr<LevelChunk> > > >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c872ee",
+          "operand": "1c981b0 <std::unordered_map<ChunkPos, std::weak_ptr<LevelChunk>, std::hash<ChunkPos>, std::equal_to<ChunkPos>, std::allocator<std::pair<ChunkPos const, std::weak_ptr<LevelChunk> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c87305",
+          "operand": "1c981e0 <bool std::__detail::operator!=<std::pair<ChunkPos const, std::weak_ptr<LevelChunk> >, true>(std::__detail::_Node_iterator_base<std::pair<ChunkPos const, std::weak_ptr<LevelChunk> >, true> const&, std::__detail::_Node_iterator_base<std::pair<ChunkPos const, std::weak_ptr<LevelChunk> >, true> const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c8731b",
+          "operand": "1c98210 <std::__detail::_Node_const_iterator<std::pair<ChunkPos const, std::weak_ptr<LevelChunk> >, false, true>::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c87333",
+          "operand": "1c98230 <std::weak_ptr<LevelChunk>::lock() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c8733f",
+          "operand": "1b34720 <std::__shared_ptr<LevelChunk, (__gnu_cxx::_Lock_policy)2>::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c87358",
+          "operand": "1b3b560 <std::__shared_ptr<LevelChunk, (__gnu_cxx::_Lock_policy)2>::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c87360",
+          "operand": "1de84c0 <LevelChunk::isDirty() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c87379",
+          "operand": "1b3b560 <std::__shared_ptr<LevelChunk, (__gnu_cxx::_Lock_policy)2>::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c87381",
+          "operand": "1de9c60 <LevelChunk::getState() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c87389",
+          "operand": "1c53180 <std::atomic<ChunkState>::operator ChunkState() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c873b0",
+          "operand": "1b3b740 <std::__shared_ptr<LevelChunk, (__gnu_cxx::_Lock_policy)2>::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c873c0",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1c873ce",
+          "operand": "1b32590 <std::shared_ptr<LevelChunk>::~shared_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c873d7",
+          "operand": "1c98260 <std::__detail::_Node_const_iterator<std::pair<ChunkPos const, std::weak_ptr<LevelChunk> >, false, true>::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c873f1",
+          "operand": "1c96950 <std::__detail::_Node_iterator<std::pair<int const, std::unique_ptr<Dimension, std::default_delete<Dimension> > >, false, false>::operator++()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "DBStorage::saveLevelData(LevelData const&)",
+      "address": "0x1cdbc00",
+      "size": 318,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1cdbc2f",
+          "operand": "1cf20a0 <ExternalFileLevelStorage::saveLevelData(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, LevelData const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbc4b",
+          "operand": "18184e0 <Core::Path::Path(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbc5e",
+          "operand": "18ffb50 <Core::SplitPathT<1024ul, 64ul>::SplitPathT(Core::Path)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbc71",
+          "operand": "18ffca0 <Core::SplitPathT<1024ul, 64ul>::back() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbc84",
+          "operand": "196fb20 <Core::Path::operator std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbca4",
+          "operand": "1ce18f0 <std::vector<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >, std::allocator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> > > >::begin()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbcb7",
+          "operand": "1ce1920 <std::vector<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >, std::allocator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> > > >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbcd1",
+          "operand": "1ce1960 <bool __gnu_cxx::operator!=<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >*, std::vector<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >, std::allocator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> > > > >(__gnu_cxx::__normal_iterator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >*, std::vector<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >, std::allocator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> > > > > const&, __gnu_cxx::__normal_iterator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >*, std::vector<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >, std::allocator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> > > > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbcea",
+          "operand": "1ce19a0 <__gnu_cxx::__normal_iterator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >*, std::vector<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >, std::allocator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> > > > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbcfd",
+          "operand": "1ce19c0 <std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbd0c",
+          "operand": "1cf8390 <LevelStorageObserver::onSave(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbd18",
+          "operand": "1ce19e0 <__gnu_cxx::__normal_iterator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >*, std::vector<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> >, std::allocator<std::unique_ptr<LevelStorageObserver, std::default_delete<LevelStorageObserver> > > > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1cdbd30",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }
