@@ -6330,6 +6330,117 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "LoginPacket::read(BinaryStream&)",
+      "address": "0x187e910",
+      "size": 222,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x187e92f",
+          "operand": "26eb1b0 <ReadOnlyBinaryStream::getSignedBigEndianInt()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e95c",
+          "operand": "1840730 <ReadOnlyBinaryStream::getLength() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e968",
+          "operand": "18406c0 <ReadOnlyBinaryStream::setReadPointer(unsigned long)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e984",
+          "operand": "26eb8d0 <ReadOnlyBinaryStream::getString[abi:cxx11]()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e99d",
+          "operand": "18f2b20 <ConnectionRequest::fromString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e9aa",
+          "operand": "187eac0 <std::_MakeUniq<ConnectionRequest>::__single_object std::make_unique<ConnectionRequest, ConnectionRequest>(ConnectionRequest&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e9b7",
+          "operand": "187ea60 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator=(std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e9c4",
+          "operand": "1837410 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e9cd",
+          "operand": "18f2ad0 <ConnectionRequest::~ConnectionRequest()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187e9dd",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ConnectionRequest::fromString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)",
+      "address": "0x18f2b20",
+      "size": 193,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x18f2b4d",
+          "operand": "187ae20 <StringByteInput::StringByteInput(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f2b6f",
+          "operand": "*0x18(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18f2b8f",
+          "operand": "*0x18(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18f2b9a",
+          "operand": "187aeb0 <std::_MakeUniq<WebToken>::__single_object std::make_unique<WebToken, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f2bab",
+          "operand": "18f28e0 <ConnectionRequest::ConnectionRequest(std::unique_ptr<WebToken, std::default_delete<WebToken> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f2bb4",
+          "operand": "18375a0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f2bbd",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f2bc6",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f2bcf",
+          "operand": "187af20 <StringByteInput::~StringByteInput()>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }

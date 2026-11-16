@@ -29,6 +29,11 @@ int main(int argc,char** argv) {
   check(properties.server_name=="Test = Name" && properties.level_name=="World With Spaces");
   check(properties.max_threads==0 && properties.gamemode==2 && properties.difficulty==3 && properties.tick_distance==12 && properties.whitelist && properties.permission=="operator");
   check(properties.world_directory(temp.path)==std::filesystem::weakly_canonical(temp.path/"worlds"/"World With Spaces"));
+  const auto old_cwd=std::filesystem::current_path();
+  std::filesystem::current_path(temp.path);
+  try {check(properties.world_directory(".")==properties.world_directory(temp.path));}
+  catch(...){std::filesystem::current_path(old_cwd);throw;}
+  std::filesystem::current_path(old_cwd);
   for(const auto& text:{"server-port=0","server-portv6=65536","tick-distance=3","tick-distance=13","max-players=-1","view-distance=0","max-threads=1x","allow-cheats=maybe"})
    rejects([&]{std::istringstream bad(text);bds::Properties::parse(bad);});
   std::istringstream alias("default-player-permission=operator\n");auto original=bds::Properties::parse(alias);

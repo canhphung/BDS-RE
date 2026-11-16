@@ -21,7 +21,9 @@ targets += [
  'PropertiesSettings::PropertiesSettings(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)',
  'RakNet::ProcessOfflineNetworkPacket(RakNet::SystemAddress, char const*, int, RakNet::RakPeer*, RakNet::RakNetSocket2*, bool*, unsigned long)',
  'RakNetServerLocator::announceServer(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, GameType, int, int, bool)',
- 'Common::getGameVersionStringNet[abi:cxx11]()'
+ 'Common::getGameVersionStringNet[abi:cxx11]()',
+ 'LoginPacket::read(BinaryStream&)',
+ 'ConnectionRequest::fromString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)'
 ]
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)
