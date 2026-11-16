@@ -301,13 +301,43 @@ void connection(const Json &fixtures) {
               stack[0].header.id == static_cast<std::uint16_t>(protocol::PacketId::ResourcePackStack) &&
               stack[0].body == crypto::Bytes({0, 0, 0}),
           "HaveAllPacks -> empty ResourcePackStack (bool, varint counts)");
-    const auto [completed, goodbye_packets] = respond(accepted, client_cipher, 4);
-    check(completed.close && goodbye_packets.size() == 1 &&
-              goodbye_packets[0].header.id == static_cast<std::uint16_t>(protocol::PacketId::Disconnect),
-          "Completed ends at the missing StartGame");
-    protocol::ByteReader goodbye(goodbye_packets[0].body);
-    check(!goodbye.boolean() && goodbye.string(4096).find("StartGame and world streaming are not implemented") != std::string::npos,
-          "explains the missing world");
+    const auto [completed, level_packets] = respond(accepted, client_cipher, 4);
+    using protocol::PacketId;
+    const auto id_of = [](PacketId id) { return static_cast<std::uint16_t>(id); };
+    check(!completed.close && accepted.state() == protocol::GameConnection::State::spawning && level_packets.size() == 5,
+          "Completed sends the level data");
+    check(level_packets[0].header.id == id_of(PacketId::StartGame) &&
+              level_packets[0].body == protocol::start_game_body([] {
+                  protocol::StartGame game;
+                  game.palette = protocol::internal_block_palette();
+                  return game;
+              }()),
+          "StartGame (default contents without a provider)");
+    check(level_packets[1].header.id == id_of(PacketId::SetSpawnPosition) && level_packets[2].header.id == id_of(PacketId::SetTime) &&
+              level_packets[3].header.id == id_of(PacketId::SetDifficulty) &&
+              level_packets[4].header.id == id_of(PacketId::SetCommandsEnabled),
+          "_sendLevelData order");
+    // Packets other than RequestChunkRadius are ignored while spawning.
+    const auto send_encrypted = [&](protocol::GameConnection &connection, protocol::PacketCipher &cipher, PacketId id, crypto::Bytes body) {
+        const std::array one{protocol::GamePacket{{id_of(id), 0, 0}, std::move(body)}};
+        crypto::Bytes out{protocol::batch_id};
+        const auto sealed_packet = cipher.seal(protocol::compress_packets(one));
+        out.insert(out.end(), sealed_packet.begin(), sealed_packet.end());
+        return connection.receive(out);
+    };
+    const auto ignored = send_encrypted(accepted, client_cipher, PacketId::MovePlayer, {1, 2, 3});
+    check(!ignored.close && ignored.messages.empty(), "unhandled packet ignored while spawning");
+    const auto radius = send_encrypted(accepted, client_cipher, PacketId::RequestChunkRadius, {0x40}); // varint 32
+    check(radius.close && radius.messages.size() == 1, "chunk radius reply closes");
+    const auto radius_packets = protocol::decompress_packets(*client_cipher.open(std::span(radius.messages[0]).subspan(1)));
+    check(radius_packets.size() == 2 && radius_packets[0].header.id == id_of(PacketId::ChunkRadiusUpdated) &&
+              radius_packets[0].body == protocol::chunk_radius_updated_body(10),
+          "radius clamped to the default view distance");
+    protocol::ByteReader goodbye(radius_packets[1].body);
+    check(radius_packets[1].header.id == id_of(PacketId::Disconnect) && !goodbye.boolean() &&
+              goodbye.string(4096).find("Chunk streaming and spawning are not implemented") != std::string::npos,
+          "explains the missing chunks");
+    check(radius.reason.find("1 other packets ignored") != std::string::npos, "ignored packet count logged");
 
     // Refusal sends disconnectClient("") like the original; SendPacks cannot be served.
     const auto handshaken = [&](protocol::GameConnection &connection) {

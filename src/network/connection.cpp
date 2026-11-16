@@ -113,6 +113,12 @@ ConnectionOutput GameConnection::receive(std::span<const std::uint8_t> raw) {
         }
         const auto packets = decompress_packets(payload);
         for (const auto &packet : packets) {
+            if (state_ == State::spawning) {
+                auto output = handle_spawning(packet);
+                if (output.close || !output.messages.empty())
+                    return output;
+                continue;
+            }
             // Split-screen sub-clients are not supported by this server yet.
             if (packet.header.sender != 0 || packet.header.target != 0) {
                 state_ = State::closed;
@@ -214,18 +220,57 @@ ConnectionOutput GameConnection::handle_pack_response(const GamePacket &received
         return {{message({packet(PacketId::ResourcePackStack, resource_pack_stack_body(options_.texture_packs_required))})},
                 false,
                 {}};
-    case PackResponse::Completed: {
-        // sendLoginMessageLocal (0x182b0b9) creates the player and starts the
-        // game; StartGame and world streaming are not implemented yet.
-        state_ = State::closed;
-        const auto &who = *identity_;
-        return close("resource packs completed for " + printable(who.display_name) +
-                         "; closing because StartGame and world streaming are not implemented",
-                     {message({disconnect_packet("BDS-RE: " + who.display_name +
-                                                 " finished resource packs. StartGame and world streaming are not implemented yet")})});
-    }
+    case PackResponse::Completed:
+        // sendLoginMessageLocal (0x182b0b9) -> _createNewPlayer, _sendLevelData.
+        return start_game();
     }
     state_ = State::closed;
     return close("unknown resource pack response " + std::to_string(response.status));
+}
+
+ConnectionOutput GameConnection::start_game() {
+    // _sendLevelData (0x182fd90) order: StartGame, SetSpawnPosition (type 0,
+    // player spawn), SetTime, SetDifficulty, SetCommandsEnabled, then
+    // lightning/rain LevelEvents, AdventureSettings, game rules, PlayerList,
+    // abilities; _sendAdditionalLevelData then sends attributes, inventory,
+    // crafting data and scoreboards, and AvailableCommands follows. Only the
+    // first five are implemented.
+    state_ = State::spawning;
+    auto game = options_.start_game ? options_.start_game() : StartGame{};
+    if (game.palette.empty())
+        game.palette = internal_block_palette();
+    const auto &settings = game.settings;
+    const auto &who = *identity_;
+    return {{message({packet(PacketId::StartGame, start_game_body(game)),
+                      packet(PacketId::SetSpawnPosition, set_spawn_position_body(0, settings.spawn, false)),
+                      packet(PacketId::SetTime, set_time_body(settings.time)),
+                      packet(PacketId::SetDifficulty, set_difficulty_body(static_cast<std::uint32_t>(settings.difficulty))),
+                      packet(PacketId::SetCommandsEnabled, set_commands_enabled_body(settings.commands_enabled))})},
+            false,
+            "StartGame sent to " + printable(who.display_name) + " (runtime id " + std::to_string(game.runtime_id) + ")"};
+}
+
+ConnectionOutput GameConnection::handle_spawning(const GamePacket &received) {
+    if (received.header.sender != 0 || received.header.target != 0) {
+        state_ = State::closed;
+        return close("sub-client packets are not supported");
+    }
+    if (received.header.id != static_cast<std::uint16_t>(PacketId::RequestChunkRadius)) {
+        // A joining client sends further packets (movement, settings) before it
+        // spawns; they have no handler yet and are ignored rather than fatal.
+        ++ignored_while_spawning_;
+        return {};
+    }
+    // ServerNetworkHandler::handle(RequestChunkRadiusPacket) (0x1825e50) ->
+    // ServerPlayer::setClientChunkRadius -> ChunkRadiusUpdated.
+    const auto radius = client_chunk_radius(decode_request_chunk_radius(received.body), options_.view_distance);
+    state_ = State::closed;
+    const auto &who = *identity_;
+    return close("chunk radius " + std::to_string(radius) + " for " + printable(who.display_name) +
+                     "; closing because chunk streaming is not implemented (" +
+                     std::to_string(ignored_while_spawning_) + " other packets ignored)",
+                 {message({packet(PacketId::ChunkRadiusUpdated, chunk_radius_updated_body(radius)),
+                           disconnect_packet("BDS-RE: StartGame sent to " + who.display_name +
+                                             ". Chunk streaming and spawning are not implemented yet")})});
 }
 } // namespace bds::protocol

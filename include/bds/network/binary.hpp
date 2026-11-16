@@ -23,6 +23,7 @@ class ByteReader {
     bool boolean();
     // Unsigned LEB128 limited to 32 bits; overlong encodings are rejected.
     std::uint32_t varint();
+    std::int32_t signed_varint();
     std::int32_t big_endian_int();
     // Unsigned-varint length followed by bytes (BinaryStream::writeString).
     std::string string(std::size_t limit);
@@ -39,6 +40,13 @@ class ByteWriter {
     void byte(std::uint8_t value) { bytes_.push_back(value); }
     void boolean(bool value) { byte(value ? 1 : 0); }
     void varint(std::uint32_t value);
+    void varint64(std::uint64_t value);
+    // Zigzag-encoded signed varints (BinaryStream::writeVarInt / writeVarInt64).
+    void signed_varint(std::int32_t value);
+    void signed_varint64(std::int64_t value);
+    // Raw little-endian fixed-width values (BinaryStream::write of native bytes).
+    void little_endian(std::uint64_t value, unsigned width);
+    void float32(float value);
     void big_endian_int(std::int32_t value);
     void string(std::string_view value);
     void raw(std::span<const std::uint8_t> value) { bytes_.insert(bytes_.end(), value.begin(), value.end()); }

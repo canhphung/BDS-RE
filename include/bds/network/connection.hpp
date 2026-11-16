@@ -2,6 +2,7 @@
 #include "bds/network/auth.hpp"
 #include "bds/network/batch.hpp"
 #include "bds/network/encryption.hpp"
+#include "bds/network/level_packets.hpp"
 #include <memory>
 #include <functional>
 #include <optional>
@@ -66,6 +67,10 @@ struct ConnectionOptions {
     // (whitelist), or nullopt to admit. Runs before the encryption handshake,
     // as in the login handler (0x1828b2f-0x1828bf5).
     std::function<std::optional<std::string>(const auth::Identity &)> admission;
+    // Builds the StartGame contents for a joining player (world state,
+    // server.properties and a fresh entity id); default-constructed if unset.
+    std::function<StartGame()> start_game;
+    std::int32_t view_distance = 10; // server.properties view-distance
 };
 
 // Per-peer Minecraft protocol state above RakNet. Owns no world state; gameplay
@@ -76,7 +81,7 @@ class GameConnection {
     using Options = ConnectionOptions;
     explicit GameConnection(auth::LoginPolicy policy = {}, Clock clock = {},
                             std::shared_ptr<ServerSecrets> secrets = nullptr, Options options = {});
-    enum class State { awaiting_login, awaiting_handshake, awaiting_packs, closed };
+    enum class State { awaiting_login, awaiting_handshake, awaiting_packs, spawning, closed };
     ConnectionOutput receive(std::span<const std::uint8_t> message);
     State state() const { return state_; }
     // Set once a login passed verification; never set from unverified data.
@@ -86,6 +91,9 @@ class GameConnection {
     ConnectionOutput handle_login(const GamePacket &packet);
     ConnectionOutput handle_handshake();
     ConnectionOutput handle_pack_response(const GamePacket &packet);
+    ConnectionOutput start_game();
+    ConnectionOutput handle_spawning(const GamePacket &packet);
+    std::size_t ignored_while_spawning_ = 0;
     // 0xfe message for `packets`, encrypted once the handshake key is set.
     Bytes message(std::vector<GamePacket> packets);
     State state_ = State::awaiting_login;

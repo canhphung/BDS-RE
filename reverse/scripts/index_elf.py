@@ -63,7 +63,18 @@ targets += [
  'ServerNetworkHandler::handle(NetworkIdentifier const&, ResourcePackClientResponsePacket const&)',
  'ResourcePacksInfoPacket::write(BinaryStream&) const',
  'ResourcePackStackPacket::write(BinaryStream&) const',
- 'ResourcePackClientResponsePacket::read(BinaryStream&)'
+ 'ResourcePackClientResponsePacket::read(BinaryStream&)',
+ 'ServerNetworkHandler::sendLoginMessageLocal(NetworkIdentifier const&, ConnectionRequest const&)',
+ 'ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)',
+ 'ServerNetworkHandler::_sendLevelData(ServerPlayer&, NetworkIdentifier const&)',
+ 'ServerNetworkHandler::_sendAdditionalLevelData(ServerPlayer&, NetworkIdentifier const&)',
+ 'StartGamePacket::write(BinaryStream&) const',
+ 'serialize<LevelSettings>::write(LevelSettings const&, BinaryStream&)',
+ 'serialize<NetworkBlockPosition>::write(NetworkBlockPosition const&, BinaryStream&)',
+ 'LevelSettings::generatorTypeToString[abi:cxx11](GeneratorType)',
+ 'ServerNetworkHandler::handle(NetworkIdentifier const&, RequestChunkRadiusPacket const&)',
+ 'ServerPlayer::setClientChunkRadius(unsigned int)',
+ 'ServerPlayer::findClientChunkRadius(unsigned int) const'
 ]
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)

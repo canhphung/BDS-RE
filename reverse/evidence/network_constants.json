@@ -357,5 +357,99 @@
       "4_completed": "0x182af8f -> sendLoginMessageLocal 0x182b0b9",
       "2_send_packs": "0x182b0c3 -> ResourcePackFileUploadManager::uploadResourcePack"
     }
+  },
+  "start_game": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "flow": {
+      "sendLoginMessageLocal": "0x182b690: _createNewPlayer 0x182b6ce, updateServerAnnouncement, _sendLevelData 0x182b6f2, _sendAdditionalLevelData 0x182b706, AvailableCommands (CommandRegistry::serializeAvailableCommands 0x182b74f)",
+      "_sendLevelData": "0x182fd90: StartGamePacket 0x182ffe3, SetSpawnPosition(spawn, type 0, isForcedRespawn) 0x18300be, SetTime(Level::getTime) 0x1830143, SetDifficulty 0x18301c8, SetCommandsEnabled 0x183025e, LevelEvent lightning 0x183034a, LevelEvent rain 0x1830425, AdventureSettings 0x1830500, game rules 0x183054e, PlayerList 0x18305c6, LevelEvent sim-paused 0x1830711, sendAllPlayerAbilities 0x183079b",
+      "_sendAdditionalLevelData": "0x1830820: UpdateAttributes 0x183090f, InventoryContent 0x18309c2, CraftingData 0x1830a4d, scoreboard 0x1830df6"
+    },
+    "start_game_write": {
+      "function": "StartGamePacket::write 0x184a2b0",
+      "fields": [
+        "ActorUniqueID: writeVarInt64 (zigzag) 0x184b7f0",
+        "ActorRuntimeID: writeUnsignedVarInt64 0x1848780",
+        "player game type: writeVarInt",
+        "Vec3: 3 x writeFloat 0x184b820",
+        "Vec2: 2 x writeFloat 0x184b870",
+        "LevelSettings 0x184b8b0",
+        "levelId string",
+        "levelName string",
+        "premium template ContentIdentity string",
+        "isTrial bool",
+        "currentTick writeUnsignedInt64",
+        "enchantment seed writeVarInt",
+        "block palette: writeVectorList (unsigned varint count) of {name string, writeSignedShort data} 0x184c8b0",
+        "multiplayerCorrelationId string"
+      ]
+    },
+    "level_settings_write": {
+      "function": "serialize<LevelSettings>::write 0x184b8b0",
+      "fields": [
+        "seed varint",
+        "dimension varint",
+        "generator varint",
+        "game type varint",
+        "difficulty varint",
+        "default spawn NetworkBlockPosition (varint x, unsigned varint y, varint z: 0x1849230)",
+        "achievementsDisabled bool",
+        "time varint",
+        "education world bool",
+        "education features bool",
+        "rain float",
+        "lightning float",
+        "multiplayer bool",
+        "LAN broadcast bool",
+        "XBL broadcast bool",
+        "commands enabled bool",
+        "texture packs required bool",
+        "game rules: GameRulesChangedPacketData, writeVectorList<GameRule> unsigned varint count",
+        "bonus chest bool",
+        "start with map bool",
+        "constant false bool (xor %esi 0x184bbf2)",
+        "default player permission varint",
+        "XBL broadcast mode varint",
+        "server chunk tick range writeSignedInt",
+        "platform broadcast bool",
+        "platform broadcast mode varint",
+        "XBL broadcast intent bool",
+        "locked behaviour pack bool",
+        "locked resource pack bool",
+        "from locked template bool"
+      ]
+    },
+    "primitives": {
+      "writeFloat/writeSignedShort/writeSignedInt": "BinaryStream::write of native little-endian bytes",
+      "writeVarInt": "zigzag (shl 1 / xor -1) then writeUnsignedVarInt",
+      "writeVarInt64": "zigzag then writeUnsignedVarInt64"
+    },
+    "generator_type": {
+      "function": "LevelSettings::generatorTypeToString 0x1c697c0",
+      "values": {
+        "0": "Legacy",
+        "1": "Overworld",
+        "2": "Flat",
+        "3": "Nether",
+        "4": "TheEnd"
+      },
+      "properties_mapping": "DEFAULT->Overworld, FLAT->Flat, LEGACY->Legacy is INFERRED"
+    },
+    "palette": {
+      "source": "Level::getGlobalBlockPalette 0x182fed4; built at runtime by BlockPalette::initFromBlockDefinitions 0x1d3c0a0 / assignBlockRuntimeIds 0x1d3c1c0",
+      "note": "contents are not a static table in the binary; the reconstruction sends only its internal blocks (UNVERIFIED with a client)"
+    },
+    "simple_packets": {
+      "SetSpawnPosition": "0x184f690: varint type, NetworkBlockPosition, bool",
+      "SetTime": "0x184f820: varint",
+      "SetDifficulty": "0x184f960: unsigned varint",
+      "SetCommandsEnabled": "0x184faa0: bool",
+      "ChunkRadiusUpdated": "0x18cde50: varint",
+      "RequestChunkRadius read": "0x18cd780: varint"
+    },
+    "chunk_radius": {
+      "handler": "ServerNetworkHandler::handle(RequestChunkRadiusPacket) 0x1825e50 -> ServerPlayer::setClientChunkRadius 0x25fd6e0 -> ChunkRadiusUpdatedPacket",
+      "find": "ServerPlayer::findClientChunkRadius 0x25fd620: clamp(requested, 5, min(field +0x1b34, dimension value / 16.0 + 8.0)); dimension virtual +0x120 unresolved"
+    }
   }
 }

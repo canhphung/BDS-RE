@@ -1,4 +1,6 @@
 #include "bds/network/binary.hpp"
+#include <bit>
+#include <limits>
 
 namespace bds::protocol {
 std::span<const std::uint8_t> ByteReader::take(std::size_t count) {
@@ -29,6 +31,10 @@ std::uint32_t ByteReader::varint() {
     }
     throw ProtocolError("unterminated varint");
 }
+std::int32_t ByteReader::signed_varint() {
+    const auto bits = varint();
+    return static_cast<std::int32_t>((bits >> 1) ^ (0U - (bits & 1U)));
+}
 std::int32_t ByteReader::big_endian_int() {
     const auto bytes = take(4);
     std::uint32_t value = 0;
@@ -53,6 +59,29 @@ void ByteWriter::varint(std::uint32_t value) {
         value >>= 7;
     }
     byte(static_cast<std::uint8_t>(value));
+}
+void ByteWriter::varint64(std::uint64_t value) {
+    while (value >= 0x80) {
+        byte(static_cast<std::uint8_t>(value | 0x80));
+        value >>= 7;
+    }
+    byte(static_cast<std::uint8_t>(value));
+}
+void ByteWriter::signed_varint(std::int32_t value) {
+    const auto bits = static_cast<std::uint32_t>(value);
+    varint((bits << 1) ^ (value < 0 ? 0xffffffffU : 0U));
+}
+void ByteWriter::signed_varint64(std::int64_t value) {
+    const auto bits = static_cast<std::uint64_t>(value);
+    varint64((bits << 1) ^ (value < 0 ? ~std::uint64_t{0} : 0U));
+}
+void ByteWriter::little_endian(std::uint64_t value, unsigned width) {
+    for (unsigned i = 0; i < width; ++i)
+        byte(static_cast<std::uint8_t>(value >> (8 * i)));
+}
+void ByteWriter::float32(float value) {
+    static_assert(sizeof(float) == 4 && std::numeric_limits<float>::is_iec559);
+    little_endian(std::bit_cast<std::uint32_t>(value), 4);
 }
 void ByteWriter::big_endian_int(std::int32_t value) {
     const auto bits = static_cast<std::uint32_t>(value);

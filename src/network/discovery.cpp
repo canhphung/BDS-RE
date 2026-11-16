@@ -5,6 +5,7 @@
 #include "bds/network/connection.hpp"
 #include <map>
 #include <algorithm>
+#include <charconv>
 #include <array>
 #include <chrono>
 #include <optional>
@@ -210,6 +211,42 @@ struct DiscoveryServer::Impl {
     // Valid during poll(); connections only call admission from within poll.
     const Properties *properties = nullptr;
     AccessLists *access = nullptr;
+    std::uint64_t world_age = 0;
+    // Level::getNextRuntimeID / getNewUniqueID analogue; ids are never reused.
+    std::int64_t next_entity_id = 1;
+
+    protocol::StartGame start_game() {
+        const auto &p = *properties;
+        protocol::StartGame game;
+        game.unique_id = next_entity_id;
+        game.runtime_id = static_cast<std::uint64_t>(next_entity_id++);
+        game.player_game_type = static_cast<std::int32_t>(p.gamemode);
+        auto &s = game.settings;
+        // The seed is only advertised: this server does not generate terrain.
+        // A purely numeric level-seed is sent as-is, anything else as 0 (policy).
+        std::int32_t seed = 0;
+        const auto *begin = p.seed.data();
+        if (!p.seed.empty() && std::from_chars(begin, begin + p.seed.size(), seed).ptr != begin + p.seed.size())
+            seed = 0;
+        s.seed = seed;
+        s.generator = p.level_type == "FLAT"     ? protocol::Generator::Flat
+                      : p.level_type == "LEGACY" ? protocol::Generator::Legacy
+                                                 : protocol::Generator::Overworld;
+        s.game_type = static_cast<std::int32_t>(p.gamemode);
+        s.difficulty = static_cast<std::int32_t>(p.difficulty);
+        s.time = static_cast<std::int32_t>(world_age % 24000); // time of day (policy)
+        s.commands_enabled = p.cheats;
+        s.texture_packs_required = p.texturepack_required;
+        s.default_player_permission = p.permission == "visitor" ? 0 : p.permission == "operator" ? 2 : 1;
+        s.server_chunk_tick_range = static_cast<std::int32_t>(p.tick_distance);
+        game.x = static_cast<float>(s.spawn.x) + 0.5f;
+        game.y = static_cast<float>(s.spawn.y) + 1.62f; // player position is eye height
+        game.z = static_cast<float>(s.spawn.z) + 0.5f;
+        game.level_id = p.level_name;
+        game.level_name = p.level_name;
+        game.current_tick = world_age;
+        return game;
+    }
     std::optional<std::string> admit(const auth::Identity &identity) {
         // Login handler 0x1828b2f-0x1828bf5: when the whitelist is enabled,
         // Whitelist::tryUpdateEntries then Whitelist::isAllowed, else
@@ -276,9 +313,10 @@ struct DiscoveryServer::Impl {
 };
 DiscoveryServer::DiscoveryServer(const Properties &p) : impl_(std::make_unique<Impl>(p)) {}
 DiscoveryServer::~DiscoveryServer() = default;
-void DiscoveryServer::poll(const Properties &p, AccessLists &access) {
+void DiscoveryServer::poll(const Properties &p, AccessLists &access, std::uint64_t world_age) {
     impl_->properties = &p;
     impl_->access = &access;
+    impl_->world_age = world_age;
     const auto advertisement = server_advertisement(p, impl_->guid);
     const auto now =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -338,7 +376,9 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access) {
                                                   p.texturepack_required,
                                                   [impl = impl_.get()](const auth::Identity &identity) {
                                                       return impl->admit(identity);
-                                                  }})
+                                                  },
+                                                  [impl = impl_.get()] { return impl->start_game(); },
+                                                  static_cast<std::int32_t>(p.view_distance)})
                                  .first->second.receive(application.bytes);
                 for (const auto &message : output.messages)
                     for (const auto &outgoing : impl_->transport->send(from, message, now))

@@ -139,6 +139,67 @@ def packets_of(payload):
     return packets
 
 
+class Reader:
+    """Independent protocol-282 reader for the level packets checked here."""
+
+    def __init__(self, data):
+        self.data, self.at = data, 0
+
+    def take(self, n):
+        require(self.at + n <= len(self.data), "truncated level packet")
+        out = self.data[self.at:self.at + n]
+        self.at += n
+        return out
+
+    def uvarint(self):
+        value = shift = 0
+        while True:
+            byte = self.take(1)[0]
+            value |= (byte & 0x7F) << shift
+            shift += 7
+            if byte < 0x80:
+                return value
+
+    def varint(self):
+        n = self.uvarint()
+        return (n >> 1) ^ -(n & 1)
+
+    def string(self):
+        return self.take(self.uvarint()).decode()
+
+    def boolean(self):
+        return self.take(1)[0] == 1
+
+    def f32(self):
+        return struct.unpack("<f", self.take(4))[0]
+
+
+def parse_start_game(body):
+    """Field order from StartGamePacket::write / serialize<LevelSettings>::write."""
+    r = Reader(body)
+    game = {"unique_id": r.varint(), "runtime_id": r.uvarint(), "game_type": r.varint(),
+            "position": (r.f32(), r.f32(), r.f32()), "rotation": (r.f32(), r.f32())}
+    game["seed"], game["dimension"], game["generator"] = r.varint(), r.varint(), r.varint()
+    game["world_game_type"], game["difficulty"] = r.varint(), r.varint()
+    game["spawn"] = (r.varint(), r.uvarint(), r.varint())
+    r.boolean(); game["time"] = r.varint(); r.boolean(); r.boolean(); r.f32(); r.f32()
+    r.boolean(); r.boolean(); r.boolean()
+    game["commands"], game["texture_packs_required"] = r.boolean(), r.boolean()
+    require(r.uvarint() == 0, "no game rules expected")
+    r.boolean(); r.boolean(); r.boolean()
+    game["permission"], _ = r.varint(), r.varint()
+    game["tick_range"] = struct.unpack("<i", r.take(4))[0]
+    r.boolean(); r.varint(); r.boolean(); r.boolean(); r.boolean(); r.boolean()
+    game["level_id"], game["level_name"], _ = r.string(), r.string(), r.string()
+    r.boolean()
+    game["current_tick"] = struct.unpack("<Q", r.take(8))[0]
+    r.varint()
+    game["palette"] = [(r.string(), struct.unpack("<h", r.take(2))[0]) for _ in range(r.uvarint())]
+    r.string()
+    require(r.at == len(body), "StartGame fully consumed")
+    return game
+
+
 def next_application(client, remote, seen):
     """Next new reliable-ordered application message from the server."""
     while True:
@@ -410,8 +471,22 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                         require(receive_packets() == [(0x07, bytes(3))], f"{scenario}: empty ResourcePackStack")
                         sender.send(b"\xfe" + session.seal(compressed_packets([(0x08, b"\x04\x00\x00")])))
                         packets = receive_packets()
-                        require(len(packets) == 1 and packets[0][0] == 0x05 and expected.encode() in packets[0][1] and
-                                b"StartGame" in packets[0][1], f"{scenario}: encrypted disconnect {packets}")
+                        require([header for header, _ in packets] == [0x0B, 0x2B, 0x0A, 0x3C, 0x3B],
+                                f"{scenario}: StartGame, SetSpawnPosition, SetTime, SetDifficulty, SetCommandsEnabled {packets}")
+                        game = parse_start_game(packets[0][1])
+                        require(game["runtime_id"] >= 1 and game["unique_id"] == game["runtime_id"], f"{scenario}: entity ids {game}")
+                        require(game["level_name"] == "Transport Test" and game["generator"] == 1 and game["dimension"] == 0,
+                                f"{scenario}: level settings {game}")
+                        require(game["spawn"] == (0, 64, 0) and abs(game["position"][1] - 65.62) < 1e-3, f"{scenario}: spawn {game}")
+                        require(game["tick_range"] == 4 and game["permission"] == 1 and game["palette"][0] == ("minecraft:air", 0),
+                                f"{scenario}: defaults {game}")
+                        # A movement packet before spawning is ignored; the radius request is answered.
+                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x13, b"\x00")])))
+                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x45, varint(32 << 1))])))
+                        packets = receive_packets()
+                        require(packets[0] == (0x46, varint(10 << 1)), f"{scenario}: ChunkRadiusUpdated {packets}")
+                        require(len(packets) == 2 and packets[1][0] == 0x05 and expected.encode() in packets[1][1] and
+                                b"Chunk streaming" in packets[1][1], f"{scenario}: encrypted disconnect {packets}")
                         require(next_application(client, remote, seen) == b"\x15", f"{scenario}: RakNet disconnect")
                         continue
                     messages = until_disconnect(client, remote)
@@ -456,7 +531,7 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
         require(any("login not authenticated" in line for line in transcript), f"forged login not logged: {transcript}")
         require(any("closing connection: login protocol 281 is not 282" in line for line in transcript),
                 f"version refusal not logged: {transcript}")
-        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection, signed logins, the encrypted handshake, pack exchange and whitelist refusal passed")
+        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection, signed logins, the encrypted handshake, pack exchange, StartGame, chunk radius and whitelist refusal passed")
     finally:
         if server.poll() is None:
             server.kill()

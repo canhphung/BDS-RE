@@ -99,3 +99,13 @@ New test `auth`: RFC 4648 base64 vectors and strictness, FIPS 180-2 SHA-256/384 
 | Clang 18.1.3 | Release | PASS, 16/16 CTest |
 
 `server` adds whitelist UUID parsing/normalisation, UUID/XUID admission, XUID fill-in and gamertag update with persistence. `auth` adds the encrypted PlayStatus/ResourcePacksInfo/ResourcePackStack sequence, Completed, refusal, download request, malformed responses and admission refusal. `raknet_handshake` drives the pack exchange over UDP with the Python client and toggles `whitelist on` through the console to check a plaintext notAllowed refusal. During development ASan caught a use-after-free in new test code (a ByteReader over a temporary); it was fixed before commit. No Minecraft client was used.
+
+## StartGame slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 17/17 CTest |
+| GCC 13.3.0 | Release | PASS, 17/17 CTest |
+| Clang 18.1.3 | Release | PASS, 17/17 CTest |
+
+New test `level_packets` compares StartGame (all LevelSettings fields, negative/extreme values, palette) and the small level packets with golden bytes from an independent Python encoder, plus zigzag varints and the chunk radius clamp. `auth` covers the Completed → level data sequence, ignored packets while spawning and the radius reply. `raknet_handshake` parses StartGame with an independent Python reader over UDP and checks ChunkRadiusUpdated. No Minecraft client was used.

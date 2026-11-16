@@ -13650,6 +13650,2354 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::sendLoginMessageLocal(NetworkIdentifier const&, ConnectionRequest const&)",
+      "address": "0x182b690",
+      "size": 274,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x182b6ce",
+          "operand": "1831210 <ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b6de",
+          "operand": "18279b0 <ServerNetworkHandler::updateServerAnnouncement()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b6f2",
+          "operand": "182fd90 <ServerNetworkHandler::_sendLevelData(ServerPlayer&, NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b706",
+          "operand": "1830820 <ServerNetworkHandler::_sendAdditionalLevelData(ServerPlayer&, NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b740",
+          "operand": "24f02c0 <MinecraftCommands::getRegistry()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b74f",
+          "operand": "2596260 <CommandRegistry::serializeAvailableCommands() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b766",
+          "operand": "18f3ed0 <ConnectionRequest::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b78a",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182b794",
+          "operand": "183a5d0 <AvailableCommandsPacket::~AvailableCommandsPacket()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)",
+      "address": "0x1831210",
+      "size": 3340,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x183124a",
+          "operand": "1832b10 <std::function<void (ServerPlayer&)>::function<ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)::$_10, void, void>(ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)::$_10)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183128d",
+          "operand": "18f3ed0 <ConnectionRequest::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18312b8",
+          "operand": "*0x10(%rdx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18312bf",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18312c7",
+          "operand": "1836e60 <ExtendedCertificate::getIdentity(Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18312e5",
+          "operand": "18f3ef0 <ConnectionRequest::getDeviceId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18312ee",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18312fd",
+          "operand": "183a910 <std::_MakeUniq<Certificate>::__single_object std::make_unique<Certificate, Certificate const&>(Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18313bb",
+          "operand": "183a660 <std::_MakeUniq<ServerPlayer>::__single_object std::make_unique<ServerPlayer, Level&, PacketSender&, NetworkHandler&, GameType, NetworkIdentifier const&, unsigned char, std::function<void (ServerPlayer&)>&, std::unique_ptr<SkinInfoData, std::default_delete<SkinInfoData> >, mce::UUID, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::unique_ptr<Certificate, std::default_delete<Certificate> >, int const&>(Level&, PacketSender&, NetworkHandler&, GameType&&, NetworkIdentifier const&, unsigned char&&, std::function<void (ServerPlayer&)>&, std::unique_ptr<SkinInfoData, std::default_delete<SkinInfoData> >&&, mce::UUID&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::unique_ptr<Certificate, std::default_delete<Certificate> >&&, int const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18313c7",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18313d3",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18313dc",
+          "operand": "183a9d0 <std::unique_ptr<SkinInfoData, std::default_delete<SkinInfoData> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18313e5",
+          "operand": "18f3060 <ConnectionRequest::getClientRandomId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18313f5",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183140c",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831422",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831437",
+          "operand": "26ed0e0 <mce::UUID::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183144a",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183145d",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831466",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831483",
+          "operand": "18f2e40 <ConnectionRequest::getSelfSignedId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831496",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18314a9",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18314b2",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18314cf",
+          "operand": "18f30e0 <ConnectionRequest::getClientPlatformId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18314e2",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18314f5",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18314fe",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183151b",
+          "operand": "18f3320 <ConnectionRequest::getClientPlatformOfflineId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183152e",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831541",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183154a",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831561",
+          "operand": "18f31a0 <ConnectionRequest::getClientThirdPartyName[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831574",
+          "operand": "22e9010 <Player::setThirdPartyName(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831580",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831589",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18315a0",
+          "operand": "18f3260 <ConnectionRequest::getClientPlatformOnlineId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18315b3",
+          "operand": "22e90f0 <Player::setPlatformOnlineId(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18315bf",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18315c8",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18315d8",
+          "operand": "18f3c50 <ConnectionRequest::getDeviceOS() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18315e6",
+          "operand": "22e9050 <Player::setPlatform(BuildPlatform)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18315ef",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18315ff",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183160e",
+          "operand": "1837070 <ExtendedCertificate::getIdentityName[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831621",
+          "operand": "22e8fd0 <Player::setPrimaryName(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183162d",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183163d",
+          "operand": "1c87180 <Level::getLevelStorage()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183164d",
+          "operand": "183aa50 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183165d",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183166c",
+          "operand": "17fdd10 <ExtendedCertificate::getXuid[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831678",
+          "operand": "17573a0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::empty() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18316a9",
+          "operand": "1cd6050 <LevelStorage::loadServerPlayerData(Player const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18316b5",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18316be",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18316db",
+          "operand": "1c87180 <Level::getLevelStorage()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18316eb",
+          "operand": "183aa50 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18316fb",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183170a",
+          "operand": "17fdd10 <ExtendedCertificate::getXuid[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831716",
+          "operand": "17573a0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::empty() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831748",
+          "operand": "1cd67f0 <LevelStorage::getServerId[abi:cxx11](Player const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183175b",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183176e",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183177a",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831783",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183179a",
+          "operand": "1c88aa0 <Level::getNextRuntimeID()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18317b4",
+          "operand": "21a5720 <Actor::setRuntimeID(ActorRuntimeID)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18317bd",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18317c5",
+          "operand": "22eae90 <Player::getSupplies() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18317fb",
+          "operand": "1832b90 <std::function<void (Container&, int, ItemInstance const&, ItemInstance const&)>::function<ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)::$_11, void, void>(ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)::$_11)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183184e",
+          "operand": "1832c10 <std::function<void ()>::function<ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)::$_12, void, void>(ServerNetworkHandler::_createNewPlayer(NetworkIdentifier const&, ConnectionRequest const&)::$_12)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183186f",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1831878",
+          "operand": "1804310 <std::function<void ()>::~function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831884",
+          "operand": "183aa70 <std::function<void (Container&, int, ItemInstance const&, ItemInstance const&)>::~function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183189f",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18318a7",
+          "operand": "21a56b0 <Actor::getUniqueID() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18318c9",
+          "operand": "1c89520 <Level::fetchEntity(ActorUniqueID, bool) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18318dc",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18318f3",
+          "operand": "1c8e880 <Level::getNewUniqueID()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183190d",
+          "operand": "21a5760 <Actor::migrateUniqueID(ActorUniqueID)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831916",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831926",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831932",
+          "operand": "183aa90 <ActorUniqueID::fromClientId(unsigned long)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183195e",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831966",
+          "operand": "1cd1750 <LevelData::getForceGameType() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183197c",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18319a7",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18319af",
+          "operand": "1cd16f0 <LevelData::getGameType() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18319c4",
+          "operand": "*%rcx",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18319ca",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18319f5",
+          "operand": "18f33e0 <ConnectionRequest::getSkinId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831a05",
+          "operand": "18f34a0 <ConnectionRequest::getSkinData() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831a15",
+          "operand": "18f3600 <ConnectionRequest::getCapeData() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831a25",
+          "operand": "18f3760 <ConnectionRequest::getSkinGeometryName[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831a35",
+          "operand": "18f3820 <ConnectionRequest::getSkinGeometry[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831a3e",
+          "operand": "18f3fb0 <ConnectionRequest::isPremiumSkin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831ad5",
+          "operand": "*%r10",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1831adf",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831aeb",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831af7",
+          "operand": "18371f0 <std::vector<unsigned char, std::allocator<unsigned char> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831b03",
+          "operand": "18371f0 <std::vector<unsigned char, std::allocator<unsigned char> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831b0f",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831b2d",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831b42",
+          "operand": "1836840 <mce::UUID::operator==(mce::UUID const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831b58",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831b6b",
+          "operand": "2307240 <Abilities::setCommandPermissions(CommandPermissionLevel)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831b79",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831b88",
+          "operand": "17fdd10 <ExtendedCertificate::getXuid[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831ba4",
+          "operand": "25e1ee0 <PermissionsMap::isPermissionsSet(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, PlayerPermissionLevel) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831bba",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831bda",
+          "operand": "17fffd0 <MinecraftCommands::getOpPermissionLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831be9",
+          "operand": "2307240 <Abilities::setCommandPermissions(CommandPermissionLevel)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831bfe",
+          "operand": "25e1ec0 <PermissionsMap::preservePerms() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c0f",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c2c",
+          "operand": "1c8de10 <Level::getDefaultAbilities()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c34",
+          "operand": "2307210 <Abilities::getCommandPermissions() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c43",
+          "operand": "2307240 <Abilities::setCommandPermissions(CommandPermissionLevel)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c4c",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c69",
+          "operand": "1c8de10 <Level::getDefaultAbilities()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c71",
+          "operand": "2307270 <Abilities::getPlayerPermissions() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c80",
+          "operand": "2306930 <Abilities::setPlayerPermissions(PlayerPermissionLevel)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831c91",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831ca1",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831ca9",
+          "operand": "1cd1890 <LevelData::hasCommandsEnabled() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831cbf",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831cca",
+          "operand": "*0x598(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1831ce4",
+          "operand": "17fffd0 <MinecraftCommands::getOpPermissionLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831cfb",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d0e",
+          "operand": "2306930 <Abilities::setPlayerPermissions(PlayerPermissionLevel)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d1a",
+          "operand": "183aac0 <std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >::unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d23",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d2b",
+          "operand": "183aae0 <Player::getR5DataRecoverComplete() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d43",
+          "operand": "1c87180 <Level::getLevelStorage()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d53",
+          "operand": "183aa50 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d63",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d72",
+          "operand": "17fdd10 <ExtendedCertificate::getXuid[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831d7e",
+          "operand": "17573a0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::empty() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831db0",
+          "operand": "1cd6420 <LevelStorage::loadLostPlayerData(Player const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831dc3",
+          "operand": "183ab00 <std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >::operator=(std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831dd6",
+          "operand": "183ab60 <std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831de2",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831dee",
+          "operand": "183abc0 <std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >::get() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e04",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e17",
+          "operand": "183abe0 <std::remove_reference<std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >&>::type&& std::move<std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >&>(std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e26",
+          "operand": "183abf0 <std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >::unique_ptr(std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e39",
+          "operand": "25ff080 <ServerPlayer::setLostDataTag(std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e45",
+          "operand": "183ab60 <std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e53",
+          "operand": "183aa30 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e5b",
+          "operand": "22e9080 <Player::setDisplayName()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e64",
+          "operand": "183aa50 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831e94",
+          "operand": "183ac40 <std::remove_reference<std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >&>::type&& std::move<std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >&>(std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831ea3",
+          "operand": "183ac50 <std::unique_ptr<Player, std::default_delete<Player> >::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer>, void>(std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831ebd",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1831ec6",
+          "operand": "183aca0 <std::unique_ptr<Player, std::default_delete<Player> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831ee0",
+          "operand": "183ab60 <std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831eec",
+          "operand": "183ab60 <std::unique_ptr<CompoundTag, std::default_delete<CompoundTag> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831ef5",
+          "operand": "183ad00 <std::unique_ptr<ServerPlayer, std::default_delete<ServerPlayer> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1831efe",
+          "operand": "183ad60 <std::function<void (ServerPlayer&)>::~function()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::_sendLevelData(ServerPlayer&, NetworkIdentifier const&)",
+      "address": "0x182fd90",
+      "size": 2702,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x182fdbf",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fddc",
+          "operand": "*%rsi",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182fdee",
+          "operand": "1c68ab0 <LevelSettings::LevelSettings(LevelData const&, DimensionId)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fdf7",
+          "operand": "21a56b0 <Actor::getUniqueID() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fe0a",
+          "operand": "21a55d0 <Actor::getRuntimeID() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fe1a",
+          "operand": "22f5f80 <Player::getUnmappedPlayerGameType()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fe41",
+          "operand": "*%rsi",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182fe4e",
+          "operand": "21af570 <Actor::getRotation() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fe65",
+          "operand": "1c87180 <Level::getLevelStorage()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fe85",
+          "operand": "*0xa8(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182fe96",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fe9e",
+          "operand": "1cd14a0 <LevelData::getLevelName[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182feb5",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182febd",
+          "operand": "1cd1990 <LevelData::getPremiumTemplateContentIdentity() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182fed4",
+          "operand": "1c8fa00 <Level::getGlobalBlockPalette() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ff0c",
+          "operand": "1c86a50 <Level::getCurrentTick() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ff14",
+          "operand": "1838fd0 <Tick::getTimeStamp() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ff27",
+          "operand": "22f6230 <Player::getEnchantmentSeed() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ffe3",
+          "operand": "1838ff0 <StartGamePacket::StartGamePacket(LevelSettings const&, ActorUniqueID, ActorRuntimeID, GameType, Vec3 const&, Vec2 const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, ContentIdentity const&, BlockPalette const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool, unsigned long, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ffef",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830034",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830058",
+          "operand": "*%r9",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1830069",
+          "operand": "22f2ae0 <Player::getSpawnPosition()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830075",
+          "operand": "22f2c90 <Player::isForcedRespawn() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18300be",
+          "operand": "1839220 <SetSpawnPositionPacket::SetSpawnPositionPacket(BlockPos const&, SpawnPositionType, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830103",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830127",
+          "operand": "*%r9",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1830135",
+          "operand": "1c86b00 <Level::getTime() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830143",
+          "operand": "1839290 <SetTimePacket::SetTimePacket(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830188",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18301ac",
+          "operand": "*%r9",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18301ba",
+          "operand": "1c88a70 <Level::getDifficulty() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18301c8",
+          "operand": "18392d0 <SetDifficultyPacket::SetDifficultyPacket(Difficulty)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183020d",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830231",
+          "operand": "*%r9",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x183023f",
+          "operand": "1c8e5c0 <Level::hasCommandsEnabled() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183025e",
+          "operand": "1839310 <SetCommandsEnabledPacket::SetCommandsEnabledPacket(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18302a3",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18302c7",
+          "operand": "*%r9",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18302d5",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18302e8",
+          "operand": "1cd15c0 <LevelData::getLightningLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183030b",
+          "operand": "1cd15c0 <LevelData::getLightningLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183031c",
+          "operand": "26dda50 <mce::Math::floor(float)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183034a",
+          "operand": "1839360 <LevelEventPacket::LevelEventPacket(LevelEvent, float, float, float, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183038f",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18303b3",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18303bd",
+          "operand": "18393e0 <LevelEventPacket::~LevelEventPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18303ce",
+          "operand": "1cd1670 <LevelData::getRainLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18303e6",
+          "operand": "1cd1670 <LevelData::getRainLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18303f7",
+          "operand": "26dda50 <mce::Math::floor(float)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830425",
+          "operand": "1839360 <LevelEventPacket::LevelEventPacket(LevelEvent, float, float, float, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183046a",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183048e",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1830498",
+          "operand": "18393e0 <LevelEventPacket::~LevelEventPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18304ad",
+          "operand": "1c8ddb0 <Level::getAdventureSettings()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18304d2",
+          "operand": "21a56b0 <Actor::getUniqueID() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830500",
+          "operand": "1839400 <AdventureSettingsPacket::AdventureSettingsPacket(AdventureSettings const&, Abilities const&, ActorUniqueID, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830532",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x183053f",
+          "operand": "1c86a80 <Level::getGameRules()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183054e",
+          "operand": "1d1a420 <GameRules::createAllGameRulesPacket() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830585",
+          "operand": "1839a50 <std::unique_ptr<GameRulesChangedPacket, std::default_delete<GameRulesChangedPacket> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830598",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18305bc",
+          "operand": "*%r9",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18305c6",
+          "operand": "1839a70 <PlayerListPacket::PlayerListPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18305eb",
+          "operand": "1839ac0 <std::unordered_map<mce::UUID, PlayerListEntry, std::hash<mce::UUID>, std::equal_to<mce::UUID>, std::allocator<std::pair<mce::UUID const, PlayerListEntry> > >::begin()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18305fe",
+          "operand": "1838c20 <std::unordered_map<mce::UUID, PlayerListEntry, std::hash<mce::UUID>, std::equal_to<mce::UUID>, std::allocator<std::pair<mce::UUID const, PlayerListEntry> > >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183061e",
+          "operand": "1838bf0 <bool std::__detail::operator!=<std::pair<mce::UUID const, PlayerListEntry>, true>(std::__detail::_Node_iterator_base<std::pair<mce::UUID const, PlayerListEntry>, true> const&, std::__detail::_Node_iterator_base<std::pair<mce::UUID const, PlayerListEntry>, true> const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830637",
+          "operand": "1839af0 <std::__detail::_Node_iterator<std::pair<mce::UUID const, PlayerListEntry>, false, true>::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830658",
+          "operand": "1839b10 <PlayerListPacket::add(PlayerListEntry const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830664",
+          "operand": "1839b50 <std::__detail::_Node_iterator<std::pair<mce::UUID const, PlayerListEntry>, false, true>::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18306b5",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18306d9",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18306e7",
+          "operand": "1836b30 <Level::getSimPaused()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830711",
+          "operand": "1839b80 <LevelEventPacket::LevelEventPacket(LevelEvent, Vec3 const&, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830756",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183077a",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1830784",
+          "operand": "18393e0 <LevelEventPacket::~LevelEventPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183079b",
+          "operand": "1c8f870 <Level::sendAllPlayerAbilities(Player const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18307a7",
+          "operand": "1839be0 <PlayerListPacket::~PlayerListPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18307b3",
+          "operand": "1839c30 <std::unique_ptr<GameRulesChangedPacket, std::default_delete<GameRulesChangedPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18307bf",
+          "operand": "1836920 <AdventureSettingsPacket::~AdventureSettingsPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18307cb",
+          "operand": "1839c90 <SetCommandsEnabledPacket::~SetCommandsEnabledPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18307d7",
+          "operand": "1839cb0 <SetDifficultyPacket::~SetDifficultyPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18307e3",
+          "operand": "1839cd0 <SetTimePacket::~SetTimePacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18307ef",
+          "operand": "1839cf0 <SetSpawnPositionPacket::~SetSpawnPositionPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18307fb",
+          "operand": "1839d10 <StartGamePacket::~StartGamePacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830807",
+          "operand": "180bfb0 <LevelSettings::~LevelSettings()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::_sendAdditionalLevelData(ServerPlayer&, NetworkIdentifier const&)",
+      "address": "0x1830820",
+      "size": 1606,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1830846",
+          "operand": "25fe120 <ServerPlayer::sendMobEffectPackets()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183084f",
+          "operand": "1839da0 <std::vector<AttributeInstanceHandle, std::allocator<AttributeInstanceHandle> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183085b",
+          "operand": "21a5000 <Actor::getAttributes()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830868",
+          "operand": "24a4ac0 <BaseAttributeMap::begin[abi:cxx11]()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830875",
+          "operand": "24a4b20 <BaseAttributeMap::end[abi:cxx11]()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183088c",
+          "operand": "1839dc0 <bool std::__detail::operator!=<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, AttributeInstance>, true>(std::__detail::_Node_iterator_base<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, AttributeInstance>, true> const&, std::__detail::_Node_iterator_base<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, AttributeInstance>, true> const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18308a2",
+          "operand": "1839df0 <std::__detail::_Node_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, AttributeInstance>, false, true>::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18308ba",
+          "operand": "24a7d70 <AttributeInstance::getHandle() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18308c7",
+          "operand": "1839e10 <std::vector<AttributeInstanceHandle, std::allocator<AttributeInstanceHandle> >::push_back(AttributeInstanceHandle&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18308d0",
+          "operand": "1839e50 <AttributeInstanceHandle::~AttributeInstanceHandle()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18308d9",
+          "operand": "1839e70 <std::__detail::_Node_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, AttributeInstance>, false, true>::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18308ee",
+          "operand": "1839ea0 <std::vector<AttributeInstanceHandle, std::allocator<AttributeInstanceHandle> >::size() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x183090f",
+          "operand": "18fb2a0 <UpdateAttributesPacket::UpdateAttributesPacket(Actor const&, std::vector<AttributeInstanceHandle, std::allocator<AttributeInstanceHandle> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830954",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830978",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1830982",
+          "operand": "1839ed0 <UpdateAttributesPacket::~UpdateAttributesPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830996",
+          "operand": "*0x960(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18309aa",
+          "operand": "1810f10 <std::lock_guard<std::mutex>::lock_guard(std::mutex&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18309c2",
+          "operand": "1839f20 <InventoryContentPacket::InventoryContentPacket(ContainerID, std::vector<ItemInstance, std::allocator<ItemInstance> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830a07",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830a2b",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1830a35",
+          "operand": "1836a10 <InventoryContentPacket::~InventoryContentPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830a41",
+          "operand": "18110f0 <std::lock_guard<std::mutex>::~lock_guard()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830a4d",
+          "operand": "1839f80 <CraftingDataPacket::CraftingDataPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830a64",
+          "operand": "1c8fa30 <Level::getRecipes() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830a6c",
+          "operand": "20c6870 <Recipes::getRecipes() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830a7f",
+          "operand": "1839fd0 <std::vector<std::unique_ptr<Recipe, std::default_delete<Recipe> >, std::allocator<std::unique_ptr<Recipe, std::default_delete<Recipe> > > >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830a92",
+          "operand": "183a010 <std::vector<std::unique_ptr<Recipe, std::default_delete<Recipe> >, std::allocator<std::unique_ptr<Recipe, std::default_delete<Recipe> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830aac",
+          "operand": "183a050 <bool __gnu_cxx::operator!=<std::unique_ptr<Recipe, std::default_delete<Recipe> > const*, std::vector<std::unique_ptr<Recipe, std::default_delete<Recipe> >, std::allocator<std::unique_ptr<Recipe, std::default_delete<Recipe> > > > >(__gnu_cxx::__normal_iterator<std::unique_ptr<Recipe, std::default_delete<Recipe> > const*, std::vector<std::unique_ptr<Recipe, std::default_delete<Recipe> >, std::allocator<std::unique_ptr<Recipe, std::default_delete<Recipe> > > > > const&, __gnu_cxx::__normal_iterator<std::unique_ptr<Recipe, std::default_delete<Recipe> > const*, std::vector<std::unique_ptr<Recipe, std::default_delete<Recipe> >, std::allocator<std::unique_ptr<Recipe, std::default_delete<Recipe> > > > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830ac5",
+          "operand": "183a090 <__gnu_cxx::__normal_iterator<std::unique_ptr<Recipe, std::default_delete<Recipe> > const*, std::vector<std::unique_ptr<Recipe, std::default_delete<Recipe> >, std::allocator<std::unique_ptr<Recipe, std::default_delete<Recipe> > > > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830ad8",
+          "operand": "183a0b0 <CraftingDataEntry::CraftingDataEntry()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830ae4",
+          "operand": "183a100 <std::unique_ptr<Recipe, std::default_delete<Recipe> >::get() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830af3",
+          "operand": "1900b20 <CraftingDataEntry::fillFromRecipe(Recipe const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b11",
+          "operand": "183a1b0 <std::remove_reference<CraftingDataEntry&>::type&& std::move<CraftingDataEntry&>(CraftingDataEntry&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b20",
+          "operand": "183a120 <void std::vector<CraftingDataEntry, std::allocator<CraftingDataEntry> >::emplace_back<CraftingDataEntry>(CraftingDataEntry&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b2c",
+          "operand": "183a1c0 <CraftingDataEntry::~CraftingDataEntry()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b38",
+          "operand": "183a200 <__gnu_cxx::__normal_iterator<std::unique_ptr<Recipe, std::default_delete<Recipe> > const*, std::vector<std::unique_ptr<Recipe, std::default_delete<Recipe> >, std::allocator<std::unique_ptr<Recipe, std::default_delete<Recipe> > > > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b54",
+          "operand": "1c8fa60 <Level::getFurnaceRecipes() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b5c",
+          "operand": "183a220 <FurnaceRecipes::getRecipes() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b6f",
+          "operand": "183a230 <std::map<int, ItemInstance, std::less<int>, std::allocator<std::pair<int const, ItemInstance> > >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b82",
+          "operand": "183a260 <std::map<int, ItemInstance, std::less<int>, std::allocator<std::pair<int const, ItemInstance> > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830b9c",
+          "operand": "183a290 <std::_Rb_tree_const_iterator<std::pair<int const, ItemInstance> >::operator!=(std::_Rb_tree_const_iterator<std::pair<int const, ItemInstance> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830bb5",
+          "operand": "183a2c0 <std::_Rb_tree_const_iterator<std::pair<int const, ItemInstance> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830bc8",
+          "operand": "183a0b0 <CraftingDataEntry::CraftingDataEntry()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830beb",
+          "operand": "19009b0 <CraftingDataEntry::fillFromFurnaceRecipe(int, ItemInstance const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c09",
+          "operand": "183a1b0 <std::remove_reference<CraftingDataEntry&>::type&& std::move<CraftingDataEntry&>(CraftingDataEntry&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c18",
+          "operand": "183a120 <void std::vector<CraftingDataEntry, std::allocator<CraftingDataEntry> >::emplace_back<CraftingDataEntry>(CraftingDataEntry&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c24",
+          "operand": "183a1c0 <CraftingDataEntry::~CraftingDataEntry()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c30",
+          "operand": "183a2e0 <std::_Rb_tree_const_iterator<std::pair<int const, ItemInstance> >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c4c",
+          "operand": "1c8fa60 <Level::getFurnaceRecipes() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c54",
+          "operand": "183a310 <FurnaceRecipes::getAuxRecipes() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c67",
+          "operand": "183a230 <std::map<int, ItemInstance, std::less<int>, std::allocator<std::pair<int const, ItemInstance> > >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c7a",
+          "operand": "183a260 <std::map<int, ItemInstance, std::less<int>, std::allocator<std::pair<int const, ItemInstance> > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830c94",
+          "operand": "183a290 <std::_Rb_tree_const_iterator<std::pair<int const, ItemInstance> >::operator!=(std::_Rb_tree_const_iterator<std::pair<int const, ItemInstance> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830cad",
+          "operand": "183a2c0 <std::_Rb_tree_const_iterator<std::pair<int const, ItemInstance> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830cc0",
+          "operand": "183a0b0 <CraftingDataEntry::CraftingDataEntry()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830ce3",
+          "operand": "1900a60 <CraftingDataEntry::fillFromFurnaceAuxRecipe(int, ItemInstance const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830d01",
+          "operand": "183a1b0 <std::remove_reference<CraftingDataEntry&>::type&& std::move<CraftingDataEntry&>(CraftingDataEntry&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830d10",
+          "operand": "183a120 <void std::vector<CraftingDataEntry, std::allocator<CraftingDataEntry> >::emplace_back<CraftingDataEntry>(CraftingDataEntry&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830d1c",
+          "operand": "183a1c0 <CraftingDataEntry::~CraftingDataEntry()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830d28",
+          "operand": "183a2e0 <std::_Rb_tree_const_iterator<std::pair<int const, ItemInstance> >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830d79",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830d9d",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1830da0",
+          "operand": "183a330 <ServiceLocator<FeatureToggles>::get()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830db8",
+          "operand": "24c2f30 <FeatureToggles::get(FeatureOptionID)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830dd9",
+          "operand": "24cbd50 <Option::getBool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830df6",
+          "operand": "1c8deb0 <Level::getScoreboard()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830e29",
+          "operand": "22e7050 <Player::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830e46",
+          "operand": "*%rcx",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1830e4f",
+          "operand": "183a3a0 <CraftingDataPacket::~CraftingDataPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1830e58",
+          "operand": "183a3f0 <std::vector<AttributeInstanceHandle, std::allocator<AttributeInstanceHandle> >::~vector()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "StartGamePacket::write(BinaryStream&) const",
+      "address": "0x184a2b0",
+      "size": 400,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x184a2db",
+          "operand": "184b5e0 <void BinaryStream::writeType<ActorUniqueID>(ActorUniqueID const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a2f1",
+          "operand": "1848750 <void BinaryStream::writeType<ActorRuntimeID>(ActorRuntimeID const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a304",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a31a",
+          "operand": "184b610 <void BinaryStream::writeType<Vec3>(Vec3 const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a330",
+          "operand": "184b640 <void BinaryStream::writeType<Vec2>(Vec2 const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a344",
+          "operand": "184b670 <void BinaryStream::writeType<LevelSettings>(LevelSettings const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a35a",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a370",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a38c",
+          "operand": "272dd50 <ContentIdentity::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a399",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a3a2",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a3bb",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a3cf",
+          "operand": "26eb3d0 <BinaryStream::writeUnsignedInt64(unsigned long)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a3e2",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a402",
+          "operand": "184b750 <std::function<void (BinaryStream&, BlockPaletteSerializationData const&)>::function<StartGamePacket::write(BinaryStream&) const::{lambda(BinaryStream&, BlockPaletteSerializationData const&)#1}, void, void>(StartGamePacket::write(BinaryStream&) const::{lambda(BinaryStream&, BlockPaletteSerializationData const&)#1})>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a413",
+          "operand": "184b6a0 <void BinaryStream::writeVectorList<BlockPaletteSerializationData>(std::vector<BlockPaletteSerializationData, std::allocator<BlockPaletteSerializationData> > const&, std::function<void (BinaryStream&, BlockPaletteSerializationData const&)>&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a41c",
+          "operand": "184b7d0 <std::function<void (BinaryStream&, BlockPaletteSerializationData const&)>::~function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184a432",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "serialize<LevelSettings>::write(LevelSettings const&, BinaryStream&)",
+      "address": "0x184b8b0",
+      "size": 1231,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x184b8d5",
+          "operand": "1c69170 <LevelSettings::getSeed() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b8e3",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b8fa",
+          "operand": "1c691a0 <LevelSettings::getDimension() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b908",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b91f",
+          "operand": "1c69260 <LevelSettings::getGenerator() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b92d",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b944",
+          "operand": "1c69180 <LevelSettings::getGameType() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b952",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b969",
+          "operand": "1c691c0 <LevelSettings::getGameDifficulty() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b977",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b98e",
+          "operand": "1c69150 <LevelSettings::getDefaultSpawn() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b99a",
+          "operand": "184bd80 <NetworkBlockPosition::NetworkBlockPosition(BlockPos const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b9aa",
+          "operand": "1849140 <void BinaryStream::writeType<NetworkBlockPosition>(NetworkBlockPosition const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b9c1",
+          "operand": "1c69240 <LevelSettings::hasAchievementsDisabled() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b9d2",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b9e9",
+          "operand": "1c691e0 <LevelSettings::getTime() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184b9f7",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184ba0e",
+          "operand": "1c692c0 <LevelSettings::isEducationEditionWorld() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184ba1f",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184ba36",
+          "operand": "1c69300 <LevelSettings::educationFeaturesEnabled() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184ba47",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184ba5e",
+          "operand": "1c69280 <LevelSettings::getRainLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184ba6a",
+          "operand": "26eb4b0 <BinaryStream::writeFloat(float)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184ba81",
+          "operand": "1c692a0 <LevelSettings::getLightningLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184ba8d",
+          "operand": "26eb4b0 <BinaryStream::writeFloat(float)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184baa4",
+          "operand": "1c693a0 <LevelSettings::isMultiplayerGame() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bab5",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bacc",
+          "operand": "1c693c0 <LevelSettings::hasLANBroadcast() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184badd",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184baf4",
+          "operand": "1c693e0 <LevelSettings::hasXBLBroadcast() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb05",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb1c",
+          "operand": "1c69420 <LevelSettings::hasCommandsEnabled() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb2d",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb44",
+          "operand": "1c69440 <LevelSettings::isTexturepacksRequired() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb55",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb6c",
+          "operand": "1c69360 <LevelSettings::getGameRules() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb78",
+          "operand": "1d1a420 <GameRules::createAllGameRulesPacket() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb81",
+          "operand": "184bdf0 <std::unique_ptr<GameRulesChangedPacket, std::default_delete<GameRulesChangedPacket> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb94",
+          "operand": "184bdc0 <void BinaryStream::writeType<GameRulesChangedPacketData>(GameRulesChangedPacketData const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bb9d",
+          "operand": "1839c30 <std::unique_ptr<GameRulesChangedPacket, std::default_delete<GameRulesChangedPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bbb4",
+          "operand": "1c694c0 <LevelSettings::hasBonusChestEnabled() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bbc5",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bbdc",
+          "operand": "1c694e0 <LevelSettings::hasStartWithMapEnabled() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bbed",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bbf8",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc13",
+          "operand": "1c69560 <LevelSettings::getDefaultAbilities() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc1f",
+          "operand": "2307270 <Abilities::getPlayerPermissions() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc2e",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc3a",
+          "operand": "180b850 <Abilities::~Abilities()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc51",
+          "operand": "1c69400 <LevelSettings::getXBLBroadcastMode() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc5f",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc76",
+          "operand": "1c69500 <LevelSettings::getServerChunkTickRange() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc84",
+          "operand": "26eb280 <BinaryStream::writeSignedInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bc9b",
+          "operand": "1c69520 <LevelSettings::hasPlatformBroadcast() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bcac",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bcc3",
+          "operand": "1c69540 <LevelSettings::getPlatformBroadcastMode() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bcd1",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bce8",
+          "operand": "1c69380 <LevelSettings::getXBLBroadcastIntent() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bcf9",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bd10",
+          "operand": "1c69460 <LevelSettings::hasLockedBehaviorPack() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bd21",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bd38",
+          "operand": "1c69480 <LevelSettings::hasLockedResourcePack() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bd49",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bd60",
+          "operand": "1c694a0 <LevelSettings::isFromLockedTemplate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184bd71",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "serialize<NetworkBlockPosition>::write(NetworkBlockPosition const&, BinaryStream&)",
+      "address": "0x1849230",
+      "size": 69,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x184924a",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184925a",
+          "operand": "26eb790 <BinaryStream::writeUnsignedVarInt(unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184926a",
+          "operand": "26eb740 <BinaryStream::writeVarInt(int)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "LevelSettings::generatorTypeToString[abi:cxx11](GeneratorType)",
+      "address": "0x1c697c0",
+      "size": 335,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1c697e4",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c697f8",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c69801",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c69819",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c6982d",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c69836",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c6984e",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c69862",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c6986b",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c69883",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c69897",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c698a0",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c698b8",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c698cc",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c698d5",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c698e3",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c698f7",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1c69900",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::handle(NetworkIdentifier const&, RequestChunkRadiusPacket const&)",
+      "address": "0x1825e50",
+      "size": 106,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1825e7b",
+          "operand": "18365f0 <Packet::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1825e8b",
+          "operand": "1825970 <ServerNetworkHandler::_getServerPlayer(NetworkIdentifier const&, unsigned char)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1825eaf",
+          "operand": "25fd6e0 <ServerPlayer::setClientChunkRadius(unsigned int)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerPlayer::setClientChunkRadius(unsigned int)",
+      "address": "0x25fd6e0",
+      "size": 272,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25fd703",
+          "operand": "25fd620 <ServerPlayer::findClientChunkRadius(unsigned int) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd724",
+          "operand": "21a3250 <Actor::getLevel()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd72c",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd734",
+          "operand": "1cd1350 <LevelData::getServerChunkTickRange() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd744",
+          "operand": "19f8dd0 <unsigned int const& std::max<unsigned int>(unsigned int const&, unsigned int const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd752",
+          "operand": "25fe1d0 <ServerPlayer::_getViewDistanceDeterminismBufferRadius() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd769",
+          "operand": "22f5730 <Player::setChunkRadius(unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd77c",
+          "operand": "22fa8d0 <std::unique_ptr<PlayerChunkSource, std::default_delete<PlayerChunkSource> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd79b",
+          "operand": "22faae0 <std::unique_ptr<PlayerChunkSource, std::default_delete<PlayerChunkSource> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd7b2",
+          "operand": "1e1f9e0 <PlayerChunkSource::setRadius(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd7c5",
+          "operand": "2602760 <ChunkRadiusUpdatedPacket::ChunkRadiusUpdatedPacket(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd7df",
+          "operand": "*%rcx",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x25fd7e5",
+          "operand": "18cdda0 <ChunkRadiusUpdatedPacket::~ChunkRadiusUpdatedPacket()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerPlayer::findClientChunkRadius(unsigned int) const",
+      "address": "0x25fd620",
+      "size": 192,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25fd637",
+          "operand": "19f27f0 <std::numeric_limits<unsigned int>::max()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd643",
+          "operand": "21a67b0 <Actor::getDimension() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd656",
+          "operand": "*0x120(%rax)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x25fd671",
+          "operand": "21a67b0 <Actor::getDimension() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd68b",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x25fd6c0",
+          "operand": "1840750 <unsigned int const& std::min<unsigned int>(unsigned int const&, unsigned int const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25fd6d5",
+          "operand": "2451150 <unsigned int mce::Math::clamp<unsigned int>(unsigned int, unsigned int, unsigned int)>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }
