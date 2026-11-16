@@ -135,6 +135,13 @@ Translated from the original and checked against it with three oracles
   as UpdateAttributes and SetActorData. Jump, respawn and actions 13/14 are not
   relayed; break actions, 17 and 18 (crack particles/progress) are handled as in
   the original and relayed with every other action.
+- Spawn: like the original, the joining player receives its first dirty
+  attributes (all attribute instances) and its complete metadata (flags
+  BREATHING, HAS_COLLISION, AFFECTED_BY_GRAVITY), then flag 34, and flag 14 once
+  initialized. Without these the client floated and showed the air-bubble bar.
+- Placement checks the acting player at the transaction's fromPosition (the
+  original sets it for useItemOn), so building a pillar while jumping works even
+  though the server position trails by up to three ticks.
 - Every 80 ticks ActorEvent 66 carries the structure feature at the player
   (always none in BDS-RE).
 - Outgoing packets are never merged; a client more than 4096 packets behind is

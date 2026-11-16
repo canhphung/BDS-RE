@@ -88,7 +88,8 @@ void Server::enqueue(std::uint64_t id, GamePacket packet) {
 std::uint64_t Server::Session::flags() const {
     // Actor flags of a standing survival player in the original (bits 14, 19,
     // 34, 46, 47), plus SNEAKING (1) and SPRINTING (3).
-    std::uint64_t f = 0xc00400084000ULL;
+    // Bit 14 is added once the client has initialized (join capture packet 247).
+    std::uint64_t f = active ? 0xc00400084000ULL : 0xc00400080000ULL;
     if (sneaking)
         f |= 1ULL << 1;
     if (sprinting)
@@ -239,10 +240,19 @@ std::vector<GamePacket> Server::prepare(const auth::Identity &identity, protocol
     hotbar.varint(p.selected);
     hotbar.byte(0);
     hotbar.boolean(true);
+    // The player's first dirty attributes and synched data, as the original
+    // sends them before the chunks (join capture packets 26-28): all attribute
+    // instances, the complete metadata with flags 0xc00000080000 (BREATHING,
+    // HAS_COLLISION, AFFECTED_BY_GRAVITY), then flags with bit 34 added. Without
+    // them the client keeps default flags: no gravity/collision (floating) and
+    // the air-bubble bar.
     return {packet(PacketId::InventoryContent, inventory(p)),
             packet(PacketId::InventoryContent, creative_inventory()),
             packet(PacketId::InventoryContent, cursor_inventory(p)),
-            packet(PacketId::PlayerHotbar, hotbar.take())};
+            packet(PacketId::PlayerHotbar, hotbar.take()),
+            packet(PacketId::UpdateAttributes, spawn_attributes(g.runtime_id)),
+            packet(PacketId::SetActorData, player_data(g.runtime_id, identity.display_name, 0xc00000080000ULL)),
+            packet(PacketId::SetActorData, actor_flags(g.runtime_id, 0xc00400080000ULL))};
 }
 void Server::leave(std::uint64_t runtime) {
     auto i = sessions_.find(runtime);
@@ -553,9 +563,23 @@ std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
         !held.block || held != t.held || !world_.block(t.block) ||
         world_.block(target) || std::get<1>(target) < 0 || std::get<1>(target) >= 256)
         return restore();
-    for (const auto &[id, session] : sessions_)
-        if (session.active && overlap(world_.players().at(session.key), target))
+    // The click-block branch of ItemUseInventoryTransaction::handle ($_2,
+    // 0x1ae6f67) puts the player at the transaction's fromPosition for the
+    // duration of useItemOn, so the acting player is checked where the client
+    // was, not at the interpolated server position (which trails by up to
+    // three ticks and made pillar building fail).
+    for (const auto &[id, session] : sessions_) {
+        if (!session.active)
+            continue;
+        PlayerData where = world_.players().at(session.key);
+        if (&session == &s) {
+            where.x = t.from[0];
+            where.y = t.from[1];
+            where.z = t.from[2];
+        }
+        if (overlap(where, target))
             return restore();
+    }
     world_.set_block(target, held.block);
     if (s.game.player_game_type != 1) {
         auto &stack = p.inventory[p.selected];
@@ -581,6 +605,7 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             if (s.active)
                 return {};
             s.active = true;
+            s.flags_dirty = true; // flag 14 goes out at the next tick
             // Player list entries are exchanged at once; AddPlayer and item
             // entities follow at the next tick through _updateNearbyEntities.
             for (const auto &[other_id, other] : sessions_)

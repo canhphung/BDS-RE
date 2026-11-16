@@ -49,6 +49,22 @@ GamePacket use(unsigned type, World::Position p, ItemStack held = {}) {
         w.float32(0);
     return packet(PacketId::InventoryTransaction, w.take());
 }
+GamePacket use_from(World::Position p, ItemStack held, float fx, float fy, float fz) {
+    ByteWriter w;
+    w.varint(2);
+    w.varint(0);
+    w.varint(0); // click block
+    position(w, p);
+    w.signed_varint(1);
+    w.signed_varint(0);
+    item(w, held);
+    w.float32(fx);
+    w.float32(fy);
+    w.float32(fz);
+    for (int i = 0; i < 3; ++i)
+        w.float32(0);
+    return packet(PacketId::InventoryTransaction, w.take());
+}
 GamePacket changes(std::vector<Action> actions) {
     ByteWriter w;
     w.varint(0);
@@ -419,6 +435,40 @@ int main() {
                 ls.tick();
                 check(lp.x == e, "interpolation steps equal the original's");
             }
+        }
+        {
+            // Pillar building: the click-block branch checks the acting player at
+            // the transaction's fromPosition (ItemUseInventoryTransaction $_2
+            // 0x1ae6f67), not at the lagging interpolated server position.
+            World pw;
+            pw.configure_terrain({1, 123});
+            Server ps(pw, properties, access);
+            auto g = make_game(1, 1);
+            ps.prepare(identity(8), g);
+            ps.handle(1, packet(PacketId::SetLocalPlayerAsInitialized, {1}), 0);
+            auto &pp = pw.players().at("uuid:" + identity(8).identity);
+            pp.x = 0.5f;
+            pp.y = 5.62f; // feet at 4: the server still sees the player in the target block
+            pp.z = 0.5f;
+            pp.inventory[0] = {3, 64};
+            ps.handle(1, use_from({0, 3, 0}, {3, 64}, 0.5f, 5.62f, 0.5f), 0);
+            check(pw.block({0, 4, 0}) == 0, "placement into the player's own block is refused");
+            ps.handle(1, use_from({0, 3, 0}, {3, 64}, 0.5f, 6.82f, 0.5f), 0);
+            check(pw.block({0, 4, 0}) == 3, "pillar placement uses the client's fromPosition");
+        }
+        {
+            // The player's own first SetActorData packets at spawn, byte for byte
+            // with the original join capture (runtime id 1, name "Reference").
+            const auto hex = [](const Bytes &b) {
+                std::string out;
+                for (auto c : b) {
+                    out += "0123456789abcdef"[c >> 4];
+                    out += "0123456789abcdef"[c & 15];
+                }
+                return out;
+            };
+            check(hex(player_data(1, "Reference", 0xc00000080000ULL)) == "012800078080c0808080600102020202000300000404095265666572656e636505070107012c010802000900000a00001600001a00001b02021c0600000025070026030000803f2704002a012c012b02002c00002d02002e02003503cdcc4c3f36036666e63f38080000000000000000000000003900003a03000000003b03000000004500004604004704004800014900004a02004b02004c02004d0201500001510000530400", "spawn metadata bytes");
+            check(hex(actor_flags(1, 0xc00400080000ULL)) == "010100078080c080808160", "spawn flags bytes");
         }
         std::cout << "terrain, sparse restart, movement, collision, two-player broadcasts, "
                      "building and transactional inventory passed\n";
