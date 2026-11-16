@@ -1,0 +1,6 @@
+/input/
+/build*/
+/reverse/symbols/generated/
+/reverse/evidence/local/
+*.pdb
+*.zip
