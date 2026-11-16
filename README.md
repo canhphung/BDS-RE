@@ -28,7 +28,7 @@ ctest --preset windows-debug
 .\build\windows-msvc\Debug\bds_server.exe --ticks 20
 ```
 
-Use `windows-release` for Release. Windows instructions and CI are configured, not yet executed. Linux Clang can use `-DCMAKE_CXX_COMPILER=clang++` in a separate build directory. Sanitizers: `-DBDS_SANITIZE=ON` on GCC/Clang.
+Use `windows-release` for Release. Windows CI uses the `windows-2022` runner to match the Visual Studio 2022 preset. See [build status](docs/BUILD_STATUS.md) for recorded verification. Linux Clang can use `-DCMAKE_CXX_COMPILER=clang++` in a separate build directory. Sanitizers: `-DBDS_SANITIZE=ON` on GCC/Clang.
 
 ## Research
 
