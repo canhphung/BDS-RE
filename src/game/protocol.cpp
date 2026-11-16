@@ -1,3 +1,5 @@
+#include <nlohmann/json.hpp>
+#include <limits>
 #include "bds/game/protocol.hpp"
 #include "bds/network/spawn.hpp"
 #include <algorithm>
@@ -196,8 +198,42 @@ Bytes remove_player_list(const auth::Identity &identity) {
     out.raw(in.take(16));
     return out.take();
 }
+void write_player_metadata(ByteWriter &out, const std::string &name, std::uint64_t flags) {
+    // SynchedActorData::packAll of a ServerPlayer as the original sends it in
+    // AddPlayerPacket (tests/reference/player_actions_bds_1.6.0.15.json): key,
+    // type (0 byte, 1 short, 2 int, 3 float, 4 string, 6 block pos, 7 long,
+    // 8 vec3), value. Key 0 holds the actor flags, key 4 the name tag.
+    struct Entry {
+        unsigned key, type;
+        std::int64_t value;
+        float real;
+    };
+    static const Entry entries[] = {
+        {0, 7, 0, 0}, {1, 2, 1, 0}, {2, 2, 0, 0}, {3, 0, 0, 0}, {4, 4, 0, 0}, {5, 7, -1, 0},
+        {7, 1, 300, 0}, {8, 2, 0, 0}, {9, 0, 0, 0}, {10, 0, 0, 0}, {22, 0, 0, 0}, {26, 0, 0, 0},
+        {27, 2, 1, 0}, {28, 6, 0, 0}, {37, 7, 0, 0}, {38, 3, 0, 1.0f}, {39, 4, 0, 0}, {42, 1, 300, 0},
+        {43, 2, 0, 0}, {44, 0, 0, 0}, {45, 2, 0, 0}, {46, 2, 0, 0}, {53, 3, 0, 0.8f}, {54, 3, 0, 1.8f},
+        {56, 8, 0, 0}, {57, 0, 0, 0}, {58, 3, 0, 0.0f}, {59, 3, 0, 0.0f}, {69, 0, 0, 0}, {70, 4, 0, 0},
+        {71, 4, 0, 0}, {72, 0, 1, 0}, {73, 0, 0, 0}, {74, 2, 0, 0}, {75, 2, 0, 0}, {76, 2, 0, 0},
+        {77, 2, -1, 0}, {80, 0, 1, 0}, {81, 0, 0, 0}, {83, 4, 0, 0}};
+    out.varint(static_cast<std::uint32_t>(std::size(entries)));
+    for (const auto &e : entries) {
+        out.varint(e.key);
+        out.varint(e.type);
+        switch (e.type) {
+        case 0: out.byte(static_cast<std::uint8_t>(e.value)); break;
+        case 1: out.little_endian(static_cast<std::uint16_t>(e.value), 2); break;
+        case 2: out.signed_varint(static_cast<std::int32_t>(e.value)); break;
+        case 3: out.float32(e.real); break;
+        case 4: out.string(e.key == 4 ? std::string_view(name) : std::string_view()); break;
+        case 6: out.signed_varint(0); out.varint(0); out.signed_varint(0); break;
+        case 7: out.signed_varint64(e.key == 0 ? static_cast<std::int64_t>(flags) : e.value); break;
+        case 8: out.float32(0); out.float32(0); out.float32(0); break;
+        }
+    }
+}
 Bytes add_player(const auth::Identity &identity, const protocol::StartGame &game,
-                 const PlayerData &p) {
+                 const PlayerData &p, std::uint64_t flags) {
     const auto profile = protocol::player_list_body(identity, game.unique_id);
     ByteReader in(profile);
     in.byte();
@@ -220,10 +256,40 @@ Bytes add_player(const auth::Identity &identity, const protocol::StartGame &game
     out.float32(p.yaw);
     out.float32(p.head_yaw);
     item(out, p.inventory[p.selected]);
-    out.varint(0);
+    write_player_metadata(out, identity.display_name, flags);
     out.raw(protocol::adventure_settings_body(game));
+    out.varint(0); // actor links
+    // Device id from the client data (the original sends the joining device's id).
+    std::string device;
+    try {
+        const auto data = nlohmann::json::parse(identity.client_data_json);
+        if (data.contains("DeviceId") && data["DeviceId"].is_string())
+            device = data["DeviceId"].get<std::string>();
+    } catch (const nlohmann::json::exception &) {
+    }
+    out.string(device);
+    return out.take();
+}
+Bytes actor_flags(std::uint64_t runtime, std::uint64_t flags) {
+    // SetActorDataPacket with the dirty flags item only (Actor::_sendDirtyActorData).
+    ByteWriter out;
+    out.varint64(runtime);
+    out.varint(1);
     out.varint(0);
-    out.string("");
+    out.varint(7);
+    out.signed_varint64(static_cast<std::int64_t>(flags));
+    return out.take();
+}
+Bytes movement_attribute(std::uint64_t runtime, float value) {
+    // UpdateAttributesPacket for the dirty minecraft:movement attribute.
+    ByteWriter out;
+    out.varint64(runtime);
+    out.varint(1);
+    out.float32(0.0f);
+    out.float32(std::numeric_limits<float>::max());
+    out.float32(value);
+    out.float32(0.1f);
+    out.string("minecraft:movement");
     return out.take();
 }
 Transaction transaction(std::span<const std::uint8_t> bytes) {

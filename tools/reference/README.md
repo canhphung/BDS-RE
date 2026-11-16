@@ -121,3 +121,10 @@ python3 tools/reference/trace_item_actor.py \
   --preload input/reference-runtime/ipv6_shim.so \
   --output input/reference/items-new --scenario merge
 ```
+
+## PlayerAction and visibility oracle
+
+`player_actions_oracle.py HOST PORT OUT.json` joins two clients; A sneaks,
+sprints, jumps, walks out of B's ticking area and back. `about_actor` holds the
+normalised packets concerning A per step; tests/reference/player_actions_bds_1.6.0.15.json
+is the original's result and test `player_actions_reference` compares BDS-RE.

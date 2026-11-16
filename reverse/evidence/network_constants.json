@@ -496,7 +496,13 @@
     },
     "validation": "none beyond runtime id and init/dimension state; checkMovementStats 0x25fd0d0 is telemetry",
     "relay": "Dimension::sendPacketForEntity(player, received packet, player)",
-    "oracle": "tests/reference/movement_bds_1.6.0.15.json"
+    "oracle": "tests/reference/movement_bds_1.6.0.15.json",
+    "interpolation": {
+      "function": "Mob::lerpTo -> MovementInterpolator::lerpTo 0x23cf1d0 / tick 0x23cf280",
+      "steps": "1 if packet onGround and not Actor+0x125 (on ground last tick), else 3",
+      "per_tick": "pos + (target - pos) * (1/steps); last step exact",
+      "teleport_mode": "mode 2 sets position and rotation at once"
+    }
   },
   "block_break": {
     "confidence": "VERIFIED_BINARY+DIFFERENTIAL_VERIFIED",
@@ -563,5 +569,33 @@
       "tests/reference/item_actor_bds_1.6.0.15.json",
       "tests/reference/item_actor_merge_bds_1.6.0.15.json"
     ]
+  },
+  "entity_visibility": {
+    "confidence": "VERIFIED_BINARY+DIFFERENTIAL_VERIFIED",
+    "update": "ServerPlayer::_updateNearbyEntities 0x25f90e0 every tick",
+    "offsets": "Level::Level 0x1c814e9; 57 for tick-distance 4",
+    "send": "Dimension::sendPacketForEntity 0x1d69020 -> ServerPlayer::isEntityRelevant 0x25fed30",
+    "on_enter": [
+      "AddActor/AddPlayer",
+      "MobArmorEquipment",
+      "MobEquipment if carried item not empty"
+    ],
+    "on_leave": "RemoveActor",
+    "oracle": "tests/reference/player_actions_bds_1.6.0.15.json"
+  },
+  "player_action": {
+    "handler": "0x182d140",
+    "relay": "sendPacketForEntity(player, packet, player) except actions 7, 8, 11, 12, 13, 14 and 18 on air",
+    "sneak_flag_bit": 1,
+    "sprint_flag_bit": 3,
+    "base_player_flags": "0xc00400084000",
+    "sprint_movement": [
+      0.1,
+      0.13
+    ],
+    "feature_event": {
+      "actor_event": 66,
+      "period_ticks": 80
+    }
   }
 }

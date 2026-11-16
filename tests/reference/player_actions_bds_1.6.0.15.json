@@ -1,0 +1,123 @@
+{
+ "source": "tools/reference/player_actions_oracle.py against the original bedrock_server 1.6.0.15 (FLAT, tick-distance 4)",
+ "note": "Per step, packets concerning player A (runtime id 1) received by A and by the watcher B, normalised by player_actions_oracle.about(). Jump only produced food exhaustion attributes, which are filtered out (hunger is not modelled).",
+ "steps": [
+  {
+   "step": "sneak_start",
+   "to_actor": [
+    [
+     39,
+     "010100078480c280808160"
+    ]
+   ],
+   "to_watcher": [
+    [
+     39,
+     "010100078480c280808160"
+    ]
+   ]
+  },
+  {
+   "step": "sneak_stop",
+   "to_actor": [
+    [
+     39,
+     "010100078080c280808160"
+    ]
+   ],
+   "to_watcher": [
+    [
+     39,
+     "010100078080c280808160"
+    ]
+   ]
+  },
+  {
+   "step": "sprint_start",
+   "to_actor": [
+    [
+     29,
+     "010100000000ffff7f7fb81e053ecdcccc3d126d696e6563726166743a6d6f76656d656e74"
+    ],
+    [
+     39,
+     "010100079080c280808160"
+    ]
+   ],
+   "to_watcher": [
+    [
+     36,
+     "011200000000"
+    ],
+    [
+     29,
+     "010100000000ffff7f7fb81e053ecdcccc3d126d696e6563726166743a6d6f76656d656e74"
+    ],
+    [
+     39,
+     "010100079080c280808160"
+    ]
+   ]
+  },
+  {
+   "step": "sprint_stop",
+   "to_actor": [
+    [
+     29,
+     "010100000000ffff7f7fcdcccc3dcdcccc3d126d696e6563726166743a6d6f76656d656e74"
+    ],
+    [
+     39,
+     "010100078080c280808160"
+    ]
+   ],
+   "to_watcher": [
+    [
+     36,
+     "011400000000"
+    ],
+    [
+     29,
+     "010100000000ffff7f7fcdcccc3dcdcccc3d126d696e6563726166743a6d6f76656d656e74"
+    ],
+    [
+     39,
+     "010100078080c280808160"
+    ]
+   ]
+  },
+  {
+   "step": "jump",
+   "to_actor": [],
+   "to_watcher": []
+  },
+  {
+   "step": "leave_view",
+   "to_actor": [],
+   "to_watcher": [
+    [
+     19,
+     "relay"
+    ],
+    [
+     14,
+     "remove"
+    ]
+   ]
+  },
+  {
+   "step": "return",
+   "to_actor": [],
+   "to_watcher": [
+    [
+     12,
+     "2800078080c2808081600102020202000300000404064e414d4505070107012c010802000900000a00001600001a00001b02021c0600000025070026030000803f2704002a012c012b02002c00002d02002e02003503cdcc4c3f36036666e63f38080000000000000000000000003900003a03000000003b03000000004500004604004704004800014900004a02004b02004c02004d0201500001510000530400"
+    ],
+    [
+     32,
+     "0100000000"
+    ]
+   ]
+  }
+ ]
+}

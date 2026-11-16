@@ -36,8 +36,11 @@ Bytes cursor_inventory(const PlayerData &p);
 Bytes creative_inventory();
 Bytes block_update(World::Position p, BlockId id);
 Bytes equipment(std::uint64_t runtime, const PlayerData &p);
+// AddPlayerPacket with the original's full player metadata and device id.
 Bytes add_player(const auth::Identity &identity, const protocol::StartGame &game,
-                 const PlayerData &data);
+                 const PlayerData &data, std::uint64_t flags);
+Bytes actor_flags(std::uint64_t runtime, std::uint64_t flags);
+Bytes movement_attribute(std::uint64_t runtime, float value);
 Bytes remove_player_list(const auth::Identity &identity);
 struct Action {
     unsigned source = 0, slot = 0;
