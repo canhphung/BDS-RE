@@ -27,7 +27,8 @@ int main() { try {
   std::array<std::string_view,2> input={"--tick-ms",bad}; rejects([&]{bds::parse_config(input);});
  }
  std::array<std::string_view,1> missing={"--ticks"}; rejects([&]{bds::parse_config(missing);});
- bds::ServerRuntime r({3,1,5}); check(r.run([]{return false;})==3);
+ bds::Config runtime_config{3,1,5};runtime_config.network=false;
+ bds::ServerRuntime r(runtime_config); check(r.run([]{return false;})==3);
  check(r.run([]{return true;})==0);
  std::cout<<"scheduler, config and lifecycle checks passed\n"; return 0;
  } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;} }

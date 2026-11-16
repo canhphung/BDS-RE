@@ -1,0 +1,33 @@
+{
+  "sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+  "confidence": "VERIFIED_BINARY",
+  "permission_key": {
+    "address": "0x281c710",
+    "text": "default-player-permission-level",
+    "lookup_site": "0x1817b35"
+  },
+  "max_threads_default": {
+    "instruction": "0x1816dc8",
+    "value": 8
+  },
+  "view_distance_default": {
+    "instruction": "0x1816e47",
+    "value": 10
+  },
+  "offline_magic": {
+    "address": "0x28aa370",
+    "hex": "00ffff00fefefefefdfdfdfd12345678"
+  },
+  "server_identifier": {
+    "address": "0x2824710",
+    "hex": "4d43504500"
+  },
+  "discovery": {
+    "pong_id_site": "0x279240a",
+    "pong_id": 28,
+    "echo_timestamp_write": "0x2792437",
+    "guid_write": "0x2792455",
+    "magic_write": "0x2792472",
+    "advertisement_length_write": "0x188da95"
+  }
+}

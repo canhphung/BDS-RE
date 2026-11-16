@@ -9,6 +9,8 @@ struct Config {
  unsigned tick_ms=50;
  unsigned max_catch_up=5;
  std::filesystem::path world_file;
+ std::filesystem::path root=".";
+ bool network=true;
 };
 Config parse_config(std::span<const std::string_view> args);
 }

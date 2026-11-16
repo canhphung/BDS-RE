@@ -4,3 +4,7 @@
 /reverse/evidence/local/
 *.pdb
 *.zip
+
+/worlds/
+/whitelist.json
+/opsfile.json

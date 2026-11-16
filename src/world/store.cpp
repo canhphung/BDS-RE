@@ -34,13 +34,7 @@ std::uint32_t crc32(std::span<const std::uint8_t> bytes) {
     }
     return value ^ 0xffffffffU;
 }
-struct StagingDirectory {
-    std::filesystem::path path;
-    ~StagingDirectory() {
-        std::error_code ignored;
-        std::filesystem::remove_all(path, ignored);
-    }
-};
+;
 }
 
 std::vector<std::uint8_t> WorldStore::encode(const World& world) {
@@ -107,25 +101,6 @@ World WorldStore::load(const std::filesystem::path& path) {
 
 void WorldStore::save(const World& world, const std::filesystem::path& path) {
     const auto bytes = encode(world);
-    auto parent = path.parent_path();
-    if (parent.empty()) parent = ".";
-    std::random_device random;
-    std::filesystem::path staging;
-    for (unsigned attempt = 0; attempt < 32; ++attempt) {
-        staging = parent / (".bds-world-" + std::to_string(random()) + ".tmp");
-        if (std::filesystem::create_directory(staging)) break;
-        staging.clear();
-    }
-    require(!staging.empty(), "cannot allocate world snapshot staging directory");
-    StagingDirectory cleanup{staging};
-    const auto file = staging / "snapshot";
-    std::ofstream output(file, std::ios::binary | std::ios::trunc);
-    require(output.is_open(), "cannot create world snapshot");
-    output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
-    output.flush();
-    require(static_cast<bool>(output), "cannot write world snapshot");
-    output.close();
-    require(!output.fail(), "cannot close world snapshot");
-    replace_file(file, path);
+    write_file_atomically(path, bytes);
 }
 }

@@ -1,11 +1,11 @@
 # BDS-RE
 
 Independent C++20 server research targeting Bedrock Dedicated Server 1.6.0.15.
-Currently a tested runtime bootstrap and chunked internal world, **not a Minecraft-compatible server**. No networking, client login, network chunk streaming or gameplay yet. The original `server.properties` is included as reference configuration; its parsing, world-directory selection and console commands are not implemented yet. See the [original BDS compatibility contract](docs/COMPATIBILITY.md).
+Currently a C++20 runtime with chunked internal world snapshots, server.properties parsing, world-directory selection, console commands, whitelist/operator file models and asynchronous internal backups. IPv4/IPv6 UDP offline discovery is implemented. **Minecraft login, world streaming and gameplay are not implemented; clients cannot spawn.** See [operations and limitations](docs/OPERATIONS.md).
 
 ## Build
 
-Requires CMake >=3.20, Ninja and a C++20 compiler. GCC 14.2 is tested locally.
+Requires CMake >=3.20, Ninja and a C++20 compiler; Python 3 is needed for the process/socket integration test. GCC 14.2 is tested locally.
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
@@ -15,7 +15,9 @@ ctest --test-dir build --output-on-failure
 ```
 
 On this cloud machine, first `export PATH=/workspace/bds-tools/bin:$PATH`.
-`--world build/world.snapshot` enables internal snapshot load/save across restarts (see [format and limits](docs/PERSISTENCE.md)). `--ticks` counts ticks per invocation.
+Default startup reads `server.properties`, selects `worlds/<level-name>` and binds the configured UDP ports. Type `stop` for clean shutdown. `--root <directory>` isolates server state; `--network 0` disables discovery for development tests.
+
+`--world build/world.snapshot` overrides internal snapshot selection for development (see [format and limits](docs/PERSISTENCE.md)). `--ticks` counts ticks per invocation.
 
 `--ticks 0` (default) runs until SIGINT/SIGTERM. `--tick-ms` accepts 1..1000 (default 50); `--max-catch-up` accepts 1..100 (default 5).
 

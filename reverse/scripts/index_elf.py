@@ -16,6 +16,13 @@ for line in raw.splitlines():
  if m: rows.append((int(m[1],16),int(m[2],16),m[3],m[4]))
 con.executemany('INSERT INTO symbols VALUES (?,?,?,?)',rows);con.commit()
 targets=['ServerInstance::_update()','ServerInstance::startServerThread()', 'ServerInstance::startServerThread()::$_3::operator()() const','ServerLevel::tick()', 'Minecraft::update(bool)', 'Minecraft::tickSimtime(int, int)', 'Minecraft::tickRealtime(int, int)', 'GameSession::tick()', 'Timer::advanceTime(float)', 'ChunkPos::ChunkPos(BlockPos const&)', 'LevelChunk::getBlock(ChunkBlockPos const&) const', 'Level::saveDirtyChunks()', 'DBStorage::saveLevelData(LevelData const&)']
+targets += [
+ 'DedicatedServer::run()',
+ 'PropertiesSettings::PropertiesSettings(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)',
+ 'RakNet::ProcessOfflineNetworkPacket(RakNet::SystemAddress, char const*, int, RakNet::RakPeer*, RakNet::RakNetSocket2*, bool*, unsigned long)',
+ 'RakNetServerLocator::announceServer(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, GameType, int, int, bool)',
+ 'Common::getGameVersionStringNet[abi:cxx11]()'
+]
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)
 for i,name in enumerate(targets):
@@ -67,4 +74,14 @@ Path('reverse/evidence/network_constants.json').write_text(json.dumps({
  'sha256':digest,'confidence':'VERIFIED_BINARY','encoding':'little-endian integers at sized symbol addresses',
  'constants':constants,
  'scope':'static constants only; login and discovery formats and actual bound ports not yet verified'
+},indent=2)+'\n')
+
+Path('reverse/evidence/operational_constants.json').write_text(json.dumps({
+ 'sha256':digest,'confidence':'VERIFIED_BINARY',
+ 'permission_key':{'address':'0x281c710','text':'default-player-permission-level','lookup_site':'0x1817b35'},
+ 'max_threads_default':{'instruction':'0x1816dc8','value':8},
+ 'view_distance_default':{'instruction':'0x1816e47','value':10},
+ 'offline_magic':{'address':'0x28aa370','hex':pointer_at(0x28aa370,16).to_bytes(16,'little').hex()},
+ 'server_identifier':{'address':'0x2824710','hex':pointer_at(0x2824710,5).to_bytes(5,'little').hex()},
+ 'discovery':{'pong_id_site':'0x279240a','pong_id':28,'echo_timestamp_write':'0x2792437','guid_write':'0x2792455','magic_write':'0x2792472','advertisement_length_write':'0x188da95'}
 },indent=2)+'\n')

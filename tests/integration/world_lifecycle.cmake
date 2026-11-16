@@ -3,7 +3,7 @@ set(DIR "${TEST_ROOT}/world-lifecycle-${ID}")
 file(MAKE_DIRECTORY "${DIR}")
 set(WORLD "${DIR}/test.snapshot")
 foreach(TICKS IN ITEMS 2 3)
-  execute_process(COMMAND "${SERVER}" --world "${WORLD}" --ticks "${TICKS}" --tick-ms 1
+  execute_process(COMMAND "${SERVER}" --network 0 --world "${WORLD}" --ticks "${TICKS}" --tick-ms 1
     RESULT_VARIABLE RESULT OUTPUT_VARIABLE OUTPUT ERROR_VARIABLE ERROR TIMEOUT 5)
   if(TICKS EQUAL 2)
     set(EXPECTED_AGE 2)
@@ -15,7 +15,7 @@ foreach(TICKS IN ITEMS 2 3)
   endif()
 endforeach()
 file(WRITE "${WORLD}" "corrupt input must survive")
-execute_process(COMMAND "${SERVER}" --world "${WORLD}" --ticks 1 --tick-ms 1
+execute_process(COMMAND "${SERVER}" --network 0 --world "${WORLD}" --ticks 1 --tick-ms 1
   RESULT_VARIABLE RESULT OUTPUT_VARIABLE OUTPUT ERROR_VARIABLE ERROR TIMEOUT 5)
 file(READ "${WORLD}" PRESERVED)
 if(NOT RESULT EQUAL 1 OR NOT PRESERVED STREQUAL "corrupt input must survive")

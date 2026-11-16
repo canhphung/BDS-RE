@@ -8,3 +8,5 @@
 - Worker timing observed statically; original runtime/differential tests not executed.
 - Protocol constant verified as 282; discovery/login wire formats and RakNet behavior, login, chunk serialization, original LevelDB persistence, entities and gameplay. Independent internal chunk storage and snapshots are implemented; they do not establish original format compatibility.
 - No real client or captures supplied; no compatibility evidence.
+
+Operational follow-up: canonical permission key and initial thread/view defaults now have binary evidence in OPERATIONS.md. Strict malformed-value handling, confined level paths and JSON matching policies are intentional implementation choices rather than verified original behavior. save hold/query/resume exists only for immutable internal snapshots; original LevelDB retention is pending. Offline discovery is implemented and loopback-tested, while full RakNet connection, authenticated login, world streaming and gameplay remain missing.

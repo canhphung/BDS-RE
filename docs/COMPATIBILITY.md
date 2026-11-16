@@ -8,15 +8,15 @@ The current executable is a development harness. Its --ticks, --tick-ms, --max-c
 
 | Original documented interface | Current implementation | Acceptance requirement |
 |---|---|---|
-| Read server.properties at startup, one key=value per line | Missing; CLI configuration only | Implement documented names, defaults, enum aliases and application lifecycle; distinguish unknown details from observed behavior |
-| World selected by level-name under worlds/; create worlds/ at startup | Missing; --world selects a single custom snapshot | Default runtime must follow original directory selection; retain custom snapshots only as an explicit development format until original storage support is implemented |
-| behavior_packs and resource_packs locations | Missing | Preserve documented directory roles; do not claim loading or activation before implementation |
-| Console stop | Missing; signals/finite tick count only | Parse console input, schedule shutdown on simulation owner, save and exit cleanly |
-| whitelist.json and whitelist commands | Missing | Persist entries; reload explicitly; preserve name, optional xuid and ignoresPlayerLimit semantics |
-| opsfile.json and ops list/reload | Missing | Load XUID entries and reload on command; enforce roles once sessions exist |
-| changesetting allow-cheats/difficulty | Missing | Apply changes in memory without rewriting server.properties |
-| save hold/query/resume | Missing; atomic replacement of one snapshot only | Implement asynchronous backup preparation and retained-file lifecycle; query reports file paths and copy lengths while simulation continues; resume releases retention |
-| Networking, Xbox Live authentication and session limits | Missing | Implement and test actual protocol behavior; parsing configuration alone does not enforce any of these settings |
+| Read server.properties at startup, one key=value per line | Implemented settings parser; session/gameplay enforcement incomplete | Implement documented names, defaults, enum aliases and application lifecycle; distinguish unknown details from observed behavior |
+| World selected by level-name under worlds/; create worlds/ at startup | Implemented directory selection; storage remains internal snapshot | Default runtime must follow original directory selection; retain custom snapshots only as an explicit development format until original storage support is implemented |
+| behavior_packs and resource_packs locations | Original data directories included; loader pending | Preserve documented directory roles; do not claim loading or activation before implementation |
+| Console stop | Implemented console stop; save and native process exit tested | Parse console input, schedule shutdown on simulation owner, save and exit cleanly |
+| whitelist.json and whitelist commands | Implemented file/command model; connected admission pending | Persist entries; reload explicitly; preserve name, optional xuid and ignoresPlayerLimit semantics |
+| opsfile.json and ops list/reload | Implemented file/command model; session role enforcement pending | Load XUID entries and reload on command; enforce roles once sessions exist |
+| changesetting allow-cheats/difficulty | Implemented runtime settings mutation; gameplay effects pending | Apply changes in memory without rewriting server.properties |
+| save hold/query/resume | Asynchronous immutable checkpoint lifecycle implemented for internal storage; original LevelDB backup pending | Implement asynchronous backup preparation and retained-file lifecycle; query reports file paths and copy lengths while simulation continues; resume releases retention |
+| Networking, Xbox Live authentication and session limits | IPv4/IPv6 offline discovery implemented; connection/login/admission pending | Implement and test actual protocol behavior; parsing configuration alone does not enforce any of these settings |
 
 ## Guide defaults
 
@@ -74,6 +74,8 @@ The original root server.properties was extracted byte-for-byte from the user-su
 
 The shipped comments additionally specify positive max-players, view-distance and player-idle-timeout; ports 1..65535; tick-distance 4..12. max-threads=0 is an explicit exception to the following positive-integer comment.
 
-Neither the file nor the guide alone proves the binary's behavior for absent keys, invalid inputs or the two permission-key spellings. Trace the original property lookup before choosing alias behavior; do not silently replace the shipped spelling with the guide spelling. Distinguish configured values from actual built-in defaults. Numeric gamemode/difficulty aliases appear in the guide but not in the shipped comments and still require parser verification.
+The original constructor lookup has now been traced: the recognized permission key is default-player-permission-level (reference and address in reverse/reports/OPERATIONS.md). The shorter shipped spelling is reported as unknown; the supplied file is preserved unchanged. Distinguish configured values from actual built-in defaults. Numeric gamemode/difficulty aliases appear in the guide but not in the shipped comments and still require parser verification.
 
-The file is now included as reference configuration. The current executable still lacks server.properties parsing; adding the file does not enforce the listed gameplay, network, authentication or permission settings.
+The executable now parses server.properties. Values affecting sessions and gameplay are modeled but not yet enforced because those subsystems are incomplete. See OPERATIONS.md for the implemented behavior and explicit differences.
+
+Implementation status is recorded in OPERATIONS.md; the numbered sequence above remains the overall work order rather than a claim that every step is still missing.

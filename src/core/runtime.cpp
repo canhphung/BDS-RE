@@ -4,6 +4,9 @@
 #include "bds/world/store.hpp"
 #include "bds/core/logger.hpp"
 #include <thread>
+#include "bds/core/console.hpp"
+#include "bds/server/control.hpp"
+#include "bds/network/discovery.hpp"
 namespace bds {
 TickScheduler::TickScheduler(Duration step,unsigned limit):step_(step),limit_(limit) {
  if(step<=Duration::zero() || limit==0) throw std::invalid_argument("invalid scheduler");
@@ -22,12 +25,31 @@ unsigned TickScheduler::advance(Duration elapsed) {
 std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
  using Clock=std::chrono::steady_clock;
  TickScheduler scheduler(std::chrono::milliseconds(config_.tick_ms), config_.max_catch_up);
+ auto properties=Properties::load(config_.root/"server.properties");
+ for(const auto& diagnostic:properties.diagnostics)log(diagnostic);
+ auto world_dir=config_.world_file.empty()?properties.world_directory(config_.root):std::filesystem::absolute(config_.world_file).parent_path();
+ if(std::filesystem::exists(world_dir/"level.dat") || std::filesystem::exists(world_dir/"db"))
+  throw std::runtime_error("original Bedrock storage is not supported; refusing to modify this world");
+ std::filesystem::create_directories(world_dir);
+ auto world_file=config_.world_file.empty()?world_dir/"bdsre-world.snapshot":config_.world_file;
  World world;
- if(!config_.world_file.empty() && std::filesystem::exists(config_.world_file))
-  world=WorldStore::load(config_.world_file);
+ if(std::filesystem::exists(world_file))world=WorldStore::load(world_file);
+ AccessLists access(config_.root);access.reload_whitelist();access.reload_operators();
+ Backup backup(world_dir);ServerControl control(properties,access,backup);ConsoleInput console;
+ std::unique_ptr<DiscoveryServer> network;
+ if(config_.network)network=std::make_unique<DiscoveryServer>(properties);
+ log("world directory: "+world_dir.string());
+ log("console ready; storage is BDS-RE internal; Minecraft login/gameplay unavailable");
  auto last=Clock::now();
  std::uint64_t ticks=0;
- while(!stop() && (config_.ticks==0 || ticks<config_.ticks)) {
+ while(!stop() && !control.stopping() && (config_.ticks==0 || ticks<config_.ticks)) {
+  if(network)network->poll(properties);
+  backup.poll();
+  for(const auto& line:console.poll()) {
+   auto output=control.execute(line,world);if(!output.empty())log(output);
+   if(control.stopping())break;
+  }
+  if(control.stopping())break;
   auto now=Clock::now(); auto due=scheduler.advance(now-last); last=now;
   for(unsigned i=0;i<due && !stop() && (config_.ticks==0 || ticks<config_.ticks);++i) {
    world.tick();
@@ -36,8 +58,8 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
   if(config_.ticks!=0 && ticks==config_.ticks) break;
   std::this_thread::sleep_until(last+scheduler.remaining());
  }
- if(!config_.world_file.empty()) {
-  WorldStore::save(world,config_.world_file);
+ {
+  WorldStore::save(world,world_file);
   log("saved world age="+std::to_string(world.age()));
  }
  return ticks;
