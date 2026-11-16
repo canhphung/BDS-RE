@@ -8,3 +8,5 @@
 /worlds/
 /whitelist.json
 /opsfile.json
+__pycache__/
+*.pyc
