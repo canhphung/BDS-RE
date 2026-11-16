@@ -176,7 +176,9 @@ void connections() {
     }
     {
         GameConnection connection;
-        const auto output = connection.receive(python_batch);
+        const auto decoded = decode_batch(python_batch);
+        const std::array single_login{decoded.front()};
+        const auto output = connection.receive(encode_batch(single_login));
         const auto reply = only(output);
         check(output.close && reply.header.id == static_cast<std::uint16_t>(PacketId::Disconnect), "Disconnect reply");
         ByteReader reader(reply.body);
@@ -203,6 +205,12 @@ void connections() {
         GameConnection connection;
         const Bytes garbage = {batch_id, 1, 2, 3};
         check(connection.receive(garbage).close, "corrupt batch closes");
+    }
+    {
+        GameConnection connection;
+        const auto output = connection.receive(python_batch);
+        check(output.close && output.messages.empty() && output.reason.find("single packet") != std::string::npos,
+              "multiple packets cannot straddle the encryption transition");
     }
     check(disconnect_body(true, "ignored") == Bytes({1}), "hidden disconnect omits message");
 }

@@ -23,6 +23,7 @@ class ByteReader {
     bool boolean();
     // Unsigned LEB128 limited to 32 bits; overlong encodings are rejected.
     std::uint32_t varint();
+    std::uint64_t varint64();
     std::int32_t signed_varint();
     std::int32_t big_endian_int();
     // Unsigned-varint length followed by bytes (BinaryStream::writeString).

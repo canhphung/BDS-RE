@@ -47,12 +47,12 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
   }
  }
  log("world directory: "+world_dir.string());
- log("console ready; storage is BDS-RE internal; Minecraft login/gameplay unavailable");
+ log("console ready; storage is BDS-RE internal; gameplay simulation unavailable");
  auto last=Clock::now();
  std::uint64_t ticks=0;
  try {
  while(!stop() && !control.stopping() && (config_.ticks==0 || ticks<config_.ticks)) {
-  if(network)network->poll(properties,access,world.age());
+  if(network)network->poll(properties,access,world);
   backup.poll();
   for(const auto& line:console.poll()) {
    auto output=control.execute(line,world);if(!output.empty())log(output);

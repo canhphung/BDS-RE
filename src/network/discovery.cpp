@@ -3,6 +3,7 @@
 #include "bds/core/logger.hpp"
 #include "bds/network/batch.hpp"
 #include "bds/network/connection.hpp"
+#include "bds/network/chunk.hpp"
 #include <map>
 #include <algorithm>
 #include <charconv>
@@ -217,6 +218,8 @@ struct DiscoveryServer::Impl {
     std::uint64_t world_age = 0;
     // Level::getNextRuntimeID / getNewUniqueID analogue; ids are never reused.
     std::int64_t next_entity_id = 1;
+    const World *world = nullptr;
+    std::optional<raknet::Address> stream_cursor;
 
     protocol::StartGame start_game() {
         const auto &p = *properties;
@@ -328,10 +331,11 @@ struct DiscoveryServer::Impl {
 };
 DiscoveryServer::DiscoveryServer(const Properties &p) : impl_(std::make_unique<Impl>(p)) {}
 DiscoveryServer::~DiscoveryServer() = default;
-void DiscoveryServer::poll(const Properties &p, AccessLists &access, std::uint64_t world_age) {
+void DiscoveryServer::poll(const Properties &p, AccessLists &access, const World &world) {
     impl_->properties = &p;
     impl_->access = &access;
-    impl_->world_age = world_age;
+    impl_->world_age = world.age();
+    impl_->world = &world;
     const auto advertisement = server_advertisement(p, impl_->guid);
     const auto now =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -342,6 +346,24 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access, std::uint64
         const auto socket = impl_->sockets[outgoing.address.ipv6 ? 1 : 0];
         if (socket != invalid)
             send_packet(socket, outgoing.address, outgoing.bytes);
+    }
+    // At most four chunks per poll globally, round-robin across sessions.
+    // Leave headroom in RakNet's reliable window for split packets, retries
+    // and control traffic. Encryption happens once, before reliable retransmit.
+    for (std::size_t i = 0, count = std::min<std::size_t>(4, impl_->connections.size()); i < count && !impl_->connections.empty(); ++i) {
+        auto entry = impl_->stream_cursor ? impl_->connections.upper_bound(*impl_->stream_cursor) : impl_->connections.begin();
+        if (entry == impl_->connections.end()) entry = impl_->connections.begin();
+        const auto from = entry->first; impl_->stream_cursor = from;
+        if (!impl_->transport->connected(from) || impl_->transport->pending(from) >= 64) continue;
+        auto output = entry->second.poll(1);
+        const auto socket = impl_->sockets[from.ipv6 ? 1 : 0];
+        for (const auto &message : output.messages)
+            for (const auto &outgoing : impl_->transport->send(from, message, now)) send_packet(socket, from, outgoing.bytes);
+        if (!output.reason.empty()) log(output.reason);
+        if (output.close) {
+            for (const auto &outgoing : impl_->transport->disconnect(from, now)) send_packet(socket, from, outgoing.bytes);
+            impl_->connections.erase(from);
+        }
     }
     for (auto socket : impl_->sockets) {
         if (socket == invalid)
@@ -393,8 +415,18 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access, std::uint64
                                                       return impl->admit(identity);
                                                   },
                                                   [impl = impl_.get()] { return impl->start_game(); },
+                                                  [impl = impl_.get()](std::int32_t x, std::int32_t z) {
+                                                      return protocol::full_chunk_body(protocol::network_chunk(*impl->world, x, z));
+                                                  },
                                                   static_cast<std::int32_t>(p.view_distance)})
                                  .first->second.receive(application.bytes);
+                if (!output.close) {
+                    auto entry = impl_->connections.find(from);
+                    if (entry != impl_->connections.end() &&
+                        entry->second.state() != protocol::GameConnection::State::awaiting_login &&
+                        entry->second.state() != protocol::GameConnection::State::awaiting_handshake)
+                        impl_->transport->authenticated(from);
+                }
                 for (const auto &message : output.messages)
                     for (const auto &outgoing : impl_->transport->send(from, message, now))
                         send_packet(socket, outgoing.address, outgoing.bytes);

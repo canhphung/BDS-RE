@@ -43,6 +43,12 @@ public:
             throw std::overflow_error("world age exhausted");
         ++age_;
     }
+    // Read-only view for encoding on the owning simulation thread. Do not
+    // retain this pointer across world mutations.
+    const Chunk* chunk(int x, int z) const {
+        auto column = columns_.find({x,z});
+        return column == columns_.end() ? nullptr : &column->second;
+    }
     std::uint64_t age() const { return age_; }
     std::size_t stored_blocks() const { return count_; }
     std::size_t loaded_chunks() const { return columns_.size(); }

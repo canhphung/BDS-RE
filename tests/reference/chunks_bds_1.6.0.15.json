@@ -1,0 +1,12 @@
+{
+  "source": "BDS 1.6.0.15 Linux; tools/reference/capture_reference.py",
+  "original_sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+  "capture_sha256": "e80b9bb38fae5e3ce87e79f28a5602f820ddb48ddef5974c45af602cb6be054d",
+  "captured_at": 1794835695,
+  "requested_radius": 4,
+  "packet_count": 139,
+  "fixture_sha256": "1655ae7ddd226c69d8963dcd7a4fd5a9025cfb2a11bc95614087d6ded31096a5",
+  "inflated_bytes": 1488218,
+  "cells_fnv1a64": "1276220901254225206",
+  "suffix_policy": "Border count and block-entity NBT preserved verbatim; not semantically decoded."
+}

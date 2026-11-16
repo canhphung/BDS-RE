@@ -176,8 +176,14 @@ class RakNetClient:
         self.splits = {}
         self.inbox = []
         self.seen_reliable = set()
+        self.expected_order = {}
+        self.waiting_order = {}
 
     def close(self):
+        try:
+            self.send(b"\x15")
+        except OSError:
+            pass
         self.sock.close()
 
     def ping(self):
@@ -241,7 +247,9 @@ class RakNetClient:
                 at += 3
             if reliability in (1, 4):
                 at += 3
+            order_info = None
             if reliability in (1, 3, 4, 7):
+                order_info = (int.from_bytes(data[at:at + 3], "little"), data[at + 3])
                 at += 4
             split_info = None
             if split:
@@ -262,7 +270,21 @@ class RakNetClient:
                     continue
                 body = b"".join(parts[i] for i in range(count))
                 del self.splits[sid]
-            self._dispatch(body)
+            if reliability in (3, 7):
+                order, channel = order_info
+                expected = self.expected_order.get(channel, 0)
+                distance = (order - expected) & 0xffffff
+                if distance >= 0x800000:
+                    continue
+                require(distance < 1024, "ordered receive window exceeded")
+                waiting = self.waiting_order.setdefault(channel, {})
+                waiting[order] = body
+                while expected in waiting:
+                    self._dispatch(waiting.pop(expected))
+                    expected = (expected + 1) & 0xffffff
+                self.expected_order[channel] = expected
+            else:
+                self._dispatch(body)
 
     def _dispatch(self, body):
         if body[:1] == b"\x00":  # connected ping -> pong

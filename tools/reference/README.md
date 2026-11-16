@@ -43,3 +43,22 @@ Behaviour of the original worth recording:
 - Without kernel IPv6 the original's IPv4-only retry still opens an IPv6 socket, fails again and leaves no sockets, while logging "Listening on IPv4 port: 19132" regardless of the configured port (strace: it bound the configured 19140 before failing).
 - The log reports `Error opening ops file: ops.json`, while the supplied guide documents `opsfile.json`; BDS-RE still uses `opsfile.json` (see reverse/reports/UNRESOLVED.md).
 - After StartGame the original also sends PlayerList, AdventureSettings, GameRulesChanged, UpdateAttributes, InventoryContent, PlayerHotbar, CraftingData, AvailableCommands, then FullChunkData (0x3a), MoveActorDelta and entity packets, and PlayStatus 3 (PlayerSpawn) once chunks are sent.
+
+## Chunk and spawn regression corpus
+
+The original ignored 113-chunk capture was absent in the next environment. A new
+run of this workflow produced 139 chunks; every body, both layers where present,
+and block-entity suffixes are preserved in the committed compressed corpus.
+To export a fresh capture:
+
+```sh
+python3 tools/reference/export_chunk_corpus.py input/reference/m4_join.json tests/reference/chunks_bds_1.6.0.15
+```
+
+The generated metadata records the capture hash, corpus hash, packet count and
+independent unpacked-cell digest. A deliberate corpus refresh also requires updating
+the count/digest constants in `tests/protocol/chunk_tests.cpp`. See
+[chunk format, reference evidence and spawn policies](../../reverse/reports/CHUNKS.md).
+The reference client's receive path now honors reliable ordering before decrypting
+batches, so deliberate chunk loss/retransmission is testable without corrupting
+its continuous CFB8 stream.

@@ -257,6 +257,13 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
     # Mojang root, so only the self-signed path can succeed end to end.
     (root / "server.properties").write_text(f"level-name=Transport Test\nserver-port={p4}\nserver-portv6={p6}\n"
                                             "online-mode=false\n", encoding="utf-8")
+    # Persist a small stone floor plus a block in a negative-coordinate chunk.
+    world_dir = root / "worlds" / "Transport Test"
+    world_dir.mkdir(parents=True)
+    blocks = [(x,63,z,1) for x in range(-16,16) for z in range(-16,16)] + [(-1,70,-1,3)]
+    snapshot = b"BDSREW\r\n" + struct.pack('<IQQ',1,0,len(blocks))
+    snapshot += b''.join(struct.pack('<iHiH',x,y,z,block) for x,y,z,block in blocks)
+    (world_dir / "bdsre-world.snapshot").write_bytes(snapshot + struct.pack('<I',zlib.crc32(snapshot)))
     server = subprocess.Popen([sys.argv[1], "--root", str(root), "--tick-ms", "2"],
                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True, encoding="utf-8", bufsize=1)
@@ -411,13 +418,53 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                 joining.send_packets([(0x45, client_uvarint(32 << 1))])
                 packets = joining.receive_packets()
                 require(packets[0] == (0x46, client_uvarint(10 << 1)), f"{name}: ChunkRadiusUpdated {packets}")
-                require(len(packets) == 2 and packets[1][0] == 0x05 and name.encode() in packets[1][1] and
-                        b"Chunk streaming" in packets[1][1], f"{name}: encrypted disconnect {packets}")
-                try:
-                    joining.receive_packets(timeout=3)
-                    raise AssertionError(f"{name}: expected RakNet disconnect")
-                except ProtocolFailure as closed:
-                    require("closed" in str(closed), f"{name}: {closed}")
+                require(len(packets) == 1, f"{name}: radius confirmation only")
+                from chunk_codec import parse_chunk
+                seen_chunks, spawned = set(), False
+                # Drop a server chunk datagram without ACKing it. Later reliable
+                # ordered batches must wait; CFB8/checksums must remain intact
+                # when the exact encrypted datagram is retransmitted.
+                lost, retried = [], []
+                original_handle = joining.raknet._handle_datagram
+                def drop_one(data):
+                    if data[0] & 0x80 and not data[0] & 0x60:
+                        if not lost:
+                            lost.append(data)
+                            return
+                        if data == lost[0]:
+                            retried.append(True)
+                    original_handle(data)
+                joining.raknet._handle_datagram = drop_one
+                while not spawned or len(seen_chunks) < 317:
+                    for packet_id, body in joining.receive_packets(timeout=15):
+                        if packet_id == 0x3a:
+                            chunk = parse_chunk(body)
+                            key = (chunk['x'], chunk['z'])
+                            require(key not in seen_chunks, f"duplicate chunk {key}")
+                            require(key[0] ** 2 + key[1] ** 2 <= 100, f"chunk outside view {key}")
+                            require(chunk['suffix'] == b'\x00', f"{name}: no block entities")
+                            stone = next(i for i, block in enumerate(game['palette']) if block == ('minecraft:stone',0))
+                            if key in ((-1,-1),(-1,0),(0,-1),(0,0)):
+                                require(chunk['sections'][3][0][15] == stone, f"{name}: persisted stone floor")
+                                require(chunk['heights'][0] == 64, f"{name}: height map")
+                            else:
+                                require(not chunk['sections'], f"{name}: missing columns are air")
+                            if key == (-1,-1):
+                                dirt = next(i for i, block in enumerate(game['palette']) if block == ('minecraft:dirt',0))
+                                require(chunk['sections'][4][0][(15 << 8) | (15 << 4) | 6] == dirt, 'negative chunk block')
+                            seen_chunks.add(key)
+                        elif packet_id == 0x02:
+                            require(body == struct.pack('>i', 3) and not spawned and len(seen_chunks) >= 81, f"PlayerSpawn after chunks: {len(seen_chunks)}")
+                            spawned = True
+                            joining.send_packets([(0x71, client_uvarint(game['runtime_id']))])
+                        else:
+                            raise AssertionError(f"unexpected packet during streaming: {packet_id:#x}")
+                require(lost and retried, f"{name}: chunk retransmission was exercised")
+                deadline = time.monotonic() + 5
+                while not any(f"Player initialized: {name}" in line for line in transcript):
+                    require(time.monotonic() < deadline, f"{name}: no initialization: {transcript}")
+                    time.sleep(0.01)
+
             finally:
                 joining.raknet.close()
 
@@ -451,7 +498,7 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
         require(any("login not authenticated" in line for line in transcript), f"forged login not logged: {transcript}")
         require(any("closing connection: login protocol 281 is not 282" in line for line in transcript),
                 f"version refusal not logged: {transcript}")
-        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection, signed logins, the encrypted handshake, pack exchange, StartGame, chunk radius and whitelist refusal passed")
+        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection, signed logins, the encrypted handshake, pack exchange, StartGame, chunk streaming, PlayerSpawn, initialization and whitelist refusal passed")
     finally:
         if server.poll() is None:
             server.kill()

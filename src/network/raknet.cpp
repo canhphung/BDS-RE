@@ -517,6 +517,7 @@ struct Transport::Impl {
         std::uint64_t guid, last, created, request_time = 0, accepted_time = 0;
         unsigned mtu;
         Stage stage = Stage::request;
+        bool authenticated = false;
         Channel channel;
         Peer(std::uint64_t g, std::uint64_t time, unsigned size)
             : guid(g), last(time), created(time), mtu(size), channel(size) {}
@@ -659,7 +660,7 @@ std::vector<Outgoing> Transport::poll(std::uint64_t now) {
     auto &peers = impl_->peers;
     for (auto i = peers.begin(); i != peers.end();) {
         auto &peer = i->second;
-        if (elapsed(now, peer.created) >= 30000 || elapsed(now, peer.last) >= 15000 ||
+        if ((!peer.authenticated && elapsed(now, peer.created) >= 30000) || elapsed(now, peer.last) >= 15000 ||
             (peer.stage == Impl::Stage::closing && peer.channel.pending() == 0)) {
             i = peers.erase(i);
             continue;
@@ -690,6 +691,15 @@ std::vector<Outgoing> Transport::send(const Address &address, std::span<const st
 bool Transport::connected(const Address &address) const {
     auto i = impl_->peers.find(address);
     return i != impl_->peers.end() && i->second.stage == Impl::Stage::connected;
+}
+std::size_t Transport::pending(const Address &address) const {
+    auto i = impl_->peers.find(address);
+    return i == impl_->peers.end() ? 0 : i->second.channel.pending();
+}
+void Transport::authenticated(const Address &address) {
+    auto i = impl_->peers.find(address);
+    if (i != impl_->peers.end() && i->second.stage == Impl::Stage::connected)
+        i->second.authenticated = true;
 }
 std::vector<Outgoing> Transport::disconnect(const Address &from, std::uint64_t now) {
     std::vector<Outgoing> result;

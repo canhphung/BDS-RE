@@ -66,6 +66,8 @@ class Transport {
                                std::uint64_t now);
     // True while the peer completed the handshake and is not closing.
     bool connected(const Address &address) const;
+    std::size_t pending(const Address &address) const;
+    void authenticated(const Address &address);
     std::size_t peers() const;
 
   private:

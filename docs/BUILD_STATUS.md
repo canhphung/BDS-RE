@@ -138,3 +138,22 @@ for `f8a6f27` passed all seven jobs (GCC/Clang Debug/Release, sanitizers,
 Windows MSVC Debug/Release). Both Windows job logs explicitly report 17/17 tests
 passed. These are branch results, not a claim that the final merge commit has
 already run in CI. Chunk streaming, Minecraft client spawn and gameplay remain pending.
+
+## Chunk streaming and M4 protocol path
+
+Local GCC 14.2 Debug, Release and ASan+UBSan each pass **19/19 CTest**.
+New cases `network_chunks` and `spawn_packets` check 139 recaptured original
+FullChunkData bodies and post-StartGame reference packets. The UDP integration
+now verifies snapshot blocks, two encrypted spawn/initialization sequences,
+317 chunks per view, and deliberate loss/retransmission of a chunk datagram.
+`auth` verifies one-shot PlayerSpawn, initialization IDs, continued outer-view
+streaming and signed client claims larger than 64 KiB. `raknet` verifies that
+only authenticated peers can outlive the initial 30-second login deadline.
+
+Before the final implementation, rebuilding every empty section made the sanitizer
+UDP test exceed its existing 45-second timeout. Encoding now reads only allocated
+World columns/sections; the final sanitizer UDP test passes in 2.62 seconds and the
+full sanitizer suite in 8.09 seconds on this host. The timeout was not increased,
+and no test was disabled. See reverse/reports/CHUNKS.md for wire evidence,
+spawn readiness policy and features still pending. Native CI results for this
+source will be recorded after the run completes. No actual Minecraft client was run.

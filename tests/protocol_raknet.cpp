@@ -142,6 +142,33 @@ int main() {
         check(transport.receive(remote, malformed, 3).outgoing.empty() && transport.peers() == 1);
         transport.poll(15001);
         check(transport.peers() == 0);
+        // An encrypted/authenticated session can live past the initial login
+        // deadline; an otherwise identical unauthenticated peer still expires.
+        for (const bool authenticated : {false, true}) {
+            Transport session(123);
+            session.receive(remote, request2, 0);
+            Channel client(1200);
+            Bytes request{9};
+            request.insert(request.end(), {0,0,0,0,0,0,0,1}); // client GUID
+            request.insert(request.end(), 8, 0); request.push_back(0);
+            auto reply = session.receive(remote, client.send(request, 1)[0], 1);
+            for (const auto &datagram : reply.outgoing) {
+                const auto decoded = client.receive(datagram.bytes, 2);
+                for (const auto &receipt : decoded.outgoing) session.receive(remote, receipt, 2);
+            }
+            Bytes incoming{0x13};
+            const auto target = encode_address(a), internal = encode_address(Address{});
+            incoming.insert(incoming.end(), target.begin(), target.end());
+            for (unsigned i = 0; i < 20; ++i) incoming.insert(incoming.end(), internal.begin(), internal.end());
+            incoming.insert(incoming.end(), 15, 0); incoming.push_back(1); // request time 0, accepted time 1
+            session.receive(remote, client.send(incoming, 3)[0], 3);
+            check(session.connected(remote));
+            if (authenticated) session.authenticated(remote);
+            const Bytes ping{0,0,0,0,0,0,0,0,0};
+            session.receive(remote, client.send(ping, 29000, 0)[0], 29000);
+            session.poll(30001);
+            check(session.connected(remote) == authenticated);
+        }
         // Timeout incomplete assembly rather than retaining memory indefinitely.
         Channel expiry(576);
         check(expiry.receive(fragments[0], 0).valid);

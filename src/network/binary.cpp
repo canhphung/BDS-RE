@@ -31,6 +31,19 @@ std::uint32_t ByteReader::varint() {
     }
     throw ProtocolError("unterminated varint");
 }
+std::uint64_t ByteReader::varint64() {
+    std::uint64_t value = 0;
+    for (unsigned i = 0; i < 10; ++i) {
+        const auto current = byte();
+        if (i == 9 && (current & 0xfe)) throw ProtocolError("varint exceeds 64 bits");
+        value |= std::uint64_t(current & 0x7f) << (7 * i);
+        if (!(current & 0x80)) {
+            if (i && !current) throw ProtocolError("overlong varint64");
+            return value;
+        }
+    }
+    throw ProtocolError("unterminated varint64");
+}
 std::int32_t ByteReader::signed_varint() {
     const auto bits = varint();
     return static_cast<std::int32_t>((bits >> 1) ^ (0U - (bits & 1U)));

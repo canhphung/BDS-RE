@@ -32,8 +32,8 @@ Json decode_json_segment(std::string_view segment) {
     return json;
 }
 
-Token parse_token(std::string_view text) {
-    if (text.size() > max_token)
+Token parse_token(std::string_view text, std::size_t limit = max_token) {
+    if (text.size() > limit)
         throw Malformed("JWT exceeds size limit");
     const auto first = text.find('.');
     const auto second = first == text.npos ? text.npos : text.find('.', first + 1);
@@ -179,11 +179,12 @@ std::string sign_jwt(std::string_view payload_json, const crypto::P384Key &key, 
 Result verify_login(const UnverifiedLoginBody &body, const LoginPolicy &policy, std::int64_t now) {
     try {
         const auto chain = parse_chain(body.certificate_chain);
-        const auto client = parse_token(body.client_token);
+        const auto client = parse_token(body.client_token, 768 * 1024);
         bool expired = false;
         // ConnectionRequest::verify (0x18f4030) with the trusted root keys.
         if (auto leaf = verify_request(chain, client, policy.trusted_keys, now, expired))
-            return {identity_of(*leaf, true), {}, {}};
+            { auto identity = identity_of(*leaf, true); identity.client_data_json = client.payload.dump();
+              return {std::move(identity), {}, {}}; }
         if (policy.online_mode)
             return {std::nullopt, expired ? Failure::expired : Failure::untrusted,
                     expired ? "certificate chain outside its validity period" : "certificate chain not signed by a trusted key"};
@@ -195,7 +196,8 @@ Result verify_login(const UnverifiedLoginBody &body, const LoginPolicy &policy, 
         const auto self_now = integer_field(chain.back().payload, "nbf");
         bool self_expired = false;
         if (auto leaf = verify_request(chain, client, {self_key}, self_now, self_expired))
-            return {identity_of(*leaf, false), {}, {}};
+            { auto identity = identity_of(*leaf, false); identity.client_data_json = client.payload.dump();
+              return {std::move(identity), {}, {}}; }
         return {std::nullopt, self_expired ? Failure::expired : Failure::untrusted, "self-signed login rejected"};
     } catch (const std::invalid_argument &error) {
         return {std::nullopt, Failure::malformed, error.what()};

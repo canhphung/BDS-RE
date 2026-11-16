@@ -220,6 +220,13 @@ void session_crypto(const Json &fixtures) {
     protocol::PacketCipher short_packet(key);
     check(!short_packet.open(crypto::Bytes(7, 0)), "payload shorter than checksum rejected");
 
+    // Real 128x128 skins exceed the old 64 KiB certificate-token limit.
+    // Client claims retain their separate bound under the 1 MiB Login body.
+    const auto large_token = auth::sign_jwt(Json{{"SkinData", crypto::base64_encode(crypto::Bytes(65536, 127))}}.dump(), client, random);
+    const auto large_login = login(fixtures, fixtures["chain"], large_token, true, fixtures["now"]);
+    check(large_token.size() > 65536 && large_login.identity && !large_login.identity->client_data_json.empty(),
+          "large signed client skin claims accepted and retained");
+
     // Server-signed tokens verify with an independent key holder's view of x5u.
     const auto jwt = auth::sign_jwt("{\"salt\":\"AAAA\"}", server, random);
     const auto first = jwt.find('.'), second = jwt.rfind('.');
@@ -304,7 +311,7 @@ void connection(const Json &fixtures) {
     const auto [completed, level_packets] = respond(accepted, client_cipher, 4);
     using protocol::PacketId;
     const auto id_of = [](PacketId id) { return static_cast<std::uint16_t>(id); };
-    check(!completed.close && accepted.state() == protocol::GameConnection::State::spawning && level_packets.size() == 5,
+    check(!completed.close && accepted.state() == protocol::GameConnection::State::spawning && level_packets.size() == 17,
           "Completed sends the level data");
     check(level_packets[0].header.id == id_of(PacketId::StartGame) &&
               level_packets[0].body == protocol::start_game_body([] {
@@ -328,16 +335,29 @@ void connection(const Json &fixtures) {
     const auto ignored = send_encrypted(accepted, client_cipher, PacketId::MovePlayer, {1, 2, 3});
     check(!ignored.close && ignored.messages.empty(), "unhandled packet ignored while spawning");
     const auto radius = send_encrypted(accepted, client_cipher, PacketId::RequestChunkRadius, {0x40}); // varint 32
-    check(radius.close && radius.messages.size() == 1, "chunk radius reply closes");
+    check(!radius.close && radius.messages.size() == 1, "chunk radius starts bounded streaming");
     const auto radius_packets = protocol::decompress_packets(*client_cipher.open(std::span(radius.messages[0]).subspan(1)));
-    check(radius_packets.size() == 2 && radius_packets[0].header.id == id_of(PacketId::ChunkRadiusUpdated) &&
-              radius_packets[0].body == protocol::chunk_radius_updated_body(10),
-          "radius clamped to the default view distance");
-    protocol::ByteReader goodbye(radius_packets[1].body);
-    check(radius_packets[1].header.id == id_of(PacketId::Disconnect) && !goodbye.boolean() &&
-              goodbye.string(4096).find("Chunk streaming and spawning are not implemented") != std::string::npos,
-          "explains the missing chunks");
-    check(radius.reason.find("1 other packets ignored") != std::string::npos, "ignored packet count logged");
+    check(radius_packets.size() == 1 && radius_packets[0].header.id == id_of(PacketId::ChunkRadiusUpdated) &&
+              radius_packets[0].body == protocol::chunk_radius_updated_body(10), "radius clamp");
+    check(accepted.poll(0).messages.empty(), "zero streaming budget");
+    unsigned chunks = 0, spawn = 0;
+    while (chunks < 317) {
+        const auto step = accepted.poll(4);
+        check(!step.close && step.messages.size() <= 5, "bounded streaming output");
+        for (const auto &message : step.messages) {
+            const auto decrypted = client_cipher.open(std::span(message).subspan(1)); check(decrypted.has_value(), "chunk decrypts");
+            for (const auto &p : protocol::decompress_packets(*decrypted)) {
+                if (p.header.id == id_of(PacketId::FullChunkData)) { ++chunks; }
+                else { check(p.header.id == id_of(PacketId::PlayStatus) && p.body == crypto::Bytes({0,0,0,3}), "PlayerSpawn status"); check(chunks >= 81, "initial spawn circle delivered"); ++spawn; }
+            }
+        }
+    }
+    check(chunks == 317 && spawn == 1 && accepted.poll().messages.empty(), "initial circle sent once");
+    check(accepted.state() == protocol::GameConnection::State::awaiting_initialized, "wait for client initialization");
+    const auto initialized = send_encrypted(accepted, client_cipher, PacketId::SetLocalPlayerAsInitialized, {1});
+    check(!initialized.close && accepted.state() == protocol::GameConnection::State::active, "matching runtime id initializes player");
+    const auto forged_init = send_encrypted(accepted, client_cipher, PacketId::SetLocalPlayerAsInitialized, {2});
+    check(forged_init.close, "foreign runtime id rejected");
 
     // Refusal sends disconnectClient("") like the original; SendPacks cannot be served.
     const auto handshaken = [&](protocol::GameConnection &connection) {

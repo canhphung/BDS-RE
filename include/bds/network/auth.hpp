@@ -23,6 +23,7 @@ struct Identity {
     std::string display_name;
     std::string identity;   // extraData.identity (UUID string)
     std::string xuid;       // empty unless xbox_authenticated
+    std::string client_data_json; // authenticated client claims, used for the local player profile
     std::string public_key; // leaf identityPublicKey (base64 DER), used for encryption
 };
 
