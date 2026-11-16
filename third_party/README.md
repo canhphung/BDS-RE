@@ -14,3 +14,11 @@ Used for 0xfe game-packet batches (deflate level 7, 15-bit window with zlib head
 - https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
   SHA256: 9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23
 - Vendored files: adler32.c crc32.c crc32.h deflate.c deflate.h gzguts.h inffast.c inffast.h inffixed.h inflate.c inflate.h inftrees.c inftrees.h trees.c trees.h zconf.h zlib.h zutil.c zutil.h LICENSE
+
+## Mbed TLS 3.6.2 (Apache-2.0 OR GPL-2.0-or-later; used under Apache-2.0)
+
+Used for ES384 login verification (ECDSA P-384, SHA-384) and, later, the session key exchange (ECDH P-384, SHA-256, AES). Built as the static `bds_mbedtls` target from 17 library sources with the project configuration `third_party/mbedtls_config/bds_mbedtls_config.h` (no TLS, X.509 or PSA modules). `include/` and all `library/*.h` are unmodified copies; only the listed `.c` files are vendored.
+
+- https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.2/mbedtls-3.6.2.tar.bz2
+  SHA256 of the downloaded archive: 8b54fb9bcf4d5a7078028e0520acddefb7900b3e66fec7f7175bb5b7d85ccdca. Downloaded over HTTPS from the official release; the GitHub API was not reachable to cross-check the published checksum, so verify it against the release notes before relying on it.
+- Vendored sources: aes asn1parse asn1write bignum bignum_core constant_time ctr_drbg ecdh ecdsa ecp ecp_curves entropy entropy_poll md platform_util sha256 sha512 (.c). Windows builds link bcrypt for the entropy source.

@@ -8,6 +8,7 @@ import sys
 import tempfile
 import threading
 import time
+import json
 import zlib
 
 MAGIC = bytes.fromhex("00ffff00fefefefefdfdfdfd12345678")
@@ -59,6 +60,24 @@ def frame(sequence, reliable, order, body):
     return b"\x84" + triad(sequence) + b"\x60" + struct.pack(">H", len(body) * 8) + triad(reliable) + triad(order) + b"\0" + body
 
 
+def send_message(client, remote, sequence, body, part=1000):
+    """Send one reliable-ordered message, split into fragments when larger than `part`.
+
+    Each fragment takes its own datagram sequence and reliable index; all share
+    the order index and split id. Returns the next free sequence number.
+    """
+    if len(body) <= part:
+        client.sendto(frame(sequence, sequence, sequence, body), remote)
+        return sequence + 1
+    pieces = [body[i:i + part] for i in range(0, len(body), part)]
+    order = sequence
+    for index, piece in enumerate(pieces):
+        client.sendto(b"\x84" + triad(sequence) + b"\x70" + struct.pack(">H", len(piece) * 8) + triad(sequence) +
+                      triad(order) + b"\0" + struct.pack(">IHI", len(pieces), 7, index) + piece, remote)
+        sequence += 1
+    return sequence
+
+
 def ack(sequence):
     return b"\xc0\0\x01\x01" + triad(sequence)
 
@@ -90,9 +109,10 @@ def read_varint(data, at):
             return value, at
 
 
-def login_batch(protocol):
+def login_batch(protocol, chain='{"chain":[]}', client="a.b.c"):
     """Python-built LoginPacket batch (zlib level 7), independent of the C++ encoder."""
-    inner = struct.pack("<I", 12) + b'{"chain":[]}' + struct.pack("<I", 5) + b"a.b.c"
+    chain, client = chain.encode(), client.encode()
+    inner = struct.pack("<I", len(chain)) + chain + struct.pack("<I", len(client)) + client
     packet = varint(0x01) + struct.pack(">i", protocol) + varint(len(inner)) + inner
     return b"\xfe" + zlib.compress(varint(len(packet)) + packet, 7)
 
@@ -154,12 +174,17 @@ def until_disconnect(client, remote):
             messages.append(body)
 
 
+fixtures = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+
 with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
     root = Path(directory)
     has_ipv6 = ipv6_available()
     p4 = port(socket.AF_INET, "127.0.0.1")
     p6 = port(socket.AF_INET6, "::1") if has_ipv6 else 19133
-    (root / "server.properties").write_text(f"level-name=Transport Test\nserver-port={p4}\nserver-portv6={p6}\n", encoding="utf-8")
+    # online-mode=false: the throwaway fixture keys are not anchored in the
+    # Mojang root, so only the self-signed path can succeed end to end.
+    (root / "server.properties").write_text(f"level-name=Transport Test\nserver-port={p4}\nserver-portv6={p6}\n"
+                                            "online-mode=false\n", encoding="utf-8")
     server = subprocess.Popen([sys.argv[1], "--root", str(root), "--tick-ms", "2"],
                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True, encoding="utf-8", bufsize=1)
@@ -263,36 +288,45 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                 disconnect_seq, disconnect_body = incoming_frame(disconnect)
                 require(disconnect_body == b"\x15", "application data is rejected before login exists")
                 client.sendto(ack(disconnect_seq), remote)
-            # Real protocol-282 batches over UDP: a structurally valid login is
-            # refused with DisconnectPacket because authentication is missing;
-            # other protocols receive PlayStatus like the original handler.
-            for scenario, protocol in [("login", 282), ("old client", 281), ("new client", 283)]:
-                client, remote, sequence = connected_session(family, host, target_port, 0x1000 + protocol)
+            # Real protocol-282 batches over UDP with logins signed by an
+            # independent ES384 implementation (tests/protocol/login_fixtures.json).
+            client_token = fixtures["client_token"]
+            scenarios = [
+                ("self-signed login", 282, fixtures["self_signed_chain"], [(0x05, "authenticated as Offline")]),
+                ("chain via self-signed path", 282, fixtures["chain"], [(0x05, "authenticated as Steve")]),
+                ("forged leaf", 282, fixtures["cases"]["untrusted_leaf_signer"], [(0x05, "disconnectionScreen.notAuthenticated")]),
+                ("old client", 281, fixtures["chain"], [(0x02, 1), (0x05, "disconnectionScreen.outdatedClient")]),
+                ("new client", 283, fixtures["chain"], [(0x02, 2), (0x05, "disconnectionScreen.outdatedServer")]),
+            ]
+            for index, (scenario, protocol, chain, expected) in enumerate(scenarios):
+                client, remote, sequence = connected_session(family, host, target_port, 0x1000 + index)
                 with client:
-                    client.sendto(frame(sequence, sequence, sequence, login_batch(protocol)), remote)
+                    # Signed logins exceed the MTU, so this also exercises split reassembly.
+                    send_message(client, remote, sequence, login_batch(protocol, chain, client_token))
                     messages = until_disconnect(client, remote)
                     require(len(messages) == 1, f"{scenario}: one batch before disconnect, got {messages}")
                     packets = game_packets(messages[0])
-                    require(len(packets) == 1, f"{scenario}: one game packet")
-                    header, body = packets[0]
-                    if protocol == 282:
-                        require(header == 0x05 and body[0] == 0, f"{scenario}: DisconnectPacket with message")
-                        length, at = read_varint(body, 1)
-                        require(b"not implemented" in body[at:at + length] and at + length == len(body),
-                                f"{scenario}: disconnect message")
-                    else:
-                        expected = 1 if protocol < 282 else 2
-                        require(header == 0x02 and body == struct.pack(">i", expected), f"{scenario}: PlayStatus")
+                    require(len(packets) == len(expected), f"{scenario}: packet count {packets}")
+                    for (header, body), (packet_id, value) in zip(packets, expected):
+                        require(header == packet_id, f"{scenario}: packet id {header}")
+                        if packet_id == 0x02:
+                            require(body == struct.pack(">i", value), f"{scenario}: PlayStatus")
+                        else:
+                            require(body[0] == 0, f"{scenario}: disconnect screen shown")
+                            length, at = read_varint(body, 1)
+                            require(value in body[at:at + length].decode() and at + length == len(body),
+                                    f"{scenario}: disconnect message {body!r}")
         server.stdin.write("stop\n")
         server.stdin.flush()
         server.stdin.close()
         require(server.wait(timeout=8) == 0, f"stop failed: {transcript}")
         reader.join(timeout=2)
-        require(any("closing connection: login received; authentication is not implemented" in line for line in transcript),
-                f"login refusal not logged: {transcript}")
+        require(any('login authenticated: "Offline" self-signed' in line for line in transcript),
+                f"self-signed login not logged: {transcript}")
+        require(any("login not authenticated" in line for line in transcript), f"forged login not logged: {transcript}")
         require(any("closing connection: login protocol 281 is not 282" in line for line in transcript),
                 f"version refusal not logged: {transcript}")
-        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection and login batch responses passed")
+        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection and signed login outcomes passed")
     finally:
         if server.poll() is None:
             server.kill()

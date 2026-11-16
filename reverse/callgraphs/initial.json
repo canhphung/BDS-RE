@@ -10487,6 +10487,699 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "WebToken::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const",
+      "address": "0x19dca50",
+      "size": 913,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x19dca8d",
+          "operand": "27ccbc0 <Json::Value::Value(char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcaa8",
+          "operand": "27cf1b0 <Json::Value::get(char const*, Json::Value const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcab1",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcac5",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcad6",
+          "operand": "27cd6b0 <Json::Value::asString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcadf",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcae8",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcaf1",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcafa",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcb1f",
+          "operand": "27ccbc0 <Json::Value::Value(char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcb40",
+          "operand": "27cf1b0 <Json::Value::get(char const*, Json::Value const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcb4c",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcb66",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcb80",
+          "operand": "27cd6b0 <Json::Value::asString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcb8c",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcb98",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcba4",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcbb0",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcbbc",
+          "operand": "19dcdf0 <(anonymous namespace)::getAlgorithm(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcbf4",
+          "operand": "17f4b10 <bool std::operator==<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcc24",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcc2d",
+          "operand": "1835ec0 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcc3d",
+          "operand": "1835f00 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcc5e",
+          "operand": "19de280 <__gnu_cxx::__normal_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const*, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > std::find<__gnu_cxx::__normal_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const*, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >(__gnu_cxx::__normal_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const*, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >, __gnu_cxx::__normal_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const*, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcc6e",
+          "operand": "1835f00 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcc88",
+          "operand": "1893110 <bool __gnu_cxx::operator==<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const*, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >(__gnu_cxx::__normal_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const*, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > const&, __gnu_cxx::__normal_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const*, std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dccc2",
+          "operand": "1836ba0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcce0",
+          "operand": "1808430 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dccec",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dccf8",
+          "operand": "19dce40 <(anonymous namespace)::JWTCrypto::doECCompress() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcd18",
+          "operand": "19dc030 <WebToken::signatureToDER[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcd37",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcd53",
+          "operand": "19e5720 <KeyManager::KeyManager(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Crypto::Asymmetric::System)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcd77",
+          "operand": "19e57e0 <KeyManager::verify(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Crypto::Hash::HashType) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcd92",
+          "operand": "1837470 <KeyManager::~KeyManager()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcd9e",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcdaa",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcdb6",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcdc2",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcdcb",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "UnverifiedCertificate::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const",
+      "address": "0x19e41d0",
+      "size": 522,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x19e420a",
+          "operand": "183f670 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::vector(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e421a",
+          "operand": "19dca50 <WebToken::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4228",
+          "operand": "187aad0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4244",
+          "operand": "19e5500 <bool std::operator!=<UnverifiedCertificate, std::default_delete<UnverifiedCertificate> >(std::unique_ptr<UnverifiedCertificate, std::default_delete<UnverifiedCertificate> > const&, decltype(nullptr))>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4266",
+          "operand": "187af80 <std::unique_ptr<UnverifiedCertificate, std::default_delete<UnverifiedCertificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4276",
+          "operand": "19e41d0 <UnverifiedCertificate::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4283",
+          "operand": "187b0a0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator=(std::unique_ptr<Certificate, std::default_delete<Certificate> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e428f",
+          "operand": "187b890 <bool std::operator!=<Certificate, std::default_delete<Certificate> >(std::unique_ptr<Certificate, std::default_delete<Certificate> > const&, decltype(nullptr))>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e429e",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e42ba",
+          "operand": "187afa0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e42c2",
+          "operand": "19e43e0 <Certificate::isCertificateAuthority() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e42e2",
+          "operand": "187afa0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e42ee",
+          "operand": "19e4480 <Certificate::getIdentityPublicKey[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e42fb",
+          "operand": "1805e10 <void std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::emplace_back<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4304",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4314",
+          "operand": "19dca50 <WebToken::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4336",
+          "operand": "187b100 <std::remove_reference<std::unique_ptr<Certificate, std::default_delete<Certificate> >&>::type&& std::move<std::unique_ptr<Certificate, std::default_delete<Certificate> >&>(std::unique_ptr<Certificate, std::default_delete<Certificate> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4345",
+          "operand": "18614e0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::unique_ptr(std::unique_ptr<Certificate, std::default_delete<Certificate> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e435f",
+          "operand": "19e4ea0 <Certificate::Certificate(UnverifiedCertificate const&, std::unique_ptr<Certificate, std::default_delete<Certificate> >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4372",
+          "operand": "19e5590 <std::_MakeUniq<Certificate>::__single_object std::make_unique<Certificate, Certificate>(Certificate&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e437e",
+          "operand": "1857470 <Certificate::~Certificate()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e438a",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e43a9",
+          "operand": "187ad30 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::unique_ptr(decltype(nullptr))>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e43bc",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e43c5",
+          "operand": "17fff80 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::~vector()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ConnectionRequest::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&, long)",
+      "address": "0x18f4030",
+      "size": 497,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x18f4063",
+          "operand": "187b040 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::reset(Certificate*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f406f",
+          "operand": "187af80 <std::unique_ptr<UnverifiedCertificate, std::default_delete<UnverifiedCertificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f407f",
+          "operand": "19e41d0 <UnverifiedCertificate::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4088",
+          "operand": "187ac80 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f40a8",
+          "operand": "18374c0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f40c3",
+          "operand": "187afa0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f40d2",
+          "operand": "19e4480 <Certificate::getIdentityPublicKey[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f40eb",
+          "operand": "1805080 <std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::allocator()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4100",
+          "operand": "1818440 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::vector(std::initializer_list<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4110",
+          "operand": "19dca50 <WebToken::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f411f",
+          "operand": "17fff80 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4128",
+          "operand": "17f9ff0 <std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::~allocator()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f415b",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f41a7",
+          "operand": "187b100 <std::remove_reference<std::unique_ptr<Certificate, std::default_delete<Certificate> >&>::type&& std::move<std::unique_ptr<Certificate, std::default_delete<Certificate> >&>(std::unique_ptr<Certificate, std::default_delete<Certificate> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f41b3",
+          "operand": "18614e0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::unique_ptr(std::unique_ptr<Certificate, std::default_delete<Certificate> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f41cb",
+          "operand": "18f4230 <ConnectionRequest::validate(std::unique_ptr<Certificate, std::default_delete<Certificate> >, long) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f41db",
+          "operand": "187b0a0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator=(std::unique_ptr<Certificate, std::default_delete<Certificate> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f41eb",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f41f4",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4202",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f420e",
+          "operand": "18f45a0 <ConnectionRequest::isVerified() const>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ConnectionRequest::verifySelfSigned()",
+      "address": "0x18f42a0",
+      "size": 434,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x18f42c5",
+          "operand": "187b040 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::reset(Certificate*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f42ce",
+          "operand": "187af80 <std::unique_ptr<UnverifiedCertificate, std::default_delete<UnverifiedCertificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f42ec",
+          "operand": "187af80 <std::unique_ptr<UnverifiedCertificate, std::default_delete<UnverifiedCertificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f42fb",
+          "operand": "19e4570 <UnverifiedCertificate::getIdentityPublicKey[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4314",
+          "operand": "1805080 <std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::allocator()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4329",
+          "operand": "1818440 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::vector(std::initializer_list<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f433d",
+          "operand": "19e41d0 <UnverifiedCertificate::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4346",
+          "operand": "17fff80 <std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f434f",
+          "operand": "17f9ff0 <std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::~allocator()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4382",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f43a9",
+          "operand": "187ac80 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f43bf",
+          "operand": "187afa0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f43c7",
+          "operand": "19e50e0 <Certificate::getNotBeforeDate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f43e3",
+          "operand": "187b100 <std::remove_reference<std::unique_ptr<Certificate, std::default_delete<Certificate> >&>::type&& std::move<std::unique_ptr<Certificate, std::default_delete<Certificate> >&>(std::unique_ptr<Certificate, std::default_delete<Certificate> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f43ef",
+          "operand": "18614e0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::unique_ptr(std::unique_ptr<Certificate, std::default_delete<Certificate> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4404",
+          "operand": "18f4230 <ConnectionRequest::validate(std::unique_ptr<Certificate, std::default_delete<Certificate> >, long) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4414",
+          "operand": "187b0a0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator=(std::unique_ptr<Certificate, std::default_delete<Certificate> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4424",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f442d",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f4436",
+          "operand": "183a970 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18f443f",
+          "operand": "18f45a0 <ConnectionRequest::isVerified() const>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "Certificate::validate(long)",
+      "address": "0x19e4f40",
+      "size": 401,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x19e4f69",
+          "operand": "187b890 <bool std::operator!=<Certificate, std::default_delete<Certificate> >(std::unique_ptr<Certificate, std::default_delete<Certificate> > const&, decltype(nullptr))>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4f88",
+          "operand": "187afa0 <std::unique_ptr<Certificate, std::default_delete<Certificate> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4f94",
+          "operand": "19e4f40 <Certificate::validate(long)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4fca",
+          "operand": "19e50e0 <Certificate::getNotBeforeDate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e4fd7",
+          "operand": "19e5180 <Certificate::getExpirationDate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e507e",
+          "operand": "19e4480 <Certificate::getIdentityPublicKey[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e508b",
+          "operand": "19e4570 <UnverifiedCertificate::getIdentityPublicKey[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e5098",
+          "operand": "17fdc80 <__gnu_cxx::__enable_if<__is_char<char>::__value, bool>::__type std::operator==<char>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e50ad",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19e50b6",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)",
+      "address": "0x1825660",
+      "size": 424,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x18256a3",
+          "operand": "1836540 <DisconnectPacket::DisconnectPacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18256cc",
+          "operand": "18364a0 <PacketSender::sendToPrimaryClient(NetworkIdentifier const&, Packet const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18256dc",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1825758",
+          "operand": "1757b10 <memcpy@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1825779",
+          "operand": "1805ea0 <std::remove_reference<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>::type&& std::move<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1825788",
+          "operand": "1757810 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18257aa",
+          "operand": "1825810 <std::function<void ()>::function<ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)::$_1, void, void>(ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)::$_1)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18257cb",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18257d4",
+          "operand": "1804310 <std::function<void ()>::~function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18257e0",
+          "operand": "1825890 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)::$_1::~$_1()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18257ec",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18257f5",
+          "operand": "18365a0 <DisconnectPacket::~DisconnectPacket()>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }

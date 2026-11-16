@@ -42,7 +42,13 @@ targets += [
  'MinecraftPackets::createPacket(MinecraftPacketIds)',
  'ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&)',
  'DisconnectPacket::write(BinaryStream&) const',
- 'PlayStatusPacket::write(BinaryStream&) const'
+ 'PlayStatusPacket::write(BinaryStream&) const',
+ 'WebToken::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const',
+ 'UnverifiedCertificate::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&) const',
+ 'ConnectionRequest::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&, long)',
+ 'ConnectionRequest::verifySelfSigned()',
+ 'Certificate::validate(long)',
+ 'ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)'
 ]
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)

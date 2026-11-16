@@ -123,5 +123,84 @@
       "hide_flag": "writeBool call 0x1840f36 (field +0x11)",
       "message": "writeString call 0x1840f58 only when flag is false (branch 0x1840f43)"
     }
+  },
+  "login_authentication": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "mojang_root_key": {
+      "address": "0x242b423",
+      "encoding": "base64 DER SubjectPublicKeyInfo, P-384"
+    },
+    "algorithms_table_strings": {
+      "0x242b5b4": "RS256",
+      "0x242b5ba": "RS384",
+      "0x242b5c0": "RS512",
+      "0x242b5c6": "ES256",
+      "0x242b5cc": "ES384",
+      "0x242b5d2": "ES512"
+    },
+    "webtoken_verify": {
+      "function": "WebToken::verify(vector<string> const&) const 0x19dca50",
+      "header_x5u": "0x19dca96",
+      "header_alg": "0x19dcb2b",
+      "algorithm_lookup": "getAlgorithm(string) call 0x19dcbbc",
+      "signature_to_der": "call 0x19dcd18",
+      "key_manager_verify": "KeyManager::verify call 0x19dcd77 (0x19e57e0)"
+    },
+    "chain_verify": {
+      "function": "UnverifiedCertificate::verify 0x19e41d0",
+      "own_token_first": "WebToken::verify call 0x19e421a",
+      "parent_recursion": "call 0x19e4276",
+      "ca_check": "Certificate::isCertificateAuthority call 0x19e42c2",
+      "retry_with_parent_identity_key": "emplace_back 0x19e42fb, WebToken::verify 0x19e4314",
+      "build_certificate": "Certificate(UnverifiedCertificate const&, unique_ptr<Certificate>) call 0x19e435f"
+    },
+    "payload_fields": {
+      "identityPublicKey": "0x19e44b8",
+      "certificateAuthority": "0x19e4404 (asBool)",
+      "nbf": "0x19e5104 (asInt64)",
+      "exp": "0x19e51a4 (asInt64)",
+      "chain": "UnverifiedCertificate::fromString 0x19e3c71"
+    },
+    "validate": {
+      "function": "Certificate::validate(long) 0x19e4f40",
+      "parent_first": "0x19e4f94",
+      "nbf_positive_and_not_after_now": "0x19e4fe4-0x19e4ffa",
+      "exp_positive_not_before_now_not_before_nbf": "0x19e5020-0x19e504b"
+    },
+    "connection_request_verify": {
+      "function": "ConnectionRequest::verify(vector<string> const&, long) 0x18f4030",
+      "chain": "call 0x18f407f",
+      "client_token_with_leaf_identity_key": "getIdentityPublicKey 0x18f40d2, WebToken::verify 0x18f4110",
+      "validate": "ConnectionRequest::validate call 0x18f41cb"
+    },
+    "verify_self_signed": {
+      "function": "ConnectionRequest::verifySelfSigned 0x18f42a0",
+      "trusted_key": "UnverifiedCertificate::getIdentityPublicKey 0x18f42fb",
+      "chain": "call 0x18f433d",
+      "time": "validate at the certificate's own nbf (0x18f43c7, 0x18f4404)",
+      "client_token_not_checked": "no WebToken::verify call in this function"
+    },
+    "handler_flow": {
+      "function": "ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&) 0x1827e50",
+      "now": "getEpochTimeS call 0x18280a0",
+      "verify": "call 0x18280e2",
+      "flag_0xc0": {
+        "test": "0x1828100",
+        "interpretation": "INFERRED online-mode: when clear, verifySelfSigned is tried (0x1828120)"
+      },
+      "failure": "disconnectClient('disconnectionScreen.notAuthenticated') 0x1828371"
+    },
+    "disconnect_reasons": {
+      "outdatedClient": "0x1827f62 (disconnectClient 0x1827f86)",
+      "outdatedServer": "0x1827fc0 (disconnectClient 0x1827fea)",
+      "notAuthenticated": "0x1828347",
+      "skip_message_argument": "xor %ecx,%ecx at 0x1827f76 and 0x1828361 (message shown)",
+      "disconnect_client": "ServerNetworkHandler::disconnectClient 0x1825660 builds DisconnectPacket(message, false) at 0x18256a3"
+    },
+    "next_step_strings": {
+      "salt": "0x182907b",
+      "signedToken": "0x1829116",
+      "note": "ServerToClientHandshake/encryption follows successful authentication; not yet traced"
+    }
   }
 }

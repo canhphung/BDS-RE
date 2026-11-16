@@ -69,3 +69,13 @@ CMake 3.28.3, Ninja 1.11.1. On this host the integration tests exercise the IPv4
 | Clang 18.1.3 | Release | PASS, 15/15 CTest |
 
 New test `batch` covers varint/BinaryStream codecs, header bit layout, zlib round trips with level-7 header bytes, truncated/corrupt/trailing streams, a 64 MiB decompression bomb stopped at 4 MiB, a Python-generated batch fixture, the generated packet id header against reverse/evidence/packet_ids.json, and the pre-login state machine. `raknet_handshake` now also sends Python-built zlib LoginPacket batches over real UDP and checks the DisconnectPacket (protocol 282) and PlayStatus 1/2 (281/283) replies followed by RakNet disconnect. Vendored zlib compiles on MSVC only once native CI runs; no real Minecraft client was used.
+
+## Login authentication slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 16/16 CTest |
+| GCC 13.3.0 | Release | PASS, 16/16 CTest |
+| Clang 18.1.3 | Release | PASS, 16/16 CTest |
+
+New test `auth`: RFC 4648 base64 vectors and strictness, FIPS 180-2 SHA-256/384 vectors, ES384 verification of signatures produced by Python `cryptography` (tampered input/signature, off-curve and truncated keys), the reconstructed chain algorithm (trusted chain, Mojang-key rejection, inclusive nbf/exp bounds, forged leaf, non-CA intermediate, expired leaf, missing nbf, ES256 header, foreign client token, self-signed acceptance only with online mode off, chain length and malformed input) and the GameConnection outcomes. `raknet_handshake` now sends these signed logins over real UDP as split RakNet messages and checks the self-signed success, forged rejection and outdated client/server replies. Vendored Mbed TLS compiles on MSVC only once native CI runs. No genuine Xbox Live chain or Minecraft client has been tested.

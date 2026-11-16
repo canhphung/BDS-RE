@@ -163,9 +163,15 @@ void connections() {
             body[i] = static_cast<std::uint8_t>(value >> (24 - 8 * i));
         const auto output = connection.receive(login_batch(body));
         check(output.close && connection.state() == GameConnection::State::closed, "version mismatch closes");
-        const auto reply = only(output);
-        check(reply.header.id == static_cast<std::uint16_t>(PacketId::PlayStatus), "PlayStatus reply");
-        check(reply.body == Bytes({0, 0, 0, static_cast<std::uint8_t>(status)}), "PlayStatus value");
+        // PlayStatus then disconnectClient with the matching localisation key.
+        check(output.messages.size() == 1, "one response message");
+        const auto replies = decode_batch(output.messages[0]);
+        check(replies.size() == 2, "PlayStatus and Disconnect");
+        check(replies[0].header.id == static_cast<std::uint16_t>(PacketId::PlayStatus), "PlayStatus reply");
+        check(replies[0].body == Bytes({0, 0, 0, static_cast<std::uint8_t>(status)}), "PlayStatus value");
+        check(replies[1].header.id == static_cast<std::uint16_t>(PacketId::Disconnect) &&
+                  replies[1].body == disconnect_body(false, status == 1 ? outdated_client : outdated_server),
+              "outdated Disconnect reason");
         check(connection.receive(login_batch(login_body)).messages.empty(), "closed connection ignores input");
     }
     {
@@ -175,7 +181,8 @@ void connections() {
         check(output.close && reply.header.id == static_cast<std::uint16_t>(PacketId::Disconnect), "Disconnect reply");
         ByteReader reader(reply.body);
         check(!reader.boolean(), "disconnect screen shown");
-        check(reader.string(1024).find("not implemented") != std::string::npos, "disconnect message");
+        // The fixture's empty chain cannot authenticate (signed logins: auth_tests).
+        check(reader.string(1024) == not_authenticated, "disconnect message");
         reader.finish();
     }
     {

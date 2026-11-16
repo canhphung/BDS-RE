@@ -308,7 +308,9 @@ void DiscoveryServer::poll(const Properties &p) {
                 if (application.bytes.empty() || application.bytes[0] != protocol::batch_id)
                     output = {{}, true, "non-batch application message"};
                 else
-                    output = impl_->connections[from].receive(application.bytes);
+                    output = impl_->connections
+                                 .try_emplace(from, auth::LoginPolicy{p.online_mode, {std::string(auth::mojang_root_key)}})
+                                 .first->second.receive(application.bytes);
                 for (const auto &message : output.messages)
                     for (const auto &outgoing : impl_->transport->send(from, message, now))
                         send_packet(socket, outgoing.address, outgoing.bytes);
