@@ -89,8 +89,9 @@ std::filesystem::path Properties::world_directory(const std::filesystem::path& r
  // Original accepts arbitrary strings; confinement is an intentional path policy.
  if(level_name.empty() || level_name=="." || level_name==".." || level_name.find_first_of("/\\:")!=level_name.npos || level_name.find('\0')!=level_name.npos)
   throw std::invalid_argument("level-name must be a single directory name");
- const auto base=std::filesystem::weakly_canonical(root/"worlds");
- if(!std::filesystem::equivalent(base.parent_path(),std::filesystem::canonical(root)))throw std::invalid_argument("worlds directory escapes server root");
+ const auto server_root=std::filesystem::canonical(root);
+ const auto base=std::filesystem::weakly_canonical(server_root/"worlds");
+ if(!std::filesystem::equivalent(base.parent_path(),server_root))throw std::invalid_argument("worlds directory escapes server root");
  const auto selected=std::filesystem::weakly_canonical(base/level_name);
  if(selected.parent_path()!=base)throw std::invalid_argument("world path escapes worlds directory");
  return selected;
