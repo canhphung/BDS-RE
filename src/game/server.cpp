@@ -94,6 +94,32 @@ std::vector<GamePacket> Server::correct(Session &s) {
             packet(PacketId::InventoryContent, inventory(p)),
             packet(PacketId::InventoryContent, cursor_inventory(p))};
 }
+std::vector<GamePacket> Server::reject_item_use(const Session &s, const Transaction &t) const {
+    // ItemUseInventoryTransaction::onTransactionError (original 0x1ae7710):
+    // resendBlocksAroundArea, then inventory/hotbar correction. The four updates
+    // intentionally retain duplicates when the clicked face is vertical.
+    auto [x, y, z] = t.block;
+    const auto face = static_cast<std::int8_t>(t.face);
+    World::Position adjacent{x + (face == 5) - (face == 4), y + (face == 1) - (face == 0),
+                             z + (face == 3) - (face == 2)};
+    auto [ax, ay, az] = adjacent;
+    std::vector<GamePacket> out;
+    for (const auto &pos :
+         {t.block, World::Position{x, y + 1, z}, adjacent, World::Position{ax, ay + 1, az}})
+        out.push_back(packet(PacketId::UpdateBlock, block_update(pos, world_.block(pos))));
+    const auto &p = world_.players().at(s.key);
+    out.push_back(packet(PacketId::InventoryContent, inventory(p)));
+    // Only block items are currently supported; armor and offhand stay empty.
+    out.push_back(packet(PacketId::InventoryContent, protocol::empty_inventory_body(120, 4)));
+    out.push_back(packet(PacketId::InventoryContent, cursor_inventory(p)));
+    out.push_back(packet(PacketId::InventoryContent, protocol::empty_inventory_body(119, 1)));
+    ByteWriter hotbar;
+    hotbar.varint(p.selected);
+    hotbar.byte(0);
+    hotbar.boolean(true);
+    out.push_back(packet(PacketId::PlayerHotbar, hotbar.take()));
+    return out;
+}
 std::vector<GamePacket> Server::prepare(const auth::Identity &identity, protocol::StartGame &g) {
     const auto k = key(identity);
     require(sessions_.size() < properties_.max_players);
@@ -190,11 +216,15 @@ std::vector<GamePacket> Server::destroy(Session &s, World::Position b, std::uint
 }
 std::vector<GamePacket> Server::use(Session &s, const Transaction &t, std::uint64_t now) {
     auto &p = world_.players().at(s.key);
+    // Original ItemUseInventoryTransaction::handle (0x1ae62ee..0x1ae6366):
+    // error 3 precedes dispatch for ALL actions, including click-air and break.
+    // Network requests take the force=false path in ServerNetworkHandler.
+    if (t.held != p.inventory[p.selected] || t.slot != static_cast<int>(p.selected))
+        return reject_item_use(s, t);
     if (t.action == 2)
         return destroy(s, t.block, now);
     if (t.action == 1)
         return {};
-    require(t.slot >= 0 && t.slot < 9 && static_cast<unsigned>(t.slot) == p.selected);
     auto [x, y, z] = t.block;
     const auto held = p.inventory[p.selected];
     require(t.face >= 0 && t.face < 6);

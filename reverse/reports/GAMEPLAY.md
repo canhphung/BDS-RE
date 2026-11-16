@@ -19,6 +19,13 @@ Static function inspection established these protocol-282 layouts:
 | MobEquipmentPacket::read | 0x1848680 | Runtime ID, item, inventory slot, selected hotbar slot, window bytes |
 | AddPlayerPacket::write | 0x18b17b0 | UUID, primary/third-party names and platform, unique/runtime IDs, chat ID, position/velocity/rotation/head yaw, held item, metadata, adventure settings, actor links and device ID |
 
+The held-item/selected-slot rejection branch of ItemUse now has a separate
+[function-level audit and 37 original-server regression cases](ITEM_USE.md).
+This validation applies before all three ItemUse actions. Its four-block and
+inventory/hotbar correction matches the scoped original captures after runtime
+IDs are translated through the two advertised StartGame palettes. This does not
+verify the rest of the gameplay handler.
+
 The implementation supports simple zero-damage, zero-NBT block stacks only, with
 legacy item IDs 1/2/3/7 mapped to internal stone/grass/dirt/bedrock. The stone item
 fixture `02 02 00 00 00 00` is also checked independently. Network block updates use

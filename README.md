@@ -5,10 +5,12 @@ The runtime supports server.properties, internal snapshots/backups, RakNet 9,
 ES384 Login, encrypted chunk streaming and basic gameplay: seeded flat/rolling
 terrain, player movement/visibility, block placement/breaking and persistent
 36-slot inventories with a cursor. The supported block set is stone, grass, dirt
-and bedrock. This is not yet a complete vanilla Bedrock server: tools, crafting,
-chests, mobs and full physics remain pending. The user confirmed the M4 join path
+and bedrock. **Gameplay is experimental and differs from original BDS behavior.**
+Terrain, movement, mining and inventory execution remain independent algorithms;
+tools, crafting, chests, mobs and full physics remain pending. The user confirmed the M4 join path
 with Minecraft 1.6.0.14; the new gameplay is integration-tested with two independent
-protocol clients and still needs actual-client verification. See
+protocol clients. A [scoped ItemUse validation audit](reverse/reports/ITEM_USE.md)
+now has 37 original-server cases; it does not verify the whole gameplay slice. See
 [gameplay and local testing](docs/GAMEPLAY.md) and [operations](docs/OPERATIONS.md).
 
 ## Build

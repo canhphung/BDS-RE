@@ -62,3 +62,30 @@ the count/digest constants in `tests/protocol/chunk_tests.cpp`. See
 The reference client's receive path now honors reliable ordering before decrypting
 batches, so deliberate chunk loss/retransmission is testable without corrupting
 its continuous CFB8 stream.
+
+## ItemUse validation captures
+
+Run the pinned original binary in a fresh isolated world and export held-item/
+selected-slot rejection cases:
+
+```sh
+python3 tools/reference/capture_item_use_errors.py \
+  --runtime input/reference-runtime/bds \
+  --library-path input/reference-runtime/openssl-local/lib \
+  --preload input/reference-runtime/ipv6_shim.so \
+  --output input/reference/item-use-new
+```
+
+Omit `--preload` when native IPv6 works. `--output` must be a new directory. The
+script creates its own world and server.properties; source runtime assets are
+symlinked and existing runtime worlds are never opened. `--port` defaults to
+19150 (IPv6 uses the following port). Dependencies are the same Python 3 and
+`cryptography` used by the other reference tools.
+
+The ignored output contains a full raw capture (console commands, client requests,
+server game packets) and `item_use_errors.json`. The committed fixture was obtained
+from two runs with identical exported cases. Response bodies stay unmodified;
+UpdateBlock runtime IDs are compared using each session's advertised StartGame
+palette. Unrelated tick packets are filtered as documented in the fixture.
+Run `ctest --test-dir build -R item_use_reference --output-on-failure` for the
+regression check; see [function evidence and coverage](../../reverse/reports/ITEM_USE.md).

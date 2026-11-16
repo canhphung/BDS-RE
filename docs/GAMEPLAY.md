@@ -1,9 +1,18 @@
-# Basic gameplay (protocol 282)
+# Experimental gameplay (protocol 282)
 
 The server now supports a small playable block world: terrain, authenticated
 player movement and visibility, block breaking/placement, and a 36-slot player
 inventory plus cursor. This is an independent implementation. It does not reproduce
-all Bedrock gameplay or the original terrain generator.
+all Bedrock gameplay or the original terrain generator. The existing terrain,
+movement, mining and inventory algorithms are experimental, not a completed
+reconstruction of BDS. Known mismatches include mining delays, direct inventory
+drops and full inventory responses to successful predicted transactions.
+
+The ItemUse held-item/selected-slot rejection branch has now been traced in the
+original binary and compared with 37 original-server cases. It validates all
+three ItemUse actions and resends authoritative blocks, inventory and hotbar on
+mismatch without resetting movement. See the [bounded audit](../reverse/reports/ITEM_USE.md)
+for exact coverage and outstanding differences.
 
 ## Try locally
 
@@ -79,6 +88,12 @@ captures the same version-2 state, including inventories, in one snapshot. See
 read version 2; this build continues to read version 1.
 
 ## Verification
+
+`item_use_reference` replays the 37 original-server cases for held-item/selected-slot
+validation. Responses match after translating UpdateBlock runtime IDs through the
+captured and advertised StartGame palettes; other response bytes/order must match.
+This is original-server evidence for that branch only. The other tests below
+check the independent implementation's own policies.
 
 `gameplay` tests terrain determinism, sparse generation/restart, tombstones and
 legacy preservation, Creative and Survival changes, Visitor denial, duplicate

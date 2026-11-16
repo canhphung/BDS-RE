@@ -37,6 +37,7 @@ class Server {
     bool collides(const PlayerData &p) const;
     bool reach(const PlayerData &p, World::Position block) const;
     std::vector<GamePacket> correct(Session &s);
+    std::vector<GamePacket> reject_item_use(const Session &s, const Transaction &t) const;
     std::vector<GamePacket> use(Session &s, const Transaction &t, std::uint64_t now);
     std::vector<GamePacket> destroy(Session &s, World::Position block, std::uint64_t now);
 };
