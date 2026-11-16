@@ -10,4 +10,6 @@
 
 No feature is REAL_CLIENT_VERIFIED or DIFFERENTIAL_VERIFIED. The proprietary server was not executed. Findings concern static binary evidence only; no claim of recovered original source code.
 
-Next vertical slice: trace offline discovery wire format using verified protocol constant 282 before discovery/login implementation. Original LevelDB and network chunk formats remain unimplemented.
+Next vertical slice (revised after reading the original dedicated-server guide): implement server.properties settings and original world-directory selection, then console stop. The operational compatibility contract and remaining command/storage gaps are tracked in COMPATIBILITY.md. Protocol 282 discovery follows these interfaces; original storage and network chunk formats remain unimplemented.
+
+Current CLI settings and internal snapshots are development harness features, not BDS-compatible configuration or world saves. Their passing tests do not establish operational compatibility.
