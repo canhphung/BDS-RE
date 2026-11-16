@@ -73,6 +73,7 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
   auto now=Clock::now(); auto due=scheduler.advance(now-last); last=now;
   for(unsigned i=0;i<due && !stop() && (config_.ticks==0 || ticks<config_.ticks);++i) {
    world.tick();
+   if(network)network->tick();
    ++ticks;
   }
   if(config_.ticks!=0 && ticks==config_.ticks) break;

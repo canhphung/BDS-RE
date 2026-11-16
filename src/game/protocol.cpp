@@ -132,6 +132,40 @@ Bytes creative_inventory() {
         item(out, {static_cast<std::uint16_t>(i), 1});
     return out.take();
 }
+namespace {
+// Metadata of a freshly spawned ItemActor exactly as the original sends it
+// (SetActorData and AddItemActor in tests/reference/break_bds_1.6.0.15.json):
+// key, type (0 byte, 1 short, 2 int, 3 float, 4 string, 7 long, 8 vec3), value.
+void write_item_metadata(ByteWriter &out) {
+    struct Entry {
+        unsigned key, type;
+        std::int64_t value;
+        float real;
+    };
+    static const Entry entries[] = {
+        {0, 7, 0xC00000000000LL, 0}, // flags: HAS_COLLISION (46), AFFECTED_BY_GRAVITY (47)
+        {1, 2, 1, 0}, {2, 2, 0, 0}, {3, 0, 0, 0}, {4, 4, 0, 0}, {5, 7, -1, 0}, {7, 1, 300, 0},
+        {22, 0, 0, 0}, {37, 7, 0, 0}, {38, 3, 0, 1.0f}, {42, 1, 300, 0}, {43, 2, 0, 0}, {44, 0, 0, 0},
+        {45, 2, 0, 0}, {46, 2, 0, 0}, {53, 3, 0, 0.25f}, {54, 3, 0, 0.25f}, {56, 8, 0, 0}, {57, 0, 0, 0},
+        {58, 3, 0, 0.0f}, {59, 3, 0, 0.0f}, {69, 0, 0, 0}, {70, 4, 0, 0}, {71, 4, 0, 0}, {72, 0, 1, 0},
+        {73, 0, 0, 0}, {74, 2, 0, 0}, {75, 2, 0, 0}, {76, 2, 0, 0}, {77, 2, -1, 0}, {80, 0, 255, 0},
+        {81, 0, 0, 0}};
+    out.varint(static_cast<std::uint32_t>(std::size(entries)));
+    for (const auto &e : entries) {
+        out.varint(e.key);
+        out.varint(e.type);
+        switch (e.type) {
+        case 0: out.byte(static_cast<std::uint8_t>(e.value)); break;
+        case 1: out.little_endian(static_cast<std::uint16_t>(e.value), 2); break;
+        case 2: out.signed_varint(static_cast<std::int32_t>(e.value)); break;
+        case 3: out.float32(e.real); break;
+        case 4: out.varint(0); break;
+        case 7: out.signed_varint64(e.value); break;
+        case 8: out.float32(0); out.float32(0); out.float32(0); break;
+        }
+    }
+}
+} // namespace
 Bytes block_update(World::Position p, BlockId id) {
     const auto &palette = protocol::internal_block_palette();
     require(id < palette.size());
@@ -225,5 +259,111 @@ Transaction transaction(std::span<const std::uint8_t> bytes) {
     }
     in.finish();
     return t;
+}
+Bytes item_actor_data(std::uint64_t runtime) {
+    ByteWriter out;
+    out.varint64(runtime);
+    write_item_metadata(out);
+    return out.take();
+}
+Bytes add_item_actor(const ItemActor &a) {
+    ByteWriter out;
+    out.signed_varint64(a.unique_id);
+    out.varint64(a.runtime_id);
+    item(out, a.item);
+    for (float v : {a.sent_pos.x, a.sent_pos.y, a.sent_pos.z, a.motion.x, a.motion.y, a.motion.z})
+        out.float32(v);
+    write_item_metadata(out);
+    out.boolean(false); // isFromFishing
+    return out.take();
+}
+Bytes move_actor_delta(std::uint64_t runtime, std::uint8_t flags, const std::int32_t delta[3]) {
+    ByteWriter out;
+    out.varint64(runtime);
+    out.byte(flags);
+    for (int i = 0; i < 3; ++i)
+        if (flags & (1U << i))
+            out.signed_varint(delta[i]);
+    return out.take();
+}
+Bytes set_actor_motion(std::uint64_t runtime, Vec3 motion) {
+    ByteWriter out;
+    out.varint64(runtime);
+    out.float32(motion.x);
+    out.float32(motion.y);
+    out.float32(motion.z);
+    return out.take();
+}
+Bytes take_item_actor(std::uint64_t item_runtime, std::uint64_t player) {
+    ByteWriter out;
+    out.varint64(item_runtime);
+    out.varint64(player);
+    return out.take();
+}
+Bytes remove_actor(std::int64_t unique) {
+    ByteWriter out;
+    out.signed_varint64(unique);
+    return out.take();
+}
+Bytes actor_event(std::uint64_t runtime, std::uint8_t event, std::int32_t data) {
+    ByteWriter out;
+    out.varint64(runtime);
+    out.byte(event);
+    out.signed_varint(data);
+    return out.take();
+}
+Bytes pickup_transaction(const std::vector<SlotChange> &slots, ItemStack taken, ItemStack left) {
+    ByteWriter out;
+    out.varint(0); // normal transaction
+    out.varint(static_cast<std::uint32_t>(slots.size() + 1));
+    out.varint(2); // InventorySource::fromWorldInteraction
+    out.varint(0); // flags
+    out.varint(1); // slot argument of InventoryAction in Player::take
+    item(out, taken);
+    item(out, left);
+    for (const auto &c : slots) {
+        out.varint(0);        // InventorySource container
+        out.signed_varint(0); // ContainerID inventory
+        out.varint(c.slot);
+        item(out, c.before);
+        item(out, c.after);
+    }
+    return out.take();
+}
+std::vector<GamePacket> replicate(ItemActor &a) {
+    std::vector<GamePacket> out;
+    // Actor::sendMotionPacketIfNeeded (0x21bb110): SpatialActorNetworkData::
+    // shouldSendUpdate -> MoveActorAbsoluteData::isDifferenceSignificant
+    // (0x1919f70); rotation never changes for an item.
+    const Vec3 d{a.pos.x - a.sent_pos.x, a.pos.y - a.sent_pos.y, a.pos.z - a.sent_pos.z};
+    const float moved2 = d.x * d.x + d.y * d.y + d.z * d.z;
+    const float speed2 = a.motion.x * a.motion.x + a.motion.y * a.motion.y + a.motion.z * a.motion.z;
+    // Thresholds 0x28275a0 (1e-4f) and 0x2827598 (0x358637be, one ulp above 1e-6f).
+    const float tiny = std::bit_cast<float>(0x358637beU);
+    if (moved2 > 1e-4f || (tiny > speed2 && moved2 > tiny)) {
+        // calculateDelta (0x191a250): int differences of the float bits; the
+        // runtime id and the onGround/teleported header are copied from the
+        // previously sent data, so a landing is flagged one packet later.
+        const std::int32_t delta[3] = {
+            static_cast<std::int32_t>(std::bit_cast<std::uint32_t>(a.pos.x) - std::bit_cast<std::uint32_t>(a.sent_pos.x)),
+            static_cast<std::int32_t>(std::bit_cast<std::uint32_t>(a.pos.y) - std::bit_cast<std::uint32_t>(a.sent_pos.y)),
+            static_cast<std::int32_t>(std::bit_cast<std::uint32_t>(a.pos.z) - std::bit_cast<std::uint32_t>(a.sent_pos.z))};
+        std::uint8_t flags = a.sent_on_ground ? 0x40 : 0;
+        for (int i = 0; i < 3; ++i)
+            if (delta[i] != 0)
+                flags |= static_cast<std::uint8_t>(1U << i);
+        out.push_back(packet(PacketId::MoveActorDelta, move_actor_delta(a.runtime_id, flags, delta)));
+        a.sent_pos = a.pos;
+        a.sent_on_ground = a.on_ground;
+    }
+    // SetActorMotion when the motion changed by more than 0.2 since the last
+    // one, or stopped. The last sent motion (+0x110) starts at zero (INFERRED).
+    const Vec3 dm{a.motion.x - a.sent_motion.x, a.motion.y - a.sent_motion.y, a.motion.z - a.sent_motion.z};
+    const float changed2 = dm.x * dm.x + dm.y * dm.y + dm.z * dm.z;
+    if (changed2 > 0.04f || (changed2 > 0.0f && a.motion.x == 0.0f && a.motion.y == 0.0f && a.motion.z == 0.0f)) {
+        a.sent_motion = a.motion;
+        out.push_back(packet(PacketId::SetActorMotion, set_actor_motion(a.runtime_id, a.motion)));
+    }
+    return out;
 }
 } // namespace bds::game

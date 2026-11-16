@@ -33,7 +33,7 @@ Directive (user, 2026-11-16): gameplay — terrain generation, movement synchron
 | Caves, ores, trees, structures | pending | `LargeCaveFeature`, `OreFeature`, `TreeFeature` families |
 | Movement (MovePlayer) | TRANSLATED, DIFFERENTIAL_VERIFIED | handler 0x182bcf0 in src/game/server.cpp; packet layout 0x18b4190/0x18b40b0; the oracle observes identical relay/no-correction behaviour on the original and BDS-RE (tests/reference/movement_bds_1.6.0.15.json, test `movement_reference`) |
 | Mining time and reach | TRANSLATED, DIFFERENTIAL_VERIFIED (packet oracle) | ItemUse handle 0x1ae6290 (reach 12.5, error 7), GameMode::destroyBlock 0x1ab4a80, _destroyBlockInternal 0x1ab4e50, PlayerAction handler 0x182d140 (StartBreak crack rate), GameMode::getDestroyRate 0x1ab5820, Player::getDestroyProgress 0x22ed290, Player::getDestroySpeed 0x22ed000; tests/reference/break_bds_1.6.0.15.json, asserted in tests/unit/gameplay_tests.cpp |
-| Item drops and pickup | next | Block::playerDestroy / ItemActor spawn (AddItemActor), TakeItemActor |
+| Item drops and pickup | TRANSLATED, DIFFERENTIAL_VERIFIED (gdb trace replay) | popResource 0x1e545b0, ItemActor ctor 0x23fe150, normalTick 0x23fe8a0, Actor::move 0x21a6b50, AABB::clipCollide 0x21877e0, fetchCollisionShapes 0x1c5d990, pushOutOfBlocks 0x21bb8a0, _merge 0x23ff7f0, playerTouch 0x23ff130, Player::take 0x22f0640, sendMotionPacketIfNeeded 0x21bb110, MoveActorAbsoluteData 0x1919ca0..0x191a410; 201 ticks bit-exact (tests/reference/item_actor*_bds_1.6.0.15.json) |
 | Inventory transactions | pending | handlers listed above |
 
 ## Recorded findings
@@ -56,3 +56,15 @@ Packet oracle: tools/reference/capture_break_oracle.py, survival player at (0.5,
 - StartBreak crack data: grass 3640, dirt 4369, stone 436, bedrock 0 — exactly floor(65535 × getDestroyProgress) with hardness 0.6/0.5/1.5/−1 and the 30 (Material::isAlwaysDestroyable) / 100 divisors (constants 0x281c5c4, 0x28323a4). StartBreak has no reach check (the 12.78 block also produced 3600).
 - The PlayerAction handler's action chain: 0 StartBreak (extinguishFire, Block::attack, LevelEvent 3600 unless creative), 1 AbortBreak and 2 StopBreak (LevelEvent 3601), 6, 8 jump, 9/10 sprint, 11/12 sneak, 13 dimension change (ChangeDimensionRequest), 14, 15/16 gliding, 17/18 crack continue, 20 enchantment seed, 21–24 vtable calls. No action destroys a block; the earlier BDS-RE "action 13 creative break" was invented and is removed.
 - SurvivalMode::destroyBlock 0x1abcd90 only refuses when flags +0xa4 and +0xa6 are both set (zeroed by the constructor), so bedrock is not protected on this path.
+
+### Dropped items (2026-11-16)
+
+Method: the original was run under gdb with tools/reference/gdb_item_actor.py logging the ItemActor at every normalTick entry (position, motion, box, flags) plus merge/remove/playerTouch/Player::take and packet writes. Two scenarios: a single drop picked up by a player, and two adjacent drops that merge before the hole is refilled over them. tests/unit/item_actor_tests.cpp replays both from the recorded initial states and requires identical float bits every tick, identical AddItemActor/SetActorData bytes, the same 15 MoveActorDelta packets and the pickup InventoryTransaction bytes.
+
+Findings that differ from what a re-implementation would naturally do:
+- Ground friction is the constant 0x3f16872c (0.6f * 0.98f), one ulp above the literal 0.588f; the replication threshold 0x358637be is one ulp above 1e-6f.
+- fetchCollisionShapes iterates x, z, then y over floor(min - 1)..floor(max + 1) and keeps only strictly intersecting boxes; clipping is sequential per box, so both the order and the exclusion of touching boxes change results (a buried item is pushed up instead of being held).
+- AABB::clipCollide on an overlapping box pushes along the smallest penetration axis (first minimum on ties) unless the actor is stuck (penetration above FLT_EPSILON on two consecutive moves) and has an exit.
+- MoveActorAbsoluteData::calculateDelta copies the header (onGround, teleported) from the previously sent data, so the landing tick is flagged one packet late.
+- AddItemActor is sent after the item's first tick, preceded by SetActorData with the same metadata; Player::take's InventoryTransaction lists the world-interaction action before the container action.
+- Merging: the larger stack absorbs the smaller (the other one on a tie), takes the larger throw time and the smaller age, and broadcasts ActorEvent 69 with the new count.

@@ -113,6 +113,8 @@ int main() {
         Properties properties;
         AccessLists access(".");
         Server server(w, properties, access);
+        for (int i = 0; i < 10; ++i)
+            server.allocate_entity_id(); // test players use runtime ids 1..5
         auto a = make_game(1, 1), b = make_game(2);
         server.prepare(identity(1), a);
         server.prepare(identity(2), b);
@@ -167,8 +169,44 @@ int main() {
               "StartBreak crack rate broadcast");
         // No destroy-time gate: the break immediately after StartBreak succeeds.
         server.handle(2, use(2, {5, 3, 1}), 1001);
-        check(w.block({5, 3, 1}) == 0 && pb.inventory[0] == ItemStack{3, 1},
-              "survival break yields dirt without waiting");
+        check(w.block({5, 3, 1}) == 0 && pb.inventory[0].count == 0 && server.items().size() == 1 &&
+                  server.items()[0].item == ItemStack{3, 1} && server.items()[0].pickup_delay == 10,
+              "survival break drops a dirt item entity (popResource)");
+        server.drain(1);
+        server.drain(2);
+        // First tick: actor data and AddItemActor; the pickup delay of 10 ticks
+        // then expires and player 2, standing on the hole, takes the item.
+        server.tick();
+        auto added = server.drain(1);
+        check(added.size() == 2 && added[0].header.id == 0x27 && added[1].header.id == 0x0f,
+              "item entity added after its first tick");
+        // Player::aiStep touches entities within the player box grown by
+        // (1, 0.5, 1): player 2 steps into the hole the item fell into.
+        Motion into_hole;
+        into_hole.runtime = 2;
+        into_hole.data = pb;
+        into_hole.data.y = 4.62f;
+        into_hole.data.z = 1.5f;
+        into_hole.grounded = true;
+        server.handle(2, packet(PacketId::MovePlayer, motion(into_hole)), 1001);
+        std::vector<GamePacket> seen_by_taker;
+        for (int i = 0; i < 12; ++i) {
+            server.tick();
+            for (auto &q : server.drain(2))
+                seen_by_taker.push_back(q);
+        }
+        const auto has = [&](unsigned id) {
+            return std::any_of(seen_by_taker.begin(), seen_by_taker.end(),
+                               [&](auto &q) { return q.header.id == id; });
+        };
+        check(pb.inventory[0] == ItemStack{3, 1} && server.items().empty() && has(0x1e) && has(0x11) &&
+                  has(0x0e) && has(0x6f),
+              "pickup: MoveActorDelta, InventoryTransaction, TakeItemActor, RemoveActor");
+        server.drain(1);
+        into_hole.data.y = 5.62f;
+        into_hole.data.z = 0.5f;
+        server.handle(2, packet(PacketId::MovePlayer, motion(into_hole)), 1001);
+        server.drain(1);
         // Reach: Actor::distanceTo(Vec3(BlockPos)) > 12.5 is error 7.
         w.set_block({17, 3, 1}, 1);
         w.set_block({18, 3, 1}, 1);

@@ -220,7 +220,6 @@ struct DiscoveryServer::Impl {
     AccessLists *access = nullptr;
     std::uint64_t world_age = 0;
     // Level::getNextRuntimeID / getNewUniqueID analogue; ids are never reused.
-    std::int64_t next_entity_id = 1;
     World *world = nullptr;
     std::unique_ptr<game::Server> gameplay;
     std::uint64_t gameplay_time = 0;
@@ -248,8 +247,8 @@ struct DiscoveryServer::Impl {
     protocol::StartGame start_game() {
         const auto &p = *properties;
         protocol::StartGame game;
-        game.unique_id = next_entity_id;
-        game.runtime_id = static_cast<std::uint64_t>(next_entity_id++);
+        game.unique_id = gameplay->allocate_entity_id();
+        game.runtime_id = static_cast<std::uint64_t>(game.unique_id);
         game.player_game_type = static_cast<std::int32_t>(p.gamemode);
         auto &s = game.settings;
         // The seed is only advertised: this server does not generate terrain.
@@ -367,6 +366,10 @@ struct DiscoveryServer::Impl {
 };
 DiscoveryServer::DiscoveryServer(const Properties &p) : impl_(std::make_unique<Impl>(p)) {}
 DiscoveryServer::~DiscoveryServer() = default;
+void DiscoveryServer::tick() {
+    if (impl_->gameplay)
+        impl_->gameplay->tick();
+}
 void DiscoveryServer::poll(const Properties &p, AccessLists &access, World &world) {
     impl_->properties = &p;
     impl_->access = &access;

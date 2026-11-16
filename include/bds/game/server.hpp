@@ -4,6 +4,7 @@
 #include "bds/server/properties.hpp"
 #include <deque>
 #include <map>
+#include <random>
 namespace bds::game {
 class Server {
   public:
@@ -15,6 +16,12 @@ class Server {
     std::vector<GamePacket> drain(std::uint64_t runtime);
     std::optional<std::pair<int, int>> center(std::uint64_t runtime) const;
     void leave(std::uint64_t runtime);
+    // One level tick: item entities (ItemActor::normalTick, replication) and
+    // player item pickup (Player::aiStep touch).
+    void tick();
+    // Level::getNewUniqueID / getNextRuntimeID share one counter in BDS-RE.
+    std::int64_t allocate_entity_id() { return next_entity_id_++; }
+    const std::vector<ItemActor> &items() const { return items_; }
 
   private:
     struct Session {
@@ -29,6 +36,15 @@ class Server {
     const Properties &properties_;
     AccessLists &access_;
     std::map<std::uint64_t, Session> sessions_;
+    std::vector<ItemActor> items_;
+    std::int64_t next_entity_id_ = 1;
+    // Level::getRandom and the thread-local Random of the original are both
+    // seeded from std::random_device (Random::Random() 0x187d430).
+    Random level_random_{std::random_device{}()};
+    Random actor_random_{std::random_device{}()};
+    void spawn_item(World::Position block, ItemStack item);
+    void tick_item(ItemActor &a);
+    void touch(Session &s, ItemActor &a);
     void enqueue(std::uint64_t runtime, GamePacket packet);
     void broadcast(GamePacket packet, std::uint64_t exclude = 0);
     bool collides(const PlayerData &p) const;
