@@ -32,7 +32,7 @@ Directive (user, 2026-11-16): gameplay — terrain generation, movement synchron
 | OverworldGenerator heights/surfaces | pending | depends on noise and biomes; intermediate BlockVolume can be dumped from the original under gdb |
 | Caves, ores, trees, structures | pending | `LargeCaveFeature`, `OreFeature`, `TreeFeature` families |
 | Movement (MovePlayer) | TRANSLATED, DIFFERENTIAL_VERIFIED | handler 0x182bcf0 in src/game/server.cpp; packet layout 0x18b4190/0x18b40b0; the oracle observes identical relay/no-correction behaviour on the original and BDS-RE (tests/reference/movement_bds_1.6.0.15.json, test `movement_reference`) |
-| Mining time and reach | next | PlayerAction handler 0x182ba?/GameMode::startDestroyBlock 0x1ab44a0, continueDestroyBlock 0x1ab50b0, destroyBlock 0x1ab4a80, Player::getDestroySpeed 0x22ed000 |
+| Mining time and reach | next | PlayerAction handler 0x182d140, GameMode::startDestroyBlock 0x1ab44a0, continueDestroyBlock 0x1ab50b0, destroyBlock 0x1ab4a80, Player::getDestroySpeed 0x22ed000 |
 | Item drops and pickup, inventory | pending | handlers listed above |
 
 ## Recorded findings
