@@ -1,6 +1,6 @@
 # Protocol-282 login body evidence
 
-Target SHA256: `69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad`. Confidence VERIFIED_BINARY for the bounded functions below. Raw binary-derived assembly is not copied into implementation source.
+Target SHA256: `69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad`. Confidence VERIFIED_BINARY for the bounded functions below. The implementation translates these functions; see the implementation policy in docs/COMPATIBILITY.md.
 
 LoginPacket::read(BinaryStream&) at 0x187e910, size 0xde, reads a signed big-endian int at 0x187e92f, compares it to SharedConstants::NetworkProtocolVersion at 0x187e945, and skips to the stream end on protocol mismatch. For matching version 282 it reads a BinaryStream string at 0x187e984 and calls ConnectionRequest::fromString at 0x187e99d. The corresponding write method at 0x187e8a0 calls writeSignedBigEndianInt at 0x187e8c1 and writeString at 0x187e8f2. ReadOnlyBinaryStream::getString at 0x26eb8d0 first calls getUnsignedVarInt at 0x26eb8f2.
 

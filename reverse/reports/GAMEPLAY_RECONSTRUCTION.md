@@ -5,7 +5,7 @@ Directive (user, 2026-11-16): gameplay — terrain generation, movement synchron
 ## Method
 
 1. **Trace** the original function in the Linux ELF (disassembly with symbols; addresses recorded in the code next to each translated function).
-2. **Translate** it to C++ preserving data flow, integer widths and floating-point operation order (the original is SSE single/double precision; results must match bit for bit).
+2. **Translate** it to C++ preserving data flow, integer widths and floating-point operation order (the original is SSE single/double precision; results must match bit for bit). Direct translation of the original logic is the intended approach; the earlier "independently authored code" rule no longer applies.
 3. **Verify with the original as an oracle**:
    - *Function oracle*: run `bedrock_server` under gdb, stop at `main`, call the original functions by address on a scratch object and record outputs (`tools/reference/oracle_*.py`). The C++ translation must reproduce them exactly.
    - *Chunk oracle*: generate a world with the same seed in the original and in BDS-RE and compare decoded chunks (block states, biomes) from reference captures.

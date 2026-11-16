@@ -46,6 +46,8 @@ Use `windows-release` for Release. Windows CI uses the `windows-2022` runner to 
 
 Place the original ELF at `input/linux/bedrock_server` (ignored). Original executables, PDBs, raw disassemblies and generated symbol databases are excluded from Git. At the user's request, the four original data directories from the supplied Linux server ZIP are included; see [bundled data provenance](docs/BUNDLED_DATA.md). The current engine does not load these packs, definitions or structures yet.
 
+Implementation policy (user directive, 2026-11-16): game and server logic follows the original binary. Translating recovered functions (disassembly or decompiled logic) directly into C++ is the intended approach; there is no requirement to author algorithms independently. Each translated function cites its original address and is verified against the original (function oracle under gdb, chunk or packet comparison). Deliberate deviations (e.g. security hardening) must be documented as such.
+
 ```sh
 python3 reverse/scripts/index_elf.py input/linux/bedrock_server
 python3 -c "import sqlite3; c=sqlite3.connect('reverse/symbols/generated/linux.sqlite'); print(c.execute("select printf('0x%x',address),size,name from symbols where name like 'ServerInstance::%' limit 20").fetchall())"

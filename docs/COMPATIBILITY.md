@@ -1,6 +1,6 @@
 # BDS 1.6.0.15 operational compatibility contract
 
-Source: the user-supplied “How to use the dedicated server” document, read on 2026-11-16. These are documented requirements, not VERIFIED_RUNTIME findings. Binary analysis and differential tests must resolve details the document does not specify. Independent implementation means independently authored code; it does not justify changing the external behavior being reconstructed.
+Source: the user-supplied “How to use the dedicated server” document, read on 2026-11-16. These are documented requirements, not VERIFIED_RUNTIME findings. Binary analysis and differential tests must resolve details the document does not specify. Implementation policy (user directive, 2026-11-16): game and server logic follows the original binary. Translating recovered functions (disassembly or decompiled logic) directly into C++ is the intended approach; there is no requirement to author algorithms independently. Each translated function cites its original address and is verified against the original (function oracle under gdb, chunk or packet comparison). Deliberate deviations (e.g. security hardening) must be documented as such.
 
 ## Current gaps
 
