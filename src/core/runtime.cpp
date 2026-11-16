@@ -52,7 +52,7 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
  std::uint64_t ticks=0;
  try {
  while(!stop() && !control.stopping() && (config_.ticks==0 || ticks<config_.ticks)) {
-  if(network)network->poll(properties);
+  if(network)network->poll(properties,access);
   backup.poll();
   for(const auto& line:console.poll()) {
    auto output=control.execute(line,world);if(!output.empty())log(output);

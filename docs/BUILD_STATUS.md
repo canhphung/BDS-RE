@@ -89,3 +89,13 @@ New test `auth`: RFC 4648 base64 vectors and strictness, FIPS 180-2 SHA-256/384 
 | Clang 18.1.3 | Release | PASS, 16/16 CTest |
 
 `auth` adds the NIST SP 800-38A CFB8-AES256 vector (with stream state across calls), ECDH/session-key/sealed-packet vectors from Python `cryptography`, tamper/replay/short-packet rejection, server token signature checks and a full in-process handshake playing the client. `raknet_handshake` now completes the encrypted handshake over UDP with an independent Python client (token signature, ECDH, AES-CFB8, checksums) up to PlayStatus LoginSuccess. CI installs `cryptography` through actions/setup-python and passes that interpreter to CMake; this workflow change has not run yet. No Minecraft client was used.
+
+## Admission and resource pack slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 16/16 CTest |
+| GCC 13.3.0 | Release | PASS, 16/16 CTest |
+| Clang 18.1.3 | Release | PASS, 16/16 CTest |
+
+`server` adds whitelist UUID parsing/normalisation, UUID/XUID admission, XUID fill-in and gamertag update with persistence. `auth` adds the encrypted PlayStatus/ResourcePacksInfo/ResourcePackStack sequence, Completed, refusal, download request, malformed responses and admission refusal. `raknet_handshake` drives the pack exchange over UDP with the Python client and toggles `whitelist on` through the console to check a plaintext notAllowed refusal. During development ASan caught a use-after-free in new test code (a ByteReader over a temporary); it was fixed before commit. No Minecraft client was used.

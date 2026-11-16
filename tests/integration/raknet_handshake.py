@@ -397,13 +397,21 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                         require(len(salt) == 16, f"{scenario}: salt length")
                         session = Session(hashlib.sha256(salt + client_key.exchange(ec.ECDH(), server_key)).digest())
                         sender.send(b"\xfe" + session.seal(compressed_packets([(0x04, b"")])))
-                        final = next_application(client, remote, seen)
-                        require(final[0] == 0xFE, f"{scenario}: encrypted batch id")
-                        packets = packets_of(session.open(final[1:]))
-                        require(packets[0] == (0x02, struct.pack(">i", 0)), f"{scenario}: PlayStatus LoginSuccess")
-                        require(packets[1][0] == 0x05 and f"logged in as {expected}".encode() in packets[1][1],
-                                f"{scenario}: encrypted disconnect {packets}")
-                        require(len(packets) == 2, f"{scenario}: packet count")
+                        def receive_packets():
+                            message = next_application(client, remote, seen)
+                            require(message[0] == 0xFE, f"{scenario}: encrypted batch id")
+                            return packets_of(session.open(message[1:]))
+
+                        packets = receive_packets()
+                        require(packets == [(0x02, struct.pack(">i", 0)), (0x06, bytes(5))],
+                                f"{scenario}: PlayStatus LoginSuccess + empty ResourcePacksInfo {packets}")
+                        # ResourcePackClientResponse: HaveAllPacks (3), then Completed (4).
+                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x08, b"\x03\x00\x00")])))
+                        require(receive_packets() == [(0x07, bytes(3))], f"{scenario}: empty ResourcePackStack")
+                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x08, b"\x04\x00\x00")])))
+                        packets = receive_packets()
+                        require(len(packets) == 1 and packets[0][0] == 0x05 and expected.encode() in packets[0][1] and
+                                b"StartGame" in packets[0][1], f"{scenario}: encrypted disconnect {packets}")
                         require(next_application(client, remote, seen) == b"\x15", f"{scenario}: RakNet disconnect")
                         continue
                     messages = until_disconnect(client, remote)
@@ -419,6 +427,22 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                             length, at = read_varint(body, 1)
                             require(value in body[at:at + length].decode() and at + length == len(body),
                                     f"{scenario}: disconnect message {body!r}")
+        # Whitelist admission, toggled at runtime through the console: the
+        # self-signed player has no XUID and no listed UUID, so it is refused in
+        # plaintext before any key exchange.
+        server.stdin.write("whitelist on\n")
+        server.stdin.flush()
+        deadline = time.monotonic() + 5
+        while not any("whitelist on (runtime only)" in line for line in transcript):
+            require(time.monotonic() < deadline, f"whitelist command: {transcript}")
+            time.sleep(0.01)
+        client, remote, sequence = connected_session(socket.AF_INET, "127.0.0.1", p4, 0x2000)
+        with client:
+            Sender(client, remote, sequence).send(login_batch(282, fixtures["self_signed_chain"], fixtures["client_token"]))
+            messages = until_disconnect(client, remote)
+            packets = game_packets(messages[0])
+            require(len(messages) == 1 and len(packets) == 1 and packets[0][0] == 0x05 and
+                    b"disconnectionScreen.notAllowed" in packets[0][1], f"whitelist refusal {packets}")
         server.stdin.write("stop\n")
         server.stdin.flush()
         server.stdin.close()
@@ -427,10 +451,12 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
         require(any('login authenticated: "Offline" self-signed' in line for line in transcript),
                 f"self-signed login not logged: {transcript}")
         require(any("Player connected: Steve" in line for line in transcript), f"handshake completion not logged: {transcript}")
+        require(any("login refused: Offline (disconnectionScreen.notAllowed)" in line for line in transcript),
+                f"whitelist refusal not logged: {transcript}")
         require(any("login not authenticated" in line for line in transcript), f"forged login not logged: {transcript}")
         require(any("closing connection: login protocol 281 is not 282" in line for line in transcript),
                 f"version refusal not logged: {transcript}")
-        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection, signed logins and the encrypted handshake passed")
+        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection, signed logins, the encrypted handshake, pack exchange and whitelist refusal passed")
     finally:
         if server.poll() is None:
             server.kill()

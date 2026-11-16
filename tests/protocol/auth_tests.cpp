@@ -7,6 +7,8 @@
 #include "bds/network/packet_ids.hpp"
 #include <nlohmann/json.hpp>
 #include <array>
+#include <memory>
+#include <vector>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -264,18 +266,110 @@ void connection(const Json &fixtures) {
     const auto sealed = client_cipher.seal(protocol::compress_packets(reply));
     encrypted.insert(encrypted.end(), sealed.begin(), sealed.end());
     const auto done = accepted.receive(encrypted);
-    check(done.close && done.messages.size() == 1, "handshake completion closes with one batch");
-    check(done.reason.find("Player connected: Steve") != std::string::npos, "player connected log");
+    check(!done.close && done.messages.size() == 1 && accepted.state() == protocol::GameConnection::State::awaiting_packs,
+          "handshake completion moves to the pack exchange");
+    check(done.reason == "Player connected: Steve, xuid: 2535400000000001", "player connected log");
     const auto opened = client_cipher.open(std::span(done.messages[0]).subspan(1));
     check(opened.has_value(), "server reply decrypts with the client key");
-    const auto final_packets = protocol::decompress_packets(*opened);
-    check(final_packets.size() == 2 && final_packets[0].header.id == static_cast<std::uint16_t>(protocol::PacketId::PlayStatus) &&
-              final_packets[0].body == crypto::Bytes({0, 0, 0, 0}),
+    const auto after_handshake = protocol::decompress_packets(*opened);
+    check(after_handshake.size() == 2 && after_handshake[0].header.id == static_cast<std::uint16_t>(protocol::PacketId::PlayStatus) &&
+              after_handshake[0].body == crypto::Bytes({0, 0, 0, 0}),
           "PlayStatus LoginSuccess");
-    protocol::ByteReader goodbye(final_packets[1].body);
-    check(final_packets[1].header.id == static_cast<std::uint16_t>(protocol::PacketId::Disconnect) && !goodbye.boolean() &&
-              goodbye.string(4096).find("world streaming are not implemented") != std::string::npos,
+    check(after_handshake[1].header.id == static_cast<std::uint16_t>(protocol::PacketId::ResourcePacksInfo) &&
+              after_handshake[1].body == crypto::Bytes({0, 0, 0, 0, 0}),
+          "empty ResourcePacksInfo (mustAccept false, u16 LE counts)");
+
+    // ResourcePackClientResponse: status byte, u16 LE count, ids.
+    const auto respond = [&](protocol::GameConnection &connection, protocol::PacketCipher &cipher, std::uint8_t status) {
+        const std::array response{protocol::GamePacket{
+            {static_cast<std::uint16_t>(protocol::PacketId::ResourcePackClientResponse), 0, 0}, {status, 0, 0}}};
+        crypto::Bytes out{protocol::batch_id};
+        const auto sealed_response = cipher.seal(protocol::compress_packets(response));
+        out.insert(out.end(), sealed_response.begin(), sealed_response.end());
+        auto output = connection.receive(out);
+        std::vector<protocol::GamePacket> packets;
+        for (const auto &reply : output.messages) {
+            const auto plain = cipher.open(std::span(reply).subspan(1));
+            check(plain.has_value(), "encrypted pack reply");
+            const auto decoded = protocol::decompress_packets(*plain);
+            packets.insert(packets.end(), decoded.begin(), decoded.end());
+        }
+        return std::pair{output, packets};
+    };
+    const auto [have_all, stack] = respond(accepted, client_cipher, 3);
+    check(!have_all.close && stack.size() == 1 &&
+              stack[0].header.id == static_cast<std::uint16_t>(protocol::PacketId::ResourcePackStack) &&
+              stack[0].body == crypto::Bytes({0, 0, 0}),
+          "HaveAllPacks -> empty ResourcePackStack (bool, varint counts)");
+    const auto [completed, goodbye_packets] = respond(accepted, client_cipher, 4);
+    check(completed.close && goodbye_packets.size() == 1 &&
+              goodbye_packets[0].header.id == static_cast<std::uint16_t>(protocol::PacketId::Disconnect),
+          "Completed ends at the missing StartGame");
+    protocol::ByteReader goodbye(goodbye_packets[0].body);
+    check(!goodbye.boolean() && goodbye.string(4096).find("StartGame and world streaming are not implemented") != std::string::npos,
           "explains the missing world");
+
+    // Refusal sends disconnectClient("") like the original; SendPacks cannot be served.
+    const auto handshaken = [&](protocol::GameConnection &connection) {
+        const auto login_reply = send(connection, fixtures["chain"].get<std::string>());
+        const auto token = [&] {
+            const auto packets = protocol::decode_batch(login_reply.messages[0]); // keep alive for the reader
+            protocol::ByteReader r(packets[0].body);
+            return r.string(16384);
+        }();
+        const auto dot1 = token.find('.'), dot2 = token.rfind('.');
+        const auto key_der = *crypto::base64_decode(Json::parse(*crypto::base64url_decode(token.substr(0, dot1)))["x5u"].get<std::string>());
+        const auto token_salt = *crypto::base64_decode(
+            Json::parse(*crypto::base64url_decode(token.substr(dot1 + 1, dot2 - dot1 - 1)))["salt"].get<std::string>());
+        auto cipher = std::make_unique<protocol::PacketCipher>(protocol::session_key(token_salt, *client.shared_secret(key_der, random)));
+        crypto::Bytes out{protocol::batch_id};
+        const auto sealed_reply = cipher->seal(protocol::compress_packets(reply));
+        out.insert(out.end(), sealed_reply.begin(), sealed_reply.end());
+        // Consume the encrypted PlayStatus/ResourcePacksInfo reply so the
+        // client's CFB8 stream and receive counter stay in step.
+        const auto handshake_reply = connection.receive(out);
+        check(handshake_reply.messages.size() == 1 &&
+                  cipher->open(std::span(handshake_reply.messages[0]).subspan(1)).has_value(),
+              "handshake reply");
+        return cipher;
+    };
+    protocol::GameConnection refusing(trusted, [&] { return now; });
+    auto refusing_cipher = handshaken(refusing);
+    const auto [refused, refused_packets] = respond(refusing, *refusing_cipher, 1);
+    check(refused.close && refused_packets.size() == 1 && refused_packets[0].body == protocol::disconnect_body(false, ""),
+          "pack refusal disconnects with an empty message");
+    protocol::GameConnection downloading(trusted, [&] { return now; });
+    auto downloading_cipher = handshaken(downloading);
+    check(respond(downloading, *downloading_cipher, 2).first.close, "pack download request closes (no packs)");
+    protocol::GameConnection odd(trusted, [&] { return now; });
+    auto odd_cipher = handshaken(odd);
+    check(respond(odd, *odd_cipher, 9).first.close, "unknown pack response closes");
+    check(protocol::decode_pack_response(crypto::Bytes{3, 1, 0, 2, 'a', 'b'}).pack_ids == std::vector<std::string>{"ab"},
+          "pack response ids");
+    bool rejected_trailing = false;
+    try {
+        protocol::decode_pack_response(crypto::Bytes{3, 0, 0, 9});
+    } catch (const std::invalid_argument &) {
+        rejected_trailing = true;
+    }
+    check(rejected_trailing, "pack response trailing bytes rejected");
+
+    // Admission runs before the handshake; a refusal is sent in plaintext.
+    protocol::GameConnection::Options closed_server;
+    std::string admitted_name;
+    closed_server.admission = [&](const auth::Identity &identity) -> std::optional<std::string> {
+        admitted_name = identity.display_name;
+        return std::string(protocol::not_allowed);
+    };
+    protocol::GameConnection gated(trusted, [&] { return now; }, nullptr, closed_server);
+    check(disconnect_message(send(gated, fixtures["chain"].get<std::string>())) == protocol::not_allowed &&
+              admitted_name == "Steve" && gated.state() == protocol::GameConnection::State::closed,
+          "admission refusal uses notAllowed");
+    protocol::GameConnection::Options texture_packs;
+    texture_packs.texture_packs_required = true;
+    check(protocol::resource_packs_info_body(true) == crypto::Bytes({1, 0, 0, 0, 0}) &&
+              protocol::resource_pack_stack_body(true) == crypto::Bytes({1, 0, 0}),
+          "mustAccept follows texturepack-required");
 
     // An unencrypted or wrong-key handshake reply is rejected.
     protocol::GameConnection plain(trusted, [&] { return now; });

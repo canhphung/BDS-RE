@@ -207,6 +207,25 @@ struct DiscoveryServer::Impl {
     std::map<raknet::Address, protocol::GameConnection> connections;
     // One server key pair for all handshakes, generated at startup.
     std::shared_ptr<protocol::ServerSecrets> secrets = std::make_shared<protocol::ServerSecrets>();
+    // Valid during poll(); connections only call admission from within poll.
+    const Properties *properties = nullptr;
+    AccessLists *access = nullptr;
+    std::optional<std::string> admit(const auth::Identity &identity) {
+        // Login handler 0x1828b2f-0x1828bf5: when the whitelist is enabled,
+        // Whitelist::tryUpdateEntries then Whitelist::isAllowed, else
+        // disconnectionScreen.notAllowed.
+        if (!properties || !access || !properties->whitelist)
+            return std::nullopt;
+        const auto xuid = identity.xbox_authenticated ? identity.xuid : std::string();
+        try {
+            access->try_update_entries(identity.identity, xuid, identity.display_name);
+        } catch (const std::exception &error) {
+            log(std::string("whitelist update failed: ") + error.what());
+        }
+        if (access->is_allowed(identity.identity, xuid))
+            return std::nullopt;
+        return std::string(protocol::not_allowed);
+    }
 #ifdef _WIN32
     bool initialized = false;
 #endif
@@ -257,7 +276,9 @@ struct DiscoveryServer::Impl {
 };
 DiscoveryServer::DiscoveryServer(const Properties &p) : impl_(std::make_unique<Impl>(p)) {}
 DiscoveryServer::~DiscoveryServer() = default;
-void DiscoveryServer::poll(const Properties &p) {
+void DiscoveryServer::poll(const Properties &p, AccessLists &access) {
+    impl_->properties = &p;
+    impl_->access = &access;
     const auto advertisement = server_advertisement(p, impl_->guid);
     const auto now =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -312,7 +333,12 @@ void DiscoveryServer::poll(const Properties &p) {
                 else
                     output = impl_->connections
                                  .try_emplace(from, auth::LoginPolicy{p.online_mode, {std::string(auth::mojang_root_key)}},
-                                              protocol::GameConnection::Clock{}, impl_->secrets)
+                                              protocol::GameConnection::Clock{}, impl_->secrets,
+                                              protocol::GameConnection::Options{
+                                                  p.texturepack_required,
+                                                  [impl = impl_.get()](const auth::Identity &identity) {
+                                                      return impl->admit(identity);
+                                                  }})
                                  .first->second.receive(application.bytes);
                 for (const auto &message : output.messages)
                     for (const auto &outgoing : impl_->transport->send(from, message, now))

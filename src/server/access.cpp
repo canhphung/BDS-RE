@@ -31,6 +31,17 @@ std::string string(const Json& entry,const char* key,bool optional=false) {
  return value;
 }
 bool decimal(const std::string& s){return !s.empty() && std::all_of(s.begin(),s.end(),[](char c){return c>='0' && c<='9';});}
+// Canonical 8-4-4-4-12 hexadecimal UUID, lower-cased; empty if malformed.
+std::string uuid_text(std::string value) {
+ if(value.size()!=36)return {};
+ for(std::size_t i=0;i<value.size();++i) {
+  char& c=value[i];
+  if(i==8 || i==13 || i==18 || i==23){if(c!='-')return {};continue;}
+  if(c>='A' && c<='F')c=static_cast<char>(c-'A'+'a');
+  if(!((c>='0' && c<='9') || (c>='a' && c<='f')))return {};
+ }
+ return value;
+}
 }
 void AccessLists::reload_whitelist() {
  std::vector<WhitelistEntry> entries;std::set<std::string> names,xuids;
@@ -39,7 +50,13 @@ void AccessLists::reload_whitelist() {
   auto name=string(entry,"name"),xuid=string(entry,"xuid",true);
   if(!names.insert(name).second || (!xuid.empty() && (!decimal(xuid) || !xuids.insert(xuid).second)))throw std::runtime_error("duplicate or invalid whitelist identity");
   if(entry.contains("ignoresPlayerLimit") && !entry["ignoresPlayerLimit"].is_boolean())throw std::runtime_error("invalid ignoresPlayerLimit");
-  entries.push_back({name,xuid,entry.value("ignoresPlayerLimit",false)});
+  // WhitelistEntry::deserialize (0x25e1170) reads an optional "uuid".
+  std::string uuid;
+  if(entry.contains("uuid")) {
+   uuid=uuid_text(string(entry,"uuid"));
+   if(uuid.empty())throw std::runtime_error("invalid whitelist uuid");
+  }
+  entries.push_back({name,xuid,entry.value("ignoresPlayerLimit",false),uuid});
  }
  whitelist_=std::move(entries);
 }
@@ -58,6 +75,7 @@ void AccessLists::save(const std::vector<WhitelistEntry>& entries) const {
  for(const auto& entry:entries) {
   Json value={{"name",entry.name},{"ignoresPlayerLimit",entry.ignores_limit}};
   if(!entry.xuid.empty())value["xuid"]=entry.xuid;
+  if(!entry.uuid.empty())value["uuid"]=entry.uuid; // serialize writes uuid only when set
   output.push_back(value);
  }
  const auto text=output.dump(4)+"\n";
@@ -68,12 +86,31 @@ bool AccessLists::add(const std::string& name) {
  if(name.empty() || name.size()>1024 || name.find('\0')!=name.npos)throw std::invalid_argument("invalid gamertag");
  if(std::any_of(whitelist_.begin(),whitelist_.end(),[&](const auto& e){return e.name==name;}))return false;
  if(whitelist_.size()>=10000)throw std::runtime_error("whitelist entry limit exceeded");
- auto next=whitelist_;next.push_back({name,{},false});save(next);whitelist_=std::move(next);return true;
+ auto next=whitelist_;next.push_back({name,{},false,{}});save(next);whitelist_=std::move(next);return true;
 }
 bool AccessLists::remove(const std::string& name) {
  auto next=whitelist_;std::erase_if(next,[&](const auto& e){return e.name==name;});
  if(next.size()==whitelist_.size())return false;
  save(next);whitelist_=std::move(next);return true;
+}
+bool AccessLists::try_update_entries(const std::string& uuid,const std::string& xuid,const std::string& name) {
+ // WhitelistEntryMatcher (0x25f7390): name match or XUID match, each only for
+ // a non-empty value.
+ auto match=std::find_if(whitelist_.begin(),whitelist_.end(),[&](const WhitelistEntry& e){
+  return (!name.empty() && e.name==name) || (!xuid.empty() && e.xuid==xuid);});
+ if(match==whitelist_.end())return false;
+ auto next=whitelist_;auto& entry=next[static_cast<std::size_t>(match-whitelist_.begin())];
+ bool changed=false;
+ if(entry.xuid.empty() && entry.name==name && !xuid.empty()) {entry.xuid=xuid;changed=true;}
+ else if(!xuid.empty() && entry.xuid==xuid && entry.name!=name && !name.empty()) {entry.name=name;changed=true;}
+ if(entry.uuid.empty() && changed) {const auto text=uuid_text(uuid);if(!text.empty())entry.uuid=text;}
+ if(!changed)return false;
+ save(next);whitelist_=std::move(next);return true;
+}
+bool AccessLists::is_allowed(const std::string& uuid,const std::string& xuid) const {
+ const auto text=uuid_text(uuid);
+ if(!text.empty() && std::any_of(whitelist_.begin(),whitelist_.end(),[&](const auto& e){return e.uuid==text;}))return true;
+ return !xuid.empty() && std::any_of(whitelist_.begin(),whitelist_.end(),[&](const auto& e){return e.xuid==xuid;});
 }
 bool AccessLists::is_operator(const std::string& xuid) const {
  return !xuid.empty() && std::find(operators_.begin(),operators_.end(),xuid)!=operators_.end();

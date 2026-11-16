@@ -12396,6 +12396,1260 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "Whitelist::isAllowed(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const",
+      "address": "0x25f5410",
+      "size": 397,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25f5444",
+          "operand": "17f4860 <mce::UUID::UUID()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5454",
+          "operand": "17f4810 <mce::UUID::operator!=(mce::UUID const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5480",
+          "operand": "17f4700 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5497",
+          "operand": "17f4740 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f54b4",
+          "operand": "25f55a0 <__gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > std::find_if<__gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, Whitelist::isAllowed(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::$_0>(__gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, __gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, Whitelist::isAllowed(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::$_0)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f54cb",
+          "operand": "17f4740 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f54dc",
+          "operand": "17f4780 <bool __gnu_cxx::operator!=<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >(__gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > const&, __gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5500",
+          "operand": "17f4700 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5517",
+          "operand": "17f4740 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5534",
+          "operand": "25f5600 <__gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > std::find_if<__gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, Whitelist::isAllowed(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::$_1>(__gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, __gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, Whitelist::isAllowed(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::$_1)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f554b",
+          "operand": "17f4740 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5562",
+          "operand": "17f4780 <bool __gnu_cxx::operator!=<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >(__gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > const&, __gnu_cxx::__normal_iterator<WhitelistEntry const*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > const&)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "Whitelist::tryUpdateEntries(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)",
+      "address": "0x25f5ac0",
+      "size": 569,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25f5af4",
+          "operand": "25f6650 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::begin()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5b0b",
+          "operand": "25f6680 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5b1f",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5b2f",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5b49",
+          "operand": "25f66c0 <Whitelist::WhitelistEntryMatcher::WhitelistEntryMatcher(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5b5d",
+          "operand": "25f65d0 <__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > std::find_if<__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, Whitelist::WhitelistEntryMatcher>(__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, __gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >, Whitelist::WhitelistEntryMatcher)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5b6d",
+          "operand": "25f6700 <Whitelist::WhitelistEntryMatcher::~WhitelistEntryMatcher()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5b79",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5b85",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5bab",
+          "operand": "25f6680 <std::vector<WhitelistEntry, std::allocator<WhitelistEntry> >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5bc5",
+          "operand": "25f6890 <bool __gnu_cxx::operator!=<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >(__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > const&, __gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5bdb",
+          "operand": "25f69a0 <__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5bee",
+          "operand": "17f4b10 <bool std::operator==<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c04",
+          "operand": "25f69a0 <__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c14",
+          "operand": "17fdc80 <__gnu_cxx::__enable_if<__is_char<char>::__value, bool>::__type std::operator==<char>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c2a",
+          "operand": "25f69a0 <__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c3a",
+          "operand": "1758290 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c53",
+          "operand": "25f69a0 <__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c63",
+          "operand": "17fdc80 <__gnu_cxx::__enable_if<__is_char<char>::__value, bool>::__type std::operator==<char>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c79",
+          "operand": "25f69a0 <__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c89",
+          "operand": "1837040 <bool std::operator!=<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5c9f",
+          "operand": "25f69a0 <__gnu_cxx::__normal_iterator<WhitelistEntry*, std::vector<WhitelistEntry, std::allocator<WhitelistEntry> > >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5caf",
+          "operand": "1758290 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f5ceb",
+          "operand": "1874100 <std::function<void ()>::operator()() const>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "Whitelist::WhitelistEntryMatcher::operator()(WhitelistEntry&)",
+      "address": "0x25f7390",
+      "size": 203,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25f73b0",
+          "operand": "17fdc80 <__gnu_cxx::__enable_if<__is_char<char>::__value, bool>::__type std::operator==<char>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f73d4",
+          "operand": "17f47e0 <bool std::operator!=<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f73fa",
+          "operand": "17fdc80 <__gnu_cxx::__enable_if<__is_char<char>::__value, bool>::__type std::operator==<char>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25f7428",
+          "operand": "17f47e0 <bool std::operator!=<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "WhitelistEntry::deserialize(Json::Value&)",
+      "address": "0x25e1170",
+      "size": 1101,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x25e119c",
+          "operand": "27ceb70 <Json::Value::operator[](char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e11b0",
+          "operand": "27ceb70 <Json::Value::operator[](char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e11c4",
+          "operand": "27ceb70 <Json::Value::operator[](char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e11d8",
+          "operand": "27ceb70 <Json::Value::operator[](char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e11f7",
+          "operand": "27ce3c0 <Json::Value::empty() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1222",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e123a",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1252",
+          "operand": "27cd6b0 <Json::Value::asString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1260",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e127b",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e128b",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e129b",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e12b6",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e12ce",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e12e6",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1301",
+          "operand": "27ce3c0 <Json::Value::empty() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1335",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1356",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1377",
+          "operand": "27cd6b0 <Json::Value::asString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e138a",
+          "operand": "26ecd90 <mce::UUID::fromString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e13a9",
+          "operand": "17f4860 <mce::UUID::UUID()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e13e3",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1401",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e141f",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e143a",
+          "operand": "27ce3c0 <Json::Value::empty() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e146e",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e148f",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e14b0",
+          "operand": "27cd6b0 <Json::Value::asString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e14c1",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e14e2",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e14f5",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1508",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1526",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1544",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1562",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e156b",
+          "operand": "27cf7c0 <Json::Value::isBool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x25e1583",
+          "operand": "27cde00 <Json::Value::asBool(bool) const>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::handle(NetworkIdentifier const&, ResourcePackClientResponsePacket const&)",
+      "address": "0x182aba0",
+      "size": 2791,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x182abcd",
+          "operand": "1837c30 <ResourcePackClientResponsePacket::isResponse(ResourcePackResponse) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182abf3",
+          "operand": "1836d50 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::find(NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ac17",
+          "operand": "1836d80 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ac2b",
+          "operand": "1836d20 <bool std::__detail::operator!=<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true>(std::__detail::_Node_iterator_base<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true> const&, std::__detail::_Node_iterator_base<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true> const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ac4c",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ac60",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ac7c",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ac85",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ac8e",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182aca6",
+          "operand": "1837c30 <ResourcePackClientResponsePacket::isResponse(ResourcePackResponse) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182acbc",
+          "operand": "1837c60 <std::vector<PackInstanceId, std::allocator<PackInstanceId> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182acc5",
+          "operand": "1837c60 <std::vector<PackInstanceId, std::allocator<PackInstanceId> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182acdb",
+          "operand": "*0xf0(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182ace9",
+          "operand": "1a71be0 <ResourcePackManager::getStack(ResourcePackStackType) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ad0e",
+          "operand": "1837860 <std::vector<PackInstance, std::allocator<PackInstance> >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ad21",
+          "operand": "18378a0 <std::vector<PackInstance, std::allocator<PackInstance> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ad3b",
+          "operand": "18378e0 <bool __gnu_cxx::operator!=<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >(__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > > const&, __gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ad54",
+          "operand": "1837920 <__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ad67",
+          "operand": "1aa2540 <PackInstance::getManifest() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ad6f",
+          "operand": "1a55b10 <PackManifest::getIdentity() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ad82",
+          "operand": "1aa2920 <PackInstance::getSubpackFolderName[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ad95",
+          "operand": "1837c80 <void std::vector<PackInstanceId, std::allocator<PackInstanceId> >::emplace_back<PackIdVersion const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>(PackIdVersion const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ada1",
+          "operand": "1837ac0 <__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182adc3",
+          "operand": "*0xf0(%rdx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182adce",
+          "operand": "1a71be0 <ResourcePackManager::getStack(ResourcePackStackType) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182adf3",
+          "operand": "1837860 <std::vector<PackInstance, std::allocator<PackInstance> >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ae06",
+          "operand": "18378a0 <std::vector<PackInstance, std::allocator<PackInstance> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ae20",
+          "operand": "18378e0 <bool __gnu_cxx::operator!=<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >(__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > > const&, __gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ae39",
+          "operand": "1837920 <__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ae4c",
+          "operand": "1aa2540 <PackInstance::getManifest() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ae54",
+          "operand": "1a55b10 <PackManifest::getIdentity() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ae67",
+          "operand": "1aa2920 <PackInstance::getSubpackFolderName[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ae7a",
+          "operand": "1837c80 <void std::vector<PackInstanceId, std::allocator<PackInstanceId> >::emplace_back<PackIdVersion const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>(PackIdVersion const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182ae86",
+          "operand": "1837ac0 <__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182aea2",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182aeaa",
+          "operand": "1cd1dd0 <LevelData::isTexturepacksRequired() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182af00",
+          "operand": "1837d30 <ResourcePackStackPacket::ResourcePackStackPacket(std::vector<PackInstanceId, std::allocator<PackInstanceId> >&, std::vector<PackInstanceId, std::allocator<PackInstanceId> >&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182af45",
+          "operand": "18365f0 <Packet::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182af69",
+          "operand": "*%r8",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182af73",
+          "operand": "1837dd0 <ResourcePackStackPacket::~ResourcePackStackPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182af7c",
+          "operand": "180f300 <std::vector<PackInstanceId, std::allocator<PackInstanceId> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182af85",
+          "operand": "180f300 <std::vector<PackInstanceId, std::allocator<PackInstanceId> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182af98",
+          "operand": "1837c30 <ResourcePackClientResponsePacket::isResponse(ResourcePackResponse) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182afbe",
+          "operand": "1836d50 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::find(NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182afe8",
+          "operand": "1836d80 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b002",
+          "operand": "18377f0 <bool std::__detail::operator==<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true>(std::__detail::_Node_iterator_base<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true> const&, std::__detail::_Node_iterator_base<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true> const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b026",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b040",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b05c",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b068",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b074",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b085",
+          "operand": "1837820 <std::__detail::_Node_iterator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, false, true>::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b093",
+          "operand": "1836b80 <std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b09b",
+          "operand": "182a950 <ServerNetworkHandler::Client::getPrimaryRequest() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b0b9",
+          "operand": "182b690 <ServerNetworkHandler::sendLoginMessageLocal(NetworkIdentifier const&, ConnectionRequest const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b0cc",
+          "operand": "1837c30 <ResourcePackClientResponsePacket::isResponse(ResourcePackResponse) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b0e2",
+          "operand": "1837e30 <ResourcePackClientResponsePacket::getDownloadingPacks[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b0f1",
+          "operand": "1837e50 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::set(std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b115",
+          "operand": "*0xf0(%rsi)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182b123",
+          "operand": "1a71be0 <ResourcePackManager::getStack(ResourcePackStackType) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b136",
+          "operand": "1837e80 <std::vector<PackInstance, std::allocator<PackInstance> >::vector(std::vector<PackInstance, std::allocator<PackInstance> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b150",
+          "operand": "1837f30 <std::vector<PackInstance, std::allocator<PackInstance> >::begin()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b163",
+          "operand": "1837f60 <std::vector<PackInstance, std::allocator<PackInstance> >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b17d",
+          "operand": "1837fa0 <bool __gnu_cxx::operator!=<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > >(__gnu_cxx::__normal_iterator<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > > const&, __gnu_cxx::__normal_iterator<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b196",
+          "operand": "1837fe0 <__gnu_cxx::__normal_iterator<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b1a9",
+          "operand": "1aa27e0 <PackInstance::getPackCategory() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b1c8",
+          "operand": "1aa2810 <PackInstance::getPackOrigin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b1ee",
+          "operand": "1aa27e0 <PackInstance::getPackCategory() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b210",
+          "operand": "1aa2540 <PackInstance::getManifest() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b218",
+          "operand": "1a55b10 <PackManifest::getIdentity() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b227",
+          "operand": "272f4d0 <PackIdVersion::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b233",
+          "operand": "1838000 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b246",
+          "operand": "1838030 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b275",
+          "operand": "182b7b0 <std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > std::find_if<std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, ServerNetworkHandler::handle(NetworkIdentifier const&, ResourcePackClientResponsePacket const&)::$_3>(std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, ServerNetworkHandler::handle(NetworkIdentifier const&, ResourcePackClientResponsePacket const&)::$_3)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b2a4",
+          "operand": "1838030 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b2be",
+          "operand": "1838060 <std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::operator!=(std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b2ea",
+          "operand": "1881690 <NetworkHandler::getResourcePackUploadManager(PacketSender&, NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b2fd",
+          "operand": "1aa26f0 <PackInstance::getResourceLocation() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b310",
+          "operand": "1aa2750 <PackInstance::isZipped() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b350",
+          "operand": "1945e50 <ResourcePackFileUploadManager::uploadResourcePack(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, ResourceLocation const&, bool, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b374",
+          "operand": "1838090 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::erase[abi:cxx11](std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b387",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b398",
+          "operand": "18380d0 <__gnu_cxx::__normal_iterator<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b3b0",
+          "operand": "18380f0 <std::vector<PackInstance, std::allocator<PackInstance> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b3c6",
+          "operand": "*0xf0(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182b3d1",
+          "operand": "1a71be0 <ResourcePackManager::getStack(ResourcePackStackType) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b3e4",
+          "operand": "1837e80 <std::vector<PackInstance, std::allocator<PackInstance> >::vector(std::vector<PackInstance, std::allocator<PackInstance> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b3fe",
+          "operand": "1837f30 <std::vector<PackInstance, std::allocator<PackInstance> >::begin()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b411",
+          "operand": "1837f60 <std::vector<PackInstance, std::allocator<PackInstance> >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b42b",
+          "operand": "1837fa0 <bool __gnu_cxx::operator!=<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > >(__gnu_cxx::__normal_iterator<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > > const&, __gnu_cxx::__normal_iterator<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b444",
+          "operand": "1837fe0 <__gnu_cxx::__normal_iterator<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b457",
+          "operand": "1aa27e0 <PackInstance::getPackCategory() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b476",
+          "operand": "1aa2810 <PackInstance::getPackOrigin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b49c",
+          "operand": "1aa27e0 <PackInstance::getPackCategory() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b4be",
+          "operand": "1aa2540 <PackInstance::getManifest() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b4c6",
+          "operand": "1a55b10 <PackManifest::getIdentity() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b4d5",
+          "operand": "272f4d0 <PackIdVersion::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b4e1",
+          "operand": "1838000 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b4f4",
+          "operand": "1838030 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b523",
+          "operand": "182b810 <std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > std::find_if<std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, ServerNetworkHandler::handle(NetworkIdentifier const&, ResourcePackClientResponsePacket const&)::$_4>(std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, ServerNetworkHandler::handle(NetworkIdentifier const&, ResourcePackClientResponsePacket const&)::$_4)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b552",
+          "operand": "1838030 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b56c",
+          "operand": "1838060 <std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::operator!=(std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b598",
+          "operand": "1881690 <NetworkHandler::getResourcePackUploadManager(PacketSender&, NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b5ab",
+          "operand": "1aa26f0 <PackInstance::getResourceLocation() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b5be",
+          "operand": "1aa2750 <PackInstance::isZipped() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b5fe",
+          "operand": "1945e50 <ResourcePackFileUploadManager::uploadResourcePack(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, ResourceLocation const&, bool, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b622",
+          "operand": "1838090 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::erase[abi:cxx11](std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b635",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b646",
+          "operand": "18380d0 <__gnu_cxx::__normal_iterator<PackInstance*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b65e",
+          "operand": "18380f0 <std::vector<PackInstance, std::allocator<PackInstance> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182b66a",
+          "operand": "1838140 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::~set()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ResourcePacksInfoPacket::write(BinaryStream&) const",
+      "address": "0x1844650",
+      "size": 841,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x184467c",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184469e",
+          "operand": "1845200 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::size() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18446b2",
+          "operand": "26eb180 <BinaryStream::writeUnsignedShort(unsigned short)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18446ce",
+          "operand": "1845230 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18446db",
+          "operand": "1845270 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18446ec",
+          "operand": "18452b0 <bool __gnu_cxx::operator!=<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > >(__gnu_cxx::__normal_iterator<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > > const&, __gnu_cxx::__normal_iterator<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844702",
+          "operand": "18452f0 <__gnu_cxx::__normal_iterator<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184471e",
+          "operand": "26ed0e0 <mce::UUID::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184472e",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844737",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844752",
+          "operand": "27572d0 <SemVersion::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844761",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844775",
+          "operand": "26eb3d0 <BinaryStream::writeUnsignedInt64(unsigned long)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184478b",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18447a1",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18447c0",
+          "operand": "272dd50 <ContentIdentity::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18447d0",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18447d9",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18447e2",
+          "operand": "1845310 <__gnu_cxx::__normal_iterator<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844810",
+          "operand": "1845200 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::size() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844822",
+          "operand": "26eb180 <BinaryStream::writeUnsignedShort(unsigned short)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184483e",
+          "operand": "1845230 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184484b",
+          "operand": "1845270 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844862",
+          "operand": "18452b0 <bool __gnu_cxx::operator!=<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > >(__gnu_cxx::__normal_iterator<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > > const&, __gnu_cxx::__normal_iterator<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844878",
+          "operand": "18452f0 <__gnu_cxx::__normal_iterator<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184489d",
+          "operand": "26ed0e0 <mce::UUID::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18448b0",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18448bc",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18448da",
+          "operand": "27572d0 <SemVersion::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18448e9",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844900",
+          "operand": "26eb3d0 <BinaryStream::writeUnsignedInt64(unsigned long)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844919",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844932",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844957",
+          "operand": "272dd50 <ContentIdentity::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184496a",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1844976",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184497f",
+          "operand": "1845310 <__gnu_cxx::__normal_iterator<ResourcePackInfoData const*, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> > >::operator++()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ResourcePackStackPacket::write(BinaryStream&) const",
+      "address": "0x18461c0",
+      "size": 171,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x18461e9",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1846206",
+          "operand": "18465a0 <std::function<void (BinaryStream&, PackInstanceId const&)>::function<ResourcePackStackPacket::write(BinaryStream&) const::{lambda(BinaryStream&, PackInstanceId const&)#1}, void, void>(ResourcePackStackPacket::write(BinaryStream&) const::{lambda(BinaryStream&, PackInstanceId const&)#1})>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1846217",
+          "operand": "18464f0 <void BinaryStream::writeVectorList<PackInstanceId>(std::vector<PackInstanceId, std::allocator<PackInstanceId> > const&, std::function<void (BinaryStream&, PackInstanceId const&)>&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1846220",
+          "operand": "1846620 <std::function<void (BinaryStream&, PackInstanceId const&)>::~function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1846240",
+          "operand": "1846640 <std::function<void (BinaryStream&, PackInstanceId const&)>::function<ResourcePackStackPacket::write(BinaryStream&) const::{lambda(BinaryStream&, PackInstanceId const&)#2}, void, void>(ResourcePackStackPacket::write(BinaryStream&) const::{lambda(BinaryStream&, PackInstanceId const&)#2})>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1846254",
+          "operand": "18464f0 <void BinaryStream::writeVectorList<PackInstanceId>(std::vector<PackInstanceId, std::allocator<PackInstanceId> > const&, std::function<void (BinaryStream&, PackInstanceId const&)>&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x184625d",
+          "operand": "1846620 <std::function<void (BinaryStream&, PackInstanceId const&)>::~function()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ResourcePackClientResponsePacket::read(BinaryStream&)",
+      "address": "0x187d8f0",
+      "size": 168,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x187d90c",
+          "operand": "26eb020 <ReadOnlyBinaryStream::getByte()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187d91f",
+          "operand": "187dad0 <std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::clear()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187d92b",
+          "operand": "26eb140 <ReadOnlyBinaryStream::getUnsignedShort()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187d960",
+          "operand": "26eb8d0 <ReadOnlyBinaryStream::getString[abi:cxx11]()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187d96d",
+          "operand": "187daf0 <std::pair<std::_Rb_tree_const_iterator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, bool> std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::emplace<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x187d97d",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }

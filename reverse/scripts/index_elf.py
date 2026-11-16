@@ -55,7 +55,15 @@ targets += [
  'WebToken::createFromData(Json::Value const&, PrivateKeyManager const&)',
  'NetworkHandler::Connection::Connection(NetworkIdentifier const&, NetworkPeer&, std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >, bool, PacketObserver*, Scheduler&, WorkerPool&)',
  'ServerNetworkHandler::handle(NetworkIdentifier const&, ClientToServerHandshakePacket const&)',
- 'ServerNetworkHandler::_onClientAuthenticated(NetworkIdentifier const&, Certificate const&)'
+ 'ServerNetworkHandler::_onClientAuthenticated(NetworkIdentifier const&, Certificate const&)',
+ 'Whitelist::isAllowed(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const',
+ 'Whitelist::tryUpdateEntries(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)',
+ 'Whitelist::WhitelistEntryMatcher::operator()(WhitelistEntry&)',
+ 'WhitelistEntry::deserialize(Json::Value&)',
+ 'ServerNetworkHandler::handle(NetworkIdentifier const&, ResourcePackClientResponsePacket const&)',
+ 'ResourcePacksInfoPacket::write(BinaryStream&) const',
+ 'ResourcePackStackPacket::write(BinaryStream&) const',
+ 'ResourcePackClientResponsePacket::read(BinaryStream&)'
 ]
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)

@@ -293,5 +293,69 @@
       "log": "'Player connected: %s' 0x281d6e8",
       "next": "ResourcePacksInfo built from the resource pack stacks"
     }
+  },
+  "admission_and_packs": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "whitelist_gate": {
+      "handler_flag": "+0x68 tested at 0x1828b2f (INFERRED: white-list setting)",
+      "realms_exception": "string compare with 'realms' 0x1828b39",
+      "try_update": "Whitelist::tryUpdateEntries call 0x1828b82 (0x25f5ac0)",
+      "is_allowed": "Whitelist::isAllowed call 0x1828ba0 (0x25f5410)",
+      "refusal": "disconnectClient('disconnectionScreen.notAllowed' 0x281d62b) 0x1828bf5"
+    },
+    "whitelist_entry": {
+      "constructor": "WhitelistEntry(string, mce::UUID, string, bool) 0x25e0e70",
+      "offsets": {
+        "name": "+0x8",
+        "uuid": "+0x28",
+        "xuid": "+0x38",
+        "ignoresPlayerLimit": "+0x58"
+      },
+      "json_keys": [
+        "name",
+        "uuid (written only when set)",
+        "xuid",
+        "ignoresPlayerLimit"
+      ]
+    },
+    "is_allowed": {
+      "uuid_lambda": "0x25f61c0 compares +0x28 when the queried UUID is non-nil",
+      "xuid_lambda": "0x25f6540 compares +0x38 (string ==, empty strings match in the original)"
+    },
+    "try_update": {
+      "matcher": "WhitelistEntryMatcher::operator() 0x25f7390: name (+0x8) or xuid (+0x38), each guarded by != \"\"",
+      "fill_xuid": "entry xuid == \"\" branch 0x25f5bee, assignment 0x25f5c3a",
+      "rename": "second assignment 0x25f5caf (INFERRED gamertag update)",
+      "persist": "std::function callback 0x25f5ceb"
+    },
+    "other_login_checks_not_implemented": {
+      "invalidTenant": "0x281d609",
+      "blacklist": "Blacklist::isBlocked 0x1828c58",
+      "skin_size": "0x1828df1-0x1828e13 accepts 0x4000, 0x2000, 0x10000 bytes; else disconnectionScreen.invalidSkin 0x281d64a"
+    },
+    "after_handshake": {
+      "play_status": "PlayStatus(0) 0x18297aa",
+      "resource_packs_info": "built from ResourcePackManager stacks 0x182985e; mustAccept = LevelData::isTexturepacksRequired 0x1829bea"
+    },
+    "resource_packs_info_write": {
+      "function": "ResourcePacksInfoPacket::write 0x1844650",
+      "layout": "writeBool, writeUnsignedShort (raw little-endian, BinaryStream::write 0x26eb1a5) count + {uuid string, version string, u64 size, 3 strings}, twice"
+    },
+    "resource_pack_stack_write": {
+      "function": "ResourcePackStackPacket::write 0x18461c0",
+      "layout": "writeBool, writeVectorList (writeUnsignedVarInt count 0x184651d) of {uuid, version, subpack strings}, twice"
+    },
+    "client_response_read": {
+      "function": "ResourcePackClientResponsePacket::read 0x187d8f0",
+      "layout": "getByte status, getUnsignedShort count, strings"
+    },
+    "response_handler": {
+      "function": "ServerNetworkHandler::handle(ResourcePackClientResponsePacket) 0x182aba0",
+      "isResponse": "compares field +0x48 (0x1837c48)",
+      "1_refused": "0x182abab -> disconnectClient('') 0x182ac7c",
+      "3_have_all_packs": "0x182ac9d -> ResourcePackStackPacket(behaviour, resource, isTexturepacksRequired) 0x182af00",
+      "4_completed": "0x182af8f -> sendLoginMessageLocal 0x182b0b9",
+      "2_send_packs": "0x182b0c3 -> ResourcePackFileUploadManager::uploadResourcePack"
+    }
   }
 }

@@ -49,6 +49,26 @@ int main(int argc,char** argv) {
   write(temp.path/"opsfile.json","[{\"xuid\":\"123\"}]");access.reload_operators();check(access.is_operator("123") && !access.is_operator(""));
   write(temp.path/"opsfile.json","[{\"xuid\":\"123\"},{\"xuid\":\"123\"}]");rejects([&]{access.reload_operators();});check(access.is_operator("123"));
   check(access.remove("Player") && !access.remove("Player"));access.reload_whitelist();check(access.whitelist().empty());
+  // Admission semantics (Whitelist::tryUpdateEntries / isAllowed).
+  write(temp.path/"whitelist.json","[{\"name\":\"Named\"},{\"name\":\"Old Tag\",\"xuid\":\"42\"},"
+   "{\"name\":\"Offline\",\"uuid\":\"AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE\"}]");
+  access.reload_whitelist();
+  check(access.whitelist()[2].uuid=="aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
+  check(!access.is_allowed("","7") && !access.is_allowed("","") && access.is_allowed("","42"));
+  check(access.is_allowed("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee","") && access.is_allowed("AAAAAAAA-bbbb-4ccc-8ddd-eeeeeeeeeeee",""));
+  check(!access.is_allowed("not-a-uuid",""));
+  // A name-only entry gains the authenticated XUID (and UUID) on first join, and persists.
+  check(access.try_update_entries("11111111-2222-4333-8444-555555555555","7","Named") && access.is_allowed("","7"));
+  check(!access.try_update_entries("11111111-2222-4333-8444-555555555555","7","Named"));
+  // An XUID-matched entry follows a gamertag change.
+  check(access.try_update_entries("","42","New Tag") && access.whitelist()[1].name=="New Tag");
+  // No XUID: a name match alone neither updates nor admits.
+  check(!access.try_update_entries("","","Unlisted") && !access.is_allowed("",""));
+  access.reload_whitelist();
+  check(access.whitelist()[0].xuid=="7" && access.whitelist()[0].uuid=="11111111-2222-4333-8444-555555555555" &&
+        access.whitelist()[1].name=="New Tag" && access.whitelist()[2].uuid=="aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
+  write(temp.path/"whitelist.json","[{\"name\":\"Bad\",\"uuid\":\"nope\"}]");rejects([&]{access.reload_whitelist();});
+  write(temp.path/"whitelist.json","[]");access.reload_whitelist();
   auto world_dir=properties.world_directory(temp.path);std::filesystem::create_directories(world_dir);
   bds::World world;world.set_block({-1,255,16},42);world.tick();
   bds::Backup backup(world_dir);bds::ServerControl control(properties,access,backup);

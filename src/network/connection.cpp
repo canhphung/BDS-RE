@@ -41,6 +41,37 @@ Bytes server_handshake_body(std::string_view jwt) {
     return writer.take();
 }
 
+Bytes resource_packs_info_body(bool must_accept) {
+    ByteWriter writer;
+    writer.boolean(must_accept);
+    for (int list = 0; list < 2; ++list) { // behaviour packs, then resource packs
+        writer.byte(0);                    // unsigned short count, little-endian
+        writer.byte(0);
+    }
+    return writer.take();
+}
+
+Bytes resource_pack_stack_body(bool must_accept) {
+    ByteWriter writer;
+    writer.boolean(must_accept);
+    writer.varint(0); // behaviour stack (writeVectorList: unsigned varint count)
+    writer.varint(0); // resource stack
+    return writer.take();
+}
+
+PackResponseBody decode_pack_response(std::span<const std::uint8_t> body) {
+    ByteReader reader(body);
+    PackResponseBody response{reader.byte(), {}};
+    const auto count_bytes = reader.take(2);
+    const auto count = static_cast<std::uint16_t>(count_bytes[0] | (count_bytes[1] << 8));
+    if (count > 256)
+        throw ProtocolError("too many pack ids");
+    for (std::uint16_t i = 0; i < count; ++i)
+        response.pack_ids.push_back(reader.string(256));
+    reader.finish();
+    return response;
+}
+
 Bytes disconnect_body(bool hide_screen, std::string_view message) {
     ByteWriter writer;
     writer.boolean(hide_screen);
@@ -49,9 +80,10 @@ Bytes disconnect_body(bool hide_screen, std::string_view message) {
     return writer.take();
 }
 
-GameConnection::GameConnection(auth::LoginPolicy policy, Clock clock, std::shared_ptr<ServerSecrets> secrets)
+GameConnection::GameConnection(auth::LoginPolicy policy, Clock clock, std::shared_ptr<ServerSecrets> secrets,
+                               Options options)
     : policy_(std::move(policy)), clock_(clock ? std::move(clock) : Clock(system_clock_seconds)),
-      secrets_(secrets ? std::move(secrets) : std::make_shared<ServerSecrets>()) {}
+      secrets_(secrets ? std::move(secrets) : std::make_shared<ServerSecrets>()), options_(std::move(options)) {}
 
 Bytes GameConnection::message(std::vector<GamePacket> packets) {
     auto payload = compress_packets(packets);
@@ -86,15 +118,21 @@ ConnectionOutput GameConnection::receive(std::span<const std::uint8_t> raw) {
                 state_ = State::closed;
                 return close("sub-client packets are not supported");
             }
-            const auto expected = state_ == State::awaiting_login ? PacketId::Login : PacketId::ClientToServerHandshake;
+            const auto expected = state_ == State::awaiting_login       ? PacketId::Login
+                                  : state_ == State::awaiting_handshake ? PacketId::ClientToServerHandshake
+                                                                        : PacketId::ResourcePackClientResponse;
             if (packet.header.id != static_cast<std::uint16_t>(expected)) {
                 const auto name = packet_name(packet.header.id);
-                const auto phase = state_ == State::awaiting_login ? "login" : "the encryption handshake";
+                const auto phase = state_ == State::awaiting_login       ? "login"
+                                   : state_ == State::awaiting_handshake ? "the encryption handshake"
+                                                                         : "the resource pack exchange";
                 state_ = State::closed;
                 return close(std::string("unexpected packet before ") + phase + ": " +
                              (name.empty() ? "id " + std::to_string(packet.header.id) : std::string(name)));
             }
-            auto output = state_ == State::awaiting_login ? handle_login(packet) : handle_handshake();
+            auto output = state_ == State::awaiting_login       ? handle_login(packet)
+                          : state_ == State::awaiting_handshake ? handle_handshake()
+                                                                : handle_pack_response(packet);
             if (output.close || !output.messages.empty())
                 return output; // one step per batch; later packets would race the key switch
         }
@@ -122,6 +160,11 @@ ConnectionOutput GameConnection::handle_login(const GamePacket &login) {
     if (!result.identity)
         return close("login not authenticated: " + result.detail, {message({disconnect_packet(not_authenticated)})});
     identity_ = result.identity;
+    if (options_.admission) {
+        if (auto refusal = options_.admission(*identity_))
+            return close("login refused: " + printable(identity_->display_name) + " (" + printable(*refusal) + ")",
+                         {message({disconnect_packet(*refusal)})});
+    }
     // Encryption setup (0x1828fcb-0x182928c): 16 random salt bytes, ECDH
     // between the server key and the client's identityPublicKey, a token
     // {"salt": base64(salt)} signed by the server key, sent in plaintext, then
@@ -143,16 +186,46 @@ ConnectionOutput GameConnection::handle_login(const GamePacket &login) {
 }
 
 ConnectionOutput GameConnection::handle_handshake() {
-    // handle(ClientToServerHandshakePacket) (0x182a830) continues with
-    // _onClientAuthenticated: capacity/duplicate checks, PlayStatus
-    // LoginSuccess, "Player connected: %s", then ResourcePacksInfo. Packs,
-    // StartGame and the world are not implemented, so the session ends here.
-    state_ = State::closed;
+    // handle(ClientToServerHandshakePacket) (0x182a830) -> _onClientAuthenticated:
+    // capacity/duplicate checks (not implemented: no players exist yet),
+    // PlayStatus LoginSuccess, "Player connected: %s", ResourcePacksInfo.
+    state_ = State::awaiting_packs;
     const auto &who = *identity_;
-    return close("Player connected: " + printable(who.display_name) +
-                     "; closing because resource packs and world streaming are not implemented",
-                 {message({packet(PacketId::PlayStatus, play_status_body(PlayStatus::LoginSuccess)),
-                           disconnect_packet("BDS-RE: logged in as " + who.display_name +
-                                             ". Resource packs, StartGame and world streaming are not implemented yet")})});
+    return {{message({packet(PacketId::PlayStatus, play_status_body(PlayStatus::LoginSuccess)),
+                      packet(PacketId::ResourcePacksInfo, resource_packs_info_body(options_.texture_packs_required))})},
+            false,
+            "Player connected: " + printable(who.display_name) +
+                (who.xbox_authenticated ? ", xuid: " + printable(who.xuid) : std::string())};
+}
+
+ConnectionOutput GameConnection::handle_pack_response(const GamePacket &received) {
+    // ServerNetworkHandler::handle(ResourcePackClientResponsePacket) (0x182aba0).
+    const auto response = decode_pack_response(received.body);
+    switch (static_cast<PackResponse>(response.status)) {
+    case PackResponse::Refused: // disconnectClient("") at 0x182ac7c
+        state_ = State::closed;
+        return close("client refused resource packs", {message({disconnect_packet("")})});
+    case PackResponse::SendPacks:
+        // The original uploads each requested pack it owns; this server owns none.
+        state_ = State::closed;
+        return close("client requested " + std::to_string(response.pack_ids.size()) + " packs; none are available",
+                     {message({disconnect_packet("BDS-RE: resource pack download is not implemented")})});
+    case PackResponse::HaveAllPacks:
+        return {{message({packet(PacketId::ResourcePackStack, resource_pack_stack_body(options_.texture_packs_required))})},
+                false,
+                {}};
+    case PackResponse::Completed: {
+        // sendLoginMessageLocal (0x182b0b9) creates the player and starts the
+        // game; StartGame and world streaming are not implemented yet.
+        state_ = State::closed;
+        const auto &who = *identity_;
+        return close("resource packs completed for " + printable(who.display_name) +
+                         "; closing because StartGame and world streaming are not implemented",
+                     {message({disconnect_packet("BDS-RE: " + who.display_name +
+                                                 " finished resource packs. StartGame and world streaming are not implemented yet")})});
+    }
+    }
+    state_ = State::closed;
+    return close("unknown resource pack response " + std::to_string(response.status));
 }
 } // namespace bds::protocol
