@@ -1,7 +1,8 @@
 # ItemUse validation: original binary and runtime comparison
 
 Status: the held-item/selected-slot rejection branch is reconstructed and checked
-against the original for the supported block-only inventory. The complete
+against the original for simple block stacks with zero NBT and empty component
+lists, empty armor/offhand and an empty cursor. The complete
 ItemUse handler, mining, placement and item drops are **not** reconstructed.
 
 Original Linux BDS 1.6.0.15, protocol 282, SHA256:
@@ -17,10 +18,11 @@ Original Linux BDS 1.6.0.15, protocol 282, SHA256:
 | PlayerInventoryProxy::getSelectedSlot / transaction slot comparison | 0x1ae6329 / 0x1ae634d | Compares selected slot index with transaction slot |
 | Mismatch return | 0x1ae635f | Returns error 3 if either comparison fails and `force=false`, before dispatching click-block, click-air or break-block |
 | ItemInstance::operator!= / matches | 0x2125b90 / 0x2124ee0 | Negates matchesItem plus stack-count equality; count comparison occurs at 0x2124f23..0x2124f35 |
-| ItemUseInventoryTransaction::onTransactionError | 0x1ae7710 | Calls resendBlocksAroundArea, then player virtual method at vtable offset 0x960 with argument true |
+| ItemUseInventoryTransaction::onTransactionError | 0x1ae7710 | Calls resendBlocksAroundArea, then player virtual method at vtable offset 0x960 with argument true; ServerPlayer vtable resolves this to sendInventory(bool) |
 | ItemUseInventoryTransaction::resendBlocksAroundArea | 0x1ae6120 | Sends clicked position, clicked + (0,1,0), face-adjacent position, adjacent + (0,1,0); retains duplicates |
 | Resend helper | 0x1ae6210 | Reads each authoritative block and constructs UpdateBlock with layer 0, flags 3 |
 | UpdateBlockPacket constructor | 0x1ae7780 | Obtains the block's runtime ID via Block::getRuntimeId at 0x1ae77e9 |
+| ServerPlayer::sendInventory(bool) | 0x25fb370 | Sends windows 0, 120, 124, 119, then hotbar with selected slot/container and the bool argument; an open container manager can add another inventory packet |
 
 Error 3 is an internal return value, not an extra wire error packet. For a
 supported block-only player with empty armor and offhand, runtime captures show
@@ -82,7 +84,11 @@ whole server session.
 - Successful predicted placement and normal inventory moves were quiet in that
   exploratory run. BDS-RE still sends full inventory responses. Expected-action
   matching, transaction execution and success notifications need separate work.
-- Other item types, NBT, nonempty armor/offhand, cursor variations, spectator/dead
+- Other item types, NBT, item component lists, nonempty armor/offhand, cursor variations, spectator/dead
   player handling, and the internal `force=true` path are outside this corpus.
+- The original handler's first virtual call (vtable offset 0x2e0) resolves to
+  Mob::isAlive at 0x22b9a40 in the ServerPlayer vtable (0x3283760). A dead player
+  returns error 7 before selected-item validation. BDS-RE has no health/death
+  simulation yet; this is recorded evidence, not an implemented branch.
 - Terrain generation, movement/physics and snapshot storage remain independent
   algorithms. No claim of matching them is supported by these 37 cases.

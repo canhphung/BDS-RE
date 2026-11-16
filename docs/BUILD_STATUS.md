@@ -1,9 +1,18 @@
 # Actual build status — 2026-11-16
 
-Latest verified source: `b13a0e404af08e1d777440e9040764ec5d0bacb1` —
-[CI run 43893499034](https://github.com/canhphung/BDS-RE/actions/runs/43893499034),
-all seven jobs successful, 21/21 CTest including native Windows Debug/Release.
+Latest verified source: `1ffaefd738ba00c4d65646e8e3d65da659ac191f` —
+[CI run 43898574051](https://github.com/canhphung/BDS-RE/actions/runs/43898574051),
+all seven jobs successful, 22/22 CTest including native Windows Debug/Release.
 Older sections below retain the results for their original source revisions.
+
+The new `item_use_reference` replays 37 cases captured from two original BDS runs
+for held-item/selected-slot validation and correction packets. UpdateBlock runtime
+IDs are translated through the captured and advertised StartGame palettes; other
+response bytes and order must match. Local GCC Debug passed 22/22 tests; the three
+targeted ItemUse/gameplay/UDP tests also passed ASan+UBSan. CI logs confirm 22/22
+in every job, including sanitizers and both native Windows configurations. See
+[function evidence and the remaining gameplay differences](../reverse/reports/ITEM_USE.md).
+This verifies a specific rejection branch, not original-equivalent gameplay.
 
 | Platform/toolchain | Debug | Release | Sanitizers | Notes |
 |---|---|---|---|---|
