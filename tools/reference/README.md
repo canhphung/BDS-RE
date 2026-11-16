@@ -89,3 +89,19 @@ UpdateBlock runtime IDs are compared using each session's advertised StartGame
 palette. Unrelated tick packets are filtered as documented in the fixture.
 Run `ctest --test-dir build -R item_use_reference --output-on-failure` for the
 regression check; see [function evidence and coverage](../../reverse/reports/ITEM_USE.md).
+
+## Block-break captures
+
+`capture_break_oracle.py` takes the same arguments (default port 19170) and records,
+for grass, dirt, bedrock and two stone blocks either side of the 12.5 reach limit,
+the LevelEvents produced by StartBreak/AbortBreak and every packet answering an
+ItemUse break request sent without StartBreak. The breaking-relevant packets of
+one run are kept in tests/reference/break_bds_1.6.0.15.json.
+
+```sh
+python3 tools/reference/capture_break_oracle.py \
+  --runtime input/reference-runtime/bds \
+  --library-path input/reference-runtime/openssl-local/lib \
+  --preload input/reference-runtime/ipv6_shim.so \
+  --output input/reference/break-new
+```

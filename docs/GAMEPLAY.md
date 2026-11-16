@@ -5,7 +5,8 @@ player movement and visibility, block breaking/placement, and a 36-slot player
 inventory plus cursor. This is an independent implementation. It does not reproduce
 all Bedrock gameplay or the original terrain generator. The existing terrain,
 movement, mining and inventory algorithms are experimental, not a completed
-reconstruction of BDS. Known mismatches include mining delays, direct inventory
+reconstruction of BDS. Movement and block breaking (timing, reach, crack events)
+are now translated from the binary; known remaining mismatches are direct inventory
 drops and full inventory responses to successful predicted transactions.
 
 The ItemUse held-item/selected-slot rejection branch has now been traced in the
@@ -39,11 +40,35 @@ world generator. Original BDS LevelDB directories are still refused.
 In Creative, the creative inventory contains stone, grass, dirt and bedrock.
 Select one, place it, break it, and check the changes from a second client.
 In Survival, break grass/dirt to obtain dirt directly in inventory and place it;
-placement consumes one item. Bare-hand stone breaking yields no item. Bedrock
-cannot be broken in Survival. Tools, normal item drops/entities, ores, liquids,
-biomes, trees/caves, recipes/crafting, chests, armor, damage, hunger and mobs are
-not implemented. Mining has basic independent timing/reach checks, not a complete
-reconstruction of original hardness/tool rules.
+placement consumes one item. Bare-hand stone breaking yields no item. Tools,
+normal item drops/entities, ores, liquids, biomes, trees/caves, recipes/crafting,
+chests, armor, damage, hunger and mobs are not implemented.
+
+## Block breaking
+
+Translated from the original (ItemUseInventoryTransaction::handle 0x1ae6290,
+GameMode::destroyBlock 0x1ab4a80, PlayerAction handler 0x182d140) and checked
+against the original server with tools/reference/capture_break_oracle.py
+(tests/reference/break_bds_1.6.0.15.json):
+
+- A block is broken by InventoryTransaction ItemUse action 2. There is no
+  destroy-time gate: StartBreak is not required and elapsed time is never checked.
+  PlayerAction 13 does not break blocks (it belongs to dimension changes).
+- After the held-item check (error 3), Actor::distanceTo(Vec3(BlockPos)) > 12.5
+  (player position to the block's minimum corner) is error 7; both errors send
+  resendBlocksAroundArea plus the inventory and hotbar.
+- Success sets air, broadcasts UpdateBlock and LevelEvent 2001 (block runtime id at
+  the block centre) and sends PlayerAction StopBreak to the breaker. Like the
+  original, bedrock breaks through this path in Survival.
+- StartBreak broadcasts LevelEvent 3600 with floor(65535 × rate) to every player,
+  where rate = speed / hardness / (always destroyable ? 30 : 100), speed is 1 for
+  block items and an empty hand, divided by 5 when not on ground, and 0 for
+  negative hardness. Abort/StopBreak broadcast LevelEvent 3601. Creative players
+  send no crack event.
+- Adventure and Visitor players are refused with resendBlocksAroundArea (permission
+  check reduced to these two settings, INFERRED).
+- PLACEHOLDER: drops still go straight into the inventory (lost when full) instead
+  of spawning an ItemActor; this is the next reconstruction step.
 
 Move/split/merge the supported block stacks between inventory and cursor. Closing
 the inventory returns cursor items to available inventory space. If full, remaining
@@ -55,11 +80,17 @@ permission; self-signed clients cannot claim an operator XUID.
 
 ## Movement and synchronization
 
-MovePlayer accepts only the joining runtime ID, finite bounded coordinates and
-normal/rotation modes. Basic motion budgets and solid-block collision checks reject
-teleports, implausible speed and penetration, returning authoritative position.
-This is client-driven movement with validation, not a complete server physics or
-anti-cheat implementation. Other initialized players receive AddPlayer/PlayerList,
+MovePlayer is translated from the original handler (ServerNetworkHandler::handle
+0x182bcf0): a packet for another runtime ID is ignored, Y is clamped to [-128, 512]
+with mce::Math::clamp (NaN becomes -128), position and rotation are taken as sent in
+every mode, and the received packet is relayed unchanged to other players. Like the
+original, there is no speed, distance or collision validation and no correction is
+sent (ServerPlayer::checkMovementStats only feeds telemetry). One documented safety
+deviation: packets with non-finite or |coordinate| > 1e9 X/Z are ignored, because
+BDS-RE converts them to chunk coordinates. The earlier invented motion budgets,
+collision rejection and coordinate limits were removed. Riding and dimension changes
+do not exist yet, so those branches of the original are not reachable. Verified with
+tools/reference/movement_oracle.py against the original (test `movement_reference`). Other initialized players receive AddPlayer/PlayerList,
 movement, held-item updates and RemoveActor/PlayerList removal on disconnect.
 
 The streamed chunk circle follows the accepted player position and radius, bounded

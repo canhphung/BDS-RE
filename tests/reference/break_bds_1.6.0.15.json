@@ -1,0 +1,181 @@
+{
+ "source": "tools/reference/capture_break_oracle.py against the original bedrock_server 1.6.0.15",
+ "binary_sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+ "player_position": [
+  0.5,
+  66.62,
+  0.5
+ ],
+ "on_ground": true,
+ "held": "empty hand, slot 0",
+ "note": "Only packets relevant to block breaking are kept (MoveEntityDelta, SetActorData, attribute and motion packets omitted). LevelEvent data is a zigzag varint; 3600 = StartBlockCracking with floor(65535*rate), 3601 = StopBlockCracking, 2001 = ParticlesDestroyBlock with the block runtime id.",
+ "cases": [
+  {
+   "case": "grass",
+   "block": [
+    2,
+    64,
+    1
+   ],
+   "distance_to_corner": 3.06,
+   "start_then_abort_level_events": [
+    "a03800000040000080420000803ff038",
+    "a23800000040000080420000803f00"
+   ],
+   "break_responses": [
+    {
+     "packet": "UpdateBlock",
+     "body": "044002ad1d0300"
+    },
+    {
+     "packet": "LevelEvent",
+     "body": "a21f00002040000081420000c03fde05"
+    },
+    {
+     "packet": "PlayerAction",
+     "body": "010400000000"
+    },
+    {
+     "packet": "AddItemActor",
+     "body": "efffffff1f080602000000003b831740e3988142e532e33f0e8ecc3a2e90203eb474e93c2000078080808080806001020202020003000004040005070107012c0116000025070026030000803f2a012c012b02002c00002d02002e020035030000803e36030000803e38080000000000000000000000003900003a03000000003b03000000004500004604004704004800014900004a02004b02004c02004d02015000ff51000000"
+    }
+   ]
+  },
+  {
+   "case": "dirt",
+   "block": [
+    3,
+    64,
+    1
+   ],
+   "distance_to_corner": 3.656,
+   "start_then_abort_level_events": [
+    "a03800004040000080420000803fa244",
+    "a23800004040000080420000803f00"
+   ],
+   "break_responses": [
+    {
+     "packet": "UpdateBlock",
+     "body": "064002ad1d0300"
+    },
+    {
+     "packet": "LevelEvent",
+     "body": "a21f00006040000081420000c03fb231"
+    },
+    {
+     "packet": "PlayerAction",
+     "body": "010400000000"
+    },
+    {
+     "packet": "AddItemActor",
+     "body": "edffffff1f09060200000000fc4d62403ff081421684c23f889ac6bd2e90203ead99e83c2000078080808080806001020202020003000004040005070107012c0116000025070026030000803f2a012c012b02002c00002d02002e020035030000803e36030000803e38080000000000000000000000003900003a03000000003b03000000004500004604004704004800014900004a02004b02004c02004d02015000ff51000000"
+    }
+   ]
+  },
+  {
+   "case": "bedrock",
+   "block": [
+    4,
+    64,
+    1
+   ],
+   "distance_to_corner": 4.4,
+   "start_then_abort_level_events": [
+    "a03800008040000080420000803f00",
+    "a23800008040000080420000803f00"
+   ],
+   "break_responses": [
+    {
+     "packet": "UpdateBlock",
+     "body": "084002ad1d0300"
+    },
+    {
+     "packet": "LevelEvent",
+     "body": "a21f00009040000081420000c03f9409"
+    },
+    {
+     "packet": "PlayerAction",
+     "body": "010400000000"
+    }
+   ]
+  },
+  {
+   "case": "stone_in_reach",
+   "block": [
+    12,
+    64,
+    1
+   ],
+   "distance_to_corner": 11.805,
+   "start_then_abort_level_events": [
+    "a03800004041000080420000803fe806",
+    "a23800004041000080420000803f00"
+   ],
+   "break_responses": [
+    {
+     "packet": "UpdateBlock",
+     "body": "184002ad1d0300"
+    },
+    {
+     "packet": "LevelEvent",
+     "body": "a21f00004841000081420000c03fb037"
+    },
+    {
+     "packet": "PlayerAction",
+     "body": "010400000000"
+    }
+   ]
+  },
+  {
+   "case": "stone_out_of_reach",
+   "block": [
+    13,
+    64,
+    1
+   ],
+   "distance_to_corner": 12.781,
+   "start_then_abort_level_events": [
+    "a03800005041000080420000803fe806",
+    "a23800005041000080420000803f00"
+   ],
+   "break_responses": [
+    {
+     "packet": "UpdateBlock",
+     "body": "1a4002d81b0300"
+    },
+    {
+     "packet": "UpdateBlock",
+     "body": "1a4102ad1d0300"
+    },
+    {
+     "packet": "UpdateBlock",
+     "body": "1a4102ad1d0300"
+    },
+    {
+     "packet": "UpdateBlock",
+     "body": "1a4202ad1d0300"
+    },
+    {
+     "packet": "InventoryContent",
+     "body": "0024000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+     "packet": "InventoryContent",
+     "body": "780400000000"
+    },
+    {
+     "packet": "InventoryContent",
+     "body": "7c0100"
+    },
+    {
+     "packet": "InventoryContent",
+     "body": "770100"
+    },
+    {
+     "packet": "PlayerHotbar",
+     "body": "000001"
+    }
+   ]
+  }
+ ]
+}

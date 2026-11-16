@@ -9,6 +9,7 @@ struct ItemStack {
 };
 struct PlayerData {
     float x = 0.5f, y = 65.62f, z = 0.5f, pitch = 0, yaw = 0, head_yaw = 0;
+    bool on_ground = false; // Actor +0x124, from MovePlayer; not persisted
     unsigned selected = 0;
     ItemStack cursor;
     std::array<ItemStack, 36> inventory{};

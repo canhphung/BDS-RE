@@ -131,14 +131,56 @@ int main() {
         check(w.block({1, 4, 0}) == 1 && pa.inventory[0].count == 64, "creative placement");
         auto updated = server.drain(2);
         check(!updated.empty() && updated[0].header.id == 21, "block broadcast");
+        // Breaking follows ItemUseInventoryTransaction::handle and
+        // GameMode::destroyBlock: action 13 does not break blocks, creative
+        // players break through ItemUse action 2.
         server.handle(1, action(1, 13, {1, 4, 0}), 1200);
-        check(w.block({1, 4, 0}) == 0, "creative break");
+        check(w.block({1, 4, 0}) == 1, "PlayerAction 13 is not a break");
+        server.drain(2);
+        auto creative_break = server.handle(1, use(2, {1, 4, 0}, {1, 64}), 1200);
+        check(w.block({1, 4, 0}) == 0 && creative_break.size() == 3 && creative_break[0].header.id == 21 &&
+                  creative_break[1].header.id == 25 && creative_break[2].header.id == 36 &&
+                  pa.inventory[0].count == 64,
+              "creative break: UpdateBlock, LevelEvent 2001, PlayerAction StopBreak, no drop");
+        auto seen = server.drain(2);
+        check(seen.size() == 2 && seen[0].header.id == 21 && seen[1].header.id == 25,
+              "break broadcast to other players");
+        // StartBreak broadcasts the crack rate to every player, the sender included:
+        // grass on ground = floor(65535 / 0.6 / 30) = 3640 (oracle value).
+        Motion ground;
+        ground.runtime = 2;
+        ground.data = pb;
+        ground.grounded = true;
+        server.handle(2, packet(PacketId::MovePlayer, motion(ground)), 1000);
+        server.drain(1);
+        server.drain(2);
         server.handle(2, action(2, 0, {5, 3, 1}), 1000);
-        server.handle(2, use(2, {5, 3, 1}), 1200);
-        check(w.block({5, 3, 1}) == 2, "early break rejected");
-        server.handle(2, use(2, {5, 3, 1}), 1400);
+        auto crack = server.drain(2);
+        ByteWriter expected;
+        expected.signed_varint(3600);
+        expected.float32(5);
+        expected.float32(3);
+        expected.float32(1);
+        expected.signed_varint(3640);
+        check(crack.size() == 1 && crack[0].header.id == 25 && crack[0].body == expected.bytes() &&
+                  server.drain(1).size() == 1,
+              "StartBreak crack rate broadcast");
+        // No destroy-time gate: the break immediately after StartBreak succeeds.
+        server.handle(2, use(2, {5, 3, 1}), 1001);
         check(w.block({5, 3, 1}) == 0 && pb.inventory[0] == ItemStack{3, 1},
-              "survival break yields dirt");
+              "survival break yields dirt without waiting");
+        // Reach: Actor::distanceTo(Vec3(BlockPos)) > 12.5 is error 7.
+        w.set_block({17, 3, 1}, 1);
+        w.set_block({18, 3, 1}, 1);
+        auto far = server.handle(2, use(2, {18, 3, 1}, {3, 1}), 1002);
+        check(w.block({18, 3, 1}) == 1 && far.size() == 9 && far[0].header.id == 21 && far[8].header.id == 48,
+              "out of reach: resendBlocksAroundArea and inventory resend");
+        server.handle(2, use(2, {17, 3, 1}, {3, 1}), 1003);
+        check(w.block({17, 3, 1}) == 0 && pb.inventory[0] == ItemStack{3, 1},
+              "in reach: stone by hand breaks without drop");
+        w.set_block({5, 3, 0}, 4);
+        server.handle(2, use(2, {5, 3, 0}, {3, 1}), 1004);
+        check(w.block({5, 3, 0}) == 0, "bedrock breaks through ItemUse like the original");
         server.handle(2, use(0, {5, 2, 1}, {3, 1}), 1500);
         check(w.block({5, 3, 1}) == 3 && pb.inventory[0].count == 0,
               "survival placement consumes item");
@@ -159,33 +201,57 @@ int main() {
         check(server.handle(1, action(1, 8, {0, -1, 0}), 1950).empty(),
               "unused action target does not correct movement");
         server.drain(2);
+        // Movement follows ServerNetworkHandler::handle(MovePlayerPacket): no
+        // speed/collision validation, Y clamped to [-128, 512], packet relayed
+        // unchanged to other players.
         Motion m;
         m.runtime = 1;
         m.data = pa;
+        const float standing_y = pa.y;
         m.data.x = 1.5f;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2000);
         check(pa.x == 1.5f, "valid movement");
         auto moved = server.drain(2);
-        check(moved.size() == 1 && moved[0].header.id == 19, "movement broadcast");
+        check(moved.size() == 1 && moved[0].header.id == 19 && moved[0].body == motion(m),
+              "movement relayed unchanged");
         m.data.x = 100;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2000);
-        check(pa.x == 1.5f, "teleport rejected");
+        check(pa.x == 100.0f, "large moves are accepted like the original");
         m.data = pa;
+        m.data.x = 1.5f;
         m.data.y = 3;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2200);
-        check(pa.y > 5, "solid-block collision");
-        m.data = pa;
+        check(pa.x == 1.5f && pa.y == 3.0f, "no collision rejection");
+        m.data.y = 1000;
+        server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2210);
+        check(pa.y == 512.0f, "Y clamped to 512");
+        m.data.y = std::numeric_limits<float>::quiet_NaN();
+        server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2220);
+        check(pa.y == -128.0f, "NaN Y becomes -128 (mce::Math::clamp)");
+        server.drain(2);
+        m.data.y = 4;
+        m.mode = 2;
+        m.riding = 77;
+        m.teleport_cause = 3;
+        m.teleport_source = 9;
+        server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2230);
+        auto relayed = server.drain(2);
+        check(pa.y == 4.0f && relayed.size() == 1 && relayed[0].body == motion(m),
+              "teleport mode, riding id and teleport fields relayed");
+        m.mode = 0;
+        m.riding = 0;
         m.data.x = std::numeric_limits<float>::quiet_NaN();
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2300);
-        check(pa.x == 1.5f, "NaN movement rejected");
+        check(pa.x == 1.5f && server.drain(2).empty(), "non-finite X ignored (documented safety deviation)");
         m.data = pa;
         m.runtime = 2;
         m.data.x = 2;
-        server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2400);
-        check(pa.x == 1.5f, "runtime ownership");
+        check(server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2400).empty() && pa.x == 1.5f,
+              "foreign runtime id ignored silently");
         m.runtime = 1;
         for (unsigned i = 0; i < 20; ++i) {
             m.data = pa;
+            m.data.y = standing_y; // stand on the surface again before rejoining
             m.data.x += 1;
             server.handle(1, packet(PacketId::MovePlayer, motion(m)), 3000 + i * 200);
         }
