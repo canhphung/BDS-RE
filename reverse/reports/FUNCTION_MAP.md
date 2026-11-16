@@ -38,3 +38,7 @@ Same target SHA256 and VERIFIED_BINARY confidence as above; script now indexes 1
 - `DBStorage::saveLevelData(LevelData const&)` VA `0x1cdbc00`, size `0x13e`: calls `ExternalFileLevelStorage::saveLevelData` at `0x1cdbc2f`, constructs path components, iterates LevelStorageObserver unique_ptrs and invokes `LevelStorageObserver::onSave` at `0x1cdbd0c`. Callers and detailed external file encoding remain untraced.
 
 The new WorldStore snapshot is independent implementation policy, not a recovered LevelDB or level.dat format. Original dirty-chunk asynchronous/synchronous save semantics remain under investigation.
+
+## Operational and login follow-up
+
+The current script exports outgoing calls for 20 bounded functions. Additional focused findings, precise addresses and unresolved behavior are documented in OPERATIONS.md and LOGIN.md. New implementation tests remain separate from original-runtime or real-client verification.
