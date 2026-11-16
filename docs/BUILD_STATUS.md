@@ -1,8 +1,8 @@
 # Actual build status — 2026-11-16
 
-Latest verified source: `a16671bb8b386e58edcf280a175bb314d35b6485` —
-[CI run 43879299098](https://github.com/canhphung/BDS-RE/actions/runs/43879299098),
-all seven jobs successful, 19/19 CTest including native Windows Debug/Release.
+Latest verified source: `b13a0e404af08e1d777440e9040764ec5d0bacb1` —
+[CI run 43893499034](https://github.com/canhphung/BDS-RE/actions/runs/43893499034),
+all seven jobs successful, 21/21 CTest including native Windows Debug/Release.
 Older sections below retain the results for their original source revisions.
 
 | Platform/toolchain | Debug | Release | Sanitizers | Notes |
@@ -189,7 +189,12 @@ Two independent encrypted UDP clients verify movement and block broadcasts,
 new chunks after crossing a boundary, inventory cursor transfers, a rejected
 stack-creation attempt, stop/restart and restored position, items and edits.
 The existing 139 original chunk fixtures and startup packet fixtures still pass.
-Native CI for the gameplay source will be recorded when available.
+[Native CI run 43893499034](https://github.com/canhphung/BDS-RE/actions/runs/43893499034)
+for source `b13a0e404af08e1d777440e9040764ec5d0bacb1` passed all seven jobs:
+GCC/Clang Debug/Release, Linux sanitizers and Windows MSVC Debug/Release.
+Both Windows logs explicitly report 100% tests passed, 0 failed out of 21.
+The final source includes native empty-hand equipment markers and non-block
+PlayerAction sentinel coordinates in addition to the tests above.
 
 The user confirmed basic M4 Login/chunk/spawn initialization on a real Minecraft
 Bedrock 1.6.0.14 client after the timestamp correction. This predates the gameplay
