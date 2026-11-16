@@ -22,6 +22,11 @@ targets += [
  'RakNet::ProcessOfflineNetworkPacket(RakNet::SystemAddress, char const*, int, RakNet::RakPeer*, RakNet::RakNetSocket2*, bool*, unsigned long)',
  'RakNetServerLocator::announceServer(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, GameType, int, int, bool)',
  'Common::getGameVersionStringNet[abi:cxx11]()',
+ 'RakNet::ReliabilityLayer::CreateInternalPacketFromBitStream(RakNet::BitStream*, unsigned long)',
+ 'RakNet::ReliabilityLayer::WriteToBitStreamFromInternalPacket(RakNet::BitStream*, RakNet::InternalPacket const*, unsigned long)',
+ 'DatagramHeaderFormat::Deserialize(RakNet::BitStream*)',
+ 'RakNet::RakPeer::OnConnectionRequest(RakNet::RakPeer::RemoteSystemStruct*, unsigned long)',
+ 'RakNet::RakPeer::ParseConnectionRequestPacket(RakNet::RakPeer::RemoteSystemStruct*, RakNet::SystemAddress const&, char const*, int)',
  'LoginPacket::read(BinaryStream&)',
  'ConnectionRequest::fromString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)'
 ]
@@ -86,4 +91,13 @@ Path('reverse/evidence/operational_constants.json').write_text(json.dumps({
  'offline_magic':{'address':'0x28aa370','hex':pointer_at(0x28aa370,16).to_bytes(16,'little').hex()},
  'server_identifier':{'address':'0x2824710','hex':pointer_at(0x2824710,5).to_bytes(5,'little').hex()},
  'discovery':{'pong_id_site':'0x279240a','pong_id':28,'echo_timestamp_write':'0x2792437','guid_write':'0x2792455','magic_write':'0x2792472','advertisement_length_write':'0x188da95'}
+},indent=2)+'\n')
+
+Path('reverse/evidence/raknet_constants.json').write_text(json.dumps({
+ 'sha256':digest,'confidence':'VERIFIED_BINARY',
+ 'raknet_protocol':{'compare_site':'0x279450c','value':9,'incompatible_reply_value_site':'0x279454a'},
+ 'mtu':{'size_adjustment_site':'0x2794a34','udp_ip_adjustment':28,'ceiling_compare_site':'0x2794a37','ceiling':1400},
+ 'internal_addresses':{'loop_compare_site':'0x279054e','count':20},
+ 'reply_ids':{'request_one_reply':{'site':'0x279494e','value':6},'request_two_reply':{'site':'0x2794ff3','value':8},'connected_accept':{'site':'0x2790488','value':16}},
+ 'scope':'static wire constants only; independent synthetic client tests are not original-runtime or Minecraft-client verification'
 },indent=2)+'\n')

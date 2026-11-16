@@ -1,0 +1,34 @@
+{
+  "sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+  "confidence": "VERIFIED_BINARY",
+  "raknet_protocol": {
+    "compare_site": "0x279450c",
+    "value": 9,
+    "incompatible_reply_value_site": "0x279454a"
+  },
+  "mtu": {
+    "size_adjustment_site": "0x2794a34",
+    "udp_ip_adjustment": 28,
+    "ceiling_compare_site": "0x2794a37",
+    "ceiling": 1400
+  },
+  "internal_addresses": {
+    "loop_compare_site": "0x279054e",
+    "count": 20
+  },
+  "reply_ids": {
+    "request_one_reply": {
+      "site": "0x279494e",
+      "value": 6
+    },
+    "request_two_reply": {
+      "site": "0x2794ff3",
+      "value": 8
+    },
+    "connected_accept": {
+      "site": "0x2790488",
+      "value": 16
+    }
+  },
+  "scope": "static wire constants only; independent synthetic client tests are not original-runtime or Minecraft-client verification"
+}

@@ -15,4 +15,4 @@ Confidence: VERIFIED_BINARY. Read sized ELF symbols using PT_LOAD virtual-addres
 
 This confirms static version 1.6.0.15 and protocol constant 282; it does not establish discovery string layout, RakNet handshake version, login schema or whether configured ports differ at runtime. No packet compatibility or live client verification is claimed.
 
-Next: trace RakNet::RakPeer::Ping(char const*, unsigned short, bool, unsigned int), the offline receive dispatch and the advertisement producer. Recover magic bytes, exact widths, byte order, packet IDs and length validation before implementing an offline discovery codec. Then add a portable UDP listener and loopback integration tests. Real-client discovery/login tests remain separate acceptance steps.
+Current follow-up: the RakNet 9 handshake and bounded connected reliability foundation are implemented; exact binary evidence, scope and remaining limitations are in RAKNET.md. No authenticated Minecraft client connection/spawn is claimed.

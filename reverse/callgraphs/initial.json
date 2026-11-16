@@ -6332,6 +6332,521 @@
       ]
     },
     {
+      "symbol": "RakNet::ReliabilityLayer::CreateInternalPacketFromBitStream(RakNet::BitStream*, unsigned long)",
+      "address": "0x27ae700",
+      "size": 966,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x27ae724",
+          "operand": "1aacbf0 <RakNet::BitStream::GetNumberOfUnreadBits() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae743",
+          "operand": "27ae0b0 <RakNet::ReliabilityLayer::AllocateFromInternalPacketPool()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae774",
+          "operand": "2779850 <RakNet::BitStream::AlignReadToByteBoundary()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae78b",
+          "operand": "2777920 <RakNet::BitStream::ReadBits(unsigned char*, unsigned int, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae7a6",
+          "operand": "1cd22c0 <bool RakNet::BitStream::Read<bool>(bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae7b4",
+          "operand": "2779850 <RakNet::BitStream::AlignReadToByteBoundary()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae7c1",
+          "operand": "27790f0 <RakNet::BitStream::ReadAlignedVar16(char*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae809",
+          "operand": "27b6ba0 <bool RakNet::BitStream::Read<RakNet::uint24_t>(RakNet::uint24_t&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae82d",
+          "operand": "27b4f30 <RakNet::uint24_t::uint24_t(unsigned int const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae83a",
+          "operand": "27b4f60 <RakNet::uint24_t::operator=(RakNet::uint24_t const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae847",
+          "operand": "2779850 <RakNet::BitStream::AlignReadToByteBoundary()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae877",
+          "operand": "27b6ba0 <bool RakNet::BitStream::Read<RakNet::uint24_t>(RakNet::uint24_t&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae8c6",
+          "operand": "27b6ba0 <bool RakNet::BitStream::Read<RakNet::uint24_t>(RakNet::uint24_t&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae8da",
+          "operand": "2778fc0 <RakNet::BitStream::ReadAlignedVar8(char*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae90a",
+          "operand": "2779300 <RakNet::BitStream::ReadAlignedVar32(char*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae91e",
+          "operand": "27790f0 <RakNet::BitStream::ReadAlignedVar16(char*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae932",
+          "operand": "2779300 <RakNet::BitStream::ReadAlignedVar32(char*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae9b0",
+          "operand": "27ab290 <RakNet::ReliabilityLayer::ReleaseToInternalPacketPool(RakNet::InternalPacket*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27ae9e6",
+          "operand": "27ae170 <RakNet::ReliabilityLayer::AllocInternalPacketData(RakNet::InternalPacket*, unsigned int, bool, char const*, unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27aea0f",
+          "operand": "*(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x27aea19",
+          "operand": "27ab290 <RakNet::ReliabilityLayer::ReleaseToInternalPacketPool(RakNet::InternalPacket*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27aea66",
+          "operand": "2777e80 <RakNet::BitStream::ReadAlignedBytes(unsigned char*, unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27aea95",
+          "operand": "27ab150 <RakNet::ReliabilityLayer::FreeInternalPacketData(RakNet::InternalPacket*, char const*, unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27aeaa2",
+          "operand": "27ab290 <RakNet::ReliabilityLayer::ReleaseToInternalPacketPool(RakNet::InternalPacket*)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "RakNet::ReliabilityLayer::WriteToBitStreamFromInternalPacket(RakNet::BitStream*, RakNet::InternalPacket const*, unsigned long)",
+      "address": "0x27b2190",
+      "size": 592,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x27b21ac",
+          "operand": "1aacd00 <RakNet::BitStream::GetNumberOfBitsUsed() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b21b8",
+          "operand": "27797a0 <RakNet::BitStream::AlignWriteToByteBoundary()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b222a",
+          "operand": "2777270 <RakNet::BitStream::WriteBits(unsigned char const*, unsigned int, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b2247",
+          "operand": "2779930 <void RakNet::BitStream::Write<bool>(bool const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b2250",
+          "operand": "27797a0 <RakNet::BitStream::AlignWriteToByteBoundary()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b226d",
+          "operand": "2779030 <RakNet::BitStream::WriteAlignedVar16(char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b22c3",
+          "operand": "27b6aa0 <void RakNet::BitStream::Write<RakNet::uint24_t>(RakNet::uint24_t const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b22cc",
+          "operand": "27797a0 <RakNet::BitStream::AlignWriteToByteBoundary()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b22fc",
+          "operand": "27b6aa0 <void RakNet::BitStream::Write<RakNet::uint24_t>(RakNet::uint24_t const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b2348",
+          "operand": "27b6aa0 <void RakNet::BitStream::Write<RakNet::uint24_t>(RakNet::uint24_t const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b235f",
+          "operand": "2778f60 <RakNet::BitStream::WriteAlignedVar8(char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b2381",
+          "operand": "27791d0 <RakNet::BitStream::WriteAlignedVar32(char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b2395",
+          "operand": "2779030 <RakNet::BitStream::WriteAlignedVar16(char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b23a9",
+          "operand": "27791d0 <RakNet::BitStream::WriteAlignedVar32(char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b23c9",
+          "operand": "2777cd0 <RakNet::BitStream::WriteAlignedBytes(unsigned char const*, unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b23d2",
+          "operand": "1aacd00 <RakNet::BitStream::GetNumberOfBitsUsed() const>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "DatagramHeaderFormat::Deserialize(RakNet::BitStream*)",
+      "address": "0x27b4b70",
+      "size": 311,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x27b4b96",
+          "operand": "1cd22c0 <bool RakNet::BitStream::Read<bool>(bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4baa",
+          "operand": "1cd22c0 <bool RakNet::BitStream::Read<bool>(bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4bd7",
+          "operand": "1cd22c0 <bool RakNet::BitStream::Read<bool>(bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4be3",
+          "operand": "2779850 <RakNet::BitStream::AlignReadToByteBoundary()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4c05",
+          "operand": "27b8600 <bool RakNet::BitStream::Read<float>(float&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4c21",
+          "operand": "1cd22c0 <bool RakNet::BitStream::Read<bool>(bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4c53",
+          "operand": "1cd22c0 <bool RakNet::BitStream::Read<bool>(bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4c67",
+          "operand": "1cd22c0 <bool RakNet::BitStream::Read<bool>(bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4c7b",
+          "operand": "1cd22c0 <bool RakNet::BitStream::Read<bool>(bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4c87",
+          "operand": "2779850 <RakNet::BitStream::AlignReadToByteBoundary()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27b4c94",
+          "operand": "27b6ba0 <bool RakNet::BitStream::Read<RakNet::uint24_t>(RakNet::uint24_t&)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "RakNet::RakPeer::OnConnectionRequest(RakNet::RakPeer::RemoteSystemStruct*, unsigned long)",
+      "address": "0x2790450",
+      "size": 683,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x2790483",
+          "operand": "2776de0 <RakNet::BitStream::BitStream()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x279049d",
+          "operand": "279b750 <void RakNet::BitStream::Write<unsigned char>(unsigned char const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27904b9",
+          "operand": "279c540 <void RakNet::BitStream::Write<RakNet::SystemAddress>(RakNet::SystemAddress const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27904e6",
+          "operand": "1757b10 <memcpy@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x279050c",
+          "operand": "278a300 <RakNet::RakPeer::GetIndexFromSystemAddress(RakNet::SystemAddress, bool) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x279053a",
+          "operand": "19b7340 <void RakNet::BitStream::Write<unsigned short>(unsigned short const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x2790580",
+          "operand": "279c540 <void RakNet::BitStream::Write<RakNet::SystemAddress>(RakNet::SystemAddress const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27905b9",
+          "operand": "2776fc0 <RakNet::BitStream::~BitStream()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27905ce",
+          "operand": "279b7c0 <void RakNet::BitStream::Write<unsigned long>(unsigned long const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27905d8",
+          "operand": "27a6b20 <RakNet::GetTime()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x2790605",
+          "operand": "279b7c0 <void RakNet::BitStream::Write<unsigned long>(unsigned long const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x2790616",
+          "operand": "188f490 <RakNet::BitStream::GetData() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x279062e",
+          "operand": "1aacd00 <RakNet::BitStream::GetNumberOfBitsUsed() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x2790650",
+          "operand": "1929550 <RakNet::AddressOrGUID::AddressOrGUID(RakNet::SystemAddress const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x279065a",
+          "operand": "27a6b50 <RakNet::GetTimeUS()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27906ca",
+          "operand": "278ff10 <RakNet::RakPeer::SendImmediate(char*, unsigned int, PacketPriority, PacketReliability, char, RakNet::AddressOrGUID, bool, bool, unsigned long, unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27906e1",
+          "operand": "2776fc0 <RakNet::BitStream::~BitStream()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x27906f6",
+          "operand": "1757610 <_Unwind_Resume@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "RakNet::RakPeer::ParseConnectionRequestPacket(RakNet::RakPeer::RemoteSystemStruct*, RakNet::SystemAddress const&, char const*, int)",
+      "address": "0x278fb10",
+      "size": 1009,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x278fb56",
+          "operand": "2776eb0 <RakNet::BitStream::BitStream(unsigned char*, unsigned int, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fb67",
+          "operand": "2778d40 <RakNet::BitStream::IgnoreBytes(unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fb78",
+          "operand": "2776870 <RakNet::RakNetGUID::RakNetGUID()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fb90",
+          "operand": "279c460 <bool RakNet::BitStream::Read<RakNet::RakNetGUID>(RakNet::RakNetGUID&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fbae",
+          "operand": "279c490 <bool RakNet::BitStream::Read<unsigned long>(unsigned long&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fbcc",
+          "operand": "1929510 <bool RakNet::BitStream::Read<unsigned char>(unsigned char&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fbe3",
+          "operand": "188f490 <RakNet::BitStream::GetData() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fbfb",
+          "operand": "2779780 <RakNet::BitStream::GetReadOffset() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fc3a",
+          "operand": "2779780 <RakNet::BitStream::GetReadOffset() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fca3",
+          "operand": "17569d0 <memcmp@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fcb8",
+          "operand": "2776de0 <RakNet::BitStream::BitStream()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fcd7",
+          "operand": "279b750 <void RakNet::BitStream::Write<unsigned char>(unsigned char const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fd13",
+          "operand": "1757b10 <memcpy@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fd3f",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x278fd5b",
+          "operand": "279b840 <void RakNet::BitStream::Write<RakNet::RakNetGUID>(RakNet::RakNetGUID const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fd6c",
+          "operand": "188f490 <RakNet::BitStream::GetData() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fd84",
+          "operand": "188f4b0 <RakNet::BitStream::GetNumberOfBytesUsed() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fd9f",
+          "operand": "1929550 <RakNet::AddressOrGUID::AddressOrGUID(RakNet::SystemAddress const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fda9",
+          "operand": "27a6b50 <RakNet::GetTimeUS()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fe19",
+          "operand": "278ff10 <RakNet::RakPeer::SendImmediate(char*, unsigned int, PacketPriority, PacketReliability, char, RakNet::AddressOrGUID, bool, bool, unsigned long, unsigned int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fe48",
+          "operand": "2776fc0 <RakNet::BitStream::~BitStream()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fe7c",
+          "operand": "2776fc0 <RakNet::BitStream::~BitStream()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fea6",
+          "operand": "2790450 <RakNet::RakPeer::OnConnectionRequest(RakNet::RakPeer::RemoteSystemStruct*, unsigned long)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fec1",
+          "operand": "2776fc0 <RakNet::BitStream::~BitStream()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fef0",
+          "operand": "2776fc0 <RakNet::BitStream::~BitStream()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x278fefc",
+          "operand": "1757610 <_Unwind_Resume@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
       "symbol": "LoginPacket::read(BinaryStream&)",
       "address": "0x187e910",
       "size": 222,

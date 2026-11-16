@@ -38,4 +38,6 @@ IPv4/IPv6 UDP offline discovery handles RakNet ping IDs 1 and 2 with verified ma
 
 A bounded protocol-282 LoginPacket body decoder is implemented separately and tested against a synthetic binary fixture. Its return type is explicitly unverified and it is not connected to UDP. It does not validate JWTs or authenticate clients. See reverse/reports/LOGIN.md.
 
-No RakNet open-connection negotiation, reliable/ordered transport, login/JWT verification, encryption, spawn, StartGame, chunk streaming or networked gameplay is implemented. Unknown packets are ignored and never create an authenticated player. Loopback packet tests do not count as real-client verification. These remain the next required phases, not features claimed by the discovery listener.
+RakNet 9 open/connected handshakes and bounded reliable/ordered/sequenced receive, ACK/NACK, retry and split-message reassembly are now implemented. See reverse/reports/RAKNET.md for limits and policies. A transport peer is not a Minecraft player.
+
+Application batching, login/JWT verification, encryption, spawn, StartGame, chunk streaming and networked gameplay are not implemented. Application traffic after a transport connection is explicitly disconnected until the authenticated login pipeline exists; unknown offline packets are ignored. Loopback packet tests do not count as real-client verification. These remain the next required phases, not features claimed by the discovery listener.

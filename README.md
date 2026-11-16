@@ -1,7 +1,7 @@
 # BDS-RE
 
 Independent C++20 server research targeting Bedrock Dedicated Server 1.6.0.15.
-Currently a C++20 runtime with chunked internal world snapshots, server.properties parsing, world-directory selection, console commands, whitelist/operator file models and asynchronous internal backups. IPv4/IPv6 UDP offline discovery is implemented. **Minecraft login, world streaming and gameplay are not implemented; clients cannot spawn.** See [operations and limitations](docs/OPERATIONS.md).
+Currently a C++20 runtime with chunked internal world snapshots, server.properties parsing, world-directory selection, console commands, whitelist/operator file models and asynchronous internal backups. IPv4/IPv6 UDP discovery and a bounded RakNet 9 connection/reliability foundation are implemented. **Minecraft login, world streaming and gameplay are not implemented; clients cannot spawn.** See [operations and limitations](docs/OPERATIONS.md).
 
 ## Build
 

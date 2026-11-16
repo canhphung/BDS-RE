@@ -41,3 +41,7 @@ The initial operational CI at 250e810 passed all Linux GCC/Clang/sanitizer jobs 
 ### Verified current source
 
 [Run 43839417910](https://github.com/canhphung/BDS-RE/actions/runs/43839417910), source commit `43d46b64df09d15a7e5db73ebba99a934256b95b`, completed with all seven jobs successful. Windows MSVC Debug and Release logs each explicitly report 100% tests passed, 0 tests failed out of 11. Linux GCC/Clang Debug/Release and the sanitizer job also passed. This replaces the earlier operational Windows failures; no tests were skipped or disabled to make them pass. Login/JWT verification, real-client spawn, world streaming and networked gameplay remain unimplemented.
+
+## Current RakNet foundation (CI pending)
+
+Linux GCC Debug, Release and ASan+UBSan each execute 13/13 CTest cases successfully. New tests are raknet (wire fixtures, sequence wrap arithmetic, padding, ACK/NACK, loss/retry, duplicates, ordered/sequenced delivery, bounded split reassembly, peer limits/expiry) and raknet_handshake (independent Python client over real IPv4/IPv6 UDP, protocol 9 negotiation, 20-address acceptance, forced retransmission, ping/pong and unauthenticated-application rejection). These do not count as Minecraft client or differential verification. The accompanying local source-map correlator processed 2,500 supplied module rows and produced 1,429 INFERRED navigation candidates; its raw input/output remain ignored.
