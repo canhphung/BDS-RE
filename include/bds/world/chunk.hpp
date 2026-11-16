@@ -48,6 +48,16 @@ public:
     std::size_t stored_blocks() const { return count_; }
     std::size_t allocated_sections() const { return sections_.size(); }
 
+    template<class Visitor> void for_each_block(Visitor visit) const {
+        for (const auto& [section, data] : sections_)
+            for (unsigned y = 0; y < 16; ++y)
+                for (unsigned z = 0; z < 16; ++z)
+                    for (unsigned x = 0; x < 16; ++x) {
+                        const auto value = data.blocks[index(x, y, z)];
+                        if (value != 0) visit(x, section * 16 + y, z, value);
+                    }
+    }
+
 private:
     struct Section {
         std::array<BlockId, 4096> blocks{};

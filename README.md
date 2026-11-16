@@ -15,6 +15,8 @@ ctest --test-dir build --output-on-failure
 ```
 
 On this cloud machine, first `export PATH=/workspace/bds-tools/bin:$PATH`.
+`--world build/world.snapshot` enables internal snapshot load/save across restarts (see [format and limits](docs/PERSISTENCE.md)). `--ticks` counts ticks per invocation.
+
 `--ticks 0` (default) runs until SIGINT/SIGTERM. `--tick-ms` accepts 1..1000 (default 50); `--max-catch-up` accepts 1..100 (default 5).
 
 Windows: install Visual Studio 2022 with Desktop development with C++, then:

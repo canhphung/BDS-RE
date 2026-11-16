@@ -18,6 +18,11 @@ int main() { try {
  check(a.advance(bds::TickScheduler::Duration::max())==5);
  std::array<std::string_view,4> args={"--ticks","7","--tick-ms","2"};
  auto c=bds::parse_config(args); check(c.ticks==7 && c.tick_ms==2);
+ std::array<std::string_view,4> persisted={"--world","world with spaces.snapshot","--ticks","3"};
+ auto persistent=bds::parse_config(persisted);
+ check(persistent.world_file=="world with spaces.snapshot" && persistent.ticks==3);
+ std::array<std::string_view,2> empty_path={"--world",""};
+ rejects([&]{bds::parse_config(empty_path);});
  for(auto bad:{"-1","0","1001","1x","18446744073709551616"}) {
   std::array<std::string_view,2> input={"--tick-ms",bad}; rejects([&]{bds::parse_config(input);});
  }

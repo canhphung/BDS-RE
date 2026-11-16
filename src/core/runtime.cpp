@@ -1,6 +1,8 @@
 #include "bds/core/runtime.hpp"
 #include <stdexcept>
 #include "bds/world/world.hpp"
+#include "bds/world/store.hpp"
+#include "bds/core/logger.hpp"
 #include <thread>
 namespace bds {
 TickScheduler::TickScheduler(Duration step,unsigned limit):step_(step),limit_(limit) {
@@ -20,13 +22,24 @@ unsigned TickScheduler::advance(Duration elapsed) {
 std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
  using Clock=std::chrono::steady_clock;
  TickScheduler scheduler(std::chrono::milliseconds(config_.tick_ms), config_.max_catch_up);
- auto last=Clock::now(); World world;
- while(!stop() && (config_.ticks==0 || world.age()<config_.ticks)) {
+ World world;
+ if(!config_.world_file.empty() && std::filesystem::exists(config_.world_file))
+  world=WorldStore::load(config_.world_file);
+ auto last=Clock::now();
+ std::uint64_t ticks=0;
+ while(!stop() && (config_.ticks==0 || ticks<config_.ticks)) {
   auto now=Clock::now(); auto due=scheduler.advance(now-last); last=now;
-  for(unsigned i=0;i<due && !stop() && (config_.ticks==0 || world.age()<config_.ticks);++i) world.tick();
-  if(config_.ticks!=0 && world.age()==config_.ticks) break;
+  for(unsigned i=0;i<due && !stop() && (config_.ticks==0 || ticks<config_.ticks);++i) {
+   world.tick();
+   ++ticks;
+  }
+  if(config_.ticks!=0 && ticks==config_.ticks) break;
   std::this_thread::sleep_until(last+scheduler.remaining());
  }
- return world.age();
+ if(!config_.world_file.empty()) {
+  WorldStore::save(world,config_.world_file);
+  log("saved world age="+std::to_string(world.age()));
+ }
+ return ticks;
 }
 }

@@ -3,6 +3,7 @@
 #include "bds/world/chunk.hpp"
 #include <cstdint>
 #include <map>
+#include <limits>
 #include <tuple>
 #include <utility>
 
@@ -37,12 +38,32 @@ public:
         if (column->second.stored_blocks() == 0) columns_.erase(column);
     }
 
-    void tick() { ++age_; }
+    void tick() {
+        if (age_ == std::numeric_limits<std::uint64_t>::max())
+            throw std::overflow_error("world age exhausted");
+        ++age_;
+    }
     std::uint64_t age() const { return age_; }
     std::size_t stored_blocks() const { return count_; }
     std::size_t loaded_chunks() const { return columns_.size(); }
 
+    std::size_t allocated_sections() const {
+        std::size_t result = 0;
+        for (const auto& [key, chunk] : columns_) result += chunk.allocated_sections();
+        return result;
+    }
+
+    template<class Visitor> void for_each_block(Visitor visit) const {
+        for (const auto& [key, chunk] : columns_)
+            chunk.for_each_block([&](unsigned x, unsigned y, unsigned z, Block value) {
+                visit(Position{static_cast<int>(static_cast<std::int64_t>(key.first) * 16 + x),
+                               static_cast<int>(y),
+                               static_cast<int>(static_cast<std::int64_t>(key.second) * 16 + z)}, value);
+            });
+    }
+
 private:
+    friend class WorldStore;
     std::map<std::pair<int, int>, Chunk> columns_;
     std::size_t count_ = 0;
     std::uint64_t age_ = 0;
