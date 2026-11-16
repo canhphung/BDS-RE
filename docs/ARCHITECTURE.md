@@ -1,4 +1,6 @@
-# Independent implementation
+# Implementation architecture
+
+Implementation policy (user directive, 2026-11-16): game and server logic follows the original binary. Translating recovered functions (disassembly or decompiled logic) directly into C++ is the intended approach; there is no requirement to author algorithms independently. Each translated function cites its original address and is verified against the original (function oracle under gdb, chunk or packet comparison). Deliberate deviations (e.g. security hardening) must be documented as such. Earlier slices were written as independent implementations and are being brought in line with the original where they differ (reverse/reports/GAMEPLAY_RECONSTRUCTION.md).
 
 `main` parses CLI configuration, registers signal handlers, and runs `ServerRuntime` on one simulation thread. The signal handler only sets `sig_atomic_t`. Logging uses C++20 synchronized output. Runtime owns one `World`; every scheduled tick advances its age. There are no network workers or concurrent world writes.
 
