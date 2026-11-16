@@ -159,33 +159,57 @@ int main() {
         check(server.handle(1, action(1, 8, {0, -1, 0}), 1950).empty(),
               "unused action target does not correct movement");
         server.drain(2);
+        // Movement follows ServerNetworkHandler::handle(MovePlayerPacket): no
+        // speed/collision validation, Y clamped to [-128, 512], packet relayed
+        // unchanged to other players.
         Motion m;
         m.runtime = 1;
         m.data = pa;
+        const float standing_y = pa.y;
         m.data.x = 1.5f;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2000);
         check(pa.x == 1.5f, "valid movement");
         auto moved = server.drain(2);
-        check(moved.size() == 1 && moved[0].header.id == 19, "movement broadcast");
+        check(moved.size() == 1 && moved[0].header.id == 19 && moved[0].body == motion(m),
+              "movement relayed unchanged");
         m.data.x = 100;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2000);
-        check(pa.x == 1.5f, "teleport rejected");
+        check(pa.x == 100.0f, "large moves are accepted like the original");
         m.data = pa;
+        m.data.x = 1.5f;
         m.data.y = 3;
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2200);
-        check(pa.y > 5, "solid-block collision");
-        m.data = pa;
+        check(pa.x == 1.5f && pa.y == 3.0f, "no collision rejection");
+        m.data.y = 1000;
+        server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2210);
+        check(pa.y == 512.0f, "Y clamped to 512");
+        m.data.y = std::numeric_limits<float>::quiet_NaN();
+        server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2220);
+        check(pa.y == -128.0f, "NaN Y becomes -128 (mce::Math::clamp)");
+        server.drain(2);
+        m.data.y = 4;
+        m.mode = 2;
+        m.riding = 77;
+        m.teleport_cause = 3;
+        m.teleport_source = 9;
+        server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2230);
+        auto relayed = server.drain(2);
+        check(pa.y == 4.0f && relayed.size() == 1 && relayed[0].body == motion(m),
+              "teleport mode, riding id and teleport fields relayed");
+        m.mode = 0;
+        m.riding = 0;
         m.data.x = std::numeric_limits<float>::quiet_NaN();
         server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2300);
-        check(pa.x == 1.5f, "NaN movement rejected");
+        check(pa.x == 1.5f && server.drain(2).empty(), "non-finite X ignored (documented safety deviation)");
         m.data = pa;
         m.runtime = 2;
         m.data.x = 2;
-        server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2400);
-        check(pa.x == 1.5f, "runtime ownership");
+        check(server.handle(1, packet(PacketId::MovePlayer, motion(m)), 2400).empty() && pa.x == 1.5f,
+              "foreign runtime id ignored silently");
         m.runtime = 1;
         for (unsigned i = 0; i < 20; ++i) {
             m.data = pa;
+            m.data.y = standing_y; // stand on the surface again before rejoining
             m.data.x += 1;
             server.handle(1, packet(PacketId::MovePlayer, motion(m)), 3000 + i * 200);
         }

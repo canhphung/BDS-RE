@@ -24,8 +24,7 @@ class Server {
         bool active = false;
         std::deque<GamePacket> queue;
         bool overflow = false;
-        std::uint64_t credit_time = 0, break_time = 0;
-        double move_credit = 3, up_credit = 3;
+        std::uint64_t break_time = 0;
         std::optional<World::Position> breaking;
     };
     World &world_;

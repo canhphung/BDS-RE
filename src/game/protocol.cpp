@@ -73,20 +73,21 @@ Motion motion(std::span<const std::uint8_t> bytes) {
     ByteReader in(bytes);
     Motion m;
     m.runtime = in.varint64();
-    m.data.x = number(in);
-    m.data.y = number(in);
-    m.data.z = number(in);
-    m.data.pitch = number(in);
-    m.data.yaw = number(in);
-    m.data.head_yaw = number(in);
+    // ReadOnlyBinaryStream::getFloat reads raw IEEE bits; nothing is rejected here.
+    const auto raw = [&in] { return std::bit_cast<float>(fixed(in, 4)); };
+    m.data.x = raw();
+    m.data.y = raw();
+    m.data.z = raw();
+    m.data.pitch = raw();
+    m.data.yaw = raw();
+    m.data.head_yaw = raw();
     m.mode = in.byte();
     m.grounded = in.boolean();
-    require(in.varint64() == 0);
+    m.riding = in.varint64();
     if (m.mode == 2) {
-        fixed(in, 4);
-        fixed(in, 4);
+        m.teleport_cause = static_cast<std::int32_t>(fixed(in, 4));
+        m.teleport_source = static_cast<std::int32_t>(fixed(in, 4));
     }
-    require(m.mode <= 3);
     in.finish();
     return m;
 }
@@ -101,10 +102,10 @@ Bytes motion(const Motion &m) {
     out.float32(m.data.head_yaw);
     out.byte(m.mode);
     out.boolean(m.grounded);
-    out.varint64(0);
+    out.varint64(m.riding);
     if (m.mode == 2) {
-        out.little_endian(0, 4);
-        out.little_endian(0, 4);
+        out.little_endian(static_cast<std::uint32_t>(m.teleport_cause), 4);
+        out.little_endian(static_cast<std::uint32_t>(m.teleport_source), 4);
     }
     return out.take();
 }

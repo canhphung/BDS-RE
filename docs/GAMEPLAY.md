@@ -55,11 +55,17 @@ permission; self-signed clients cannot claim an operator XUID.
 
 ## Movement and synchronization
 
-MovePlayer accepts only the joining runtime ID, finite bounded coordinates and
-normal/rotation modes. Basic motion budgets and solid-block collision checks reject
-teleports, implausible speed and penetration, returning authoritative position.
-This is client-driven movement with validation, not a complete server physics or
-anti-cheat implementation. Other initialized players receive AddPlayer/PlayerList,
+MovePlayer is translated from the original handler (ServerNetworkHandler::handle
+0x182bcf0): a packet for another runtime ID is ignored, Y is clamped to [-128, 512]
+with mce::Math::clamp (NaN becomes -128), position and rotation are taken as sent in
+every mode, and the received packet is relayed unchanged to other players. Like the
+original, there is no speed, distance or collision validation and no correction is
+sent (ServerPlayer::checkMovementStats only feeds telemetry). One documented safety
+deviation: packets with non-finite or |coordinate| > 1e9 X/Z are ignored, because
+BDS-RE converts them to chunk coordinates. The earlier invented motion budgets,
+collision rejection and coordinate limits were removed. Riding and dimension changes
+do not exist yet, so those branches of the original are not reachable. Verified with
+tools/reference/movement_oracle.py against the original (test `movement_reference`). Other initialized players receive AddPlayer/PlayerList,
 movement, held-item updates and RemoveActor/PlayerList removal on disconnect.
 
 The streamed chunk circle follows the accepted player position and radius, bounded

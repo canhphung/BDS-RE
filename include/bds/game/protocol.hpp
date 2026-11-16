@@ -16,11 +16,17 @@ World::Position position(ByteReader &in);
 void position(ByteWriter &out, World::Position p);
 float number(ByteReader &in);
 std::uint32_t fixed(ByteReader &in, unsigned bytes);
+// MovePlayerPacket (read 0x18b4190 / write 0x18b40b0): runtime id, position,
+// pitch/yaw, head yaw, mode, onGround, riding runtime id, and two signed
+// ints (teleport cause, source actor type) only in mode 2. The original
+// reader does not validate the mode or the riding id.
 struct Motion {
     std::uint64_t runtime = 0;
     PlayerData data;
     std::uint8_t mode = 0;
     bool grounded = false;
+    std::uint64_t riding = 0;
+    std::int32_t teleport_cause = 0, teleport_source = 0;
 };
 Motion motion(std::span<const std::uint8_t> body);
 Bytes motion(const Motion &value);

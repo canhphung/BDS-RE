@@ -290,35 +290,43 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
         if (!s.active)
             return {};
         if (type == PacketId::MovePlayer) {
-            auto m = motion(packet_in.body);
-            require(m.runtime == id && (m.mode == 0 || m.mode == 3));
-            const double dt = s.credit_time && now >= s.credit_time
-                                  ? std::min(1.0, (now - s.credit_time) / 1000.0)
-                                  : 0;
-            s.credit_time = now;
-            s.move_credit =
-                std::min(3.0, s.move_credit + dt * (s.game.player_game_type == 1 ? 20 : 12));
-            s.up_credit = std::min(3.0, s.up_credit + dt * 12);
-            auto next = p;
-            if (m.mode == 0) {
-                next.x = m.data.x;
-                next.y = m.data.y;
-                next.z = m.data.z;
-            }
-            require(std::abs(next.x) < 30000000 && std::abs(next.z) < 30000000 && next.y >= 1 &&
-                    next.y <= 258);
-            const double dx = next.x - p.x, dz = next.z - p.z,
-                         up = std::max(0.0, double(next.y - p.y)), distance = std::hypot(dx, dz);
-            require(distance <= s.move_credit && up <= s.up_credit &&
-                    p.y - next.y <= std::max(4.0, dt * 80) && !collides(next));
-            s.move_credit -= distance;
-            s.up_credit -= up;
-            next.pitch = std::clamp(m.data.pitch, -90.0f, 90.0f);
-            next.yaw = std::remainder(m.data.yaw, 360.0f);
-            next.head_yaw = std::remainder(m.data.head_yaw, 360.0f);
-            p = next;
-            m.data = p;
-            broadcast(packet(PacketId::MovePlayer, motion(m)), id);
+            // ServerNetworkHandler::handle(MovePlayerPacket) 0x182bcf0, translated.
+            // The original performs no speed, distance or collision validation:
+            // ServerPlayer::checkMovementStats (0x25fd0d0) only accumulates the
+            // distance for a telemetry event.
+            const auto m = motion(packet_in.body);
+            // _getPlayer (0x182c1c0): a runtime id that is not the sender's
+            // player yields null and the packet is ignored.
+            if (m.runtime != id)
+                return {};
+            // Skipped while the player changes dimension or is not yet
+            // initialised (+0x140c / +0x1410); BDS-RE has no dimension change,
+            // and inactive sessions returned above. Riding (getRide) does not
+            // exist yet either, so the rider branch is not reachable.
+            // Normal path: Y is clamped to [-128, 512] (0x182be9f), then
+            // mode 2 (teleport) sets position/rotation directly, mode 1 (reset)
+            // does so only for a dead player, every other mode lerps to the
+            // position (Mob::lerpTo); BDS-RE has no health yet, so players are
+            // alive and the end state of every mode is the same position.
+            // Deliberate deviation (safety, not gameplay): the original stores any
+            // float, but BDS-RE converts X/Z to chunk coordinates, where a
+            // non-finite or out-of-int-range value is undefined behaviour. Such
+            // packets are ignored instead.
+            if (!std::isfinite(m.data.x) || !std::isfinite(m.data.z) || std::abs(m.data.x) > 1.0e9f ||
+                std::abs(m.data.z) > 1.0e9f)
+                return {};
+            // mce::Math::clamp(v, lo, hi) (0x1838170): v > hi ? hi : v > lo ? v : lo,
+            // so a NaN Y becomes -128.
+            const auto clamp = [](float v, float lo, float hi) { return v > hi ? hi : v > lo ? v : lo; };
+            p.x = m.data.x;
+            p.y = clamp(m.data.y, -128.0f, 512.0f);
+            p.z = m.data.z;
+            p.pitch = m.data.pitch;
+            p.yaw = m.data.yaw;
+            p.head_yaw = m.data.head_yaw; // +0x11c0 = packet head yaw
+            // Dimension::sendPacketForEntity(player, packet, player): the
+            // received packet is relayed unchanged to everyone else.
+            broadcast(packet(PacketId::MovePlayer, packet_in.body), id);
             return {};
         }
         if (type == PacketId::MobEquipment) {

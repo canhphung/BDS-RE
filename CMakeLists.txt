@@ -89,6 +89,8 @@ if(BUILD_TESTING)
  target_include_directories(auth_tests SYSTEM PRIVATE third_party)
  add_test(NAME auth COMMAND auth_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/protocol/login_fixtures.json)
  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+ add_test(NAME movement_reference COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/movement_reference.py $<TARGET_FILE:bds_server>)
+ set_tests_properties(movement_reference PROPERTIES TIMEOUT 150)
  add_test(NAME gameplay_udp COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/gameplay.py $<TARGET_FILE:bds_server>)
  set_tests_properties(gameplay_udp PROPERTIES TIMEOUT 60)
  add_test(NAME raknet_handshake COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/raknet_handshake.py $<TARGET_FILE:bds_server>
