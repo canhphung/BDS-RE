@@ -1,4 +1,5 @@
 #pragma once
+#include "bds/network/crypto.hpp"
 #include "bds/network/login.hpp"
 #include <cstdint>
 #include <optional>
@@ -37,4 +38,9 @@ struct Result {
 // `now` (epoch seconds); when that fails and online mode is off, the
 // self-signed path (ConnectionRequest::verifySelfSigned 0x18f42a0).
 Result verify_login(const UnverifiedLoginBody &body, const LoginPolicy &policy, std::int64_t now);
+
+// WebToken::createFromData (0x19dce60): header {"alg":"ES384","x5u":<signer
+// public key>}, the given JSON object as payload, raw r||s ES384 signature,
+// base64url segments. Throws std::invalid_argument if payload is not an object.
+std::string sign_jwt(std::string_view payload_json, const crypto::P384Key &key, crypto::Random &random);
 } // namespace bds::auth

@@ -1,11 +1,11 @@
 # BDS-RE
 
 Independent C++20 server research targeting Bedrock Dedicated Server 1.6.0.15.
-Currently a C++20 runtime with chunked internal world snapshots, server.properties parsing, world-directory selection, console commands, whitelist/operator file models and asynchronous internal backups. IPv4/IPv6 UDP discovery and a bounded RakNet 9 connection/reliability foundation are implemented. **Minecraft login, world streaming and gameplay are not implemented; clients cannot spawn.** See [operations and limitations](docs/OPERATIONS.md).
+Currently a C++20 runtime with chunked internal world snapshots, server.properties parsing, world-directory selection, console commands, whitelist/operator file models and asynchronous internal backups. IPv4/IPv6 UDP discovery, a bounded RakNet 9 transport, zlib game-packet batches, ES384 login authentication and the encrypted handshake are implemented. **Resource packs, StartGame, world streaming and gameplay are not implemented; clients cannot spawn.** See [operations and limitations](docs/OPERATIONS.md).
 
 ## Build
 
-Requires CMake >=3.20, Ninja and a C++20 compiler; Python 3 is needed for the process/socket integration test. GCC 14.2 is tested locally.
+Requires CMake >=3.20, Ninja and a C++20 compiler; Python 3 with the `cryptography` package (`python3 -m pip install cryptography`) is needed for the process/socket integration tests. GCC 14.2 is tested locally.
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug

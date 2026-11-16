@@ -3,6 +3,7 @@
 #include "bds/network/auth.hpp"
 #include "bds/network/connection.hpp"
 #include "bds/network/crypto.hpp"
+#include "bds/network/encryption.hpp"
 #include "bds/network/packet_ids.hpp"
 #include <nlohmann/json.hpp>
 #include <array>
@@ -166,6 +167,67 @@ std::string disconnect_message(const protocol::ConnectionOutput &output) {
     return reader.string(4096);
 }
 
+crypto::Bytes hex(const std::string &text) {
+    crypto::Bytes out;
+    for (std::size_t i = 0; i + 1 < text.size(); i += 2)
+        out.push_back(static_cast<std::uint8_t>(std::stoi(text.substr(i, 2), nullptr, 16)));
+    return out;
+}
+
+void session_crypto(const Json &fixtures) {
+    // NIST SP 800-38A F.3.17, CFB8-AES256.Encrypt.
+    const auto nist_key = hex("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4");
+    const auto nist_iv = hex("000102030405060708090a0b0c0d0e0f");
+    auto data = hex("6bc1bee22e409f96e93d7e117393172aae2d");
+    crypto::AesCfb8 nist(nist_key, nist_iv);
+    nist.encrypt(std::span(data).first(5)); // stream state persists across calls
+    nist.encrypt(std::span(data).subspan(5));
+    check(data == hex("dc1f1a8520a64db55fcc8ac554844e889700"), "NIST CFB8-AES256 vector");
+    crypto::AesCfb8 back(nist_key, nist_iv);
+    back.decrypt(data);
+    check(data == hex("6bc1bee22e409f96e93d7e117393172aae2d"), "CFB8 decrypt");
+
+    // Independent session vectors from Python cryptography.
+    const auto &session = fixtures["session"];
+    const auto server = crypto::P384Key::from_private(hex(session["server_private_key"].get<std::string>()));
+    const auto client = crypto::P384Key::from_private(hex(fixtures["client_private_key"].get<std::string>()));
+    check(crypto::base64_encode(client.public_key()) == session["client_public_key"].get<std::string>(),
+          "imported key reproduces its public key");
+    crypto::Random random;
+    const auto secret = server.shared_secret(client.public_key(), random);
+    check(secret && *secret == hex(session["ecdh_secret"].get<std::string>()), "ECDH secret matches OpenSSL");
+    check(client.shared_secret(server.public_key(), random) == secret, "ECDH symmetric");
+    check(!server.shared_secret(crypto::Bytes(120, 0), random), "invalid peer key rejected");
+    const auto key = protocol::session_key(hex(session["salt"].get<std::string>()), *secret);
+    check(crypto::Bytes(key.begin(), key.end()) == hex(session["key"].get<std::string>()), "session key");
+
+    protocol::PacketCipher sender(key), receiver(key);
+    for (std::size_t i = 0; i < session["payloads"].size(); ++i) {
+        const auto payload = hex(session["payloads"][i].get<std::string>());
+        const auto sealed = sender.seal(payload);
+        check(sealed == hex(session["sealed"][i].get<std::string>()), "sealed packet matches Python " + std::to_string(i));
+        check(receiver.open(sealed) == payload, "opened packet " + std::to_string(i));
+    }
+    protocol::PacketCipher fresh(key);
+    auto tampered = hex(session["sealed"][0].get<std::string>());
+    tampered[2] ^= 1;
+    check(!fresh.open(tampered), "tampered ciphertext rejected");
+    protocol::PacketCipher replay(key);
+    check(replay.open(hex(session["sealed"][0].get<std::string>())).has_value(), "first packet accepted");
+    check(!replay.open(hex(session["sealed"][0].get<std::string>())), "replayed packet rejected (counter and stream)");
+    protocol::PacketCipher short_packet(key);
+    check(!short_packet.open(crypto::Bytes(7, 0)), "payload shorter than checksum rejected");
+
+    // Server-signed tokens verify with an independent key holder's view of x5u.
+    const auto jwt = auth::sign_jwt("{\"salt\":\"AAAA\"}", server, random);
+    const auto first = jwt.find('.'), second = jwt.rfind('.');
+    const auto header = Json::parse(*crypto::base64url_decode(jwt.substr(0, first)));
+    check(header["alg"] == "ES384" && header["x5u"].get<std::string>() == crypto::base64_encode(server.public_key()),
+          "server token header");
+    check(crypto::verify_es384(server.public_key(), bytes(jwt.substr(0, second)), *crypto::base64url_decode(jwt.substr(second + 1))),
+          "server token signature");
+}
+
 void connection(const Json &fixtures) {
     const auto now = fixtures["now"].get<std::int64_t>();
     const auto trusted = auth::LoginPolicy{true, {fixtures["trusted_root"].get<std::string>()}};
@@ -173,12 +235,57 @@ void connection(const Json &fixtures) {
         const std::array packets{protocol::GamePacket{{1, 0, 0}, login_packet_body(chain, fixtures["client_token"].get<std::string>())}};
         return connection.receive(protocol::encode_batch(packets));
     };
+    // Full handshake, playing the client with its fixture private key.
     protocol::GameConnection accepted(trusted, [&] { return now; });
     const auto ok = send(accepted, fixtures["chain"].get<std::string>());
+    check(!ok.close && ok.messages.size() == 1 && accepted.state() == protocol::GameConnection::State::awaiting_handshake,
+          "authenticated login starts the handshake");
     check(accepted.identity() && accepted.identity()->display_name == "Steve", "connection keeps verified identity");
-    check(disconnect_message(ok).find("encryption handshake is not implemented") != std::string::npos,
-          "authenticated login explains missing encryption");
     check(ok.reason.find("xuid=2535400000000001") != std::string::npos, "authenticated log line");
+    const auto handshake = protocol::decode_batch(ok.messages[0]); // sent before encryption starts
+    check(handshake.size() == 1 && handshake[0].header.id == static_cast<std::uint16_t>(protocol::PacketId::ServerToClientHandshake),
+          "ServerToClientHandshake");
+    protocol::ByteReader reader(handshake[0].body);
+    const auto jwt = reader.string(16384);
+    reader.finish();
+    const auto first = jwt.find('.'), second = jwt.rfind('.');
+    const auto header = Json::parse(*crypto::base64url_decode(jwt.substr(0, first)));
+    const auto payload = Json::parse(*crypto::base64url_decode(jwt.substr(first + 1, second - first - 1)));
+    const auto server_key = *crypto::base64_decode(header["x5u"].get<std::string>());
+    check(crypto::verify_es384(server_key, bytes(jwt.substr(0, second)), *crypto::base64url_decode(jwt.substr(second + 1))),
+          "handshake token signed by its x5u key");
+    const auto salt = *crypto::base64_decode(payload["salt"].get<std::string>());
+    check(salt.size() == 16, "16-byte salt");
+    crypto::Random random;
+    const auto client = crypto::P384Key::from_private(hex(fixtures["client_private_key"].get<std::string>()));
+    protocol::PacketCipher client_cipher(protocol::session_key(salt, *client.shared_secret(server_key, random)));
+    const std::array reply{protocol::GamePacket{{static_cast<std::uint16_t>(protocol::PacketId::ClientToServerHandshake), 0, 0}, {}}};
+    crypto::Bytes encrypted{protocol::batch_id};
+    const auto sealed = client_cipher.seal(protocol::compress_packets(reply));
+    encrypted.insert(encrypted.end(), sealed.begin(), sealed.end());
+    const auto done = accepted.receive(encrypted);
+    check(done.close && done.messages.size() == 1, "handshake completion closes with one batch");
+    check(done.reason.find("Player connected: Steve") != std::string::npos, "player connected log");
+    const auto opened = client_cipher.open(std::span(done.messages[0]).subspan(1));
+    check(opened.has_value(), "server reply decrypts with the client key");
+    const auto final_packets = protocol::decompress_packets(*opened);
+    check(final_packets.size() == 2 && final_packets[0].header.id == static_cast<std::uint16_t>(protocol::PacketId::PlayStatus) &&
+              final_packets[0].body == crypto::Bytes({0, 0, 0, 0}),
+          "PlayStatus LoginSuccess");
+    protocol::ByteReader goodbye(final_packets[1].body);
+    check(final_packets[1].header.id == static_cast<std::uint16_t>(protocol::PacketId::Disconnect) && !goodbye.boolean() &&
+              goodbye.string(4096).find("world streaming are not implemented") != std::string::npos,
+          "explains the missing world");
+
+    // An unencrypted or wrong-key handshake reply is rejected.
+    protocol::GameConnection plain(trusted, [&] { return now; });
+    send(plain, fixtures["chain"].get<std::string>());
+    check(plain.receive(protocol::encode_batch(reply)).close, "plaintext after key exchange rejected");
+    protocol::GameConnection early(trusted, [&] { return now; });
+    send(early, fixtures["chain"].get<std::string>());
+    const std::array text{protocol::GamePacket{{static_cast<std::uint16_t>(protocol::PacketId::Text), 0, 0}, {0}}};
+    // Even a correctly encrypted packet must be the handshake reply.
+    check(early.receive(protocol::encode_batch(text)).close, "non-handshake packet rejected");
 
     protocol::GameConnection rejected(trusted, [&] { return now; });
     check(disconnect_message(send(rejected, fixtures["cases"]["untrusted_leaf_signer"].get<std::string>())) == protocol::not_authenticated,
@@ -201,8 +308,9 @@ int main(int argc, char **argv) {
         hashes();
         signatures(fixtures);
         chains(fixtures);
+        session_crypto(fixtures);
         connection(fixtures);
-        std::cout << "base64, SHA-2, ES384, certificate chain, validity window and login connection checks passed\n";
+        std::cout << "base64, SHA-2, ES384, certificate chain, validity window, session encryption and handshake checks passed\n";
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

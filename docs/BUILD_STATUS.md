@@ -79,3 +79,13 @@ New test `batch` covers varint/BinaryStream codecs, header bit layout, zlib roun
 | Clang 18.1.3 | Release | PASS, 16/16 CTest |
 
 New test `auth`: RFC 4648 base64 vectors and strictness, FIPS 180-2 SHA-256/384 vectors, ES384 verification of signatures produced by Python `cryptography` (tampered input/signature, off-curve and truncated keys), the reconstructed chain algorithm (trusted chain, Mojang-key rejection, inclusive nbf/exp bounds, forged leaf, non-CA intermediate, expired leaf, missing nbf, ES256 header, foreign client token, self-signed acceptance only with online mode off, chain length and malformed input) and the GameConnection outcomes. `raknet_handshake` now sends these signed logins over real UDP as split RakNet messages and checks the self-signed success, forged rejection and outdated client/server replies. Vendored Mbed TLS compiles on MSVC only once native CI runs. No genuine Xbox Live chain or Minecraft client has been tested.
+
+## Encryption handshake slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 16/16 CTest |
+| GCC 13.3.0 | Release | PASS, 16/16 CTest |
+| Clang 18.1.3 | Release | PASS, 16/16 CTest |
+
+`auth` adds the NIST SP 800-38A CFB8-AES256 vector (with stream state across calls), ECDH/session-key/sealed-packet vectors from Python `cryptography`, tamper/replay/short-packet rejection, server token signature checks and a full in-process handshake playing the client. `raknet_handshake` now completes the encrypted handshake over UDP with an independent Python client (token signature, ECDH, AES-CFB8, checksums) up to PlayStatus LoginSuccess. CI installs `cryptography` through actions/setup-python and passes that interpreter to CMake; this workflow change has not run yet. No Minecraft client was used.

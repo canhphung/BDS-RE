@@ -42,4 +42,9 @@ struct GamePacket {
 // holding a header varint followed by the packet body.
 std::vector<GamePacket> decode_batch(std::span<const std::uint8_t> message, const BatchLimits &limits = {});
 Bytes encode_batch(std::span<const GamePacket> packets);
+// The zlib payload alone, without the 0xfe id. EncryptedNetworkPeer sits
+// between CompressedNetworkPeer and the RakNet peer (NetworkHandler::Connection
+// constructor 0x18819f0), so encryption applies to exactly this payload.
+Bytes compress_packets(std::span<const GamePacket> packets);
+std::vector<GamePacket> decompress_packets(std::span<const std::uint8_t> payload, const BatchLimits &limits = {});
 } // namespace bds::protocol

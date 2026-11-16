@@ -161,6 +161,21 @@ std::unique_ptr<Certificate> verify_request(const std::vector<Token> &chain, con
 }
 } // namespace
 
+std::string sign_jwt(std::string_view payload_json, const crypto::P384Key &key, crypto::Random &random) {
+    const auto payload = Json::parse(payload_json, nullptr, false);
+    if (!payload.is_object())
+        throw std::invalid_argument("JWT payload must be a JSON object");
+    const Json header = {{"alg", "ES384"}, {"x5u", crypto::base64_encode(key.public_key())}};
+    const auto segment = [](const Json &json) {
+        const auto text = json.dump();
+        return crypto::base64url_encode(std::span(reinterpret_cast<const std::uint8_t *>(text.data()), text.size()));
+    };
+    const auto input = segment(header) + "." + segment(payload);
+    const auto signature =
+        key.sign_es384(std::span(reinterpret_cast<const std::uint8_t *>(input.data()), input.size()), random);
+    return input + "." + crypto::base64url_encode(signature);
+}
+
 Result verify_login(const UnverifiedLoginBody &body, const LoginPolicy &policy, std::int64_t now) {
     try {
         const auto chain = parse_chain(body.certificate_chain);

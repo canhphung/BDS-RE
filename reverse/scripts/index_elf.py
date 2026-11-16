@@ -48,7 +48,14 @@ targets += [
  'ConnectionRequest::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&, long)',
  'ConnectionRequest::verifySelfSigned()',
  'Certificate::validate(long)',
- 'ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)'
+ 'ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)',
+ 'EncryptedNetworkPeer::enableEncryption(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)',
+ 'EncryptedNetworkPeer::sendPacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NetworkPeer::Reliability, int)',
+ 'EncryptedNetworkPeer::receivePacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)',
+ 'WebToken::createFromData(Json::Value const&, PrivateKeyManager const&)',
+ 'NetworkHandler::Connection::Connection(NetworkIdentifier const&, NetworkPeer&, std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >, bool, PacketObserver*, Scheduler&, WorkerPool&)',
+ 'ServerNetworkHandler::handle(NetworkIdentifier const&, ClientToServerHandshakePacket const&)',
+ 'ServerNetworkHandler::_onClientAuthenticated(NetworkIdentifier const&, Certificate const&)'
 ]
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)

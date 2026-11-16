@@ -16,6 +16,12 @@ from pathlib import Path
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
+try:
+    from cryptography.hazmat.decrepit.ciphers.modes import CFB8
+except ImportError:  # older cryptography releases
+    from cryptography.hazmat.primitives.ciphers.modes import CFB8
+import hashlib
 
 NBF, EXP = 1_000_000_000, 2_000_000_000  # 2001-09-09 .. 2033-05-18
 
@@ -54,6 +60,25 @@ client_token = jwt(client, client_data)
 offline_identity = {"identity": "11111111-2222-4333-8444-555555555555", "displayName": "Offline"}
 offline = jwt(client, {"extraData": offline_identity, "identityPublicKey": public(client), **times})
 
+# Session vectors for the reconstructed EncryptedNetworkPeer: ECDH between the
+# client key and a server key, key = SHA-256(salt + secret), AES-256-CFB8 with
+# IV = key[:16], checksum = SHA-256(le64(counter) + payload + key)[:8].
+server = ec.generate_private_key(ec.SECP384R1())
+secret = server.exchange(ec.ECDH(), client.public_key())
+salt = bytes(range(16))
+key = hashlib.sha256(salt + secret).digest()
+encryptor = Cipher(algorithms.AES(key), CFB8(key[:16])).encryptor()
+payloads = [b"compressed batch one", b"\x78\xda second payload \x00\xff"]
+sealed = []
+for counter, payload in enumerate(payloads):
+    checksum = hashlib.sha256(counter.to_bytes(8, "little") + payload + key).digest()[:8]
+    sealed.append(encryptor.update(payload + checksum).hex())
+
+
+def scalar(key):
+    return key.private_numbers().private_value.to_bytes(48, "big").hex()
+
+
 fixtures = {
     "generator": "tests/protocol/make_login_fixtures.py (python cryptography, ES384)",
     "now": 1_500_000_000,
@@ -63,6 +88,17 @@ fixtures = {
     "client_token": client_token,
     "chain": chain(t1, t2, t3),
     "self_signed_chain": chain(offline),
+    # Throwaway test keys only; never used outside these fixtures.
+    "client_private_key": scalar(client),
+    "session": {
+        "server_private_key": scalar(server),
+        "client_public_key": public(client),
+        "ecdh_secret": secret.hex(),
+        "salt": salt.hex(),
+        "key": key.hex(),
+        "payloads": [payload.hex() for payload in payloads],
+        "sealed": sealed,
+    },
     "cases": {
         # Leaf signed by a key the CA token never named.
         "untrusted_leaf_signer": chain(t1, t2, jwt(stranger, {"extraData": identity, "identityPublicKey": public(client), **times},

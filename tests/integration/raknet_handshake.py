@@ -10,6 +10,21 @@ import threading
 import time
 import json
 import zlib
+import hashlib
+import base64
+
+try:  # The encrypted-session scenario needs an independent crypto stack.
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
+    try:
+        from cryptography.hazmat.decrepit.ciphers.modes import CFB8
+    except ImportError:
+        from cryptography.hazmat.primitives.ciphers.modes import CFB8
+except ImportError:
+    sys.exit("raknet_handshake needs the Python 'cryptography' package (pip install cryptography)")
 
 MAGIC = bytes.fromhex("00ffff00fefefefefdfdfdfd12345678")
 
@@ -60,22 +75,82 @@ def frame(sequence, reliable, order, body):
     return b"\x84" + triad(sequence) + b"\x60" + struct.pack(">H", len(body) * 8) + triad(reliable) + triad(order) + b"\0" + body
 
 
-def send_message(client, remote, sequence, body, part=1000):
-    """Send one reliable-ordered message, split into fragments when larger than `part`.
+class Sender:
+    """Client-side reliable-ordered sender: datagram/reliable indices advance per
+    fragment, the order index once per message."""
 
-    Each fragment takes its own datagram sequence and reliable index; all share
-    the order index and split id. Returns the next free sequence number.
-    """
-    if len(body) <= part:
-        client.sendto(frame(sequence, sequence, sequence, body), remote)
-        return sequence + 1
-    pieces = [body[i:i + part] for i in range(0, len(body), part)]
-    order = sequence
-    for index, piece in enumerate(pieces):
-        client.sendto(b"\x84" + triad(sequence) + b"\x70" + struct.pack(">H", len(piece) * 8) + triad(sequence) +
-                      triad(order) + b"\0" + struct.pack(">IHI", len(pieces), 7, index) + piece, remote)
-        sequence += 1
-    return sequence
+    def __init__(self, client, remote, sequence):
+        self.client, self.remote, self.sequence, self.order = client, remote, sequence, sequence
+
+    def send(self, body, part=1000):
+        pieces = [body[i:i + part] for i in range(0, len(body), part)] or [b""]
+        for index, piece in enumerate(pieces):
+            if len(pieces) == 1:
+                header = b"\x60" + struct.pack(">H", len(piece) * 8) + triad(self.sequence) + triad(self.order) + b"\0"
+            else:
+                header = (b"\x70" + struct.pack(">H", len(piece) * 8) + triad(self.sequence) + triad(self.order) + b"\0" +
+                          struct.pack(">IHI", len(pieces), self.order & 0xFFFF, index))
+            self.client.sendto(b"\x84" + triad(self.sequence) + header + piece, self.remote)
+            self.sequence += 1
+        self.order += 1
+
+
+class Session:
+    """Reconstructed EncryptedNetworkPeer, written against Python cryptography."""
+
+    def __init__(self, key):
+        self.key, self.sent, self.received = key, 0, 0
+        self.encryptor = Cipher(algorithms.AES(key), CFB8(key[:16])).encryptor()
+        self.decryptor = Cipher(algorithms.AES(key), CFB8(key[:16])).decryptor()
+
+    def checksum(self, counter, payload):
+        return hashlib.sha256(counter.to_bytes(8, "little") + payload + self.key).digest()[:8]
+
+    def seal(self, payload):
+        sealed = self.encryptor.update(payload + self.checksum(self.sent, payload))
+        self.sent += 1
+        return sealed
+
+    def open(self, data):
+        plain = self.decryptor.update(data)
+        payload, checksum = plain[:-8], plain[-8:]
+        require(checksum == self.checksum(self.received, payload), "server packet checksum")
+        self.received += 1
+        return payload
+
+
+def b64url(text):
+    return base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
+
+
+def compressed_packets(packets):
+    data = b"".join(varint(len(varint(header) + body)) + varint(header) + body for header, body in packets)
+    return zlib.compress(data, 7)
+
+
+def packets_of(payload):
+    data = zlib.decompress(payload)
+    packets, at = [], 0
+    while at < len(data):
+        length, at = read_varint(data, at)
+        header, body_at = read_varint(data, at)
+        packets.append((header, data[body_at:at + length]))
+        at += length
+    return packets
+
+
+def next_application(client, remote, seen):
+    """Next new reliable-ordered application message from the server."""
+    while True:
+        data, _ = client.recvfrom(2048)
+        if data[0] & 0xE0 != 0x80:
+            continue
+        seq, body = incoming_frame(data)
+        client.sendto(ack(seq), remote)
+        if body[0] == 0x10 or body in seen:
+            continue  # late retransmissions
+        seen.append(body)
+        return body
 
 
 def ack(sequence):
@@ -291,9 +366,10 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
             # Real protocol-282 batches over UDP with logins signed by an
             # independent ES384 implementation (tests/protocol/login_fixtures.json).
             client_token = fixtures["client_token"]
+            client_key = ec.derive_private_key(int(fixtures["client_private_key"], 16), ec.SECP384R1())
             scenarios = [
-                ("self-signed login", 282, fixtures["self_signed_chain"], [(0x05, "authenticated as Offline")]),
-                ("chain via self-signed path", 282, fixtures["chain"], [(0x05, "authenticated as Steve")]),
+                ("self-signed login", 282, fixtures["self_signed_chain"], "Offline"),
+                ("chain via self-signed path", 282, fixtures["chain"], "Steve"),
                 ("forged leaf", 282, fixtures["cases"]["untrusted_leaf_signer"], [(0x05, "disconnectionScreen.notAuthenticated")]),
                 ("old client", 281, fixtures["chain"], [(0x02, 1), (0x05, "disconnectionScreen.outdatedClient")]),
                 ("new client", 283, fixtures["chain"], [(0x02, 2), (0x05, "disconnectionScreen.outdatedServer")]),
@@ -301,8 +377,35 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
             for index, (scenario, protocol, chain, expected) in enumerate(scenarios):
                 client, remote, sequence = connected_session(family, host, target_port, 0x1000 + index)
                 with client:
+                    sender, seen = Sender(client, remote, sequence), []
                     # Signed logins exceed the MTU, so this also exercises split reassembly.
-                    send_message(client, remote, sequence, login_batch(protocol, chain, client_token))
+                    sender.send(login_batch(protocol, chain, client_token))
+                    if isinstance(expected, str):
+                        # ServerToClientHandshake arrives unencrypted.
+                        packets = game_packets(next_application(client, remote, seen))
+                        require(len(packets) == 1 and packets[0][0] == 0x03, f"{scenario}: ServerToClientHandshake")
+                        length, at = read_varint(packets[0][1], 0)
+                        token = packets[0][1][at:at + length].decode()
+                        head, payload, signature = token.split(".")
+                        header, claims = json.loads(b64url(head)), json.loads(b64url(payload))
+                        server_key = serialization.load_der_public_key(base64.b64decode(header["x5u"]))
+                        raw = b64url(signature)
+                        server_key.verify(encode_dss_signature(int.from_bytes(raw[:48], "big"), int.from_bytes(raw[48:], "big")),
+                                          f"{head}.{payload}".encode(), ec.ECDSA(hashes.SHA384()))
+                        require(header["alg"] == "ES384", f"{scenario}: token algorithm")
+                        salt = base64.b64decode(claims["salt"])
+                        require(len(salt) == 16, f"{scenario}: salt length")
+                        session = Session(hashlib.sha256(salt + client_key.exchange(ec.ECDH(), server_key)).digest())
+                        sender.send(b"\xfe" + session.seal(compressed_packets([(0x04, b"")])))
+                        final = next_application(client, remote, seen)
+                        require(final[0] == 0xFE, f"{scenario}: encrypted batch id")
+                        packets = packets_of(session.open(final[1:]))
+                        require(packets[0] == (0x02, struct.pack(">i", 0)), f"{scenario}: PlayStatus LoginSuccess")
+                        require(packets[1][0] == 0x05 and f"logged in as {expected}".encode() in packets[1][1],
+                                f"{scenario}: encrypted disconnect {packets}")
+                        require(len(packets) == 2, f"{scenario}: packet count")
+                        require(next_application(client, remote, seen) == b"\x15", f"{scenario}: RakNet disconnect")
+                        continue
                     messages = until_disconnect(client, remote)
                     require(len(messages) == 1, f"{scenario}: one batch before disconnect, got {messages}")
                     packets = game_packets(messages[0])
@@ -323,10 +426,11 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
         reader.join(timeout=2)
         require(any('login authenticated: "Offline" self-signed' in line for line in transcript),
                 f"self-signed login not logged: {transcript}")
+        require(any("Player connected: Steve" in line for line in transcript), f"handshake completion not logged: {transcript}")
         require(any("login not authenticated" in line for line in transcript), f"forged login not logged: {transcript}")
         require(any("closing connection: login protocol 281 is not 282" in line for line in transcript),
                 f"version refusal not logged: {transcript}")
-        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection and signed login outcomes passed")
+        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection, signed logins and the encrypted handshake passed")
     finally:
         if server.poll() is None:
             server.kill()

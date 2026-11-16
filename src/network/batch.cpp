@@ -80,10 +80,8 @@ PacketHeader decode_header(std::uint32_t value) {
             static_cast<std::uint8_t>((value >> 12) & 3)};
 }
 
-std::vector<GamePacket> decode_batch(std::span<const std::uint8_t> message, const BatchLimits &limits) {
-    if (message.size() < 2 || message[0] != batch_id)
-        throw ProtocolError("not a game packet batch");
-    const auto inflated = zlib_decompress(message.subspan(1), limits.max_decompressed);
+std::vector<GamePacket> decompress_packets(std::span<const std::uint8_t> payload, const BatchLimits &limits) {
+    const auto inflated = zlib_decompress(payload, limits.max_decompressed);
     ByteReader batch(inflated);
     std::vector<GamePacket> packets;
     while (!batch.empty()) {
@@ -101,7 +99,13 @@ std::vector<GamePacket> decode_batch(std::span<const std::uint8_t> message, cons
     return packets;
 }
 
-Bytes encode_batch(std::span<const GamePacket> packets) {
+std::vector<GamePacket> decode_batch(std::span<const std::uint8_t> message, const BatchLimits &limits) {
+    if (message.size() < 2 || message[0] != batch_id)
+        throw ProtocolError("not a game packet batch");
+    return decompress_packets(message.subspan(1), limits);
+}
+
+Bytes compress_packets(std::span<const GamePacket> packets) {
     ByteWriter batch;
     for (const auto &packet : packets) {
         ByteWriter encoded;
@@ -112,7 +116,11 @@ Bytes encode_batch(std::span<const GamePacket> packets) {
         batch.varint(static_cast<std::uint32_t>(encoded.bytes().size()));
         batch.raw(encoded.bytes());
     }
-    auto compressed = zlib_compress(batch.bytes());
+    return zlib_compress(batch.bytes());
+}
+
+Bytes encode_batch(std::span<const GamePacket> packets) {
+    const auto compressed = compress_packets(packets);
     Bytes message{batch_id};
     message.insert(message.end(), compressed.begin(), compressed.end());
     return message;

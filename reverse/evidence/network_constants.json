@@ -202,5 +202,96 @@
       "signedToken": "0x1829116",
       "note": "ServerToClientHandshake/encryption follows successful authentication; not yet traced"
     }
+  },
+  "session_encryption": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "libCrypto_sha256": "a9fb4397dd236e34e583f9d5cff5a00d0bda3fbdfd1c12245072ba2f23b5d034",
+    "handler": {
+      "function": "ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&) 0x1827e50",
+      "encrypted_peer_lookup": "NetworkHandler::getEncryptedPeerForUser call 0x1828f26 (encryption only when it returns a peer)",
+      "salt": {
+        "Random::getBytes call": "0x1828fe3",
+        "length_site": "0x1828fde",
+        "length": 16
+      },
+      "ecdh": "KeyManager(client identityPublicKey) 0x182902f, PrivateKeyManager::computeSecret 0x1829049",
+      "token_claims": {
+        "salt": "0x182907b base64_encode(salt, true) 0x18290a1",
+        "signedToken": "0x1829116, only when the virtual at handler+0x170 slot 0x20 returns true (0x18290ff); value is handler field +0x1a8; INFERRED unused by a dedicated server"
+      },
+      "token": "WebToken::createFromData call 0x1829182, ServerToClientHandshakePacket 0x18291b0, sent at 0x18291da before encryption",
+      "key": {
+        "concat": "salt + secret at 0x1829255",
+        "hash": "Crypto::Hash::hash(HashType 2) 0x182926d"
+      },
+      "enable": "EncryptedNetworkPeer::enableEncryption call 0x182928c"
+    },
+    "create_from_data": {
+      "function": "WebToken::createFromData 0x19dce60",
+      "header": [
+        "alg 0x19dced8",
+        "x5u 0x19dcf20"
+      ],
+      "writer": "Json::FastWriter",
+      "sign": "PrivateKeyManager::sign then WebToken::DERToBinary (raw r||s)"
+    },
+    "enable_encryption": {
+      "function": "EncryptedNetworkPeer::enableEncryption 0x1897300",
+      "cipher": "Symmetric(System 1, OperationMode 2) at 0x189732a/0x1897331 and again for the second direction 0x18974af/0x18974b6",
+      "init": "key.substr(0, keySize) and key.substr(0, blockSize) as key and IV",
+      "checksum": "HMAC(HashType 2, key, 8) at 0x189745a/0x1897465"
+    },
+    "peer_stack": {
+      "function": "NetworkHandler::Connection::Connection 0x18819f0",
+      "order": "Batched(0x1881bbd) -> Compressed(0x1881b65) -> Encrypted(0x1881b1b) -> RakNet peer"
+    },
+    "send": {
+      "function": "EncryptedNetworkPeer::sendPacket 0x1896e90",
+      "counter_field": "+0x30 post-increment 0x1896ef8",
+      "append_checksum": "HMAC::sign 0x1896f1b, operator+= 0x1896f2b",
+      "encrypt": "Symmetric vtable +0x18 0x1896f64"
+    },
+    "receive": {
+      "function": "EncryptedNetworkPeer::receivePacket 0x1897040",
+      "decrypt": "vtable +0x20 0x18970cc",
+      "split": "resultSize 0x18970f5/0x1897149",
+      "counter_field": "+0x38 post-increment 0x18971c0",
+      "compare": "0x18971e9",
+      "mismatch": "status 2, packet dropped (0x1897213)"
+    },
+    "libCrypto": {
+      "setHashType": {
+        "function": "0x17d60",
+        "jump_table": "0x1c650",
+        "values": {
+          "0": "md5",
+          "1": "sha1",
+          "2": "sha256",
+          "3": "sha384",
+          "4": "sha512"
+        }
+      },
+      "symmetric_init": {
+        "function": "Crypto::Symmetric::OpenSSLSymmetricInterface::init 0x1bb30",
+        "system_0_table": "0x1c730 aes_128 ecb/cbc/cfb8/ofb",
+        "system_1_table": "0x1c720 aes_256 ecb/cbc/cfb8/ofb",
+        "system_select": "0x1bb79/0x1bb87"
+      },
+      "hmac_sign": {
+        "function": "Crypto::Hash::HMAC::sign 0x12d20",
+        "steps": "reset; update(&counter, 8) (size 0x12d61); update(data); update(key member +0x8) 0x12dd3; final -> substr(0, resultSize) 0x12ed6",
+        "note": "not RFC 2104 HMAC"
+      }
+    },
+    "after_handshake": {
+      "handler": "ServerNetworkHandler::handle(ClientToServerHandshakePacket) 0x182a830 -> _onClientAuthenticated 0x1829510",
+      "checks": [
+        "_isServerFull 0x1829562 with Whitelist::isIgnoringPlayerLimit 0x18295cf -> disconnectionScreen.serverFull",
+        "existing player -> disconnectionScreen.loggedinOtherLocation"
+      ],
+      "play_status": "PlayStatus(0) at 0x18297a8",
+      "log": "'Player connected: %s' 0x281d6e8",
+      "next": "ResourcePacksInfo built from the resource pack stacks"
+    }
   }
 }

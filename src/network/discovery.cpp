@@ -205,6 +205,8 @@ struct DiscoveryServer::Impl {
     std::unique_ptr<raknet::Transport> transport;
     // Minecraft protocol state per transport peer; never touches the World.
     std::map<raknet::Address, protocol::GameConnection> connections;
+    // One server key pair for all handshakes, generated at startup.
+    std::shared_ptr<protocol::ServerSecrets> secrets = std::make_shared<protocol::ServerSecrets>();
 #ifdef _WIN32
     bool initialized = false;
 #endif
@@ -309,11 +311,14 @@ void DiscoveryServer::poll(const Properties &p) {
                     output = {{}, true, "non-batch application message"};
                 else
                     output = impl_->connections
-                                 .try_emplace(from, auth::LoginPolicy{p.online_mode, {std::string(auth::mojang_root_key)}})
+                                 .try_emplace(from, auth::LoginPolicy{p.online_mode, {std::string(auth::mojang_root_key)}},
+                                              protocol::GameConnection::Clock{}, impl_->secrets)
                                  .first->second.receive(application.bytes);
                 for (const auto &message : output.messages)
                     for (const auto &outgoing : impl_->transport->send(from, message, now))
                         send_packet(socket, outgoing.address, outgoing.bytes);
+                if (!output.close && !output.reason.empty())
+                    log(output.reason);
                 if (output.close) {
                     log("closing connection: " + output.reason);
                     for (const auto &outgoing : impl_->transport->disconnect(from, now))

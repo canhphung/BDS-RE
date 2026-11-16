@@ -11180,6 +11180,1222 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "EncryptedNetworkPeer::enableEncryption(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)",
+      "address": "0x1897300",
+      "size": 832,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x189734c",
+          "operand": "1897870 <std::_MakeUniq<Crypto::Symmetric::Symmetric>::__single_object std::make_unique<Crypto::Symmetric::Symmetric, Crypto::Symmetric::System, Crypto::Symmetric::OperationMode>(Crypto::Symmetric::System&&, Crypto::Symmetric::OperationMode&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189735c",
+          "operand": "1897810 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator=(std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189736c",
+          "operand": "1897740 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189737f",
+          "operand": "18977f0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18973b2",
+          "operand": "18977f0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18973bd",
+          "operand": "*0x28(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18973d4",
+          "operand": "1757070 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::substr(unsigned long, unsigned long) const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18973f2",
+          "operand": "18977f0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18973fd",
+          "operand": "*0x30(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1897414",
+          "operand": "1757070 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::substr(unsigned long, unsigned long) const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189742f",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1897435",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189743e",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897473",
+          "operand": "1897940 <std::_MakeUniq<Crypto::Hash::HMAC>::__single_object std::make_unique<Crypto::Hash::HMAC, Crypto::Hash::HashType, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int>(Crypto::Hash::HashType&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897483",
+          "operand": "18978e0 <std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >::operator=(std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897493",
+          "operand": "18976e0 <std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18974c4",
+          "operand": "1897870 <std::_MakeUniq<Crypto::Symmetric::Symmetric>::__single_object std::make_unique<Crypto::Symmetric::Symmetric, Crypto::Symmetric::System, Crypto::Symmetric::OperationMode>(Crypto::Symmetric::System&&, Crypto::Symmetric::OperationMode&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18974d4",
+          "operand": "1897810 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator=(std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18974e4",
+          "operand": "1897740 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18974f7",
+          "operand": "18977f0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189752a",
+          "operand": "18977f0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897535",
+          "operand": "*0x28(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x189754f",
+          "operand": "1757070 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::substr(unsigned long, unsigned long) const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189756d",
+          "operand": "18977f0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897578",
+          "operand": "*0x30(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1897592",
+          "operand": "1757070 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::substr(unsigned long, unsigned long) const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18975b3",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18975bc",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18975c8",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189760c",
+          "operand": "1897940 <std::_MakeUniq<Crypto::Hash::HMAC>::__single_object std::make_unique<Crypto::Hash::HMAC, Crypto::Hash::HashType, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int>(Crypto::Hash::HashType&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189761f",
+          "operand": "18978e0 <std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >::operator=(std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897632",
+          "operand": "18976e0 <std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >::~unique_ptr()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "EncryptedNetworkPeer::sendPacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NetworkPeer::Reliability, int)",
+      "address": "0x1896e90",
+      "size": 420,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1896ec1",
+          "operand": "18977a0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896ee1",
+          "operand": "18977d0 <std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896f1b",
+          "operand": "1756a10 <Crypto::Hash::HMAC::sign(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896f2b",
+          "operand": "1757240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator+=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896f3b",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896f4e",
+          "operand": "18977f0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896f64",
+          "operand": "*0x18(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1896f8b",
+          "operand": "1805ea0 <std::remove_reference<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>::type&& std::move<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896f97",
+          "operand": "1757810 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896fb5",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1896fbb",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896fc4",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1896ffc",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189701d",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1897026",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "EncryptedNetworkPeer::receivePacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "address": "0x1897040",
+      "size": 642,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1897065",
+          "operand": "1757ca0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189707c",
+          "operand": "*0x18(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1897099",
+          "operand": "18977a0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18970b9",
+          "operand": "18977f0 <std::unique_ptr<Crypto::Symmetric::Symmetric, std::default_delete<Crypto::Symmetric::Symmetric> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18970cc",
+          "operand": "*0x20(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18970d3",
+          "operand": "1756c50 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18970ed",
+          "operand": "18977d0 <std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18970f5",
+          "operand": "17564a0 <Crypto::Hash::HMAC::resultSize() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897113",
+          "operand": "1757070 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::substr(unsigned long, unsigned long) const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897127",
+          "operand": "1756c50 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897141",
+          "operand": "18977d0 <std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897149",
+          "operand": "17564a0 <Crypto::Hash::HMAC::resultSize() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897169",
+          "operand": "1757070 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::substr(unsigned long, unsigned long) const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189717c",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189718f",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18971a2",
+          "operand": "18977d0 <std::unique_ptr<Crypto::Hash::HMAC, std::default_delete<Crypto::Hash::HMAC> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18971d9",
+          "operand": "1756a10 <Crypto::Hash::HMAC::sign(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18971e9",
+          "operand": "1837040 <bool std::operator!=<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18971fb",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897237",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1897240",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189726c",
+          "operand": "1805ea0 <std::remove_reference<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>::type&& std::move<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189727b",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18972b1",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "WebToken::createFromData(Json::Value const&, PrivateKeyManager const&)",
+      "address": "0x19dce60",
+      "size": 1007,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x19dce91",
+          "operand": "27cc9d0 <Json::Value::Value(Json::ValueType)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dce9d",
+          "operand": "19de2d0 <KeyManager::getSystemType() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcea4",
+          "operand": "19dd250 <(anonymous namespace)::getAlgorithm(Crypto::Asymmetric::System)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcec3",
+          "operand": "187ae00 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::unique_ptr(decltype(nullptr))>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcedf",
+          "operand": "27ceb70 <Json::Value::operator[](char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcef7",
+          "operand": "27ccc90 <Json::Value::Value(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf07",
+          "operand": "27ccfc0 <Json::Value::operator=(Json::Value const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf17",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf27",
+          "operand": "27ceb70 <Json::Value::operator[](char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf3b",
+          "operand": "19e5850 <KeyManager::getPublicKey[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf48",
+          "operand": "27ccc90 <Json::Value::Value(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf58",
+          "operand": "27ccfc0 <Json::Value::operator=(Json::Value const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf68",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf71",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf7d",
+          "operand": "27d6da0 <Json::FastWriter::FastWriter()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcf94",
+          "operand": "27d6e40 <Json::FastWriter::write[abi:cxx11](Json::Value const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcfa7",
+          "operand": "19dc5c0 <(anonymous namespace)::base64_url_encode(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcfb3",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcfca",
+          "operand": "27d6e40 <Json::FastWriter::write[abi:cxx11](Json::Value const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcfdd",
+          "operand": "19dc5c0 <(anonymous namespace)::base64_url_encode(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dcfe9",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd00e",
+          "operand": "1836ba0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd028",
+          "operand": "1808430 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd049",
+          "operand": "19e3870 <PrivateKeyManager::sign(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Crypto::Hash::HashType) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd055",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd061",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd074",
+          "operand": "17f4b10 <bool std::operator==<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd091",
+          "operand": "187ae00 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::unique_ptr(decltype(nullptr))>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd0a9",
+          "operand": "19de300 <std::_MakeUniq<WebToken>::__single_object std::make_unique<WebToken>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd0b5",
+          "operand": "18374c0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd0c4",
+          "operand": "1758290 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd0d7",
+          "operand": "18374c0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd0e7",
+          "operand": "27ccfc0 <Json::Value::operator=(Json::Value const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd0fa",
+          "operand": "18374c0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd10d",
+          "operand": "1758290 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd120",
+          "operand": "18374c0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd130",
+          "operand": "27ccfc0 <Json::Value::operator=(Json::Value const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd143",
+          "operand": "18374c0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd157",
+          "operand": "19dce40 <(anonymous namespace)::JWTCrypto::doECCompress() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd17e",
+          "operand": "19dc610 <WebToken::DERToBinary(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd196",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd1a9",
+          "operand": "19dc5c0 <(anonymous namespace)::base64_url_encode(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd1bc",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd1cf",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd1db",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd1ee",
+          "operand": "187aa60 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::unique_ptr(std::unique_ptr<WebToken, std::default_delete<WebToken> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd201",
+          "operand": "18375a0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd20d",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd219",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd225",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd231",
+          "operand": "1977a30 <Json::FastWriter::~FastWriter()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19dd23a",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "NetworkHandler::Connection::Connection(NetworkIdentifier const&, NetworkPeer&, std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >, bool, PacketObserver*, Scheduler&, WorkerPool&)",
+      "address": "0x18819f0",
+      "size": 545,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1881a49",
+          "operand": "1757b10 <memcpy@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881a5c",
+          "operand": "18840f0 <std::unique_ptr<NetworkPacketRecorder, std::default_delete<NetworkPacketRecorder> >::unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881a6f",
+          "operand": "1884110 <std::unique_ptr<ObservingNetworkPeer, std::default_delete<ObservingNetworkPeer> >::unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881a82",
+          "operand": "1884130 <std::unique_ptr<EncryptedNetworkPeer, std::default_delete<EncryptedNetworkPeer> >::unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881a95",
+          "operand": "1884150 <std::unique_ptr<CompressedNetworkPeer, std::default_delete<CompressedNetworkPeer> >::unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881aa8",
+          "operand": "1884170 <std::unique_ptr<BatchedNetworkPeer, std::default_delete<BatchedNetworkPeer> >::unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881ac6",
+          "operand": "1884190 <std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::duration<long, std::ratio<1l, 1000000000l> > >::time_point()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881b1b",
+          "operand": "1884220 <std::_MakeUniq<EncryptedNetworkPeer>::__single_object std::make_unique<EncryptedNetworkPeer, NetworkPeer&>(NetworkPeer&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881b28",
+          "operand": "18841c0 <std::unique_ptr<EncryptedNetworkPeer, std::default_delete<EncryptedNetworkPeer> >::operator=(std::unique_ptr<EncryptedNetworkPeer, std::default_delete<EncryptedNetworkPeer> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881b35",
+          "operand": "1884280 <std::unique_ptr<EncryptedNetworkPeer, std::default_delete<EncryptedNetworkPeer> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881b59",
+          "operand": "18843a0 <std::unique_ptr<EncryptedNetworkPeer, std::default_delete<EncryptedNetworkPeer> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881b65",
+          "operand": "1884340 <std::_MakeUniq<CompressedNetworkPeer>::__single_object std::make_unique<CompressedNetworkPeer, EncryptedNetworkPeer&>(EncryptedNetworkPeer&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881b75",
+          "operand": "18842e0 <std::unique_ptr<CompressedNetworkPeer, std::default_delete<CompressedNetworkPeer> >::operator=(std::unique_ptr<CompressedNetworkPeer, std::default_delete<CompressedNetworkPeer> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881b85",
+          "operand": "18843c0 <std::unique_ptr<CompressedNetworkPeer, std::default_delete<CompressedNetworkPeer> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881ba9",
+          "operand": "1884510 <std::unique_ptr<CompressedNetworkPeer, std::default_delete<CompressedNetworkPeer> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881bbd",
+          "operand": "1884480 <std::_MakeUniq<BatchedNetworkPeer>::__single_object std::make_unique<BatchedNetworkPeer, CompressedNetworkPeer&, Scheduler&, WorkerPool&>(CompressedNetworkPeer&, Scheduler&, WorkerPool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881bcd",
+          "operand": "1884420 <std::unique_ptr<BatchedNetworkPeer, std::default_delete<BatchedNetworkPeer> >::operator=(std::unique_ptr<BatchedNetworkPeer, std::default_delete<BatchedNetworkPeer> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881bdd",
+          "operand": "1884530 <std::unique_ptr<BatchedNetworkPeer, std::default_delete<BatchedNetworkPeer> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1881bef",
+          "operand": "1884590 <std::unique_ptr<BatchedNetworkPeer, std::default_delete<BatchedNetworkPeer> >::get() const>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::handle(NetworkIdentifier const&, ClientToServerHandshakePacket const&)",
+      "address": "0x182a830",
+      "size": 277,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x182a868",
+          "operand": "1836d50 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::find(NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a886",
+          "operand": "1836d80 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::end()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a89a",
+          "operand": "18377f0 <bool std::__detail::operator==<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true>(std::__detail::_Node_iterator_base<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true> const&, std::__detail::_Node_iterator_base<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, true> const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a8b8",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a8cc",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a8df",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a8e8",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a8f1",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a8ff",
+          "operand": "1837820 <std::__detail::_Node_iterator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > >, false, true>::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a90d",
+          "operand": "1836b80 <std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a915",
+          "operand": "182a950 <ServerNetworkHandler::Client::getPrimaryRequest() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a922",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182a937",
+          "operand": "1829510 <ServerNetworkHandler::_onClientAuthenticated(NetworkIdentifier const&, Certificate const&)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::_onClientAuthenticated(NetworkIdentifier const&, Certificate const&)",
+      "address": "0x1829510",
+      "size": 1909,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1829536",
+          "operand": "1836e60 <ExtendedCertificate::getIdentity(Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829562",
+          "operand": "182a970 <ServerNetworkHandler::_isServerFull(mce::UUID) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18295b7",
+          "operand": "17fdd10 <ExtendedCertificate::getXuid[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18295cf",
+          "operand": "25f5660 <Whitelist::isIgnoringPlayerLimit(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829607",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829631",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829648",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829661",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182966a",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829676",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182968f",
+          "operand": "1c8bc00 <Level::getPlayer(mce::UUID const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18296b6",
+          "operand": "*0xc40(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18296db",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18296f5",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829711",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182971d",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829729",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182974e",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829768",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829784",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829790",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182979c",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18297aa",
+          "operand": "1836db0 <PlayStatusPacket::PlayStatusPacket(PlayStatus)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18297d6",
+          "operand": "18364a0 <PacketSender::sendToPrimaryClient(NetworkIdentifier const&, Packet const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18297e6",
+          "operand": "17fdd10 <ExtendedCertificate::getXuid[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18297f2",
+          "operand": "1756b10 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::c_str() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829819",
+          "operand": "26d7100 <BedrockLog::log(unsigned int, unsigned int, char const*, int, char const*, ...)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829825",
+          "operand": "1837840 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829831",
+          "operand": "1837840 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829844",
+          "operand": "*0xf0(%r8)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182985e",
+          "operand": "1a71be0 <ResourcePackManager::getStack(ResourcePackStackType) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829873",
+          "operand": "1a71be0 <ResourcePackManager::getStack(ResourcePackStackType) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18298a6",
+          "operand": "1837860 <std::vector<PackInstance, std::allocator<PackInstance> >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18298b9",
+          "operand": "18378a0 <std::vector<PackInstance, std::allocator<PackInstance> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18298d3",
+          "operand": "18378e0 <bool __gnu_cxx::operator!=<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >(__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > > const&, __gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18298ec",
+          "operand": "1837920 <__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18298ff",
+          "operand": "1aa27e0 <PackInstance::getPackCategory() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829914",
+          "operand": "1aa27e0 <PackInstance::getPackCategory() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829929",
+          "operand": "1aa2810 <PackInstance::getPackOrigin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182993e",
+          "operand": "1aa2540 <PackInstance::getManifest() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829951",
+          "operand": "1aa23f0 <PackInstance::getPackId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182996b",
+          "operand": "1aa2420 <PackInstance::getVersion() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182997e",
+          "operand": "1a560f0 <PackManifest::getPackSize() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829998",
+          "operand": "182a9d0 <ServerNetworkHandler::_onClientAuthenticated(NetworkIdentifier const&, Certificate const&)::$_2::operator()[abi:cxx11](PackInstance const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18299ab",
+          "operand": "1aa2920 <PackInstance::getSubpackFolderName[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18299be",
+          "operand": "1a573e0 <PackManifest::getContentIdentity() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18299f1",
+          "operand": "18379d0 <ResourcePackInfoData::ResourcePackInfoData(mce::UUID const&, SemVersion const&, unsigned long, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, ContentIdentity const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829a04",
+          "operand": "1837940 <void std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::emplace_back<ResourcePackInfoData>(ResourcePackInfoData&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829a10",
+          "operand": "1837a70 <ResourcePackInfoData::~ResourcePackInfoData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829a21",
+          "operand": "1837ac0 <__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829a4b",
+          "operand": "1837860 <std::vector<PackInstance, std::allocator<PackInstance> >::begin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829a5e",
+          "operand": "18378a0 <std::vector<PackInstance, std::allocator<PackInstance> >::end() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829a78",
+          "operand": "18378e0 <bool __gnu_cxx::operator!=<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >(__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > > const&, __gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829a91",
+          "operand": "1837920 <__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829aa4",
+          "operand": "1aa27e0 <PackInstance::getPackCategory() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829ab9",
+          "operand": "1aa27e0 <PackInstance::getPackCategory() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829ace",
+          "operand": "1aa2810 <PackInstance::getPackOrigin() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829ae3",
+          "operand": "1aa2540 <PackInstance::getManifest() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829af6",
+          "operand": "1aa23f0 <PackInstance::getPackId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829b10",
+          "operand": "1aa2420 <PackInstance::getVersion() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829b23",
+          "operand": "1a560f0 <PackManifest::getPackSize() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829b3d",
+          "operand": "182a9d0 <ServerNetworkHandler::_onClientAuthenticated(NetworkIdentifier const&, Certificate const&)::$_2::operator()[abi:cxx11](PackInstance const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829b50",
+          "operand": "1aa2920 <PackInstance::getSubpackFolderName[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829b63",
+          "operand": "1a573e0 <PackManifest::getContentIdentity() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829b96",
+          "operand": "18379d0 <ResourcePackInfoData::ResourcePackInfoData(mce::UUID const&, SemVersion const&, unsigned long, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, ContentIdentity const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829ba9",
+          "operand": "1837940 <void std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::emplace_back<ResourcePackInfoData>(ResourcePackInfoData&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829bb5",
+          "operand": "1837a70 <ResourcePackInfoData::~ResourcePackInfoData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829bc6",
+          "operand": "1837ac0 <__gnu_cxx::__normal_iterator<PackInstance const*, std::vector<PackInstance, std::allocator<PackInstance> > >::operator++()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829be2",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829bea",
+          "operand": "1cd1dd0 <LevelData::isTexturepacksRequired() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829c1d",
+          "operand": "1837ae0 <ResourcePacksInfoPacket::ResourcePacksInfoPacket(bool, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >&, std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829c3b",
+          "operand": "18364a0 <PacketSender::sendToPrimaryClient(NetworkIdentifier const&, Packet const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829c47",
+          "operand": "1837b90 <ResourcePacksInfoPacket::~ResourcePacksInfoPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829c53",
+          "operand": "1837be0 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829c5f",
+          "operand": "1837be0 <std::vector<ResourcePackInfoData, std::allocator<ResourcePackInfoData> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829c6b",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829c77",
+          "operand": "1836df0 <PlayStatusPacket::~PlayStatusPacket()>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }
