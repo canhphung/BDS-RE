@@ -18,6 +18,58 @@ bool overlap(const PlayerData &p, World::Position block) {
     return p.x + .3f > x && p.x - .3f < x + 1 && p.z + .3f > z && p.z - .3f < z + 1 &&
            feet + 1.8f > y && feet < y + 1;
 }
+// Block::getDestroySpeed() (0x1e68db0, "hardness") and
+// Player::canDestroy(Block) (0x22ed360: Material::isAlwaysDestroyable, else the
+// held item's canDestroySpecial) for the internal palette. BDS-RE inventories
+// hold only block items, whose canDestroySpecial is false. The values
+// reproduce the original crack rates (tests/reference/break_bds_1.6.0.15.json).
+struct Hardness {
+    float destroy_time;
+    bool always_destroyable;
+};
+Hardness hardness(BlockId id) {
+    switch (id) {
+    case 1: return {1.5f, false}; // stone: Material Stone
+    case 2: return {0.6f, true};  // grass: Material Dirt
+    case 3: return {0.5f, true};  // dirt: Material Dirt
+    case 4: return {-1.0f, false}; // bedrock: unbreakable time
+    default: return {0.0f, true};
+    }
+}
+// Player::getDestroySpeed(Block) 0x22ed000. The held item speed
+// (ItemInstance::getDestroySpeed) is 1.0 for block items and an empty hand;
+// BDS-RE has no mob effects, rides, flying or water, so only the
+// "not on ground" division by 5 (0x22ed1aa, constant 0x2830bf0) applies.
+float destroy_speed(const PlayerData &p) {
+    float speed = 1.0f;
+    if (!p.on_ground)
+        speed /= 5.0f;
+    return speed;
+}
+// Player::getDestroyProgress(Block) 0x22ed290, used by GameMode::getDestroyRate
+// (0x1ab5820, whose effect multipliers do not apply here).
+float destroy_rate(const PlayerData &p, BlockId id) {
+    const auto h = hardness(id);
+    if (0.0f > h.destroy_time)
+        return 0.0f;
+    return destroy_speed(p) / h.destroy_time / (h.always_destroyable ? 30.0f : 100.0f);
+}
+GamePacket level_event(int event, float x, float y, float z, int data) {
+    ByteWriter out;
+    out.signed_varint(event);
+    out.float32(x);
+    out.float32(y);
+    out.float32(z);
+    out.signed_varint(data);
+    return packet(PacketId::LevelEvent, out.take());
+}
+constexpr int LevelEventStartBlockCracking = 3600; // 0xe10
+constexpr int LevelEventStopBlockCracking = 3601;  // 0xe11
+constexpr int LevelEventParticlesDestroyBlock = 2001; // 0x7d1
+std::uint32_t block_runtime_id(BlockId id) {
+    const auto &palette = protocol::internal_block_palette();
+    return protocol::runtime_id(palette[id].name, palette[id].data).value();
+}
 } // namespace
 void Server::enqueue(std::uint64_t id, GamePacket packet) {
     auto i = sessions_.find(id);
@@ -84,9 +136,14 @@ bool Server::collides(const PlayerData &p) const {
     return false;
 }
 bool Server::reach(const PlayerData &p, World::Position b) const {
+    // ItemUseInventoryTransaction::handle 0x1ae6290: for every action except
+    // click-air, Actor::distanceTo(Vec3(BlockPos)) > 12.5 (0x2830f48) is
+    // error 7. The distance is from the player position (eye height) to the
+    // block's minimum corner, in single precision.
     auto [x, y, z] = b;
-    double dx = p.x - (x + .5), dy = p.y - (y + .5), dz = p.z - (z + .5);
-    return dx * dx + dy * dy + dz * dz <= 36;
+    const float dx = p.x - static_cast<float>(x), dy = p.y - static_cast<float>(y),
+                dz = p.z - static_cast<float>(z);
+    return !(std::sqrt(dx * dx + dy * dy + dz * dz) > 12.5f);
 }
 std::vector<GamePacket> Server::correct(Session &s) {
     const auto &p = world_.players().at(s.key);
@@ -94,10 +151,9 @@ std::vector<GamePacket> Server::correct(Session &s) {
             packet(PacketId::InventoryContent, inventory(p)),
             packet(PacketId::InventoryContent, cursor_inventory(p))};
 }
-std::vector<GamePacket> Server::reject_item_use(const Session &s, const Transaction &t) const {
-    // ItemUseInventoryTransaction::onTransactionError (original 0x1ae7710):
-    // resendBlocksAroundArea, then inventory/hotbar correction. The four updates
-    // intentionally retain duplicates when the clicked face is vertical.
+std::vector<GamePacket> Server::resend_blocks(const Transaction &t) const {
+    // ItemUseInventoryTransaction::resendBlocksAroundArea (0x1ae6120). The four
+    // updates intentionally retain duplicates when the clicked face is vertical.
     auto [x, y, z] = t.block;
     const auto face = static_cast<std::int8_t>(t.face);
     World::Position adjacent{x + (face == 5) - (face == 4), y + (face == 1) - (face == 0),
@@ -107,6 +163,12 @@ std::vector<GamePacket> Server::reject_item_use(const Session &s, const Transact
     for (const auto &pos :
          {t.block, World::Position{x, y + 1, z}, adjacent, World::Position{ax, ay + 1, az}})
         out.push_back(packet(PacketId::UpdateBlock, block_update(pos, world_.block(pos))));
+    return out;
+}
+std::vector<GamePacket> Server::reject_item_use(const Session &s, const Transaction &t) const {
+    // ItemUseInventoryTransaction::onTransactionError (original 0x1ae7710):
+    // resendBlocksAroundArea, then inventory/hotbar correction.
+    auto out = resend_blocks(t);
     const auto &p = world_.players().at(s.key);
     out.push_back(packet(PacketId::InventoryContent, inventory(p)));
     // Only block items are currently supported; armor and offhand stay empty.
@@ -169,60 +231,77 @@ void Server::leave(std::uint64_t runtime) {
     }
     sessions_.erase(i);
 }
-std::vector<GamePacket> Server::destroy(Session &s, World::Position b, std::uint64_t now) {
+std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
+    // Break branch of ItemUseInventoryTransaction::handle ($_2, 0x1ae6d20):
+    // GameMode::destroyBlock (vtable +0x18); on failure resendBlocksAroundArea.
+    // There is no destroy-time check: StartBreak is not required and the
+    // elapsed time is never compared (oracle: tests/reference/break_bds_1.6.0.15.json).
     auto &p = world_.players().at(s.key);
-    auto id = world_.block(b);
-    const auto restore = [&] {
-        std::vector<GamePacket> out{packet(PacketId::InventoryContent, inventory(p)),
-                                    packet(PacketId::InventoryContent, cursor_inventory(p))};
-        if (id < 5)
-            out.push_back(packet(PacketId::UpdateBlock, block_update(b, id)));
-        return out;
-    };
-    if (!id || id > 4 || !reach(p, b) || s.game.player_game_type == 2 ||
-        s.game.settings.default_player_permission == 0)
-        return restore();
-    auto next = p.inventory;
-    if (s.game.player_game_type != 1) {
-        const auto delay = id == 1 ? 1000U : 300U;
-        if (id == 4 || !s.breaking || *s.breaking != b || now < s.break_time ||
-            now - s.break_time < delay)
-            return restore();
-        const auto drop = static_cast<std::uint16_t>(id == 1 ? 0 : id == 2 ? 3 : id);
-        bool stored = drop == 0; // bare-hand stone mining yields no item
-
-        for (auto &stack : next)
-            if (!stored && stack.block == drop && stack.count < 64) {
+    const auto b = t.block;
+    const auto id = world_.block(b);
+    // SurvivalMode::destroyBlock (0x1abcd90) -> GameMode::destroyBlock
+    // (0x1ab4a80) -> BlockSource::checkBlockDestroyPermissions (0x1c588d0).
+    // INFERRED: the permission check is reduced to the adventure game type and
+    // the visitor permission level, the only adventure settings BDS-RE has.
+    // _destroyBlockInternal (0x1ab4e50) refuses air.
+    if (!id || s.game.player_game_type == 2 || s.game.settings.default_player_permission == 0)
+        return resend_blocks(t);
+    const bool creative = s.game.player_game_type == 1;
+    // Unbreakable blocks are not refused: the original breaks bedrock through
+    // this path in survival (oracle case "bedrock").
+    world_.set_block(b, 0);
+    auto [x, y, z] = b;
+    const auto update = packet(PacketId::UpdateBlock, block_update(b, 0));
+    // broadcastDimensionEvent(ParticlesDestroyBlock, pos + 0.5, runtime id, null)
+    const auto particles = level_event(LevelEventParticlesDestroyBlock, x + .5f, y + .5f, z + .5f,
+                                       static_cast<int>(block_runtime_id(id)));
+    broadcast(update, s.game.runtime_id);
+    broadcast(particles, s.game.runtime_id);
+    // PlayerActionPacket(StopBreak, runtime id) sent to the breaking player.
+    ByteWriter stop;
+    stop.varint64(s.game.runtime_id);
+    stop.signed_varint(2);
+    stop.signed_varint(0);
+    stop.varint(0);
+    stop.signed_varint(0);
+    stop.signed_varint(0);
+    std::vector<GamePacket> out{update, particles, packet(PacketId::PlayerAction, stop.take())};
+    if (!creative && hardness(id).always_destroyable) {
+        // Block::playerDestroy runs only when Player::canDestroy holds (stone by
+        // hand drops nothing). PLACEHOLDER (invented): the original spawns an
+        // ItemActor (AddItemActor) that is picked up later; BDS-RE still puts the
+        // drop straight into the inventory and loses it when the inventory is full.
+        const auto drop = static_cast<std::uint16_t>(id == 2 ? 3 : id);
+        bool stored = false;
+        for (auto &stack : p.inventory)
+            if (stack.block == drop && stack.count < 64) {
                 ++stack.count;
                 stored = true;
                 break;
             }
         if (!stored)
-            for (auto &stack : next)
+            for (auto &stack : p.inventory)
                 if (!stack.block) {
                     stack = {drop, 1};
-                    stored = true;
                     break;
                 }
-        if (!stored)
-            return restore();
+        out.push_back(packet(PacketId::InventoryContent, inventory(p)));
+        out.push_back(packet(PacketId::InventoryContent, cursor_inventory(p)));
     }
-    world_.set_block(b, 0);
-    p.inventory = next;
-    s.breaking.reset();
-    broadcast(packet(PacketId::UpdateBlock, block_update(b, 0)));
-    return {packet(PacketId::InventoryContent, inventory(p)),
-            packet(PacketId::InventoryContent, cursor_inventory(p))};
+    return out;
 }
-std::vector<GamePacket> Server::use(Session &s, const Transaction &t, std::uint64_t now) {
+std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
     auto &p = world_.players().at(s.key);
     // Original ItemUseInventoryTransaction::handle (0x1ae62ee..0x1ae6366):
     // error 3 precedes dispatch for ALL actions, including click-air and break.
     // Network requests take the force=false path in ServerNetworkHandler.
     if (t.held != p.inventory[p.selected] || t.slot != static_cast<int>(p.selected))
         return reject_item_use(s, t);
+    // Mob::isAlive is always true (no health yet); then the reach check, error 7.
+    if (t.action != 1 && !reach(p, t.block))
+        return reject_item_use(s, t);
     if (t.action == 2)
-        return destroy(s, t.block, now);
+        return destroy(s, t);
     if (t.action == 1)
         return {};
     auto [x, y, z] = t.block;
@@ -240,7 +319,7 @@ std::vector<GamePacket> Server::use(Session &s, const Transaction &t, std::uint6
         return out;
     };
     if (s.game.player_game_type == 2 || s.game.settings.default_player_permission == 0 ||
-        !held.block || held != t.held || !reach(p, t.block) || !world_.block(t.block) ||
+        !held.block || held != t.held || !world_.block(t.block) ||
         world_.block(target) || std::get<1>(target) < 0 || std::get<1>(target) >= 256)
         return restore();
     for (const auto &[id, session] : sessions_)
@@ -258,7 +337,7 @@ std::vector<GamePacket> Server::use(Session &s, const Transaction &t, std::uint6
             packet(PacketId::InventoryContent, cursor_inventory(p))};
 }
 std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packet_in,
-                                       std::uint64_t now) {
+                                       std::uint64_t /*now*/) {
     auto found = sessions_.find(id);
     if (found == sessions_.end())
         return {};
@@ -324,6 +403,9 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             p.pitch = m.data.pitch;
             p.yaw = m.data.yaw;
             p.head_yaw = m.data.head_yaw; // +0x11c0 = packet head yaw
+            // onGround (+0x124) is stored by every path except mode 1 with a
+            // dead player, which BDS-RE cannot have.
+            p.on_ground = m.grounded;
             // Dimension::sendPacketForEntity(player, packet, player): the
             // received packet is relayed unchanged to everyone else.
             broadcast(packet(PacketId::MovePlayer, packet_in.body), id);
@@ -376,37 +458,41 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
                     packet(PacketId::InventoryContent, cursor_inventory(p))};
         }
         if (type == PacketId::PlayerAction) {
-            require(in.varint64() == id);
-            auto action = in.signed_varint();
-            if (action != 0 && action != 13) {
-                // Jump/sprint/sneak/abort use no block target and may carry
-                // sentinel coordinates; consume their fields without applying
-                // build-position bounds or resetting a valid movement.
-                in.signed_varint();
-                in.varint();
-                in.signed_varint();
-                in.signed_varint();
-                in.finish();
-                if (action == 1)
-                    s.breaking.reset();
-                return {};
-            }
-            auto b = position(in);
-            in.signed_varint();
+            // ServerNetworkHandler::handle(PlayerActionPacket) 0x182d140. Only the
+            // block-breaking actions are translated; the others (jump, sprint,
+            // sneak, dimension change, gliding, ...) have no state in BDS-RE yet.
+            if (in.varint64() != id)
+                return {}; // _getPlayer returns null
+            const auto action = in.signed_varint();
+            const auto x = in.signed_varint();
+            const auto y = static_cast<std::int32_t>(in.varint());
+            const auto z = in.signed_varint();
+            in.signed_varint(); // face
             in.finish();
-            if (action == 0 && reach(p, b)) {
-                s.breaking = b;
-                s.break_time = now;
-            } else if (action == 1)
-                s.breaking.reset();
-            else if (action == 13 && s.game.player_game_type == 1)
-                return destroy(s, b, now);
+            const float fx = static_cast<float>(x), fy = static_cast<float>(y),
+                        fz = static_cast<float>(z);
+            if (action == 0) {
+                // StartBreak (0x182d6d3): Level::extinguishFire and Block::attack have
+                // no effect on the internal palette. Unless the player is creative,
+                // broadcastLevelEvent(StartBlockCracking, Vec3(pos),
+                // floor(65535 * GameMode::getDestroyRate(block)), null) reaches
+                // every player, the sender included. No reach check.
+                if (s.game.player_game_type != 1) {
+                    const auto block = y >= 0 && y < 256 ? world_.block({x, y, z}) : BlockId{0};
+                    const auto rate = std::floor(65535.0f * destroy_rate(p, block));
+                    broadcast(level_event(LevelEventStartBlockCracking, fx, fy, fz,
+                                          static_cast<int>(rate)));
+                }
+            } else if (action == 1 || action == 2) {
+                // AbortBreak / StopBreak: broadcastLevelEvent(StopBlockCracking, Vec3(pos), 0).
+                broadcast(level_event(LevelEventStopBlockCracking, fx, fy, fz, 0));
+            }
             return {};
         }
         if (type == PacketId::InventoryTransaction) {
             const auto t = transaction(packet_in.body);
             if (t.type == 2)
-                return use(s, t, now);
+                return use(s, t);
             require(t.type == 0);
             auto next = p.inventory;
             auto cursor = p.cursor;

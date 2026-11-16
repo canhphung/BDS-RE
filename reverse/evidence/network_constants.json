@@ -497,5 +497,32 @@
     "validation": "none beyond runtime id and init/dimension state; checkMovementStats 0x25fd0d0 is telemetry",
     "relay": "Dimension::sendPacketForEntity(player, received packet, player)",
     "oracle": "tests/reference/movement_bds_1.6.0.15.json"
+  },
+  "block_break": {
+    "confidence": "VERIFIED_BINARY+DIFFERENTIAL_VERIFIED",
+    "item_use_handle": "0x1ae6290",
+    "reach_limit": 12.5,
+    "reach_constant": "0x2830f48",
+    "reach_error": 7,
+    "reach_basis": "Actor::distanceTo(Vec3(BlockPos)) from the player position to the block minimum corner",
+    "destroy_block": "0x1ab4a80",
+    "destroy_block_internal": "0x1ab4e50",
+    "resend_blocks_around_area": "0x1ae6120",
+    "player_action_handler": "0x182d140",
+    "get_destroy_rate": "0x1ab5820",
+    "get_destroy_progress": "0x22ed290",
+    "get_destroy_speed": "0x22ed000",
+    "crack_scale": 65535.0,
+    "crack_scale_constant": "0x281cd18",
+    "divisor_always_destroyable": 30.0,
+    "divisor_other": 100.0,
+    "not_on_ground_divisor": 5.0,
+    "level_events": {
+      "start_block_cracking": 3600,
+      "stop_block_cracking": 3601,
+      "particles_destroy_block": 2001
+    },
+    "destroy_time_gate": false,
+    "oracle": "tests/reference/break_bds_1.6.0.15.json"
   }
 }

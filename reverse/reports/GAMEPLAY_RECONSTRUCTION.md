@@ -32,8 +32,9 @@ Directive (user, 2026-11-16): gameplay — terrain generation, movement synchron
 | OverworldGenerator heights/surfaces | pending | depends on noise and biomes; intermediate BlockVolume can be dumped from the original under gdb |
 | Caves, ores, trees, structures | pending | `LargeCaveFeature`, `OreFeature`, `TreeFeature` families |
 | Movement (MovePlayer) | TRANSLATED, DIFFERENTIAL_VERIFIED | handler 0x182bcf0 in src/game/server.cpp; packet layout 0x18b4190/0x18b40b0; the oracle observes identical relay/no-correction behaviour on the original and BDS-RE (tests/reference/movement_bds_1.6.0.15.json, test `movement_reference`) |
-| Mining time and reach | next | PlayerAction handler 0x182d140, GameMode::startDestroyBlock 0x1ab44a0, continueDestroyBlock 0x1ab50b0, destroyBlock 0x1ab4a80, Player::getDestroySpeed 0x22ed000 |
-| Item drops and pickup, inventory | pending | handlers listed above |
+| Mining time and reach | TRANSLATED, DIFFERENTIAL_VERIFIED (packet oracle) | ItemUse handle 0x1ae6290 (reach 12.5, error 7), GameMode::destroyBlock 0x1ab4a80, _destroyBlockInternal 0x1ab4e50, PlayerAction handler 0x182d140 (StartBreak crack rate), GameMode::getDestroyRate 0x1ab5820, Player::getDestroyProgress 0x22ed290, Player::getDestroySpeed 0x22ed000; tests/reference/break_bds_1.6.0.15.json, asserted in tests/unit/gameplay_tests.cpp |
+| Item drops and pickup | next | Block::playerDestroy / ItemActor spawn (AddItemActor), TakeItemActor |
+| Inventory transactions | pending | handlers listed above |
 
 ## Recorded findings
 
@@ -45,3 +46,13 @@ Directive (user, 2026-11-16): gameplay — terrain generation, movement synchron
 ### MovePlayer (2026-11-16)
 
 ServerNetworkHandler::handle(MovePlayerPacket) 0x182bcf0: `_getPlayer` (0x182c1c0) returns null unless the runtime id matches the sender's player, and the packet is then ignored. The packet is also ignored while +0x140c (non-zero during dimension changes, compared with 0 by isPlayerInitialized) or the +0x1410 flag is set. With a ride, the rider is positioned by the vehicle. Otherwise Y is clamped with mce::Math::clamp to [-128, 512] (constants 0x281cd04/0x281cd08), the position delta is stored, and: mode 1 with a dead player sets position/rotation; mode 2 sets position/rotation and onGround; other modes set onGround, call checkMovementStats (telemetry only: distance towards Player::DISTANCE_TO_TRANSFORM_EVENT) and Mob::lerpTo(pos, rot, 1 or 3). Head yaw is stored, Actor::checkBlockCollisions runs, the received packet is relayed with Dimension::sendPacketForEntity(player, packet, player) and riders are teleported. Vtable slots resolved via `vtable for ServerPlayer` (0x3283760): +0x60 setPos, +0x70 getPosOld, +0x98 setRot, +0xc0 checkBlockCollisions, +0xe8 Mob::lerpTo, +0x118 positionRider, +0x2e0 Mob::isAlive, +0xac0 checkMovementStats.
+
+### Block breaking (2026-11-16)
+
+Packet oracle: tools/reference/capture_break_oracle.py, survival player at (0.5, 66.62, 0.5) on ground with an empty hand, FLAT world, no StartBreak before the break request. Results (tests/reference/break_bds_1.6.0.15.json):
+
+- grass (distance 3.06), dirt, bedrock (4.40) and stone (11.80) all break: UpdateBlock to air, LevelEvent 2001 at the block centre with the block runtime id, PlayerAction StopBreak (runtime id, zero position) to the breaker. Grass and dirt also spawn an ItemActor (AddItemActor); stone by hand and bedrock drop nothing.
+- stone at 12.78 > 12.5: error 7 → onTransactionError: four UpdateBlock (resendBlocksAroundArea 0x1ae6120), InventoryContent for windows 0, 120, 124, 119 and PlayerHotbar.
+- StartBreak crack data: grass 3640, dirt 4369, stone 436, bedrock 0 — exactly floor(65535 × getDestroyProgress) with hardness 0.6/0.5/1.5/−1 and the 30 (Material::isAlwaysDestroyable) / 100 divisors (constants 0x281c5c4, 0x28323a4). StartBreak has no reach check (the 12.78 block also produced 3600).
+- The PlayerAction handler's action chain: 0 StartBreak (extinguishFire, Block::attack, LevelEvent 3600 unless creative), 1 AbortBreak and 2 StopBreak (LevelEvent 3601), 6, 8 jump, 9/10 sprint, 11/12 sneak, 13 dimension change (ChangeDimensionRequest), 14, 15/16 gliding, 17/18 crack continue, 20 enchantment seed, 21–24 vtable calls. No action destroys a block; the earlier BDS-RE "action 13 creative break" was invented and is removed.
+- SurvivalMode::destroyBlock 0x1abcd90 only refuses when flags +0xa4 and +0xa6 are both set (zeroed by the constructor), so bedrock is not protected on this path.

@@ -73,14 +73,11 @@ whole server session.
 
 ## Remaining differences
 
-- The following distance check in the original handler uses Actor::distanceTo
-  with Vec3(BlockPos), a 12.5 float threshold and error 7. BDS-RE still uses an
-  independent reach policy; the original coordinate basis and downstream checks
-  require separate reconstruction and boundary probes.
-- Matching break requests in a separate exploratory run destroyed grass without
-  a preceding StartBreak and produced AddItemActor, LevelEvent and PlayerAction.
-  BDS-RE's independent timing gate and direct-to-inventory drop policy still
-  differ. They are not made original-equivalent by this validation fix.
+- RESOLVED (2026-11-16): the distance check (Actor::distanceTo(Vec3(BlockPos)) >
+  12.5, error 7) and the break path without a timing gate are now translated; the
+  boundary was probed at 11.80 (broken) and 12.78 (error 7) against the original
+  (tests/reference/break_bds_1.6.0.15.json, docs/GAMEPLAY.md "Block breaking").
+  The direct-to-inventory drop remains a placeholder for ItemActor drops.
 - Successful predicted placement and normal inventory moves were quiet in that
   exploratory run. BDS-RE still sends full inventory responses. Expected-action
   matching, transaction execution and success notifications need separate work.

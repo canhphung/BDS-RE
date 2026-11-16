@@ -5,7 +5,8 @@ player movement and visibility, block breaking/placement, and a 36-slot player
 inventory plus cursor. This is an independent implementation. It does not reproduce
 all Bedrock gameplay or the original terrain generator. The existing terrain,
 movement, mining and inventory algorithms are experimental, not a completed
-reconstruction of BDS. Known mismatches include mining delays, direct inventory
+reconstruction of BDS. Movement and block breaking (timing, reach, crack events)
+are now translated from the binary; known remaining mismatches are direct inventory
 drops and full inventory responses to successful predicted transactions.
 
 The ItemUse held-item/selected-slot rejection branch has now been traced in the
@@ -39,11 +40,35 @@ world generator. Original BDS LevelDB directories are still refused.
 In Creative, the creative inventory contains stone, grass, dirt and bedrock.
 Select one, place it, break it, and check the changes from a second client.
 In Survival, break grass/dirt to obtain dirt directly in inventory and place it;
-placement consumes one item. Bare-hand stone breaking yields no item. Bedrock
-cannot be broken in Survival. Tools, normal item drops/entities, ores, liquids,
-biomes, trees/caves, recipes/crafting, chests, armor, damage, hunger and mobs are
-not implemented. Mining has basic independent timing/reach checks, not a complete
-reconstruction of original hardness/tool rules.
+placement consumes one item. Bare-hand stone breaking yields no item. Tools,
+normal item drops/entities, ores, liquids, biomes, trees/caves, recipes/crafting,
+chests, armor, damage, hunger and mobs are not implemented.
+
+## Block breaking
+
+Translated from the original (ItemUseInventoryTransaction::handle 0x1ae6290,
+GameMode::destroyBlock 0x1ab4a80, PlayerAction handler 0x182d140) and checked
+against the original server with tools/reference/capture_break_oracle.py
+(tests/reference/break_bds_1.6.0.15.json):
+
+- A block is broken by InventoryTransaction ItemUse action 2. There is no
+  destroy-time gate: StartBreak is not required and elapsed time is never checked.
+  PlayerAction 13 does not break blocks (it belongs to dimension changes).
+- After the held-item check (error 3), Actor::distanceTo(Vec3(BlockPos)) > 12.5
+  (player position to the block's minimum corner) is error 7; both errors send
+  resendBlocksAroundArea plus the inventory and hotbar.
+- Success sets air, broadcasts UpdateBlock and LevelEvent 2001 (block runtime id at
+  the block centre) and sends PlayerAction StopBreak to the breaker. Like the
+  original, bedrock breaks through this path in Survival.
+- StartBreak broadcasts LevelEvent 3600 with floor(65535 × rate) to every player,
+  where rate = speed / hardness / (always destroyable ? 30 : 100), speed is 1 for
+  block items and an empty hand, divided by 5 when not on ground, and 0 for
+  negative hardness. Abort/StopBreak broadcast LevelEvent 3601. Creative players
+  send no crack event.
+- Adventure and Visitor players are refused with resendBlocksAroundArea (permission
+  check reduced to these two settings, INFERRED).
+- PLACEHOLDER: drops still go straight into the inventory (lost when full) instead
+  of spawning an ItemActor; this is the next reconstruction step.
 
 Move/split/merge the supported block stacks between inventory and cursor. Closing
 the inventory returns cursor items to available inventory space. If full, remaining
