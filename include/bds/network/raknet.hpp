@@ -60,6 +60,12 @@ class Transport {
                             std::uint64_t now);
     std::vector<Outgoing> poll(std::uint64_t now);
     std::vector<Outgoing> disconnect(const Address &address, std::uint64_t now);
+    // Reliable-ordered application message to a transport-connected peer.
+    // Returns nothing if the peer is unknown, not connected, or closing.
+    std::vector<Outgoing> send(const Address &address, std::span<const std::uint8_t> message,
+                               std::uint64_t now);
+    // True while the peer completed the handshake and is not closing.
+    bool connected(const Address &address) const;
     std::size_t peers() const;
 
   private:

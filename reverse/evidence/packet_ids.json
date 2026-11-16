@@ -1,0 +1,815 @@
+{
+  "sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+  "confidence": "VERIFIED_BINARY",
+  "source": {
+    "function": "MinecraftPackets::createPacket(MinecraftPacketIds)",
+    "address": "0x189f8f0",
+    "size": "0x1549",
+    "jump_table": "0x2824874",
+    "entries": 115,
+    "bounds_check": "dec %esi; sub $0x72 at 0x189f901/0x189f905; ja default"
+  },
+  "unassigned_ids": [
+    16
+  ],
+  "packets": [
+    {
+      "id": 1,
+      "hex": "0x01",
+      "class": "LoginPacket",
+      "case_target": "0x189f940",
+      "construction_site": "0x189f944"
+    },
+    {
+      "id": 2,
+      "hex": "0x02",
+      "class": "PlayStatusPacket",
+      "case_target": "0x189f967",
+      "construction_site": "0x189f96b"
+    },
+    {
+      "id": 3,
+      "hex": "0x03",
+      "class": "ServerToClientHandshakePacket",
+      "case_target": "0x189f98e",
+      "construction_site": "0x189f992"
+    },
+    {
+      "id": 4,
+      "hex": "0x04",
+      "class": "ClientToServerHandshakePacket",
+      "case_target": "0x189f9b5",
+      "construction_site": "0x189f9b9"
+    },
+    {
+      "id": 5,
+      "hex": "0x05",
+      "class": "DisconnectPacket",
+      "case_target": "0x189fa51",
+      "construction_site": "0x189fa55"
+    },
+    {
+      "id": 6,
+      "hex": "0x06",
+      "class": "ResourcePacksInfoPacket",
+      "case_target": "0x189f9dc",
+      "construction_site": "0x189f9e0"
+    },
+    {
+      "id": 7,
+      "hex": "0x07",
+      "class": "ResourcePackStackPacket",
+      "case_target": "0x189fa03",
+      "construction_site": "0x189fa07"
+    },
+    {
+      "id": 8,
+      "hex": "0x08",
+      "class": "ResourcePackClientResponsePacket",
+      "case_target": "0x189fa2a",
+      "construction_site": "0x189fa2e"
+    },
+    {
+      "id": 9,
+      "hex": "0x09",
+      "class": "TextPacket",
+      "case_target": "0x189fa9f",
+      "construction_site": "0x189faa3"
+    },
+    {
+      "id": 10,
+      "hex": "0x0a",
+      "class": "SetTimePacket",
+      "case_target": "0x189fa78",
+      "construction_site": "0x189fa7c"
+    },
+    {
+      "id": 11,
+      "hex": "0x0b",
+      "class": "StartGamePacket",
+      "case_target": "0x189fac6",
+      "construction_site": "0x189faca"
+    },
+    {
+      "id": 12,
+      "hex": "0x0c",
+      "class": "AddPlayerPacket",
+      "case_target": "0x189fb62",
+      "construction_site": "0x189fb66"
+    },
+    {
+      "id": 13,
+      "hex": "0x0d",
+      "class": "AddActorPacket",
+      "case_target": "0x189faed",
+      "construction_site": "0x189faf1"
+    },
+    {
+      "id": 14,
+      "hex": "0x0e",
+      "class": "RemoveActorPacket",
+      "case_target": "0x189fc79",
+      "construction_site": "0x189fc80"
+    },
+    {
+      "id": 15,
+      "hex": "0x0f",
+      "class": "AddItemActorPacket",
+      "case_target": "0x189fb14",
+      "construction_site": "0x189fb18"
+    },
+    {
+      "id": 17,
+      "hex": "0x11",
+      "class": "TakeItemActorPacket",
+      "case_target": "0x189fb3b",
+      "construction_site": "0x189fb3f"
+    },
+    {
+      "id": 18,
+      "hex": "0x12",
+      "class": "MoveActorAbsolutePacket",
+      "case_target": "0x189fb89",
+      "construction_site": "0x189fb90"
+    },
+    {
+      "id": 19,
+      "hex": "0x13",
+      "class": "MovePlayerPacket",
+      "case_target": "0x189fbe9",
+      "construction_site": "0x189fbf0"
+    },
+    {
+      "id": 20,
+      "hex": "0x14",
+      "class": "RiderJumpPacket",
+      "case_target": "0x189fc19",
+      "construction_site": "0x189fc20"
+    },
+    {
+      "id": 21,
+      "hex": "0x15",
+      "class": "UpdateBlockPacket",
+      "case_target": "0x189fca9",
+      "construction_site": "0x189fcb0"
+    },
+    {
+      "id": 22,
+      "hex": "0x16",
+      "class": "AddPaintingPacket",
+      "case_target": "0x18a02a9",
+      "construction_site": "0x18a02b0"
+    },
+    {
+      "id": 23,
+      "hex": "0x17",
+      "class": "ExplodePacket",
+      "case_target": "0x189fd09",
+      "construction_site": "0x189fd10"
+    },
+    {
+      "id": 24,
+      "hex": "0x18",
+      "class": "LevelSoundEventPacket",
+      "case_target": "0x189fd39",
+      "construction_site": "0x189fd40"
+    },
+    {
+      "id": 25,
+      "hex": "0x19",
+      "class": "LevelEventPacket",
+      "case_target": "0x189fd69",
+      "construction_site": "0x189fd70"
+    },
+    {
+      "id": 26,
+      "hex": "0x1a",
+      "class": "BlockEventPacket",
+      "case_target": "0x189fd99",
+      "construction_site": "0x189fda0"
+    },
+    {
+      "id": 27,
+      "hex": "0x1b",
+      "class": "ActorEventPacket",
+      "case_target": "0x189fe59",
+      "construction_site": "0x189fe60"
+    },
+    {
+      "id": 28,
+      "hex": "0x1c",
+      "class": "MobEffectPacket",
+      "case_target": "0x189fe89",
+      "construction_site": "0x189fe90"
+    },
+    {
+      "id": 29,
+      "hex": "0x1d",
+      "class": "UpdateAttributesPacket",
+      "case_target": "0x18a04b9",
+      "construction_site": "0x18a04c0"
+    },
+    {
+      "id": 30,
+      "hex": "0x1e",
+      "class": "InventoryTransactionPacket",
+      "case_target": "0x18a00c9",
+      "construction_site": "0x18a00d0"
+    },
+    {
+      "id": 31,
+      "hex": "0x1f",
+      "class": "MobEquipmentPacket",
+      "case_target": "0x189feb9",
+      "construction_site": "0x189fec0"
+    },
+    {
+      "id": 32,
+      "hex": "0x20",
+      "class": "MobArmorEquipmentPacket",
+      "case_target": "0x189fee9",
+      "construction_site": "0x189fef0"
+    },
+    {
+      "id": 33,
+      "hex": "0x21",
+      "class": "InteractPacket",
+      "case_target": "0x189ff19",
+      "construction_site": "0x189ff20"
+    },
+    {
+      "id": 34,
+      "hex": "0x22",
+      "class": "BlockPickRequestPacket",
+      "case_target": "0x189fdc9",
+      "construction_site": "0x189fdd0"
+    },
+    {
+      "id": 35,
+      "hex": "0x23",
+      "class": "ActorPickRequestPacket",
+      "case_target": "0x189fdf9",
+      "construction_site": "0x189fe00"
+    },
+    {
+      "id": 36,
+      "hex": "0x24",
+      "class": "PlayerActionPacket",
+      "case_target": "0x189ff49",
+      "construction_site": "0x189ff50"
+    },
+    {
+      "id": 37,
+      "hex": "0x25",
+      "class": "ActorFallPacket",
+      "case_target": "0x189ff79",
+      "construction_site": "0x189ff80"
+    },
+    {
+      "id": 38,
+      "hex": "0x26",
+      "class": "HurtArmorPacket",
+      "case_target": "0x189ffa9",
+      "construction_site": "0x189ffb0"
+    },
+    {
+      "id": 39,
+      "hex": "0x27",
+      "class": "SetActorDataPacket",
+      "case_target": "0x189ffd9",
+      "construction_site": "0x189ffe0"
+    },
+    {
+      "id": 40,
+      "hex": "0x28",
+      "class": "SetActorMotionPacket",
+      "case_target": "0x18a0009",
+      "construction_site": "0x18a0010"
+    },
+    {
+      "id": 41,
+      "hex": "0x29",
+      "class": "SetActorLinkPacket",
+      "case_target": "0x18a0309",
+      "construction_site": "0x18a0310"
+    },
+    {
+      "id": 42,
+      "hex": "0x2a",
+      "class": "SetHealthPacket",
+      "case_target": "0x18a0039",
+      "construction_site": "0x18a0040"
+    },
+    {
+      "id": 43,
+      "hex": "0x2b",
+      "class": "SetSpawnPositionPacket",
+      "case_target": "0x18a0069",
+      "construction_site": "0x18a0070"
+    },
+    {
+      "id": 44,
+      "hex": "0x2c",
+      "class": "AnimatePacket",
+      "case_target": "0x18a0099",
+      "construction_site": "0x18a00a0"
+    },
+    {
+      "id": 45,
+      "hex": "0x2d",
+      "class": "RespawnPacket",
+      "case_target": "0x189fc49",
+      "construction_site": "0x189fc50"
+    },
+    {
+      "id": 46,
+      "hex": "0x2e",
+      "class": "ContainerOpenPacket",
+      "case_target": "0x18a0129",
+      "construction_site": "0x18a0130"
+    },
+    {
+      "id": 47,
+      "hex": "0x2f",
+      "class": "ContainerClosePacket",
+      "case_target": "0x18a0159",
+      "construction_site": "0x18a0160"
+    },
+    {
+      "id": 48,
+      "hex": "0x30",
+      "class": "PlayerHotbarPacket",
+      "case_target": "0x18a01b9",
+      "construction_site": "0x18a01c0"
+    },
+    {
+      "id": 49,
+      "hex": "0x31",
+      "class": "InventoryContentPacket",
+      "case_target": "0x18a01e9",
+      "construction_site": "0x18a01f0"
+    },
+    {
+      "id": 50,
+      "hex": "0x32",
+      "class": "InventorySlotPacket",
+      "case_target": "0x18a0219",
+      "construction_site": "0x18a0220"
+    },
+    {
+      "id": 51,
+      "hex": "0x33",
+      "class": "ContainerSetDataPacket",
+      "case_target": "0x18a0189",
+      "construction_site": "0x18a0190"
+    },
+    {
+      "id": 52,
+      "hex": "0x34",
+      "class": "CraftingDataPacket",
+      "case_target": "0x18a0249",
+      "construction_site": "0x18a0250"
+    },
+    {
+      "id": 53,
+      "hex": "0x35",
+      "class": "CraftingEventPacket",
+      "case_target": "0x18a0279",
+      "construction_site": "0x18a0280"
+    },
+    {
+      "id": 54,
+      "hex": "0x36",
+      "class": "GuiDataPickItemPacket",
+      "case_target": "0x189fe29",
+      "construction_site": "0x189fe30"
+    },
+    {
+      "id": 55,
+      "hex": "0x37",
+      "class": "AdventureSettingsPacket",
+      "case_target": "0x18a02d9",
+      "construction_site": "0x18a02e0"
+    },
+    {
+      "id": 56,
+      "hex": "0x38",
+      "class": "BlockActorDataPacket",
+      "case_target": "0x18a0339",
+      "construction_site": "0x18a0340"
+    },
+    {
+      "id": 57,
+      "hex": "0x39",
+      "class": "PlayerInputPacket",
+      "case_target": "0x18a0369",
+      "construction_site": "0x18a0370"
+    },
+    {
+      "id": 58,
+      "hex": "0x3a",
+      "class": "FullChunkDataPacket",
+      "case_target": "0x18a0399",
+      "construction_site": "0x18a03a0"
+    },
+    {
+      "id": 59,
+      "hex": "0x3b",
+      "class": "SetCommandsEnabledPacket",
+      "case_target": "0x18a03c9",
+      "construction_site": "0x18a03d0"
+    },
+    {
+      "id": 60,
+      "hex": "0x3c",
+      "class": "SetDifficultyPacket",
+      "case_target": "0x18a03f9",
+      "construction_site": "0x18a0400"
+    },
+    {
+      "id": 61,
+      "hex": "0x3d",
+      "class": "ChangeDimensionPacket",
+      "case_target": "0x18a0429",
+      "construction_site": "0x18a0430"
+    },
+    {
+      "id": 62,
+      "hex": "0x3e",
+      "class": "SetPlayerGameTypePacket",
+      "case_target": "0x18a0459",
+      "construction_site": "0x18a0460"
+    },
+    {
+      "id": 63,
+      "hex": "0x3f",
+      "class": "PlayerListPacket",
+      "case_target": "0x18a04e9",
+      "construction_site": "0x18a04f0"
+    },
+    {
+      "id": 64,
+      "hex": "0x40",
+      "class": "SimpleEventPacket",
+      "case_target": "0x18a0519",
+      "construction_site": "0x18a0520"
+    },
+    {
+      "id": 65,
+      "hex": "0x41",
+      "class": "EventPacket",
+      "case_target": "0x18a0549",
+      "construction_site": "0x18a0550"
+    },
+    {
+      "id": 66,
+      "hex": "0x42",
+      "class": "SpawnExperienceOrbPacket",
+      "case_target": "0x18a0579",
+      "construction_site": "0x18a0580"
+    },
+    {
+      "id": 67,
+      "hex": "0x43",
+      "class": "ClientboundMapItemDataPacket",
+      "case_target": "0x18a0609",
+      "construction_site": "0x18a0610"
+    },
+    {
+      "id": 68,
+      "hex": "0x44",
+      "class": "MapInfoRequestPacket",
+      "case_target": "0x18a0639",
+      "construction_site": "0x18a0640"
+    },
+    {
+      "id": 69,
+      "hex": "0x45",
+      "class": "RequestChunkRadiusPacket",
+      "case_target": "0x18a05a9",
+      "construction_site": "0x18a05b0"
+    },
+    {
+      "id": 70,
+      "hex": "0x46",
+      "class": "ChunkRadiusUpdatedPacket",
+      "case_target": "0x18a05d9",
+      "construction_site": "0x18a05e0"
+    },
+    {
+      "id": 71,
+      "hex": "0x47",
+      "class": "ItemFrameDropItemPacket",
+      "case_target": "0x18a00f9",
+      "construction_site": "0x18a0100"
+    },
+    {
+      "id": 72,
+      "hex": "0x48",
+      "class": "GameRulesChangedPacket",
+      "case_target": "0x18a07e9",
+      "construction_site": "0x18a07f0"
+    },
+    {
+      "id": 73,
+      "hex": "0x49",
+      "class": "CameraPacket",
+      "case_target": "0x18a07b9",
+      "construction_site": "0x18a07c0"
+    },
+    {
+      "id": 74,
+      "hex": "0x4a",
+      "class": "BossEventPacket",
+      "case_target": "0x18a06c9",
+      "construction_site": "0x18a06d0"
+    },
+    {
+      "id": 75,
+      "hex": "0x4b",
+      "class": "ShowCreditsPacket",
+      "case_target": "0x18a0819",
+      "construction_site": "0x18a0820"
+    },
+    {
+      "id": 76,
+      "hex": "0x4c",
+      "class": "AvailableCommandsPacket",
+      "case_target": "0x18a06f9",
+      "construction_site": "0x18a0700"
+    },
+    {
+      "id": 77,
+      "hex": "0x4d",
+      "class": "CommandRequestPacket",
+      "case_target": "0x18a0729",
+      "construction_site": "0x18a0730"
+    },
+    {
+      "id": 78,
+      "hex": "0x4e",
+      "class": "CommandBlockUpdatePacket",
+      "case_target": "0x18a0789",
+      "construction_site": "0x18a0790"
+    },
+    {
+      "id": 79,
+      "hex": "0x4f",
+      "class": "CommandOutputPacket",
+      "case_target": "0x18a0759",
+      "construction_site": "0x18a0760"
+    },
+    {
+      "id": 80,
+      "hex": "0x50",
+      "class": "UpdateTradePacket",
+      "case_target": "0x18a0669",
+      "construction_site": "0x18a0670"
+    },
+    {
+      "id": 81,
+      "hex": "0x51",
+      "class": "UpdateEquipPacket",
+      "case_target": "0x18a0699",
+      "construction_site": "0x18a06a0"
+    },
+    {
+      "id": 82,
+      "hex": "0x52",
+      "class": "ResourcePackDataInfoPacket",
+      "case_target": "0x18a0849",
+      "construction_site": "0x18a0850"
+    },
+    {
+      "id": 83,
+      "hex": "0x53",
+      "class": "ResourcePackChunkDataPacket",
+      "case_target": "0x18a0879",
+      "construction_site": "0x18a0880"
+    },
+    {
+      "id": 84,
+      "hex": "0x54",
+      "class": "ResourcePackChunkRequestPacket",
+      "case_target": "0x18a08a9",
+      "construction_site": "0x18a08b0"
+    },
+    {
+      "id": 85,
+      "hex": "0x55",
+      "class": "TransferPacket",
+      "case_target": "0x18a0909",
+      "construction_site": "0x18a0910"
+    },
+    {
+      "id": 86,
+      "hex": "0x56",
+      "class": "PlaySoundPacket",
+      "case_target": "0x18a0999",
+      "construction_site": "0x18a09a0"
+    },
+    {
+      "id": 87,
+      "hex": "0x57",
+      "class": "StopSoundPacket",
+      "case_target": "0x18a09c9",
+      "construction_site": "0x18a09d0"
+    },
+    {
+      "id": 88,
+      "hex": "0x58",
+      "class": "SetTitlePacket",
+      "case_target": "0x18a0969",
+      "construction_site": "0x18a0970"
+    },
+    {
+      "id": 89,
+      "hex": "0x59",
+      "class": "AddBehaviorTreePacket",
+      "case_target": "0x18a0939",
+      "construction_site": "0x18a0940"
+    },
+    {
+      "id": 90,
+      "hex": "0x5a",
+      "class": "StructureBlockUpdatePacket",
+      "case_target": "0x18a08d9",
+      "construction_site": "0x18a08e0"
+    },
+    {
+      "id": 91,
+      "hex": "0x5b",
+      "class": "ShowStoreOfferPacket",
+      "case_target": "0x18a09f9",
+      "construction_site": "0x18a0a00"
+    },
+    {
+      "id": 92,
+      "hex": "0x5c",
+      "class": "PurchaseReceiptPacket",
+      "case_target": "0x18a0a89",
+      "construction_site": "0x18a0a90"
+    },
+    {
+      "id": 93,
+      "hex": "0x5d",
+      "class": "PlayerSkinPacket",
+      "case_target": "0x18a0ab9",
+      "construction_site": "0x18a0ac0"
+    },
+    {
+      "id": 94,
+      "hex": "0x5e",
+      "class": "SubClientLoginPacket",
+      "case_target": "0x18a0b49",
+      "construction_site": "0x18a0b50"
+    },
+    {
+      "id": 95,
+      "hex": "0x5f",
+      "class": "WSConnectPacket",
+      "case_target": "0x18a0c09",
+      "construction_site": "0x18a0c10"
+    },
+    {
+      "id": 96,
+      "hex": "0x60",
+      "class": "SetLastHurtByPacket",
+      "case_target": "0x18a0b79",
+      "construction_site": "0x18a0b80"
+    },
+    {
+      "id": 97,
+      "hex": "0x61",
+      "class": "BookEditPacket",
+      "case_target": "0x18a0ba9",
+      "construction_site": "0x18a0bb0"
+    },
+    {
+      "id": 98,
+      "hex": "0x62",
+      "class": "NpcRequestPacket",
+      "case_target": "0x18a0bd9",
+      "construction_site": "0x18a0be0"
+    },
+    {
+      "id": 99,
+      "hex": "0x63",
+      "class": "PhotoTransferPacket",
+      "case_target": "0x18a0cf9",
+      "construction_site": "0x18a0d00"
+    },
+    {
+      "id": 100,
+      "hex": "0x64",
+      "class": "ModalFormRequestPacket",
+      "case_target": "0x18a0c39",
+      "construction_site": "0x18a0c40"
+    },
+    {
+      "id": 101,
+      "hex": "0x65",
+      "class": "ModalFormResponsePacket",
+      "case_target": "0x18a0c69",
+      "construction_site": "0x18a0c70"
+    },
+    {
+      "id": 102,
+      "hex": "0x66",
+      "class": "ServerSettingsRequestPacket",
+      "case_target": "0x18a0c99",
+      "construction_site": "0x18a0ca0"
+    },
+    {
+      "id": 103,
+      "hex": "0x67",
+      "class": "ServerSettingsResponsePacket",
+      "case_target": "0x18a0cc9",
+      "construction_site": "0x18a0cd0"
+    },
+    {
+      "id": 104,
+      "hex": "0x68",
+      "class": "ShowProfilePacket",
+      "case_target": "0x18a0d29",
+      "construction_site": "0x18a0d30"
+    },
+    {
+      "id": 105,
+      "hex": "0x69",
+      "class": "SetDefaultGameTypePacket",
+      "case_target": "0x18a0489",
+      "construction_site": "0x18a0490"
+    },
+    {
+      "id": 106,
+      "hex": "0x6a",
+      "class": "RemoveObjectivePacket",
+      "case_target": "0x18a0a29",
+      "construction_site": "0x18a0a30"
+    },
+    {
+      "id": 107,
+      "hex": "0x6b",
+      "class": "SetDisplayObjectivePacket",
+      "case_target": "0x18a0a59",
+      "construction_site": "0x18a0a60"
+    },
+    {
+      "id": 108,
+      "hex": "0x6c",
+      "class": "SetScorePacket",
+      "case_target": "0x18a0ae9",
+      "construction_site": "0x18a0af0"
+    },
+    {
+      "id": 109,
+      "hex": "0x6d",
+      "class": "LabTablePacket",
+      "case_target": "0x18a0d59",
+      "construction_site": "0x18a0d60"
+    },
+    {
+      "id": 110,
+      "hex": "0x6e",
+      "class": "UpdateBlockSyncedPacket",
+      "case_target": "0x189fcd9",
+      "construction_site": "0x189fce0"
+    },
+    {
+      "id": 111,
+      "hex": "0x6f",
+      "class": "MoveActorDeltaPacket",
+      "case_target": "0x189fbb9",
+      "construction_site": "0x189fbc0"
+    },
+    {
+      "id": 112,
+      "hex": "0x70",
+      "class": "SetScoreboardIdentityPacket",
+      "case_target": "0x18a0b19",
+      "construction_site": "0x18a0b20"
+    },
+    {
+      "id": 113,
+      "hex": "0x71",
+      "class": "SetLocalPlayerAsInitializedPacket",
+      "case_target": "0x18a0de9",
+      "construction_site": "0x18a0df0"
+    },
+    {
+      "id": 114,
+      "hex": "0x72",
+      "class": "UpdateSoftEnumPacket",
+      "case_target": "0x18a0db9",
+      "construction_site": "0x18a0dc0"
+    },
+    {
+      "id": 115,
+      "hex": "0x73",
+      "class": "NetworkStackLatencyPacket",
+      "case_target": "0x18a0d89",
+      "construction_site": "0x18a0d90"
+    }
+  ]
+}

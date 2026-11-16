@@ -1,8 +1,15 @@
 #include "bds/network/discovery.hpp"
 #include "bds/network/raknet.hpp"
+#include "bds/core/logger.hpp"
+#include "bds/network/batch.hpp"
+#include "bds/network/connection.hpp"
+#include <map>
 #include <algorithm>
+#include <charconv>
 #include <array>
 #include <chrono>
+#include <optional>
+#include <string>
 #include <random>
 #include <stdexcept>
 #ifdef _WIN32
@@ -43,10 +50,24 @@ void close_socket(Socket s) {
     if (s != invalid)
         closesocket(s);
 }
-bool would_block() {
+enum class ReceiveError { drained, skip, fatal };
+ReceiveError receive_error() {
+    switch (WSAGetLastError()) {
+    case WSAEWOULDBLOCK:
+        return ReceiveError::drained;
+    // An ICMP port-unreachable for an earlier send, or an oversized datagram,
+    // concerns one peer only; keep draining the queue for everyone else.
+    case WSAEINTR:
+    case WSAECONNRESET:
+    case WSAEMSGSIZE:
+        return ReceiveError::skip;
+    default:
+        return ReceiveError::fatal;
+    }
+}
+bool family_unavailable() {
     const auto error = WSAGetLastError();
-    return error == WSAEWOULDBLOCK || error == WSAEINTR || error == WSAEMSGSIZE ||
-           error == WSAECONNRESET;
+    return error == WSAEAFNOSUPPORT || error == WSAEPROTONOSUPPORT || error == WSAEADDRNOTAVAIL;
 }
 #else
 using Socket = int;
@@ -55,10 +76,23 @@ void close_socket(Socket s) {
     if (s != invalid)
         ::close(s);
 }
-bool would_block() {
-    return errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR;
+enum class ReceiveError { drained, skip, fatal };
+ReceiveError receive_error() {
+    if (errno == EAGAIN || errno == EWOULDBLOCK)
+        return ReceiveError::drained;
+    if (errno == EINTR || errno == ECONNREFUSED)
+        return ReceiveError::skip;
+    return ReceiveError::fatal;
+}
+bool family_unavailable() {
+    return errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT || errno == EADDRNOTAVAIL;
 }
 #endif
+// The host lacks this address family (e.g. IPv6 disabled). Distinct from a
+// port conflict, which stays fatal.
+struct FamilyUnavailable : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
 raknet::Address peer_address(const sockaddr_storage &storage) {
     raknet::Address out;
     if (storage.ss_family == AF_INET) {
@@ -96,9 +130,13 @@ void send_packet(Socket socket, const raknet::Address &to, std::span<const std::
 }
 
 Socket bind_socket(int family, unsigned port) {
+    const char *name = family == AF_INET ? "IPv4" : "IPv6";
     Socket s = ::socket(family, SOCK_DGRAM, IPPROTO_UDP);
-    if (s == invalid)
-        throw std::runtime_error("cannot create UDP socket");
+    if (s == invalid) {
+        if (family_unavailable())
+            throw FamilyUnavailable(std::string(name) + " not supported");
+        throw std::runtime_error(std::string("cannot create ") + name + " UDP socket");
+    }
     try {
 #ifdef _WIN32
         BOOL exclusive = TRUE;
@@ -128,8 +166,11 @@ Socket bind_socket(int family, unsigned port) {
             address.sin6_family = AF_INET6;
             address.sin6_port = htons(static_cast<unsigned short>(port));
             address.sin6_addr = in6addr_any;
-            if (::bind(s, reinterpret_cast<const sockaddr *>(&address), sizeof(address)) != 0)
+            if (::bind(s, reinterpret_cast<const sockaddr *>(&address), sizeof(address)) != 0) {
+                if (family_unavailable())
+                    throw FamilyUnavailable("IPv6 not supported");
                 throw std::runtime_error("cannot bind configured IPv6 port");
+            }
         }
     } catch (...) {
         close_socket(s);
@@ -157,12 +198,86 @@ std::string server_advertisement(const Properties &p, std::uint64_t guid) {
     constexpr const char *modes[] = {"Survival", "Creative", "Adventure"};
     return "MCPE;" + field(p.server_name) + ";282;1.6.0;0;" + std::to_string(p.max_players) + ";" +
            std::to_string(guid) + ";" + field(p.level_name) + ";" +
-           modes[p.gamemode <= 2 ? p.gamemode : 0] + ";0;";
+           // Final field: the original Linux dedicated server advertises 1
+           // (reference capture); its AppPlatform comparison at 0x1827a75 is
+           // otherwise unresolved.
+           modes[p.gamemode <= 2 ? p.gamemode : 0] + ";1;";
 }
 struct DiscoveryServer::Impl {
     std::array<Socket, 2> sockets{invalid, invalid};
     std::uint64_t guid = 0;
     std::unique_ptr<raknet::Transport> transport;
+    // Minecraft protocol state per transport peer; never touches the World.
+    std::map<raknet::Address, protocol::GameConnection> connections;
+    // One server key pair for all handshakes, generated at startup.
+    std::shared_ptr<protocol::ServerSecrets> secrets = std::make_shared<protocol::ServerSecrets>();
+    // Valid during poll(); connections only call admission from within poll.
+    const Properties *properties = nullptr;
+    AccessLists *access = nullptr;
+    std::uint64_t world_age = 0;
+    // Level::getNextRuntimeID / getNewUniqueID analogue; ids are never reused.
+    std::int64_t next_entity_id = 1;
+
+    protocol::StartGame start_game() {
+        const auto &p = *properties;
+        protocol::StartGame game;
+        game.unique_id = next_entity_id;
+        game.runtime_id = static_cast<std::uint64_t>(next_entity_id++);
+        game.player_game_type = static_cast<std::int32_t>(p.gamemode);
+        auto &s = game.settings;
+        // The seed is only advertised: this server does not generate terrain.
+        // A purely numeric level-seed is sent as-is, anything else as 0 (policy).
+        std::int32_t seed = 0;
+        const auto *begin = p.seed.data();
+        if (!p.seed.empty() && std::from_chars(begin, begin + p.seed.size(), seed).ptr != begin + p.seed.size())
+            seed = 0;
+        s.seed = seed;
+        s.generator = p.level_type == "FLAT"     ? protocol::Generator::Flat
+                      : p.level_type == "LEGACY" ? protocol::Generator::Legacy
+                                                 : protocol::Generator::Overworld;
+        s.game_type = static_cast<std::int32_t>(p.gamemode);
+        s.difficulty = static_cast<std::int32_t>(p.difficulty);
+        // The original sent time == current tick for a fresh world (reference capture).
+        s.time = static_cast<std::int32_t>(world_age);
+        s.commands_enabled = p.cheats;
+        s.texture_packs_required = p.texturepack_required;
+        s.default_player_permission = p.permission == "visitor" ? 0 : p.permission == "operator" ? 2 : 1;
+        s.server_chunk_tick_range = static_cast<std::int32_t>(p.tick_distance);
+        game.x = static_cast<float>(s.spawn.x) + 0.5f;
+        game.y = static_cast<float>(s.spawn.y) + 1.62f; // player position is eye height
+        game.z = static_cast<float>(s.spawn.z) + 0.5f;
+        game.level_id = p.level_name;
+        game.level_name = p.level_name;
+        game.current_tick = world_age;
+        // The original sends a random version-4 UUID here (reference capture).
+        auto bytes = secrets->random.bytes(16);
+        bytes[6] = static_cast<std::uint8_t>((bytes[6] & 0x0f) | 0x40);
+        bytes[8] = static_cast<std::uint8_t>((bytes[8] & 0x3f) | 0x80);
+        static constexpr char digits[] = "0123456789abcdef";
+        for (std::size_t i = 0; i < bytes.size(); ++i) {
+            if (i == 4 || i == 6 || i == 8 || i == 10)
+                game.multiplayer_correlation_id.push_back('-');
+            game.multiplayer_correlation_id.push_back(digits[bytes[i] >> 4]);
+            game.multiplayer_correlation_id.push_back(digits[bytes[i] & 15]);
+        }
+        return game;
+    }
+    std::optional<std::string> admit(const auth::Identity &identity) {
+        // Login handler 0x1828b2f-0x1828bf5: when the whitelist is enabled,
+        // Whitelist::tryUpdateEntries then Whitelist::isAllowed, else
+        // disconnectionScreen.notAllowed.
+        if (!properties || !access || !properties->whitelist)
+            return std::nullopt;
+        const auto xuid = identity.xbox_authenticated ? identity.xuid : std::string();
+        try {
+            access->try_update_entries(identity.identity, xuid, identity.display_name);
+        } catch (const std::exception &error) {
+            log(std::string("whitelist update failed: ") + error.what());
+        }
+        if (access->is_allowed(identity.identity, xuid))
+            return std::nullopt;
+        return std::string(protocol::not_allowed);
+    }
 #ifdef _WIN32
     bool initialized = false;
 #endif
@@ -176,8 +291,20 @@ struct DiscoveryServer::Impl {
         try {
             std::random_device random;
             guid = (static_cast<std::uint64_t>(random()) << 32) | random();
-            sockets[0] = bind_socket(AF_INET, p.port);
-            sockets[1] = bind_socket(AF_INET6, p.port_v6);
+            // Mirrors RakPeerHelper::peerStartup (0x192f670): when one family is
+            // unsupported the original retries with the other family only. Other
+            // bind failures, such as a port already in use, remain fatal here.
+            const std::array<int, 2> families{AF_INET, AF_INET6};
+            const std::array<unsigned, 2> ports{p.port, p.port_v6};
+            for (std::size_t i = 0; i < sockets.size(); ++i) {
+                try {
+                    sockets[i] = bind_socket(families[i], ports[i]);
+                } catch (const FamilyUnavailable &) {
+                    sockets[i] = invalid;
+                }
+            }
+            if (sockets[0] == invalid && sockets[1] == invalid)
+                throw std::runtime_error("neither IPv4 nor IPv6 UDP is supported");
             transport = std::make_unique<raknet::Transport>(guid);
         } catch (...) {
             cleanup();
@@ -201,16 +328,24 @@ struct DiscoveryServer::Impl {
 };
 DiscoveryServer::DiscoveryServer(const Properties &p) : impl_(std::make_unique<Impl>(p)) {}
 DiscoveryServer::~DiscoveryServer() = default;
-void DiscoveryServer::poll(const Properties &p) {
+void DiscoveryServer::poll(const Properties &p, AccessLists &access, std::uint64_t world_age) {
+    impl_->properties = &p;
+    impl_->access = &access;
+    impl_->world_age = world_age;
     const auto advertisement = server_advertisement(p, impl_->guid);
     const auto now =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
                                        std::chrono::steady_clock::now().time_since_epoch())
                                        .count());
-    for (const auto &outgoing : impl_->transport->poll(now))
-        send_packet(impl_->sockets[outgoing.address.ipv6 ? 1 : 0], outgoing.address,
-                    outgoing.bytes);
-    for (auto socket : impl_->sockets)
+    std::erase_if(impl_->connections, [&](const auto &entry) { return !impl_->transport->connected(entry.first); });
+    for (const auto &outgoing : impl_->transport->poll(now)) {
+        const auto socket = impl_->sockets[outgoing.address.ipv6 ? 1 : 0];
+        if (socket != invalid)
+            send_packet(socket, outgoing.address, outgoing.bytes);
+    }
+    for (auto socket : impl_->sockets) {
+        if (socket == invalid)
+            continue;
         for (unsigned packet = 0; packet < 32; ++packet) {
             std::array<std::uint8_t, 2048> bytes{};
             sockaddr_storage sender{};
@@ -225,8 +360,11 @@ void DiscoveryServer::poll(const Properties &p) {
                                         reinterpret_cast<sockaddr *>(&sender), &length);
 #endif
             if (count < 0) {
-                if (would_block())
+                const auto error = receive_error();
+                if (error == ReceiveError::drained)
                     break;
+                if (error == ReceiveError::skip)
+                    continue;
                 throw std::runtime_error("UDP receive failed");
             }
             const auto incoming = std::span(bytes).first(static_cast<std::size_t>(count));
@@ -239,11 +377,52 @@ void DiscoveryServer::poll(const Properties &p) {
             auto result = impl_->transport->receive(from, incoming, now);
             for (const auto &outgoing : result.outgoing)
                 send_packet(socket, outgoing.address, outgoing.bytes);
-            // Transport connection is not a login. Until authentication/batching exists,
-            // reject application traffic explicitly rather than creating a fake player.
-            if (!result.applications.empty())
-                for (const auto &outgoing : impl_->transport->disconnect(from, now))
-                    send_packet(socket, outgoing.address, outgoing.bytes);
+            // A transport connection is not a login: only 0xfe batches reach the
+            // Minecraft protocol layer, and it never creates a player yet.
+            for (const auto &application : result.applications) {
+                protocol::ConnectionOutput output;
+                if (application.bytes.empty() || application.bytes[0] != protocol::batch_id)
+                    output = {{}, true, "non-batch application message"};
+                else
+                    output = impl_->connections
+                                 .try_emplace(from, auth::LoginPolicy{p.online_mode, {std::string(auth::mojang_root_key)}},
+                                              protocol::GameConnection::Clock{}, impl_->secrets,
+                                              protocol::GameConnection::Options{
+                                                  p.texturepack_required,
+                                                  [impl = impl_.get()](const auth::Identity &identity) {
+                                                      return impl->admit(identity);
+                                                  },
+                                                  [impl = impl_.get()] { return impl->start_game(); },
+                                                  static_cast<std::int32_t>(p.view_distance)})
+                                 .first->second.receive(application.bytes);
+                for (const auto &message : output.messages)
+                    for (const auto &outgoing : impl_->transport->send(from, message, now))
+                        send_packet(socket, outgoing.address, outgoing.bytes);
+                if (!output.close && !output.reason.empty())
+                    log(output.reason);
+                if (output.close) {
+                    log("closing connection: " + output.reason);
+                    for (const auto &outgoing : impl_->transport->disconnect(from, now))
+                        send_packet(socket, outgoing.address, outgoing.bytes);
+                    impl_->connections.erase(from);
+                    break;
+                }
+            }
         }
+    }
+}
+std::optional<unsigned> DiscoveryServer::bound_port(bool ipv6) const {
+    const auto socket = impl_->sockets[ipv6 ? 1 : 0];
+    if (socket == invalid)
+        return std::nullopt;
+    sockaddr_storage storage{};
+#ifdef _WIN32
+    int length = sizeof(storage);
+#else
+    socklen_t length = sizeof(storage);
+#endif
+    if (getsockname(socket, reinterpret_cast<sockaddr *>(&storage), &length) != 0)
+        throw std::runtime_error("cannot query bound UDP port");
+    return peer_address(storage).port;
 }
 } // namespace bds

@@ -675,6 +675,22 @@ std::vector<Outgoing> Transport::poll(std::uint64_t now) {
     }
     return result;
 }
+std::vector<Outgoing> Transport::send(const Address &address, std::span<const std::uint8_t> message,
+                                      std::uint64_t now) {
+    std::vector<Outgoing> result;
+    auto i = impl_->peers.find(address);
+    if (i == impl_->peers.end() || i->second.stage != Impl::Stage::connected)
+        return result;
+    for (auto &bytes : i->second.channel.send(message, now))
+        result.push_back({address, std::move(bytes)});
+    if (!i->second.channel.alive())
+        impl_->peers.erase(i);
+    return result;
+}
+bool Transport::connected(const Address &address) const {
+    auto i = impl_->peers.find(address);
+    return i != impl_->peers.end() && i->second.stage == Impl::Stage::connected;
+}
 std::vector<Outgoing> Transport::disconnect(const Address &from, std::uint64_t now) {
     std::vector<Outgoing> result;
     auto i = impl_->peers.find(from);

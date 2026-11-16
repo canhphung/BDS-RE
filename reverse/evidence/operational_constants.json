@@ -29,5 +29,45 @@
     "guid_write": "0x2792455",
     "magic_write": "0x2792472",
     "advertisement_length_write": "0x188da95"
+  },
+  "ip_family_fallback": {
+    "function": "RakPeerHelper::peerStartup(RakNet::RakPeerInterface*, int, unsigned short, unsigned short)",
+    "address": "0x192f670",
+    "size": "0x5b1",
+    "ipv6_descriptor_family_write": {
+      "site": "0x192f7f9",
+      "value": 10
+    },
+    "dual_stack_startup_call": "0x192f93b",
+    "retry_result_codes": {
+      "compare_sites": [
+        "0x192f946",
+        "0x192f956"
+      ],
+      "values": [
+        4,
+        7
+      ]
+    },
+    "ipv4_only_retry": {
+      "descriptor_count_write": "0x192f96c",
+      "count": 1
+    },
+    "ipv6_only_retry": {
+      "call": "0x192f9db",
+      "target": "RakPeerHelper::_resetToIPv6Only(RakNet::SocketDescriptor*, int&)",
+      "target_address": "0x192fc70"
+    },
+    "log_call": {
+      "site": "0x192fc04",
+      "target": "RakPeerHelper::LogIPSupport()",
+      "target_address": "0x192fce0"
+    },
+    "log_strings": {
+      "0x2827cf0": "IPv4 ",
+      "0x2827cf6": "supported, port: ",
+      "0x2876e67": "not supported"
+    },
+    "interpretation": "Result codes 4/7 are INFERRED to be RakNet StartupResult SOCKET_FAMILY_NOT_SUPPORTED/SOCKET_FAILED_TEST_SEND from the upstream open-source enum order; not confirmed from binary type data."
   }
 }

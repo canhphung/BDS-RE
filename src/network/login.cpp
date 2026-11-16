@@ -34,6 +34,10 @@ public:
 private:std::span<const std::uint8_t> data_;
 };
 }
+std::int32_t login_protocol(std::span<const std::uint8_t> payload) {
+ Reader reader(payload);
+ return static_cast<std::int32_t>(reader.integer(true));
+}
 UnverifiedLoginBody decode_login_body(std::span<const std::uint8_t> payload) {
  if(payload.size()>limit)throw std::invalid_argument("login body exceeds limit");
  Reader outer(payload);

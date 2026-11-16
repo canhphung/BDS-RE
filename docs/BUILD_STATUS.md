@@ -47,3 +47,94 @@ The initial operational CI at 250e810 passed all Linux GCC/Clang/sanitizer jobs 
 Linux GCC Debug, Release and ASan+UBSan each execute 13/13 CTest cases successfully. New tests are raknet (wire fixtures, sequence wrap arithmetic, padding, ACK/NACK, loss/retry, duplicates, ordered/sequenced delivery, bounded split reassembly, peer limits/expiry) and raknet_handshake (independent Python client over real IPv4/IPv6 UDP, protocol 9 negotiation, 20-address acceptance, forced retransmission, ping/pong and unauthenticated-application rejection). These do not count as Minecraft client or differential verification. The accompanying local source-map correlator processed 2,500 supplied module rows and produced 1,429 INFERRED navigation candidates; its raw input/output remain ignored.
 
 [Run 43843720476](https://github.com/canhphung/BDS-RE/actions/runs/43843720476) completed successfully for source commit `4cdd95e317bb311e52eb64478bdf6d225c509578`. All seven jobs passed: GCC/Clang Debug/Release, Linux sanitizers, native Windows MSVC Debug/Release. Both Windows logs explicitly report 100% tests passed, 0 tests failed out of 13. This includes actual IPv4/IPv6 UDP handshake tests with an independent protocol client, not a Minecraft client. No authenticated login, spawn or gameplay verification is claimed.
+
+## Network robustness slice (local, IPv4-only host)
+
+Verified in a cloud container whose kernel rejects AF_INET6 sockets (EAFNOSUPPORT). Before this change the server exited 1 with "cannot create UDP socket" and both Python integration tests failed creating IPv6 sockets (11/13). Now:
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 14/14 CTest |
+| GCC 13.3.0 | Release | PASS, 14/14 CTest |
+| Clang 18.1.3 | Release | PASS, 14/14 CTest |
+
+CMake 3.28.3, Ninja 1.11.1. On this host the integration tests exercise the IPv4-only fallback path and assert the `IPv6 not supported` log; dual-stack hosts (CI) still exercise both families. New test runtime_failure forces an in-loop exception (world age exhaustion three ticks after load) and checks exit 1, the logged cause, and a persisted emergency snapshot with the advanced age. Windows receive-error classification (WSAECONNRESET/WSAEMSGSIZE skip one datagram) compiles only on Windows and awaits native CI.
+
+## Game-packet batch slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 15/15 CTest |
+| GCC 13.3.0 | Release | PASS, 15/15 CTest |
+| Clang 18.1.3 | Release | PASS, 15/15 CTest |
+
+New test `batch` covers varint/BinaryStream codecs, header bit layout, zlib round trips with level-7 header bytes, truncated/corrupt/trailing streams, a 64 MiB decompression bomb stopped at 4 MiB, a Python-generated batch fixture, the generated packet id header against reverse/evidence/packet_ids.json, and the pre-login state machine. `raknet_handshake` now also sends Python-built zlib LoginPacket batches over real UDP and checks the DisconnectPacket (protocol 282) and PlayStatus 1/2 (281/283) replies followed by RakNet disconnect. Vendored zlib compiles on MSVC only once native CI runs; no real Minecraft client was used.
+
+## Login authentication slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 16/16 CTest |
+| GCC 13.3.0 | Release | PASS, 16/16 CTest |
+| Clang 18.1.3 | Release | PASS, 16/16 CTest |
+
+New test `auth`: RFC 4648 base64 vectors and strictness, FIPS 180-2 SHA-256/384 vectors, ES384 verification of signatures produced by Python `cryptography` (tampered input/signature, off-curve and truncated keys), the reconstructed chain algorithm (trusted chain, Mojang-key rejection, inclusive nbf/exp bounds, forged leaf, non-CA intermediate, expired leaf, missing nbf, ES256 header, foreign client token, self-signed acceptance only with online mode off, chain length and malformed input) and the GameConnection outcomes. `raknet_handshake` now sends these signed logins over real UDP as split RakNet messages and checks the self-signed success, forged rejection and outdated client/server replies. Vendored Mbed TLS compiles on MSVC only once native CI runs. No genuine Xbox Live chain or Minecraft client has been tested.
+
+## Encryption handshake slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 16/16 CTest |
+| GCC 13.3.0 | Release | PASS, 16/16 CTest |
+| Clang 18.1.3 | Release | PASS, 16/16 CTest |
+
+`auth` adds the NIST SP 800-38A CFB8-AES256 vector (with stream state across calls), ECDH/session-key/sealed-packet vectors from Python `cryptography`, tamper/replay/short-packet rejection, server token signature checks and a full in-process handshake playing the client. `raknet_handshake` now completes the encrypted handshake over UDP with an independent Python client (token signature, ECDH, AES-CFB8, checksums) up to PlayStatus LoginSuccess. CI installs `cryptography` through actions/setup-python and passes that interpreter to CMake; this workflow change has not run yet. No Minecraft client was used.
+
+## Admission and resource pack slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 16/16 CTest |
+| GCC 13.3.0 | Release | PASS, 16/16 CTest |
+| Clang 18.1.3 | Release | PASS, 16/16 CTest |
+
+`server` adds whitelist UUID parsing/normalisation, UUID/XUID admission, XUID fill-in and gamertag update with persistence. `auth` adds the encrypted PlayStatus/ResourcePacksInfo/ResourcePackStack sequence, Completed, refusal, download request, malformed responses and admission refusal. `raknet_handshake` drives the pack exchange over UDP with the Python client and toggles `whitelist on` through the console to check a plaintext notAllowed refusal. During development ASan caught a use-after-free in new test code (a ByteReader over a temporary); it was fixed before commit. No Minecraft client was used.
+
+## StartGame slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 17/17 CTest |
+| GCC 13.3.0 | Release | PASS, 17/17 CTest |
+| Clang 18.1.3 | Release | PASS, 17/17 CTest |
+
+New test `level_packets` compares StartGame (all LevelSettings fields, negative/extreme values, palette) and the small level packets with golden bytes from an independent Python encoder, plus zigzag varints and the chunk radius clamp. `auth` covers the Completed → level data sequence, ignored packets while spawning and the radius reply. `raknet_handshake` parses StartGame with an independent Python reader over UDP and checks ChunkRadiusUpdated. No Minecraft client was used.
+
+## Reference-run slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 17/17 CTest |
+| GCC 13.3.0 | Release | PASS, 17/17 CTest |
+| Clang 18.1.3 | Release | PASS, 17/17 CTest |
+
+The original BDS 1.6.0.15 ran locally (OpenSSL 1.0.2u, IPv6 shim) and the independent client in tools/reference joined it through StartGame and 113 FullChunkData packets. `level_packets` now also checks byte equality with the captured StartGame; `raknet_handshake` runs encrypted joins against BDS-RE with that same client (StartGame now spans split RakNet messages). `discovery` checks the original advertisement format. No Minecraft client was used.
+
+## Merge review of clever-newton-bboqgm
+
+Reviewed source: `f8a6f27ce1aa462e577b1a5537aacb0f199327da` from
+`claude/clever-newton-bboqgm`, merged against `819c225` in a separate worktree.
+No merge conflicts occurred; the original workspace's uncommitted work was preserved.
+The independent synthetic StartGame fixture now compares every byte instead of only
+checking the encoded length; both this check and the captured reference fixture pass.
+
+Local review ran GCC 14.2 Debug and ASan+UBSan: 17/17 CTest passed in each,
+including live IPv4/IPv6 UDP, encrypted Login, resource pack negotiation and StartGame.
+The integration client requires Python `cryptography`, installed in the local tool
+virtual environment before running the full suite.
+
+[Native CI run 43872363343](https://github.com/canhphung/BDS-RE/actions/runs/43872363343)
+for `f8a6f27` passed all seven jobs (GCC/Clang Debug/Release, sanitizers,
+Windows MSVC Debug/Release). Both Windows job logs explicitly report 17/17 tests
+passed. These are branch results, not a claim that the final merge commit has
+already run in CI. Chunk streaming, Minecraft client spawn and gameplay remain pending.

@@ -46,5 +46,441 @@
       "value": 19133
     }
   ],
-  "scope": "static constants only; login and discovery formats and actual bound ports not yet verified"
+  "scope": "static constants only; login and discovery formats and actual bound ports not yet verified",
+  "game_batch": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "batch_message_id": {
+      "value": "0xfe",
+      "compare_site": "0x1926143",
+      "function": "RakNetInstance::runEvents() 0x1925810"
+    },
+    "send_prefix": {
+      "function": "RakNetInstance::RakNetNetworkPeer::sendPacket 0x192a2f0",
+      "resize_size_plus_one": "0x192a36f/0x192a37d",
+      "copy_at_index_1": "0x192a39a-0x192a3d6",
+      "note": "value of byte 0 is set outside this function; 0xfe is INFERRED from the receive-side compare"
+    },
+    "compression": {
+      "compress": "Util::compress 0x19484f0",
+      "level": {
+        "site": "0x1948514",
+        "value": 7
+      },
+      "compressor": "leveldb::ZlibCompressor(int) 0x194d920",
+      "raw_flag": {
+        "site": "0x194d92d",
+        "value": 0
+      },
+      "window_bits": {
+        "function": "leveldb::ZlibCompressorBase::_window() 0x2807ed0",
+        "non_raw": 15,
+        "raw": -15
+      },
+      "deflate_init": "deflateInit2_ call 0x2807d6b",
+      "decompress": "Util::decompress(bool&) 0x1948590 -> ZlibCompressor 0x19485d3"
+    },
+    "batch_framing": {
+      "function": "BatchedNetworkPeer::receivePacket 0x18e3c80",
+      "per_packet": "ReadOnlyBinaryStream::getString call 0x18e3df1 (unsigned varint length + bytes)",
+      "loop_until_empty": "getUnreadLength compares 0x18e3dc5/0x18e3e35"
+    },
+    "packet_header": {
+      "write": "PacketHeader::write 0x18a8290 -> BinaryStream::writeUnsignedVarInt",
+      "packet_id_mask": {
+        "function": "0x1883980",
+        "mask": "0x3ff"
+      },
+      "sender_subclient": {
+        "function": "0x18839a0",
+        "shift": 10,
+        "mask": 3
+      },
+      "target_subclient": {
+        "function": "0x18839d0",
+        "shift": 12,
+        "mask": 3
+      }
+    },
+    "packet_ids": "reverse/evidence/packet_ids.json (MinecraftPackets::createPacket 0x189f8f0)",
+    "login_version_check": {
+      "function": "ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&) 0x1827e50",
+      "protocol_field": "+0x14",
+      "compare_sites": [
+        "0x1827ebe",
+        "0x1827ed3"
+      ],
+      "older_client_status": 1,
+      "newer_client_status": 2,
+      "select_site": "0x1827ef9-0x1827f09",
+      "send": "PacketSender::sendToPrimaryClient call 0x1827f3b"
+    },
+    "play_status_write": {
+      "function": "PlayStatusPacket::write 0x1843960",
+      "field": "BinaryStream::writeSignedBigEndianInt call 0x184397b"
+    },
+    "disconnect_write": {
+      "function": "DisconnectPacket::write 0x1840f10",
+      "hide_flag": "writeBool call 0x1840f36 (field +0x11)",
+      "message": "writeString call 0x1840f58 only when flag is false (branch 0x1840f43)"
+    }
+  },
+  "login_authentication": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "mojang_root_key": {
+      "address": "0x242b423",
+      "encoding": "base64 DER SubjectPublicKeyInfo, P-384"
+    },
+    "algorithms_table_strings": {
+      "0x242b5b4": "RS256",
+      "0x242b5ba": "RS384",
+      "0x242b5c0": "RS512",
+      "0x242b5c6": "ES256",
+      "0x242b5cc": "ES384",
+      "0x242b5d2": "ES512"
+    },
+    "webtoken_verify": {
+      "function": "WebToken::verify(vector<string> const&) const 0x19dca50",
+      "header_x5u": "0x19dca96",
+      "header_alg": "0x19dcb2b",
+      "algorithm_lookup": "getAlgorithm(string) call 0x19dcbbc",
+      "signature_to_der": "call 0x19dcd18",
+      "key_manager_verify": "KeyManager::verify call 0x19dcd77 (0x19e57e0)"
+    },
+    "chain_verify": {
+      "function": "UnverifiedCertificate::verify 0x19e41d0",
+      "own_token_first": "WebToken::verify call 0x19e421a",
+      "parent_recursion": "call 0x19e4276",
+      "ca_check": "Certificate::isCertificateAuthority call 0x19e42c2",
+      "retry_with_parent_identity_key": "emplace_back 0x19e42fb, WebToken::verify 0x19e4314",
+      "build_certificate": "Certificate(UnverifiedCertificate const&, unique_ptr<Certificate>) call 0x19e435f"
+    },
+    "payload_fields": {
+      "identityPublicKey": "0x19e44b8",
+      "certificateAuthority": "0x19e4404 (asBool)",
+      "nbf": "0x19e5104 (asInt64)",
+      "exp": "0x19e51a4 (asInt64)",
+      "chain": "UnverifiedCertificate::fromString 0x19e3c71"
+    },
+    "validate": {
+      "function": "Certificate::validate(long) 0x19e4f40",
+      "parent_first": "0x19e4f94",
+      "nbf_positive_and_not_after_now": "0x19e4fe4-0x19e4ffa",
+      "exp_positive_not_before_now_not_before_nbf": "0x19e5020-0x19e504b"
+    },
+    "connection_request_verify": {
+      "function": "ConnectionRequest::verify(vector<string> const&, long) 0x18f4030",
+      "chain": "call 0x18f407f",
+      "client_token_with_leaf_identity_key": "getIdentityPublicKey 0x18f40d2, WebToken::verify 0x18f4110",
+      "validate": "ConnectionRequest::validate call 0x18f41cb"
+    },
+    "verify_self_signed": {
+      "function": "ConnectionRequest::verifySelfSigned 0x18f42a0",
+      "trusted_key": "UnverifiedCertificate::getIdentityPublicKey 0x18f42fb",
+      "chain": "call 0x18f433d",
+      "time": "validate at the certificate's own nbf (0x18f43c7, 0x18f4404)",
+      "client_token_not_checked": "no WebToken::verify call in this function"
+    },
+    "handler_flow": {
+      "function": "ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&) 0x1827e50",
+      "now": "getEpochTimeS call 0x18280a0",
+      "verify": "call 0x18280e2",
+      "flag_0xc0": {
+        "test": "0x1828100",
+        "interpretation": "INFERRED online-mode: when clear, verifySelfSigned is tried (0x1828120)"
+      },
+      "failure": "disconnectClient('disconnectionScreen.notAuthenticated') 0x1828371"
+    },
+    "disconnect_reasons": {
+      "outdatedClient": "0x1827f62 (disconnectClient 0x1827f86)",
+      "outdatedServer": "0x1827fc0 (disconnectClient 0x1827fea)",
+      "notAuthenticated": "0x1828347",
+      "skip_message_argument": "xor %ecx,%ecx at 0x1827f76 and 0x1828361 (message shown)",
+      "disconnect_client": "ServerNetworkHandler::disconnectClient 0x1825660 builds DisconnectPacket(message, false) at 0x18256a3"
+    },
+    "next_step_strings": {
+      "salt": "0x182907b",
+      "signedToken": "0x1829116",
+      "note": "ServerToClientHandshake/encryption follows successful authentication; not yet traced"
+    }
+  },
+  "session_encryption": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "libCrypto_sha256": "a9fb4397dd236e34e583f9d5cff5a00d0bda3fbdfd1c12245072ba2f23b5d034",
+    "handler": {
+      "function": "ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&) 0x1827e50",
+      "encrypted_peer_lookup": "NetworkHandler::getEncryptedPeerForUser call 0x1828f26 (encryption only when it returns a peer)",
+      "salt": {
+        "Random::getBytes call": "0x1828fe3",
+        "length_site": "0x1828fde",
+        "length": 16
+      },
+      "ecdh": "KeyManager(client identityPublicKey) 0x182902f, PrivateKeyManager::computeSecret 0x1829049",
+      "token_claims": {
+        "salt": "0x182907b base64_encode(salt, true) 0x18290a1",
+        "signedToken": "0x1829116, only when the virtual at handler+0x170 slot 0x20 returns true (0x18290ff); value is handler field +0x1a8; INFERRED unused by a dedicated server"
+      },
+      "token": "WebToken::createFromData call 0x1829182, ServerToClientHandshakePacket 0x18291b0, sent at 0x18291da before encryption",
+      "key": {
+        "concat": "salt + secret at 0x1829255",
+        "hash": "Crypto::Hash::hash(HashType 2) 0x182926d"
+      },
+      "enable": "EncryptedNetworkPeer::enableEncryption call 0x182928c"
+    },
+    "create_from_data": {
+      "function": "WebToken::createFromData 0x19dce60",
+      "header": [
+        "alg 0x19dced8",
+        "x5u 0x19dcf20"
+      ],
+      "writer": "Json::FastWriter",
+      "sign": "PrivateKeyManager::sign then WebToken::DERToBinary (raw r||s)"
+    },
+    "enable_encryption": {
+      "function": "EncryptedNetworkPeer::enableEncryption 0x1897300",
+      "cipher": "Symmetric(System 1, OperationMode 2) at 0x189732a/0x1897331 and again for the second direction 0x18974af/0x18974b6",
+      "init": "key.substr(0, keySize) and key.substr(0, blockSize) as key and IV",
+      "checksum": "HMAC(HashType 2, key, 8) at 0x189745a/0x1897465"
+    },
+    "peer_stack": {
+      "function": "NetworkHandler::Connection::Connection 0x18819f0",
+      "order": "Batched(0x1881bbd) -> Compressed(0x1881b65) -> Encrypted(0x1881b1b) -> RakNet peer"
+    },
+    "send": {
+      "function": "EncryptedNetworkPeer::sendPacket 0x1896e90",
+      "counter_field": "+0x30 post-increment 0x1896ef8",
+      "append_checksum": "HMAC::sign 0x1896f1b, operator+= 0x1896f2b",
+      "encrypt": "Symmetric vtable +0x18 0x1896f64"
+    },
+    "receive": {
+      "function": "EncryptedNetworkPeer::receivePacket 0x1897040",
+      "decrypt": "vtable +0x20 0x18970cc",
+      "split": "resultSize 0x18970f5/0x1897149",
+      "counter_field": "+0x38 post-increment 0x18971c0",
+      "compare": "0x18971e9",
+      "mismatch": "status 2, packet dropped (0x1897213)"
+    },
+    "libCrypto": {
+      "setHashType": {
+        "function": "0x17d60",
+        "jump_table": "0x1c650",
+        "values": {
+          "0": "md5",
+          "1": "sha1",
+          "2": "sha256",
+          "3": "sha384",
+          "4": "sha512"
+        }
+      },
+      "symmetric_init": {
+        "function": "Crypto::Symmetric::OpenSSLSymmetricInterface::init 0x1bb30",
+        "system_0_table": "0x1c730 aes_128 ecb/cbc/cfb8/ofb",
+        "system_1_table": "0x1c720 aes_256 ecb/cbc/cfb8/ofb",
+        "system_select": "0x1bb79/0x1bb87"
+      },
+      "hmac_sign": {
+        "function": "Crypto::Hash::HMAC::sign 0x12d20",
+        "steps": "reset; update(&counter, 8) (size 0x12d61); update(data); update(key member +0x8) 0x12dd3; final -> substr(0, resultSize) 0x12ed6",
+        "note": "not RFC 2104 HMAC"
+      }
+    },
+    "after_handshake": {
+      "handler": "ServerNetworkHandler::handle(ClientToServerHandshakePacket) 0x182a830 -> _onClientAuthenticated 0x1829510",
+      "checks": [
+        "_isServerFull 0x1829562 with Whitelist::isIgnoringPlayerLimit 0x18295cf -> disconnectionScreen.serverFull",
+        "existing player -> disconnectionScreen.loggedinOtherLocation"
+      ],
+      "play_status": "PlayStatus(0) at 0x18297a8",
+      "log": "'Player connected: %s' 0x281d6e8",
+      "next": "ResourcePacksInfo built from the resource pack stacks"
+    }
+  },
+  "admission_and_packs": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "whitelist_gate": {
+      "handler_flag": "+0x68 tested at 0x1828b2f (INFERRED: white-list setting)",
+      "realms_exception": "string compare with 'realms' 0x1828b39",
+      "try_update": "Whitelist::tryUpdateEntries call 0x1828b82 (0x25f5ac0)",
+      "is_allowed": "Whitelist::isAllowed call 0x1828ba0 (0x25f5410)",
+      "refusal": "disconnectClient('disconnectionScreen.notAllowed' 0x281d62b) 0x1828bf5"
+    },
+    "whitelist_entry": {
+      "constructor": "WhitelistEntry(string, mce::UUID, string, bool) 0x25e0e70",
+      "offsets": {
+        "name": "+0x8",
+        "uuid": "+0x28",
+        "xuid": "+0x38",
+        "ignoresPlayerLimit": "+0x58"
+      },
+      "json_keys": [
+        "name",
+        "uuid (written only when set)",
+        "xuid",
+        "ignoresPlayerLimit"
+      ]
+    },
+    "is_allowed": {
+      "uuid_lambda": "0x25f61c0 compares +0x28 when the queried UUID is non-nil",
+      "xuid_lambda": "0x25f6540 compares +0x38 (string ==, empty strings match in the original)"
+    },
+    "try_update": {
+      "matcher": "WhitelistEntryMatcher::operator() 0x25f7390: name (+0x8) or xuid (+0x38), each guarded by != \"\"",
+      "fill_xuid": "entry xuid == \"\" branch 0x25f5bee, assignment 0x25f5c3a",
+      "rename": "second assignment 0x25f5caf (INFERRED gamertag update)",
+      "persist": "std::function callback 0x25f5ceb"
+    },
+    "other_login_checks_not_implemented": {
+      "invalidTenant": "0x281d609",
+      "blacklist": "Blacklist::isBlocked 0x1828c58",
+      "skin_size": "0x1828df1-0x1828e13 accepts 0x4000, 0x2000, 0x10000 bytes; else disconnectionScreen.invalidSkin 0x281d64a"
+    },
+    "after_handshake": {
+      "play_status": "PlayStatus(0) 0x18297aa",
+      "resource_packs_info": "built from ResourcePackManager stacks 0x182985e; mustAccept = LevelData::isTexturepacksRequired 0x1829bea"
+    },
+    "resource_packs_info_write": {
+      "function": "ResourcePacksInfoPacket::write 0x1844650",
+      "layout": "writeBool, writeUnsignedShort (raw little-endian, BinaryStream::write 0x26eb1a5) count + {uuid string, version string, u64 size, 3 strings}, twice"
+    },
+    "resource_pack_stack_write": {
+      "function": "ResourcePackStackPacket::write 0x18461c0",
+      "layout": "writeBool, writeVectorList (writeUnsignedVarInt count 0x184651d) of {uuid, version, subpack strings}, twice"
+    },
+    "client_response_read": {
+      "function": "ResourcePackClientResponsePacket::read 0x187d8f0",
+      "layout": "getByte status, getUnsignedShort count, strings"
+    },
+    "response_handler": {
+      "function": "ServerNetworkHandler::handle(ResourcePackClientResponsePacket) 0x182aba0",
+      "isResponse": "compares field +0x48 (0x1837c48)",
+      "1_refused": "0x182abab -> disconnectClient('') 0x182ac7c",
+      "3_have_all_packs": "0x182ac9d -> ResourcePackStackPacket(behaviour, resource, isTexturepacksRequired) 0x182af00",
+      "4_completed": "0x182af8f -> sendLoginMessageLocal 0x182b0b9",
+      "2_send_packs": "0x182b0c3 -> ResourcePackFileUploadManager::uploadResourcePack"
+    }
+  },
+  "start_game": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "flow": {
+      "sendLoginMessageLocal": "0x182b690: _createNewPlayer 0x182b6ce, updateServerAnnouncement, _sendLevelData 0x182b6f2, _sendAdditionalLevelData 0x182b706, AvailableCommands (CommandRegistry::serializeAvailableCommands 0x182b74f)",
+      "_sendLevelData": "0x182fd90: StartGamePacket 0x182ffe3, SetSpawnPosition(spawn, type 0, isForcedRespawn) 0x18300be, SetTime(Level::getTime) 0x1830143, SetDifficulty 0x18301c8, SetCommandsEnabled 0x183025e, LevelEvent lightning 0x183034a, LevelEvent rain 0x1830425, AdventureSettings 0x1830500, game rules 0x183054e, PlayerList 0x18305c6, LevelEvent sim-paused 0x1830711, sendAllPlayerAbilities 0x183079b",
+      "_sendAdditionalLevelData": "0x1830820: UpdateAttributes 0x183090f, InventoryContent 0x18309c2, CraftingData 0x1830a4d, scoreboard 0x1830df6"
+    },
+    "start_game_write": {
+      "function": "StartGamePacket::write 0x184a2b0",
+      "fields": [
+        "ActorUniqueID: writeVarInt64 (zigzag) 0x184b7f0",
+        "ActorRuntimeID: writeUnsignedVarInt64 0x1848780",
+        "player game type: writeVarInt",
+        "Vec3: 3 x writeFloat 0x184b820",
+        "Vec2: 2 x writeFloat 0x184b870",
+        "LevelSettings 0x184b8b0",
+        "levelId string",
+        "levelName string",
+        "premium template ContentIdentity string",
+        "isTrial bool",
+        "currentTick writeUnsignedInt64",
+        "enchantment seed writeVarInt",
+        "block palette: writeVectorList (unsigned varint count) of {name string, writeSignedShort data} 0x184c8b0",
+        "multiplayerCorrelationId string"
+      ]
+    },
+    "level_settings_write": {
+      "function": "serialize<LevelSettings>::write 0x184b8b0",
+      "fields": [
+        "seed varint",
+        "dimension varint",
+        "generator varint",
+        "game type varint",
+        "difficulty varint",
+        "default spawn NetworkBlockPosition (varint x, unsigned varint y, varint z: 0x1849230)",
+        "achievementsDisabled bool",
+        "time varint",
+        "education world bool",
+        "education features bool",
+        "rain float",
+        "lightning float",
+        "multiplayer bool",
+        "LAN broadcast bool",
+        "XBL broadcast bool",
+        "commands enabled bool",
+        "texture packs required bool",
+        "game rules: GameRulesChangedPacketData, writeVectorList<GameRule> unsigned varint count",
+        "bonus chest bool",
+        "start with map bool",
+        "constant false bool (xor %esi 0x184bbf2)",
+        "default player permission varint",
+        "XBL broadcast mode varint",
+        "server chunk tick range writeSignedInt",
+        "platform broadcast bool",
+        "platform broadcast mode varint",
+        "XBL broadcast intent bool",
+        "locked behaviour pack bool",
+        "locked resource pack bool",
+        "from locked template bool"
+      ]
+    },
+    "primitives": {
+      "writeFloat/writeSignedShort/writeSignedInt": "BinaryStream::write of native little-endian bytes",
+      "writeVarInt": "zigzag (shl 1 / xor -1) then writeUnsignedVarInt",
+      "writeVarInt64": "zigzag then writeUnsignedVarInt64"
+    },
+    "generator_type": {
+      "function": "LevelSettings::generatorTypeToString 0x1c697c0",
+      "values": {
+        "0": "Legacy",
+        "1": "Overworld",
+        "2": "Flat",
+        "3": "Nether",
+        "4": "TheEnd"
+      },
+      "properties_mapping": "DEFAULT->Overworld, FLAT->Flat, LEGACY->Legacy is INFERRED"
+    },
+    "palette": {
+      "source": "Level::getGlobalBlockPalette 0x182fed4; built at runtime by BlockPalette::initFromBlockDefinitions 0x1d3c0a0 / assignBlockRuntimeIds 0x1d3c1c0",
+      "note": "contents are not a static table in the binary; the reconstruction sends only its internal blocks (UNVERIFIED with a client)"
+    },
+    "simple_packets": {
+      "SetSpawnPosition": "0x184f690: varint type, NetworkBlockPosition, bool",
+      "SetTime": "0x184f820: varint",
+      "SetDifficulty": "0x184f960: unsigned varint",
+      "SetCommandsEnabled": "0x184faa0: bool",
+      "ChunkRadiusUpdated": "0x18cde50: varint",
+      "RequestChunkRadius read": "0x18cd780: varint"
+    },
+    "chunk_radius": {
+      "handler": "ServerNetworkHandler::handle(RequestChunkRadiusPacket) 0x1825e50 -> ServerPlayer::setClientChunkRadius 0x25fd6e0 -> ChunkRadiusUpdatedPacket",
+      "find": "ServerPlayer::findClientChunkRadius 0x25fd620: clamp(requested, 5, min(field +0x1b34, dimension value / 16.0 + 8.0)); dimension virtual +0x120 unresolved"
+    }
+  },
+  "reference_run": {
+    "confidence": "DIFFERENTIAL_VERIFIED / VERIFIED_RUNTIME (original BDS 1.6.0.15 executed locally, 2026-11-16)",
+    "procedure": "tools/reference/README.md",
+    "advertisement": "MCPE;Dedicated Server;282;1.6.0;0;10;<guid>;Reference;Survival;1;",
+    "identical_bytes": {
+      "ResourcePacksInfo": "0000000000",
+      "ResourcePackStack": "000000",
+      "PlayStatus_LoginSuccess": "00000000",
+      "PlayStatus_PlayerSpawn": "00000003",
+      "StartGame": "tests/reference/start_game_bds_1.6.0.15.bin reproduced exactly by start_game_body"
+    },
+    "start_game_values": {
+      "xbl_broadcast_mode": 3,
+      "platform_broadcast_mode": 3,
+      "premium_template": "00000000-0000-0000-0000-000000000000",
+      "achievements_disabled": false,
+      "game_rules": 21,
+      "maxcommandchainlength": "zigzag varint 65535",
+      "palette_entries": 4493,
+      "palette_names": 409,
+      "multiplayer_correlation_id": "random UUID",
+      "time": "equal to current tick in a fresh world"
+    },
+    "chunk_radius": "request 4 -> ChunkRadiusUpdated 5",
+    "logs": {
+      "player_connected": "'Player connected: %s' with the XUID (empty for self-signed)",
+      "ops_file": "'Error opening ops file: ops.json' (guide says opsfile.json)"
+    },
+    "ipv6_less_host": "strace: dual-stack startup, IPv4-only retry and third attempt all call socket(AF_INET6) -> EAFNOSUPPORT; no socket remains open",
+    "post_start_game_order": "0x0b StartGame, 0x2b, 0x0a, 0x3c, 0x3b, 0x37, 0x48, 0x3f, 0x37, 0x1d, 0x31 x4, 0x30, 0x31, 0x34, 0x4c; after RequestChunkRadius: 0x46 then FullChunkData 0x3a, entity packets, PlayStatus 3"
+  }
 }
