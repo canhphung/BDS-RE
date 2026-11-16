@@ -19,7 +19,7 @@ public:
  DiscoveryServer& operator=(const DiscoveryServer&)=delete;
  // `access` backs whitelist admission and may be updated (XUID fill-in).
  // The simulation-owned World supplies current age and chunk contents.
- void poll(const Properties& properties, AccessLists& access, const World& world);
+ void poll(const Properties& properties, AccessLists& access, World& world);
  // Port actually bound for the family, or nullopt when the host lacks it.
  std::optional<unsigned> bound_port(bool ipv6) const;
 private: struct Impl;std::unique_ptr<Impl> impl_;

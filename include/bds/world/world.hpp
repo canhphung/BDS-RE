@@ -1,6 +1,10 @@
 #pragma once
 
 #include "bds/world/chunk.hpp"
+#include "bds/game/player.hpp"
+#include <deque>
+#include <set>
+#include <string>
 #include <cstdint>
 #include <map>
 #include <limits>
@@ -14,30 +18,14 @@ public:
     using Position = std::tuple<int, int, int>;
     using Block = BlockId;
 
-    Block block(Position position) const {
-        const auto [x, y, z] = position;
-        if (y < 0 || y >= static_cast<int>(Chunk::height)) return 0;
-        auto column = columns_.find({chunk_coordinate(x), chunk_coordinate(z)});
-        if (column == columns_.end()) return 0;
-        return column->second.block(local_coordinate(x), static_cast<unsigned>(y), local_coordinate(z));
-    }
-
-    void set_block(Position position, Block value) {
-        const auto [x, y, z] = position;
-        if (y < 0 || y >= static_cast<int>(Chunk::height))
-            throw std::out_of_range("block outside world height");
-        const auto key = std::pair{chunk_coordinate(x), chunk_coordinate(z)};
-        auto column = columns_.find(key);
-        if (column == columns_.end()) {
-            if (value == 0) return;
-            column = columns_.try_emplace(key).first;
-        }
-        const auto before = column->second.stored_blocks();
-        column->second.set_block(local_coordinate(x), static_cast<unsigned>(y), local_coordinate(z), value);
-        count_ = count_ - before + column->second.stored_blocks();
-        if (column->second.stored_blocks() == 0) columns_.erase(column);
-    }
-
+    Block block(Position position) const;
+    void set_block(Position position, Block value);
+    void configure_terrain(TerrainConfig config);
+    void ensure_chunk(int x, int z);
+    int surface(int x, int z) const;
+    TerrainConfig terrain() const { return terrain_; }
+    std::map<std::string, PlayerData>& players() { return players_; }
+    const std::map<std::string, PlayerData>& players() const { return players_; }
     void tick() {
         if (age_ == std::numeric_limits<std::uint64_t>::max())
             throw std::overflow_error("world age exhausted");
@@ -73,5 +61,11 @@ private:
     std::map<std::pair<int, int>, Chunk> columns_;
     std::size_t count_ = 0;
     std::uint64_t age_ = 0;
+    TerrainConfig terrain_;
+    std::set<std::pair<int,int>> legacy_columns_;
+    std::map<Position, BlockId> edits_; // includes air, so removed terrain never regenerates
+    std::deque<std::pair<int,int>> terrain_cache_;
+    std::map<std::string, PlayerData> players_;
+    Block generated_block(Position position) const;
 };
 }

@@ -1,18 +1,19 @@
 #include "bds/network/discovery.hpp"
-#include "bds/network/raknet.hpp"
 #include "bds/core/logger.hpp"
+#include "bds/game/server.hpp"
 #include "bds/network/batch.hpp"
-#include "bds/network/connection.hpp"
 #include "bds/network/chunk.hpp"
-#include <map>
+#include "bds/network/connection.hpp"
+#include "bds/network/raknet.hpp"
 #include <algorithm>
-#include <charconv>
 #include <array>
+#include <charconv>
 #include <chrono>
+#include <map>
 #include <optional>
-#include <string>
 #include <random>
 #include <stdexcept>
+#include <string>
 #ifdef _WIN32
 #define NOMINMAX
 #include <winsock2.h>
@@ -220,7 +221,28 @@ struct DiscoveryServer::Impl {
     std::uint64_t world_age = 0;
     // Level::getNextRuntimeID / getNewUniqueID analogue; ids are never reused.
     std::int64_t next_entity_id = 1;
-    const World *world = nullptr;
+    World *world = nullptr;
+    std::unique_ptr<game::Server> gameplay;
+    std::uint64_t gameplay_time = 0;
+    protocol::ConnectionOptions options() {
+        protocol::ConnectionOptions out;
+        out.texture_packs_required = properties->texturepack_required;
+        out.admission = [this](const auth::Identity &identity) { return admit(identity); };
+        out.start_game = [this] { return start_game(); };
+        out.chunk = [this](std::int32_t x, std::int32_t z) {
+            world->ensure_chunk(x, z);
+            return protocol::full_chunk_body(protocol::network_chunk(*world, x, z));
+        };
+        out.prepare_player = [this](const auth::Identity &identity, protocol::StartGame &game) {
+            return gameplay->prepare(identity, game);
+        };
+        out.gameplay = [this](std::uint64_t id, const protocol::GamePacket &packet) {
+            return gameplay->handle(id, packet, gameplay_time);
+        };
+        out.center = [this](std::uint64_t id) { return gameplay->center(id); };
+        out.view_distance = static_cast<std::int32_t>(properties->view_distance);
+        return out;
+    }
     std::optional<raknet::Address> stream_cursor;
 
     protocol::StartGame start_game() {
@@ -234,19 +256,33 @@ struct DiscoveryServer::Impl {
         // A purely numeric level-seed is sent as-is, anything else as 0 (policy).
         std::int32_t seed = 0;
         const auto *begin = p.seed.data();
-        if (!p.seed.empty() && std::from_chars(begin, begin + p.seed.size(), seed).ptr != begin + p.seed.size())
+        if (!p.seed.empty() &&
+            std::from_chars(begin, begin + p.seed.size(), seed).ptr != begin + p.seed.size())
             seed = 0;
-        s.seed = seed;
+        s.seed = world->terrain().kind ? static_cast<std::int32_t>(world->terrain().seed) : seed;
         s.generator = p.level_type == "FLAT"     ? protocol::Generator::Flat
                       : p.level_type == "LEGACY" ? protocol::Generator::Legacy
                                                  : protocol::Generator::Overworld;
+        if (world->terrain().kind)
+            s.generator = world->terrain().kind == 1 ? protocol::Generator::Flat
+                                                     : protocol::Generator::Overworld;
+        world->ensure_chunk(0, 0);
+        int top = 63;
+        for (int y = 255; y >= 0; --y)
+            if (world->block({0, y, 0})) {
+                top = y;
+                break;
+            }
+        s.spawn = {0, top + 1, 0};
         s.game_type = static_cast<std::int32_t>(p.gamemode);
         s.difficulty = static_cast<std::int32_t>(p.difficulty);
         // The original sent time == current tick for a fresh world (reference capture).
         s.time = static_cast<std::int32_t>(world_age);
         s.commands_enabled = p.cheats;
         s.texture_packs_required = p.texturepack_required;
-        s.default_player_permission = p.permission == "visitor" ? 0 : p.permission == "operator" ? 2 : 1;
+        s.default_player_permission = p.permission == "visitor"    ? 0
+                                      : p.permission == "operator" ? 2
+                                                                   : 1;
         s.server_chunk_tick_range = static_cast<std::int32_t>(p.tick_distance);
         game.x = static_cast<float>(s.spawn.x) + 0.5f;
         game.y = static_cast<float>(s.spawn.y) + 1.62f; // player position is eye height
@@ -327,23 +363,29 @@ struct DiscoveryServer::Impl {
         }
 #endif
     }
-    ~Impl() {
-        cleanup();
-    }
+    ~Impl() { cleanup(); }
 };
 DiscoveryServer::DiscoveryServer(const Properties &p) : impl_(std::make_unique<Impl>(p)) {}
 DiscoveryServer::~DiscoveryServer() = default;
-void DiscoveryServer::poll(const Properties &p, AccessLists &access, const World &world) {
+void DiscoveryServer::poll(const Properties &p, AccessLists &access, World &world) {
     impl_->properties = &p;
     impl_->access = &access;
     impl_->world_age = world.age();
     impl_->world = &world;
+    if (!impl_->gameplay)
+        impl_->gameplay = std::make_unique<game::Server>(world, p, access);
     const auto advertisement = server_advertisement(p, impl_->guid);
     const auto now =
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
                                        std::chrono::steady_clock::now().time_since_epoch())
                                        .count());
-    std::erase_if(impl_->connections, [&](const auto &entry) { return !impl_->transport->connected(entry.first); });
+    impl_->gameplay_time = now;
+    std::erase_if(impl_->connections, [&](const auto &entry) {
+        if (impl_->transport->connected(entry.first))
+            return false;
+        impl_->gameplay->leave(entry.second.runtime_id());
+        return true;
+    });
     for (const auto &outgoing : impl_->transport->poll(now)) {
         const auto socket = impl_->sockets[outgoing.address.ipv6 ? 1 : 0];
         if (socket != invalid)
@@ -352,19 +394,49 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access, const World
     // At most four chunks per poll globally, round-robin across sessions.
     // Leave headroom in RakNet's reliable window for split packets, retries
     // and control traffic. Encryption happens once, before reliable retransmit.
-    for (std::size_t i = 0, count = std::min<std::size_t>(4, impl_->connections.size()); i < count && !impl_->connections.empty(); ++i) {
-        auto entry = impl_->stream_cursor ? impl_->connections.upper_bound(*impl_->stream_cursor) : impl_->connections.begin();
-        if (entry == impl_->connections.end()) entry = impl_->connections.begin();
-        const auto from = entry->first; impl_->stream_cursor = from;
-        if (!impl_->transport->connected(from) || impl_->transport->pending(from) >= 64) continue;
+    for (std::size_t i = 0, count = std::min<std::size_t>(4, impl_->connections.size());
+         i < count && !impl_->connections.empty(); ++i) {
+        auto entry = impl_->stream_cursor ? impl_->connections.upper_bound(*impl_->stream_cursor)
+                                          : impl_->connections.begin();
+        if (entry == impl_->connections.end())
+            entry = impl_->connections.begin();
+        const auto from = entry->first;
+        impl_->stream_cursor = from;
+        if (!impl_->transport->connected(from) || impl_->transport->pending(from) >= 64)
+            continue;
         auto output = entry->second.poll(1);
         const auto socket = impl_->sockets[from.ipv6 ? 1 : 0];
         for (const auto &message : output.messages)
-            for (const auto &outgoing : impl_->transport->send(from, message, now)) send_packet(socket, from, outgoing.bytes);
-        if (!output.reason.empty()) log(output.reason);
+            for (const auto &outgoing : impl_->transport->send(from, message, now))
+                send_packet(socket, from, outgoing.bytes);
+        if (!output.reason.empty())
+            log(output.reason);
         if (output.close) {
-            for (const auto &outgoing : impl_->transport->disconnect(from, now)) send_packet(socket, from, outgoing.bytes);
+            for (const auto &outgoing : impl_->transport->disconnect(from, now))
+                send_packet(socket, from, outgoing.bytes);
+            if (auto i = impl_->connections.find(from); i != impl_->connections.end())
+                impl_->gameplay->leave(i->second.runtime_id());
             impl_->connections.erase(from);
+        }
+    }
+    for (auto i = impl_->connections.begin(); i != impl_->connections.end();) {
+        if (impl_->transport->pending(i->first) >= 64) {
+            ++i;
+            continue;
+        }
+        try {
+            auto output = i->second.push(impl_->gameplay->drain(i->second.runtime_id()));
+            for (const auto &message : output.messages)
+                for (const auto &outgoing : impl_->transport->send(i->first, message, now))
+                    send_packet(impl_->sockets[outgoing.address.ipv6 ? 1 : 0], outgoing.address,
+                                outgoing.bytes);
+            ++i;
+        } catch (const protocol::ProtocolError &) {
+            impl_->gameplay->leave(i->second.runtime_id());
+            for (const auto &outgoing : impl_->transport->disconnect(i->first, now))
+                send_packet(impl_->sockets[outgoing.address.ipv6 ? 1 : 0], outgoing.address,
+                            outgoing.bytes);
+            i = impl_->connections.erase(i);
         }
     }
     for (auto socket : impl_->sockets) {
@@ -399,7 +471,10 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access, const World
                 continue;
             }
             auto result = impl_->transport->receive(from, incoming, now);
-            if (now - impl_->trace_window >= 1000) { impl_->trace_window = now; impl_->trace_count = 0; }
+            if (now - impl_->trace_window >= 1000) {
+                impl_->trace_window = now;
+                impl_->trace_count = 0;
+            }
             for (const auto &event : result.events)
                 if (impl_->trace_count < 8) {
                     ++impl_->trace_count;
@@ -414,25 +489,20 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access, const World
                 if (application.bytes.empty() || application.bytes[0] != protocol::batch_id)
                     output = {{}, true, "non-batch application message"};
                 else
-                    output = impl_->connections
-                                 .try_emplace(from, auth::LoginPolicy{p.online_mode, {std::string(auth::mojang_root_key)}},
-                                              protocol::GameConnection::Clock{}, impl_->secrets,
-                                              protocol::GameConnection::Options{
-                                                  p.texturepack_required,
-                                                  [impl = impl_.get()](const auth::Identity &identity) {
-                                                      return impl->admit(identity);
-                                                  },
-                                                  [impl = impl_.get()] { return impl->start_game(); },
-                                                  [impl = impl_.get()](std::int32_t x, std::int32_t z) {
-                                                      return protocol::full_chunk_body(protocol::network_chunk(*impl->world, x, z));
-                                                  },
-                                                  static_cast<std::int32_t>(p.view_distance)})
-                                 .first->second.receive(application.bytes);
+                    output =
+                        impl_->connections
+                            .try_emplace(from,
+                                         auth::LoginPolicy{p.online_mode,
+                                                           {std::string(auth::mojang_root_key)}},
+                                         protocol::GameConnection::Clock{}, impl_->secrets,
+                                         impl_->options())
+                            .first->second.receive(application.bytes);
                 if (!output.close) {
                     auto entry = impl_->connections.find(from);
                     if (entry != impl_->connections.end() &&
                         entry->second.state() != protocol::GameConnection::State::awaiting_login &&
-                        entry->second.state() != protocol::GameConnection::State::awaiting_handshake)
+                        entry->second.state() !=
+                            protocol::GameConnection::State::awaiting_handshake)
                         impl_->transport->authenticated(from);
                 }
                 for (const auto &message : output.messages)
@@ -444,6 +514,8 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access, const World
                     log("closing connection: " + output.reason);
                     for (const auto &outgoing : impl_->transport->disconnect(from, now))
                         send_packet(socket, outgoing.address, outgoing.bytes);
+                    if (auto i = impl_->connections.find(from); i != impl_->connections.end())
+                        impl_->gameplay->leave(i->second.runtime_id());
                     impl_->connections.erase(from);
                     break;
                 }

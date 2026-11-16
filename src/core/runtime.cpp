@@ -5,6 +5,7 @@
 #include "bds/core/logger.hpp"
 #include <string>
 #include <thread>
+#include <charconv>
 #include "bds/core/console.hpp"
 #include "bds/server/control.hpp"
 #include "bds/network/discovery.hpp"
@@ -35,6 +36,15 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
  auto world_file=config_.world_file.empty()?world_dir/"bdsre-world.snapshot":config_.world_file;
  World world;
  if(std::filesystem::exists(world_file))world=WorldStore::load(world_file);
+ if(config_.network && properties.level_type!="LEGACY" && !world.terrain().kind) {
+  std::uint64_t seed=14695981039346656037ULL;
+  for(unsigned char c:properties.seed)seed=(seed^c)*1099511628211ULL;
+  if(!properties.seed.empty()) {
+   std::uint64_t numeric=0;auto r=std::from_chars(properties.seed.data(),properties.seed.data()+properties.seed.size(),numeric);
+   if(r.ec==std::errc{} && r.ptr==properties.seed.data()+properties.seed.size())seed=numeric;
+  }
+  world.configure_terrain({properties.level_type=="FLAT"?1U:2U,seed});
+ }
  AccessLists access(config_.root);access.reload_whitelist();access.reload_operators();
  Backup backup(world_dir);ServerControl control(properties,access,backup);ConsoleInput console;
  std::unique_ptr<DiscoveryServer> network;
@@ -47,13 +57,14 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
   }
  }
  log("world directory: "+world_dir.string());
- log("console ready; storage is BDS-RE internal; gameplay simulation unavailable");
- auto last=Clock::now();
+ log("console ready; storage is BDS-RE internal; basic gameplay ready");
+ auto last=Clock::now();auto saved_at=last;
  std::uint64_t ticks=0;
  try {
  while(!stop() && !control.stopping() && (config_.ticks==0 || ticks<config_.ticks)) {
   if(network)network->poll(properties,access,world);
   backup.poll();
+  if(network && Clock::now()-saved_at>=std::chrono::seconds(5)){WorldStore::save(world,world_file);saved_at=Clock::now();}
   for(const auto& line:console.poll()) {
    auto output=control.execute(line,world);if(!output.empty())log(output);
    if(control.stopping())break;

@@ -1,7 +1,15 @@
 # BDS-RE
 
 Independent C++20 server research targeting Bedrock Dedicated Server 1.6.0.15.
-Currently a C++20 runtime with chunked internal world snapshots, server.properties parsing, world-directory selection, console commands, whitelist/operator file models and asynchronous internal backups. IPv4/IPv6 UDP discovery, a bounded RakNet 9 transport, zlib game-packet batches, ES384 login authentication and the encrypted handshake are implemented. The empty resource pack exchange, StartGame, initial FullChunkData streaming and PlayerSpawn/initialization are implemented and tested with the independent protocol client. **Actual Minecraft client rendering/spawn is unverified; terrain generation and gameplay are not implemented.** See [operations and limitations](docs/OPERATIONS.md).
+The runtime supports server.properties, internal snapshots/backups, RakNet 9,
+ES384 Login, encrypted chunk streaming and basic gameplay: seeded flat/rolling
+terrain, player movement/visibility, block placement/breaking and persistent
+36-slot inventories with a cursor. The supported block set is stone, grass, dirt
+and bedrock. This is not yet a complete vanilla Bedrock server: tools, crafting,
+chests, mobs and full physics remain pending. The user confirmed the M4 join path
+with Minecraft 1.6.0.14; the new gameplay is integration-tested with two independent
+protocol clients and still needs actual-client verification. See
+[gameplay and local testing](docs/GAMEPLAY.md) and [operations](docs/OPERATIONS.md).
 
 ## Build
 

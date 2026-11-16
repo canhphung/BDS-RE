@@ -28,3 +28,23 @@ Default limits are 1,000,000 records and 4,096 allocated sections. File loading 
 ```
 
 Default execution now selects worlds/<level-name>/bdsre-world.snapshot using server.properties. --world explicitly overrides the checkpoint path for development. A missing snapshot starts an empty world; an invalid existing file fails startup and is not overwritten. Save occurs on clean finite completion, handled SIGINT/SIGTERM, and as an emergency save when an exception escapes the running loop (the process still exits 1). It does not occur on crashes, forced termination or startup failures, so an invalid input snapshot is never overwritten. World age exhaustion throws rather than wrapping. Gameplay commands and network-driven mutations are not implemented yet.
+
+## Version 2: generated terrain and players
+
+The 8-byte magic, LE version/age/record-count header and 12-byte explicit block
+records retain their offsets. For version 2, explicit records cover legacy columns
+only; generated terrain is represented by settings and sparse edits. After those
+records: a LE uint32 metadata byte length, exactly that many UTF-8 JSON bytes, and
+the LE CRC32 of the entire preceding file. Metadata is limited to 16 MiB and stores
+`kind` (0 explicit/1 flat/2 rolling), uint64 `seed`, `legacy` column coordinates,
+`edits` arrays `[x,y,z,internal_id]` (air 0 is valid here), and `players` keyed by
+trusted XUID or self-signed UUID. Player entries contain finite position/rotation,
+selected slot, 36 supported block stacks and a cursor stack. Bounds and duplicate
+legacy/edit rejection are checked before replacing live state. Generated cache
+columns are never serialized.
+
+The version-1 decoder and exact version-1 encoding remain available for Worlds
+without procedural settings or player data. Networking configures a generator for
+DEFAULT/FLAT worlds; old explicit columns are preserved. Version 2 does not make
+original LevelDB worlds readable, and earlier BDS-RE binaries reject this version.
+Gameplay and autosave behavior are described in GAMEPLAY.md.

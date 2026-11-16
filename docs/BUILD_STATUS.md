@@ -177,3 +177,20 @@ still required to lift the absolute peer deadline. The updated reference client
 also reached StartGame against the original BDS. The actual Minecraft 1.6.0.14
 reported by the user still needs a retry with this source; no successful real-client
 connection is claimed from these tests.
+
+## Basic gameplay slice
+
+GCC 14.2 Debug, Release and ASan+UBSan each pass 21/21 CTest cases after adding
+`gameplay` and `gameplay_udp`. Unit cases exercise deterministic generation,
+legacy-column preservation, air tombstones through cache eviction/reload,
+Creative and Survival edits, inventory/cursor conservation and rejection, movement
+ownership/bounds/collision, player visibility and persistent rejoin state.
+Two independent encrypted UDP clients verify movement and block broadcasts,
+new chunks after crossing a boundary, inventory cursor transfers, a rejected
+stack-creation attempt, stop/restart and restored position, items and edits.
+The existing 139 original chunk fixtures and startup packet fixtures still pass.
+Native CI for the gameplay source will be recorded when available.
+
+The user confirmed basic M4 Login/chunk/spawn initialization on a real Minecraft
+Bedrock 1.6.0.14 client after the timestamp correction. This predates the gameplay
+implementation; no actual-client gameplay verification is claimed yet.

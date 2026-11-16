@@ -8,6 +8,7 @@
 #include <optional>
 #include <cstdint>
 #include <span>
+#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -71,6 +72,9 @@ struct ConnectionOptions {
     // server.properties and a fresh entity id); default-constructed if unset.
     std::function<StartGame()> start_game;
     std::function<Bytes(std::int32_t, std::int32_t)> chunk; // FullChunkData body from the runtime World
+    std::function<std::vector<GamePacket>(const auth::Identity&, StartGame&)> prepare_player;
+    std::function<std::vector<GamePacket>(std::uint64_t,const GamePacket&)> gameplay;
+    std::function<std::optional<std::pair<int,int>>(std::uint64_t)> center;
     std::int32_t view_distance = 10; // server.properties view-distance
 };
 
@@ -84,6 +88,8 @@ class GameConnection {
                             std::shared_ptr<ServerSecrets> secrets = nullptr, Options options = {});
     enum class State { awaiting_login, awaiting_handshake, awaiting_packs, spawning, streaming, awaiting_initialized, active, closed };
     ConnectionOutput poll(unsigned chunk_budget = 1);
+    std::uint64_t runtime_id() const {return game_?game_->runtime_id:0;}
+    ConnectionOutput push(std::vector<GamePacket> packets);
     ConnectionOutput receive(std::span<const std::uint8_t> message);
     State state() const { return state_; }
     // Set once a login passed verification; never set from unverified data.
@@ -99,6 +105,9 @@ class GameConnection {
     std::vector<std::pair<std::int32_t, std::int32_t>> chunks_;
     std::size_t next_chunk_ = 0;
     bool spawn_sent_ = false;
+    std::set<std::pair<int,int>> sent_chunks_;
+    std::optional<std::pair<int,int>> center_;
+    void schedule_view(std::pair<int,int> center);
     std::optional<std::int32_t> radius_;
     std::size_t ignored_while_spawning_ = 0;
     // 0xfe message for `packets`, encrypted once the handshake key is set.

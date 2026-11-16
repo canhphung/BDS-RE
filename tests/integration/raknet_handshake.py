@@ -448,7 +448,7 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                                 require(chunk['sections'][3][0][15] == stone, f"{name}: persisted stone floor")
                                 require(chunk['heights'][0] == 64, f"{name}: height map")
                             else:
-                                require(not chunk['sections'], f"{name}: missing columns are air")
+                                require(chunk['sections'] and 54 <= chunk['heights'][0] <= 71, f"{name}: generated rolling terrain")
                             if key == (-1,-1):
                                 dirt = next(i for i, block in enumerate(game['palette']) if block == ('minecraft:dirt',0))
                                 require(chunk['sections'][4][0][(15 << 8) | (15 << 4) | 6] == dirt, 'negative chunk block')
