@@ -30,7 +30,19 @@ targets += [
  'LoginPacket::read(BinaryStream&)',
  'ConnectionRequest::fromString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)',
  'RakPeerHelper::peerStartup(RakNet::RakPeerInterface*, int, unsigned short, unsigned short)',
- 'RakPeerHelper::LogIPSupport()'
+ 'RakPeerHelper::LogIPSupport()',
+ 'BatchedNetworkPeer::receivePacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)',
+ 'CompressedNetworkPeer::receivePacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)',
+ 'CompressedNetworkPeer::sendPacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NetworkPeer::Reliability, int)',
+ 'Util::compress(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)',
+ 'Util::decompress(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool&)',
+ 'leveldb::ZlibCompressor::ZlibCompressor(int)',
+ 'leveldb::ZlibCompressorBase::_window() const',
+ 'RakNetInstance::RakNetNetworkPeer::sendPacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NetworkPeer::Reliability, int)',
+ 'MinecraftPackets::createPacket(MinecraftPacketIds)',
+ 'ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&)',
+ 'DisconnectPacket::write(BinaryStream&) const',
+ 'PlayStatusPacket::write(BinaryStream&) const'
 ]
 functions=[]
 local=Path('reverse/evidence/local');local.mkdir(parents=True,exist_ok=True)
@@ -79,13 +91,20 @@ for suffix in ['MajorVersion','MinorVersion','PatchVersion','RevisionVersion',
  assert size in (2,4)
  constants.append({'symbol':name,'address':hex(address),'width':size,'value':pointer_at(address,size)})
 Path('reverse/evidence').mkdir(parents=True,exist_ok=True)
-Path('reverse/evidence/network_constants.json').write_text(json.dumps({
+
+def write_evidence(path, generated):
+ """Refresh generated keys while keeping hand-recorded sections (e.g. focused traces)."""
+ path=Path(path)
+ merged=json.loads(path.read_text()) if path.exists() else {}
+ merged.update(generated)
+ path.write_text(json.dumps(merged,indent=2)+'\n')
+write_evidence('reverse/evidence/network_constants.json',{
  'sha256':digest,'confidence':'VERIFIED_BINARY','encoding':'little-endian integers at sized symbol addresses',
  'constants':constants,
  'scope':'static constants only; login and discovery formats and actual bound ports not yet verified'
-},indent=2)+'\n')
+})
 
-Path('reverse/evidence/operational_constants.json').write_text(json.dumps({
+write_evidence('reverse/evidence/operational_constants.json',{
  'sha256':digest,'confidence':'VERIFIED_BINARY',
  'permission_key':{'address':'0x281c710','text':'default-player-permission-level','lookup_site':'0x1817b35'},
  'max_threads_default':{'instruction':'0x1816dc8','value':8},
@@ -93,13 +112,13 @@ Path('reverse/evidence/operational_constants.json').write_text(json.dumps({
  'offline_magic':{'address':'0x28aa370','hex':pointer_at(0x28aa370,16).to_bytes(16,'little').hex()},
  'server_identifier':{'address':'0x2824710','hex':pointer_at(0x2824710,5).to_bytes(5,'little').hex()},
  'discovery':{'pong_id_site':'0x279240a','pong_id':28,'echo_timestamp_write':'0x2792437','guid_write':'0x2792455','magic_write':'0x2792472','advertisement_length_write':'0x188da95'}
-},indent=2)+'\n')
+})
 
-Path('reverse/evidence/raknet_constants.json').write_text(json.dumps({
+write_evidence('reverse/evidence/raknet_constants.json',{
  'sha256':digest,'confidence':'VERIFIED_BINARY',
  'raknet_protocol':{'compare_site':'0x279450c','value':9,'incompatible_reply_value_site':'0x279454a'},
  'mtu':{'size_adjustment_site':'0x2794a34','udp_ip_adjustment':28,'ceiling_compare_site':'0x2794a37','ceiling':1400},
  'internal_addresses':{'loop_compare_site':'0x279054e','count':20},
  'reply_ids':{'request_one_reply':{'site':'0x279494e','value':6},'request_two_reply':{'site':'0x2794ff3','value':8},'connected_accept':{'site':'0x2790488','value':16}},
  'scope':'static wire constants only; independent synthetic client tests are not original-runtime or Minecraft-client verification'
-},indent=2)+'\n')
+})

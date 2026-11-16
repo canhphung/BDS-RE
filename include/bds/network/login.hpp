@@ -11,4 +11,7 @@ struct UnverifiedLoginBody {
 // Excludes Bedrock packet header, batch compression and RakNet framing.
 // Rejects incompatible protocols, malformed lengths and trailing bytes.
 UnverifiedLoginBody decode_login_body(std::span<const std::uint8_t> payload);
+// Leading signed big-endian protocol field. LoginPacket::read (0x187e910) reads
+// it before deciding whether the remaining body is understood.
+std::int32_t login_protocol(std::span<const std::uint8_t> payload);
 }

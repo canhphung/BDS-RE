@@ -59,3 +59,13 @@ Verified in a cloud container whose kernel rejects AF_INET6 sockets (EAFNOSUPPOR
 | Clang 18.1.3 | Release | PASS, 14/14 CTest |
 
 CMake 3.28.3, Ninja 1.11.1. On this host the integration tests exercise the IPv4-only fallback path and assert the `IPv6 not supported` log; dual-stack hosts (CI) still exercise both families. New test runtime_failure forces an in-loop exception (world age exhaustion three ticks after load) and checks exit 1, the logged cause, and a persisted emergency snapshot with the advanced age. Windows receive-error classification (WSAECONNRESET/WSAEMSGSIZE skip one datagram) compiles only on Windows and awaits native CI.
+
+## Game-packet batch slice (local, IPv4-only host)
+
+| Toolchain | Configuration | Result |
+|---|---|---|
+| GCC 13.3.0 | Debug + ASan/UBSan | PASS, 15/15 CTest |
+| GCC 13.3.0 | Release | PASS, 15/15 CTest |
+| Clang 18.1.3 | Release | PASS, 15/15 CTest |
+
+New test `batch` covers varint/BinaryStream codecs, header bit layout, zlib round trips with level-7 header bytes, truncated/corrupt/trailing streams, a 64 MiB decompression bomb stopped at 4 MiB, a Python-generated batch fixture, the generated packet id header against reverse/evidence/packet_ids.json, and the pre-login state machine. `raknet_handshake` now also sends Python-built zlib LoginPacket batches over real UDP and checks the DisconnectPacket (protocol 282) and PlayStatus 1/2 (281/283) replies followed by RakNet disconnect. Vendored zlib compiles on MSVC only once native CI runs; no real Minecraft client was used.

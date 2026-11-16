@@ -8,6 +8,7 @@ import sys
 import tempfile
 import threading
 import time
+import zlib
 
 MAGIC = bytes.fromhex("00ffff00fefefefefdfdfdfd12345678")
 
@@ -68,6 +69,89 @@ def incoming_frame(data):
     bits = struct.unpack_from(">H", data, 5)[0]
     require(bits % 8 == 0 and len(data) == 14 + bits // 8, "frame size")
     return int.from_bytes(data[1:4], "little"), data[14:]
+
+
+def varint(n):
+    out = b""
+    while n >= 0x80:
+        out += bytes([n & 0x7F | 0x80])
+        n >>= 7
+    return out + bytes([n])
+
+
+def read_varint(data, at):
+    value = shift = 0
+    while True:
+        byte = data[at]
+        at += 1
+        value |= (byte & 0x7F) << shift
+        shift += 7
+        if byte < 0x80:
+            return value, at
+
+
+def login_batch(protocol):
+    """Python-built LoginPacket batch (zlib level 7), independent of the C++ encoder."""
+    inner = struct.pack("<I", 12) + b'{"chain":[]}' + struct.pack("<I", 5) + b"a.b.c"
+    packet = varint(0x01) + struct.pack(">i", protocol) + varint(len(inner)) + inner
+    return b"\xfe" + zlib.compress(varint(len(packet)) + packet, 7)
+
+
+def game_packets(message):
+    require(message[0] == 0xFE, "game batch id")
+    data = zlib.decompress(message[1:])
+    packets, at = [], 0
+    while at < len(data):
+        length, at = read_varint(data, at)
+        header, body_at = read_varint(data, at)
+        packets.append((header, data[body_at:at + length]))
+        at += length
+    return packets
+
+
+def connected_session(family, host, target_port, client_guid):
+    """Minimal open/connected handshake; returns (socket, remote, next client sequence)."""
+    client = socket.socket(family, socket.SOCK_DGRAM)
+    client.settimeout(3)
+    client.bind((host, 0))
+    remote = (host, target_port)
+    mtu = 1200
+    client.sendto(b"\x05" + MAGIC + b"\x09" + bytes(mtu - 46), remote)
+    require(client.recvfrom(2048)[0][0] == 0x06, "open reply one")
+    client.sendto(b"\x07" + MAGIC + address(host, target_port) + struct.pack(">HQ", mtu, client_guid), remote)
+    require(client.recvfrom(2048)[0][0] == 0x08, "open reply two")
+    client.sendto(frame(0, 0, 0, b"\x09" + struct.pack(">QQB", client_guid, 1, 0)), remote)
+    while True:
+        data, _ = client.recvfrom(2048)
+        if data[0] & 0xE0 == 0x80:
+            seq, body = incoming_frame(data)
+            client.sendto(ack(seq), remote)
+            if body[0] == 0x10:
+                break
+    at = skip_address(body, 1) + 2
+    for _ in range(20):
+        at = skip_address(body, at)
+    request_time, accepted_time = struct.unpack_from(">QQ", body, at)
+    incoming = b"\x13" + address(host, target_port) + address("0.0.0.0", 0) * 20 + struct.pack(">QQ", request_time, accepted_time)
+    client.sendto(frame(1, 1, 1, incoming), remote)
+    return client, remote, 2
+
+
+def until_disconnect(client, remote):
+    """Collect reliable-ordered application messages until RakNet disconnect 0x15."""
+    messages = []
+    while True:
+        data, _ = client.recvfrom(2048)
+        if data[0] & 0xE0 != 0x80:
+            continue
+        seq, body = incoming_frame(data)
+        client.sendto(ack(seq), remote)
+        if body[0] == 0x10:
+            continue  # late retransmission of the accepted reply
+        if body == b"\x15":
+            return messages
+        if body not in messages:
+            messages.append(body)
 
 
 with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
@@ -179,12 +263,36 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                 disconnect_seq, disconnect_body = incoming_frame(disconnect)
                 require(disconnect_body == b"\x15", "application data is rejected before login exists")
                 client.sendto(ack(disconnect_seq), remote)
+            # Real protocol-282 batches over UDP: a structurally valid login is
+            # refused with DisconnectPacket because authentication is missing;
+            # other protocols receive PlayStatus like the original handler.
+            for scenario, protocol in [("login", 282), ("old client", 281), ("new client", 283)]:
+                client, remote, sequence = connected_session(family, host, target_port, 0x1000 + protocol)
+                with client:
+                    client.sendto(frame(sequence, sequence, sequence, login_batch(protocol)), remote)
+                    messages = until_disconnect(client, remote)
+                    require(len(messages) == 1, f"{scenario}: one batch before disconnect, got {messages}")
+                    packets = game_packets(messages[0])
+                    require(len(packets) == 1, f"{scenario}: one game packet")
+                    header, body = packets[0]
+                    if protocol == 282:
+                        require(header == 0x05 and body[0] == 0, f"{scenario}: DisconnectPacket with message")
+                        length, at = read_varint(body, 1)
+                        require(b"not implemented" in body[at:at + length] and at + length == len(body),
+                                f"{scenario}: disconnect message")
+                    else:
+                        expected = 1 if protocol < 282 else 2
+                        require(header == 0x02 and body == struct.pack(">i", expected), f"{scenario}: PlayStatus")
         server.stdin.write("stop\n")
         server.stdin.flush()
         server.stdin.close()
         require(server.wait(timeout=8) == 0, f"stop failed: {transcript}")
         reader.join(timeout=2)
-        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 open/connected handshake, retransmission and unauthenticated-data rejection passed")
+        require(any("closing connection: login received; authentication is not implemented" in line for line in transcript),
+                f"login refusal not logged: {transcript}")
+        require(any("closing connection: login protocol 281 is not 282" in line for line in transcript),
+                f"version refusal not logged: {transcript}")
+        print(("Independent IPv4/IPv6" if has_ipv6 else "Independent IPv4-only (no host IPv6)") + " RakNet 9 handshake, retransmission, malformed-batch rejection and login batch responses passed")
     finally:
         if server.poll() is None:
             server.kill()

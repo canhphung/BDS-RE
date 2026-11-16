@@ -1,5 +1,9 @@
 #include "bds/network/discovery.hpp"
 #include "bds/network/raknet.hpp"
+#include "bds/core/logger.hpp"
+#include "bds/network/batch.hpp"
+#include "bds/network/connection.hpp"
+#include <map>
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -199,6 +203,8 @@ struct DiscoveryServer::Impl {
     std::array<Socket, 2> sockets{invalid, invalid};
     std::uint64_t guid = 0;
     std::unique_ptr<raknet::Transport> transport;
+    // Minecraft protocol state per transport peer; never touches the World.
+    std::map<raknet::Address, protocol::GameConnection> connections;
 #ifdef _WIN32
     bool initialized = false;
 #endif
@@ -255,6 +261,7 @@ void DiscoveryServer::poll(const Properties &p) {
         static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
                                        std::chrono::steady_clock::now().time_since_epoch())
                                        .count());
+    std::erase_if(impl_->connections, [&](const auto &entry) { return !impl_->transport->connected(entry.first); });
     for (const auto &outgoing : impl_->transport->poll(now)) {
         const auto socket = impl_->sockets[outgoing.address.ipv6 ? 1 : 0];
         if (socket != invalid)
@@ -294,11 +301,25 @@ void DiscoveryServer::poll(const Properties &p) {
             auto result = impl_->transport->receive(from, incoming, now);
             for (const auto &outgoing : result.outgoing)
                 send_packet(socket, outgoing.address, outgoing.bytes);
-            // Transport connection is not a login. Until authentication/batching exists,
-            // reject application traffic explicitly rather than creating a fake player.
-            if (!result.applications.empty())
-                for (const auto &outgoing : impl_->transport->disconnect(from, now))
-                    send_packet(socket, outgoing.address, outgoing.bytes);
+            // A transport connection is not a login: only 0xfe batches reach the
+            // Minecraft protocol layer, and it never creates a player yet.
+            for (const auto &application : result.applications) {
+                protocol::ConnectionOutput output;
+                if (application.bytes.empty() || application.bytes[0] != protocol::batch_id)
+                    output = {{}, true, "non-batch application message"};
+                else
+                    output = impl_->connections[from].receive(application.bytes);
+                for (const auto &message : output.messages)
+                    for (const auto &outgoing : impl_->transport->send(from, message, now))
+                        send_packet(socket, outgoing.address, outgoing.bytes);
+                if (output.close) {
+                    log("closing connection: " + output.reason);
+                    for (const auto &outgoing : impl_->transport->disconnect(from, now))
+                        send_packet(socket, outgoing.address, outgoing.bytes);
+                    impl_->connections.erase(from);
+                    break;
+                }
+            }
         }
     }
 }

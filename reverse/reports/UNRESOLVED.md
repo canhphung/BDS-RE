@@ -20,3 +20,5 @@ Native CI run 43843720476 at 4cdd95e verifies the RakNet foundation with all sev
 Windows artifacts: a BDS-windows.rar (31,278,032 bytes, SHA256 968d889368e40369afe188b34013bcf5d36bd43ecd667856acb115bc4083f420) was supplied, but this environment has no RAR extractor (package install failed), so EXE/PDB GUID+Age remain uninspected. A ZIP or 7z re-pack would unblock it.
 
 Address-family fallback: RakPeerHelper::peerStartup handling of result 5 (port in use) and the meaning of IPSupportInterface slots +0x10/+0x18 are not reconstructed; the independent server treats a port conflict as fatal.
+
+Batching: whether the original disconnects after a PlayStatus login failure, the exact Util::decompress failure handling, and any original decompressed-size bound are not traced. Sub-client (split-screen) packets are rejected rather than reconstructed. Login certificate-chain verification (ConnectionRequest::verify/verifySelfSigned, Certificate::isValid) and the encryption handshake remain the next binary targets.

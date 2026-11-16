@@ -46,5 +46,82 @@
       "value": 19133
     }
   ],
-  "scope": "static constants only; login and discovery formats and actual bound ports not yet verified"
+  "scope": "static constants only; login and discovery formats and actual bound ports not yet verified",
+  "game_batch": {
+    "confidence": "VERIFIED_BINARY except where marked",
+    "batch_message_id": {
+      "value": "0xfe",
+      "compare_site": "0x1926143",
+      "function": "RakNetInstance::runEvents() 0x1925810"
+    },
+    "send_prefix": {
+      "function": "RakNetInstance::RakNetNetworkPeer::sendPacket 0x192a2f0",
+      "resize_size_plus_one": "0x192a36f/0x192a37d",
+      "copy_at_index_1": "0x192a39a-0x192a3d6",
+      "note": "value of byte 0 is set outside this function; 0xfe is INFERRED from the receive-side compare"
+    },
+    "compression": {
+      "compress": "Util::compress 0x19484f0",
+      "level": {
+        "site": "0x1948514",
+        "value": 7
+      },
+      "compressor": "leveldb::ZlibCompressor(int) 0x194d920",
+      "raw_flag": {
+        "site": "0x194d92d",
+        "value": 0
+      },
+      "window_bits": {
+        "function": "leveldb::ZlibCompressorBase::_window() 0x2807ed0",
+        "non_raw": 15,
+        "raw": -15
+      },
+      "deflate_init": "deflateInit2_ call 0x2807d6b",
+      "decompress": "Util::decompress(bool&) 0x1948590 -> ZlibCompressor 0x19485d3"
+    },
+    "batch_framing": {
+      "function": "BatchedNetworkPeer::receivePacket 0x18e3c80",
+      "per_packet": "ReadOnlyBinaryStream::getString call 0x18e3df1 (unsigned varint length + bytes)",
+      "loop_until_empty": "getUnreadLength compares 0x18e3dc5/0x18e3e35"
+    },
+    "packet_header": {
+      "write": "PacketHeader::write 0x18a8290 -> BinaryStream::writeUnsignedVarInt",
+      "packet_id_mask": {
+        "function": "0x1883980",
+        "mask": "0x3ff"
+      },
+      "sender_subclient": {
+        "function": "0x18839a0",
+        "shift": 10,
+        "mask": 3
+      },
+      "target_subclient": {
+        "function": "0x18839d0",
+        "shift": 12,
+        "mask": 3
+      }
+    },
+    "packet_ids": "reverse/evidence/packet_ids.json (MinecraftPackets::createPacket 0x189f8f0)",
+    "login_version_check": {
+      "function": "ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&) 0x1827e50",
+      "protocol_field": "+0x14",
+      "compare_sites": [
+        "0x1827ebe",
+        "0x1827ed3"
+      ],
+      "older_client_status": 1,
+      "newer_client_status": 2,
+      "select_site": "0x1827ef9-0x1827f09",
+      "send": "PacketSender::sendToPrimaryClient call 0x1827f3b"
+    },
+    "play_status_write": {
+      "function": "PlayStatusPacket::write 0x1843960",
+      "field": "BinaryStream::writeSignedBigEndianInt call 0x184397b"
+    },
+    "disconnect_write": {
+      "function": "DisconnectPacket::write 0x1840f10",
+      "hide_flag": "writeBool call 0x1840f36 (field +0x11)",
+      "message": "writeString call 0x1840f58 only when flag is false (branch 0x1840f43)"
+    }
+  }
 }

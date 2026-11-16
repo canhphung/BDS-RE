@@ -7192,6 +7192,3301 @@
           "kind": "direct"
         }
       ]
+    },
+    {
+      "symbol": "BatchedNetworkPeer::receivePacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "address": "0x18e3c80",
+      "size": 497,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x18e3ca9",
+          "operand": "18e43d0 <std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3cba",
+          "operand": "1757ca0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3cd1",
+          "operand": "*0x18(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18e3cf4",
+          "operand": "1805ea0 <std::remove_reference<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>::type&& std::move<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3d00",
+          "operand": "18e4460 <std::_MakeUniq<ReadOnlyBinaryStream>::__single_object std::make_unique<ReadOnlyBinaryStream, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3d10",
+          "operand": "18e4400 <std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >::operator=(std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3d20",
+          "operand": "18e4330 <std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3d56",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3d9b",
+          "operand": "18e43d0 <std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >::operator bool() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3db8",
+          "operand": "18e44c0 <std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3dc0",
+          "operand": "1840860 <ReadOnlyBinaryStream::getUnreadLength() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3de5",
+          "operand": "18e44c0 <std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3df1",
+          "operand": "26eb8d0 <ReadOnlyBinaryStream::getString[abi:cxx11]()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3e01",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3e11",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3e28",
+          "operand": "18e44c0 <std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3e30",
+          "operand": "1840860 <ReadOnlyBinaryStream::getUnreadLength() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e3e4e",
+          "operand": "18e44e0 <std::unique_ptr<ReadOnlyBinaryStream, std::default_delete<ReadOnlyBinaryStream> >::operator=(decltype(nullptr))>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "CompressedNetworkPeer::receivePacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)",
+      "address": "0x18e4df0",
+      "size": 214,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x18e4e12",
+          "operand": "1757ca0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4e26",
+          "operand": "*0x18(%rcx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18e4e46",
+          "operand": "1948590 <Util::decompress(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4e61",
+          "operand": "1805ea0 <std::remove_reference<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>::type&& std::move<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4e6d",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4e9a",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4eb5",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "CompressedNetworkPeer::sendPacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NetworkPeer::Reliability, int)",
+      "address": "0x18e4d70",
+      "size": 126,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x18e4d91",
+          "operand": "19484f0 <Util::compress(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4db1",
+          "operand": "1805ea0 <std::remove_reference<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>::type&& std::move<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4dbd",
+          "operand": "1757810 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4dd4",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x18e4dda",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18e4de3",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "Util::compress(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)",
+      "address": "0x19484f0",
+      "size": 108,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x194850b",
+          "operand": "1757ca0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1948519",
+          "operand": "194d920 <leveldb::ZlibCompressor::ZlibCompressor(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x194852d",
+          "operand": "194d970 <leveldb::Compressor::compress(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1948536",
+          "operand": "194d9c0 <leveldb::ZlibCompressor::~ZlibCompressor()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x194854d",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "Util::decompress(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool&)",
+      "address": "0x1948590",
+      "size": 185,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x19485af",
+          "operand": "1757ca0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19485b8",
+          "operand": "1756620 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::length() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19485c5",
+          "operand": "1756f60 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve(unsigned long)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19485d3",
+          "operand": "194d920 <leveldb::ZlibCompressor::ZlibCompressor(int)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19485f0",
+          "operand": "1756b10 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::c_str() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x19485fd",
+          "operand": "1756c50 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1948615",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1948623",
+          "operand": "194d9c0 <leveldb::ZlibCompressor::~ZlibCompressor()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x194863a",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "leveldb::ZlibCompressor::ZlibCompressor(int)",
+      "address": "0x194d920",
+      "size": 76,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x194d94f",
+          "operand": "194edf0 <leveldb::ZlibCompressorBase::ZlibCompressorBase(char, int, bool)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "leveldb::ZlibCompressorBase::_window() const",
+      "address": "0x2807ed0",
+      "size": 33,
+      "confidence": "VERIFIED_BINARY",
+      "calls": []
+    },
+    {
+      "symbol": "RakNetInstance::RakNetNetworkPeer::sendPacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NetworkPeer::Reliability, int)",
+      "address": "0x192a2f0",
+      "size": 485,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x192a323",
+          "operand": "1756c50 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a336",
+          "operand": "1756c50 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a36a",
+          "operand": "1756c50 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a37d",
+          "operand": "17574f0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::resize(unsigned long)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a39a",
+          "operand": "1758220 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator[](unsigned long)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a3ad",
+          "operand": "1756490 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::data() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a3c0",
+          "operand": "1756c50 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a3d6",
+          "operand": "1757b10 <memcpy@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a407",
+          "operand": "1756490 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::data() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a41a",
+          "operand": "1756c50 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a430",
+          "operand": "192a910 <RakNetInstance::RakNetNetworkPeer::getReliability(NetworkPeer::Reliability)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a456",
+          "operand": "1883800 <NetworkIdentifier::getRakNetGUID() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a465",
+          "operand": "1883810 <RakNet::AddressOrGUID::AddressOrGUID(RakNet::RakNetGUID const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x192a4c4",
+          "operand": "*%rax",
+          "kind": "indirect"
+        }
+      ]
+    },
+    {
+      "symbol": "MinecraftPackets::createPacket(MinecraftPacketIds)",
+      "address": "0x189f8f0",
+      "size": 5449,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x189f944",
+          "operand": "18a0fb0 <std::_MakeUniq<LoginPacket>::__single_object std::make_unique<LoginPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f954",
+          "operand": "18a1000 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<LoginPacket, std::default_delete<LoginPacket>, void>(std::unique_ptr<LoginPacket, std::default_delete<LoginPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f95d",
+          "operand": "18a1050 <std::unique_ptr<LoginPacket, std::default_delete<LoginPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f96b",
+          "operand": "18a10b0 <std::_MakeUniq<PlayStatusPacket>::__single_object std::make_unique<PlayStatusPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f97b",
+          "operand": "18a1100 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PlayStatusPacket, std::default_delete<PlayStatusPacket>, void>(std::unique_ptr<PlayStatusPacket, std::default_delete<PlayStatusPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f984",
+          "operand": "18a1150 <std::unique_ptr<PlayStatusPacket, std::default_delete<PlayStatusPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f992",
+          "operand": "18a11b0 <std::_MakeUniq<ServerToClientHandshakePacket>::__single_object std::make_unique<ServerToClientHandshakePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f9a2",
+          "operand": "18a1200 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ServerToClientHandshakePacket, std::default_delete<ServerToClientHandshakePacket>, void>(std::unique_ptr<ServerToClientHandshakePacket, std::default_delete<ServerToClientHandshakePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f9ab",
+          "operand": "18a1250 <std::unique_ptr<ServerToClientHandshakePacket, std::default_delete<ServerToClientHandshakePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f9b9",
+          "operand": "18a12b0 <std::_MakeUniq<ClientToServerHandshakePacket>::__single_object std::make_unique<ClientToServerHandshakePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f9c9",
+          "operand": "18a1300 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ClientToServerHandshakePacket, std::default_delete<ClientToServerHandshakePacket>, void>(std::unique_ptr<ClientToServerHandshakePacket, std::default_delete<ClientToServerHandshakePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f9d2",
+          "operand": "18a1350 <std::unique_ptr<ClientToServerHandshakePacket, std::default_delete<ClientToServerHandshakePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f9e0",
+          "operand": "18a13b0 <std::_MakeUniq<ResourcePacksInfoPacket>::__single_object std::make_unique<ResourcePacksInfoPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f9f0",
+          "operand": "18a1400 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ResourcePacksInfoPacket, std::default_delete<ResourcePacksInfoPacket>, void>(std::unique_ptr<ResourcePacksInfoPacket, std::default_delete<ResourcePacksInfoPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189f9f9",
+          "operand": "18a1450 <std::unique_ptr<ResourcePacksInfoPacket, std::default_delete<ResourcePacksInfoPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa07",
+          "operand": "18a14b0 <std::_MakeUniq<ResourcePackStackPacket>::__single_object std::make_unique<ResourcePackStackPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa17",
+          "operand": "18a1500 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ResourcePackStackPacket, std::default_delete<ResourcePackStackPacket>, void>(std::unique_ptr<ResourcePackStackPacket, std::default_delete<ResourcePackStackPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa20",
+          "operand": "18a1550 <std::unique_ptr<ResourcePackStackPacket, std::default_delete<ResourcePackStackPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa2e",
+          "operand": "18a15b0 <std::_MakeUniq<ResourcePackClientResponsePacket>::__single_object std::make_unique<ResourcePackClientResponsePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa3e",
+          "operand": "18a1600 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ResourcePackClientResponsePacket, std::default_delete<ResourcePackClientResponsePacket>, void>(std::unique_ptr<ResourcePackClientResponsePacket, std::default_delete<ResourcePackClientResponsePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa47",
+          "operand": "18a1650 <std::unique_ptr<ResourcePackClientResponsePacket, std::default_delete<ResourcePackClientResponsePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa55",
+          "operand": "18a16b0 <std::_MakeUniq<DisconnectPacket>::__single_object std::make_unique<DisconnectPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa65",
+          "operand": "18a1700 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<DisconnectPacket, std::default_delete<DisconnectPacket>, void>(std::unique_ptr<DisconnectPacket, std::default_delete<DisconnectPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa6e",
+          "operand": "18a1750 <std::unique_ptr<DisconnectPacket, std::default_delete<DisconnectPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa7c",
+          "operand": "18a17b0 <std::_MakeUniq<SetTimePacket>::__single_object std::make_unique<SetTimePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa8c",
+          "operand": "18a1800 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetTimePacket, std::default_delete<SetTimePacket>, void>(std::unique_ptr<SetTimePacket, std::default_delete<SetTimePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fa95",
+          "operand": "18a1850 <std::unique_ptr<SetTimePacket, std::default_delete<SetTimePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189faa3",
+          "operand": "18a18b0 <std::_MakeUniq<TextPacket>::__single_object std::make_unique<TextPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fab3",
+          "operand": "18a1900 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<TextPacket, std::default_delete<TextPacket>, void>(std::unique_ptr<TextPacket, std::default_delete<TextPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fabc",
+          "operand": "18a1950 <std::unique_ptr<TextPacket, std::default_delete<TextPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189faca",
+          "operand": "18a19b0 <std::_MakeUniq<StartGamePacket>::__single_object std::make_unique<StartGamePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fada",
+          "operand": "18a1a00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<StartGamePacket, std::default_delete<StartGamePacket>, void>(std::unique_ptr<StartGamePacket, std::default_delete<StartGamePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fae3",
+          "operand": "18a1a50 <std::unique_ptr<StartGamePacket, std::default_delete<StartGamePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189faf1",
+          "operand": "18a1ab0 <std::_MakeUniq<AddActorPacket>::__single_object std::make_unique<AddActorPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb01",
+          "operand": "18a1b00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<AddActorPacket, std::default_delete<AddActorPacket>, void>(std::unique_ptr<AddActorPacket, std::default_delete<AddActorPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb0a",
+          "operand": "18a1b50 <std::unique_ptr<AddActorPacket, std::default_delete<AddActorPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb18",
+          "operand": "18a1bb0 <std::_MakeUniq<AddItemActorPacket>::__single_object std::make_unique<AddItemActorPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb28",
+          "operand": "18a1c00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<AddItemActorPacket, std::default_delete<AddItemActorPacket>, void>(std::unique_ptr<AddItemActorPacket, std::default_delete<AddItemActorPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb31",
+          "operand": "18a1c50 <std::unique_ptr<AddItemActorPacket, std::default_delete<AddItemActorPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb3f",
+          "operand": "18a1cb0 <std::_MakeUniq<TakeItemActorPacket>::__single_object std::make_unique<TakeItemActorPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb4f",
+          "operand": "18a1d00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<TakeItemActorPacket, std::default_delete<TakeItemActorPacket>, void>(std::unique_ptr<TakeItemActorPacket, std::default_delete<TakeItemActorPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb58",
+          "operand": "18a1d50 <std::unique_ptr<TakeItemActorPacket, std::default_delete<TakeItemActorPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb66",
+          "operand": "18a1db0 <std::_MakeUniq<AddPlayerPacket>::__single_object std::make_unique<AddPlayerPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb76",
+          "operand": "18a1e00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<AddPlayerPacket, std::default_delete<AddPlayerPacket>, void>(std::unique_ptr<AddPlayerPacket, std::default_delete<AddPlayerPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb7f",
+          "operand": "18a1e50 <std::unique_ptr<AddPlayerPacket, std::default_delete<AddPlayerPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fb90",
+          "operand": "18a1eb0 <std::_MakeUniq<MoveActorAbsolutePacket>::__single_object std::make_unique<MoveActorAbsolutePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fba3",
+          "operand": "18a1f00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<MoveActorAbsolutePacket, std::default_delete<MoveActorAbsolutePacket>, void>(std::unique_ptr<MoveActorAbsolutePacket, std::default_delete<MoveActorAbsolutePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fbaf",
+          "operand": "18a1f50 <std::unique_ptr<MoveActorAbsolutePacket, std::default_delete<MoveActorAbsolutePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fbc0",
+          "operand": "18a1fb0 <std::_MakeUniq<MoveActorDeltaPacket>::__single_object std::make_unique<MoveActorDeltaPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fbd3",
+          "operand": "18a2000 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<MoveActorDeltaPacket, std::default_delete<MoveActorDeltaPacket>, void>(std::unique_ptr<MoveActorDeltaPacket, std::default_delete<MoveActorDeltaPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fbdf",
+          "operand": "18a2050 <std::unique_ptr<MoveActorDeltaPacket, std::default_delete<MoveActorDeltaPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fbf0",
+          "operand": "18a20b0 <std::_MakeUniq<MovePlayerPacket>::__single_object std::make_unique<MovePlayerPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc03",
+          "operand": "18a2100 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<MovePlayerPacket, std::default_delete<MovePlayerPacket>, void>(std::unique_ptr<MovePlayerPacket, std::default_delete<MovePlayerPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc0f",
+          "operand": "18a2150 <std::unique_ptr<MovePlayerPacket, std::default_delete<MovePlayerPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc20",
+          "operand": "18a21b0 <std::_MakeUniq<RiderJumpPacket>::__single_object std::make_unique<RiderJumpPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc33",
+          "operand": "18a2200 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<RiderJumpPacket, std::default_delete<RiderJumpPacket>, void>(std::unique_ptr<RiderJumpPacket, std::default_delete<RiderJumpPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc3f",
+          "operand": "18a2250 <std::unique_ptr<RiderJumpPacket, std::default_delete<RiderJumpPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc50",
+          "operand": "18a22b0 <std::_MakeUniq<RespawnPacket>::__single_object std::make_unique<RespawnPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc63",
+          "operand": "18a2300 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<RespawnPacket, std::default_delete<RespawnPacket>, void>(std::unique_ptr<RespawnPacket, std::default_delete<RespawnPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc6f",
+          "operand": "18a2350 <std::unique_ptr<RespawnPacket, std::default_delete<RespawnPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc80",
+          "operand": "18a23b0 <std::_MakeUniq<RemoveActorPacket>::__single_object std::make_unique<RemoveActorPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc93",
+          "operand": "18a2400 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<RemoveActorPacket, std::default_delete<RemoveActorPacket>, void>(std::unique_ptr<RemoveActorPacket, std::default_delete<RemoveActorPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fc9f",
+          "operand": "18a2450 <std::unique_ptr<RemoveActorPacket, std::default_delete<RemoveActorPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fcb0",
+          "operand": "18a24b0 <std::_MakeUniq<UpdateBlockPacket>::__single_object std::make_unique<UpdateBlockPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fcc3",
+          "operand": "18a2500 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<UpdateBlockPacket, std::default_delete<UpdateBlockPacket>, void>(std::unique_ptr<UpdateBlockPacket, std::default_delete<UpdateBlockPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fccf",
+          "operand": "18a2550 <std::unique_ptr<UpdateBlockPacket, std::default_delete<UpdateBlockPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fce0",
+          "operand": "18a25b0 <std::_MakeUniq<UpdateBlockSyncedPacket>::__single_object std::make_unique<UpdateBlockSyncedPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fcf3",
+          "operand": "18a2600 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<UpdateBlockSyncedPacket, std::default_delete<UpdateBlockSyncedPacket>, void>(std::unique_ptr<UpdateBlockSyncedPacket, std::default_delete<UpdateBlockSyncedPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fcff",
+          "operand": "18a2650 <std::unique_ptr<UpdateBlockSyncedPacket, std::default_delete<UpdateBlockSyncedPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd10",
+          "operand": "18a26b0 <std::_MakeUniq<ExplodePacket>::__single_object std::make_unique<ExplodePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd23",
+          "operand": "18a2700 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ExplodePacket, std::default_delete<ExplodePacket>, void>(std::unique_ptr<ExplodePacket, std::default_delete<ExplodePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd2f",
+          "operand": "18a2750 <std::unique_ptr<ExplodePacket, std::default_delete<ExplodePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd40",
+          "operand": "18a27b0 <std::_MakeUniq<LevelSoundEventPacket>::__single_object std::make_unique<LevelSoundEventPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd53",
+          "operand": "18a2800 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<LevelSoundEventPacket, std::default_delete<LevelSoundEventPacket>, void>(std::unique_ptr<LevelSoundEventPacket, std::default_delete<LevelSoundEventPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd5f",
+          "operand": "18a2850 <std::unique_ptr<LevelSoundEventPacket, std::default_delete<LevelSoundEventPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd70",
+          "operand": "18a28b0 <std::_MakeUniq<LevelEventPacket>::__single_object std::make_unique<LevelEventPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd83",
+          "operand": "18a2900 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<LevelEventPacket, std::default_delete<LevelEventPacket>, void>(std::unique_ptr<LevelEventPacket, std::default_delete<LevelEventPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fd8f",
+          "operand": "18a2950 <std::unique_ptr<LevelEventPacket, std::default_delete<LevelEventPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fda0",
+          "operand": "18a29b0 <std::_MakeUniq<BlockEventPacket>::__single_object std::make_unique<BlockEventPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fdb3",
+          "operand": "18a2a00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<BlockEventPacket, std::default_delete<BlockEventPacket>, void>(std::unique_ptr<BlockEventPacket, std::default_delete<BlockEventPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fdbf",
+          "operand": "18a2a50 <std::unique_ptr<BlockEventPacket, std::default_delete<BlockEventPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fdd0",
+          "operand": "18a2ab0 <std::_MakeUniq<BlockPickRequestPacket>::__single_object std::make_unique<BlockPickRequestPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fde3",
+          "operand": "18a2b00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<BlockPickRequestPacket, std::default_delete<BlockPickRequestPacket>, void>(std::unique_ptr<BlockPickRequestPacket, std::default_delete<BlockPickRequestPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fdef",
+          "operand": "18a2b50 <std::unique_ptr<BlockPickRequestPacket, std::default_delete<BlockPickRequestPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe00",
+          "operand": "18a2bb0 <std::_MakeUniq<ActorPickRequestPacket>::__single_object std::make_unique<ActorPickRequestPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe13",
+          "operand": "18a2c00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ActorPickRequestPacket, std::default_delete<ActorPickRequestPacket>, void>(std::unique_ptr<ActorPickRequestPacket, std::default_delete<ActorPickRequestPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe1f",
+          "operand": "18a2c50 <std::unique_ptr<ActorPickRequestPacket, std::default_delete<ActorPickRequestPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe30",
+          "operand": "18a2cb0 <std::_MakeUniq<GuiDataPickItemPacket>::__single_object std::make_unique<GuiDataPickItemPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe43",
+          "operand": "18a2d00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<GuiDataPickItemPacket, std::default_delete<GuiDataPickItemPacket>, void>(std::unique_ptr<GuiDataPickItemPacket, std::default_delete<GuiDataPickItemPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe4f",
+          "operand": "18a2d50 <std::unique_ptr<GuiDataPickItemPacket, std::default_delete<GuiDataPickItemPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe60",
+          "operand": "18a2db0 <std::_MakeUniq<ActorEventPacket>::__single_object std::make_unique<ActorEventPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe73",
+          "operand": "18a2e00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ActorEventPacket, std::default_delete<ActorEventPacket>, void>(std::unique_ptr<ActorEventPacket, std::default_delete<ActorEventPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe7f",
+          "operand": "18a2e50 <std::unique_ptr<ActorEventPacket, std::default_delete<ActorEventPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fe90",
+          "operand": "18a2eb0 <std::_MakeUniq<MobEffectPacket>::__single_object std::make_unique<MobEffectPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fea3",
+          "operand": "18a2f00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<MobEffectPacket, std::default_delete<MobEffectPacket>, void>(std::unique_ptr<MobEffectPacket, std::default_delete<MobEffectPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189feaf",
+          "operand": "18a2f50 <std::unique_ptr<MobEffectPacket, std::default_delete<MobEffectPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fec0",
+          "operand": "18a2fb0 <std::_MakeUniq<MobEquipmentPacket>::__single_object std::make_unique<MobEquipmentPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fed3",
+          "operand": "18a3000 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<MobEquipmentPacket, std::default_delete<MobEquipmentPacket>, void>(std::unique_ptr<MobEquipmentPacket, std::default_delete<MobEquipmentPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fedf",
+          "operand": "18a3050 <std::unique_ptr<MobEquipmentPacket, std::default_delete<MobEquipmentPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fef0",
+          "operand": "18a30b0 <std::_MakeUniq<MobArmorEquipmentPacket>::__single_object std::make_unique<MobArmorEquipmentPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff03",
+          "operand": "18a3100 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<MobArmorEquipmentPacket, std::default_delete<MobArmorEquipmentPacket>, void>(std::unique_ptr<MobArmorEquipmentPacket, std::default_delete<MobArmorEquipmentPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff0f",
+          "operand": "18a3150 <std::unique_ptr<MobArmorEquipmentPacket, std::default_delete<MobArmorEquipmentPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff20",
+          "operand": "18a31b0 <std::_MakeUniq<InteractPacket>::__single_object std::make_unique<InteractPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff33",
+          "operand": "18a3200 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<InteractPacket, std::default_delete<InteractPacket>, void>(std::unique_ptr<InteractPacket, std::default_delete<InteractPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff3f",
+          "operand": "18a3250 <std::unique_ptr<InteractPacket, std::default_delete<InteractPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff50",
+          "operand": "18a32b0 <std::_MakeUniq<PlayerActionPacket>::__single_object std::make_unique<PlayerActionPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff63",
+          "operand": "18a3300 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PlayerActionPacket, std::default_delete<PlayerActionPacket>, void>(std::unique_ptr<PlayerActionPacket, std::default_delete<PlayerActionPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff6f",
+          "operand": "18a3350 <std::unique_ptr<PlayerActionPacket, std::default_delete<PlayerActionPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff80",
+          "operand": "18a33b0 <std::_MakeUniq<ActorFallPacket>::__single_object std::make_unique<ActorFallPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff93",
+          "operand": "18a3400 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ActorFallPacket, std::default_delete<ActorFallPacket>, void>(std::unique_ptr<ActorFallPacket, std::default_delete<ActorFallPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ff9f",
+          "operand": "18a3450 <std::unique_ptr<ActorFallPacket, std::default_delete<ActorFallPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ffb0",
+          "operand": "18a34b0 <std::_MakeUniq<HurtArmorPacket>::__single_object std::make_unique<HurtArmorPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ffc3",
+          "operand": "18a3500 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<HurtArmorPacket, std::default_delete<HurtArmorPacket>, void>(std::unique_ptr<HurtArmorPacket, std::default_delete<HurtArmorPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ffcf",
+          "operand": "18a3550 <std::unique_ptr<HurtArmorPacket, std::default_delete<HurtArmorPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ffe0",
+          "operand": "18a35b0 <std::_MakeUniq<SetActorDataPacket>::__single_object std::make_unique<SetActorDataPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189fff3",
+          "operand": "18a3600 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetActorDataPacket, std::default_delete<SetActorDataPacket>, void>(std::unique_ptr<SetActorDataPacket, std::default_delete<SetActorDataPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x189ffff",
+          "operand": "18a3650 <std::unique_ptr<SetActorDataPacket, std::default_delete<SetActorDataPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0010",
+          "operand": "18a36b0 <std::_MakeUniq<SetActorMotionPacket>::__single_object std::make_unique<SetActorMotionPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0023",
+          "operand": "18a3700 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetActorMotionPacket, std::default_delete<SetActorMotionPacket>, void>(std::unique_ptr<SetActorMotionPacket, std::default_delete<SetActorMotionPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a002f",
+          "operand": "18a3750 <std::unique_ptr<SetActorMotionPacket, std::default_delete<SetActorMotionPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0040",
+          "operand": "18a37b0 <std::_MakeUniq<SetHealthPacket>::__single_object std::make_unique<SetHealthPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0053",
+          "operand": "18a3800 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetHealthPacket, std::default_delete<SetHealthPacket>, void>(std::unique_ptr<SetHealthPacket, std::default_delete<SetHealthPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a005f",
+          "operand": "18a3850 <std::unique_ptr<SetHealthPacket, std::default_delete<SetHealthPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0070",
+          "operand": "18a38b0 <std::_MakeUniq<SetSpawnPositionPacket>::__single_object std::make_unique<SetSpawnPositionPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0083",
+          "operand": "18a3900 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetSpawnPositionPacket, std::default_delete<SetSpawnPositionPacket>, void>(std::unique_ptr<SetSpawnPositionPacket, std::default_delete<SetSpawnPositionPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a008f",
+          "operand": "18a3950 <std::unique_ptr<SetSpawnPositionPacket, std::default_delete<SetSpawnPositionPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a00a0",
+          "operand": "18a39b0 <std::_MakeUniq<AnimatePacket>::__single_object std::make_unique<AnimatePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a00b3",
+          "operand": "18a3a00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<AnimatePacket, std::default_delete<AnimatePacket>, void>(std::unique_ptr<AnimatePacket, std::default_delete<AnimatePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a00bf",
+          "operand": "18a3a50 <std::unique_ptr<AnimatePacket, std::default_delete<AnimatePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a00d0",
+          "operand": "18a3ab0 <std::_MakeUniq<InventoryTransactionPacket>::__single_object std::make_unique<InventoryTransactionPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a00e3",
+          "operand": "18a3b00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<InventoryTransactionPacket, std::default_delete<InventoryTransactionPacket>, void>(std::unique_ptr<InventoryTransactionPacket, std::default_delete<InventoryTransactionPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a00ef",
+          "operand": "18a3b50 <std::unique_ptr<InventoryTransactionPacket, std::default_delete<InventoryTransactionPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0100",
+          "operand": "18a3bb0 <std::_MakeUniq<ItemFrameDropItemPacket>::__single_object std::make_unique<ItemFrameDropItemPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0113",
+          "operand": "18a3c00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ItemFrameDropItemPacket, std::default_delete<ItemFrameDropItemPacket>, void>(std::unique_ptr<ItemFrameDropItemPacket, std::default_delete<ItemFrameDropItemPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a011f",
+          "operand": "18a3c50 <std::unique_ptr<ItemFrameDropItemPacket, std::default_delete<ItemFrameDropItemPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0130",
+          "operand": "18a3cb0 <std::_MakeUniq<ContainerOpenPacket>::__single_object std::make_unique<ContainerOpenPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0143",
+          "operand": "18a3d00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ContainerOpenPacket, std::default_delete<ContainerOpenPacket>, void>(std::unique_ptr<ContainerOpenPacket, std::default_delete<ContainerOpenPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a014f",
+          "operand": "18a3d50 <std::unique_ptr<ContainerOpenPacket, std::default_delete<ContainerOpenPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0160",
+          "operand": "18a3db0 <std::_MakeUniq<ContainerClosePacket>::__single_object std::make_unique<ContainerClosePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0173",
+          "operand": "18a3e00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ContainerClosePacket, std::default_delete<ContainerClosePacket>, void>(std::unique_ptr<ContainerClosePacket, std::default_delete<ContainerClosePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a017f",
+          "operand": "18a3e50 <std::unique_ptr<ContainerClosePacket, std::default_delete<ContainerClosePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0190",
+          "operand": "18a3eb0 <std::_MakeUniq<ContainerSetDataPacket>::__single_object std::make_unique<ContainerSetDataPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a01a3",
+          "operand": "18a3f00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ContainerSetDataPacket, std::default_delete<ContainerSetDataPacket>, void>(std::unique_ptr<ContainerSetDataPacket, std::default_delete<ContainerSetDataPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a01af",
+          "operand": "18a3f50 <std::unique_ptr<ContainerSetDataPacket, std::default_delete<ContainerSetDataPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a01c0",
+          "operand": "18a3fb0 <std::_MakeUniq<PlayerHotbarPacket>::__single_object std::make_unique<PlayerHotbarPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a01d3",
+          "operand": "18a4000 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PlayerHotbarPacket, std::default_delete<PlayerHotbarPacket>, void>(std::unique_ptr<PlayerHotbarPacket, std::default_delete<PlayerHotbarPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a01df",
+          "operand": "18a4050 <std::unique_ptr<PlayerHotbarPacket, std::default_delete<PlayerHotbarPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a01f0",
+          "operand": "18a40b0 <std::_MakeUniq<InventoryContentPacket>::__single_object std::make_unique<InventoryContentPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0203",
+          "operand": "18a4100 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<InventoryContentPacket, std::default_delete<InventoryContentPacket>, void>(std::unique_ptr<InventoryContentPacket, std::default_delete<InventoryContentPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a020f",
+          "operand": "18a4150 <std::unique_ptr<InventoryContentPacket, std::default_delete<InventoryContentPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0220",
+          "operand": "18a41b0 <std::_MakeUniq<InventorySlotPacket>::__single_object std::make_unique<InventorySlotPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0233",
+          "operand": "18a4200 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<InventorySlotPacket, std::default_delete<InventorySlotPacket>, void>(std::unique_ptr<InventorySlotPacket, std::default_delete<InventorySlotPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a023f",
+          "operand": "18a4250 <std::unique_ptr<InventorySlotPacket, std::default_delete<InventorySlotPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0250",
+          "operand": "18a42b0 <std::_MakeUniq<CraftingDataPacket>::__single_object std::make_unique<CraftingDataPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0263",
+          "operand": "18a4300 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<CraftingDataPacket, std::default_delete<CraftingDataPacket>, void>(std::unique_ptr<CraftingDataPacket, std::default_delete<CraftingDataPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a026f",
+          "operand": "18a4350 <std::unique_ptr<CraftingDataPacket, std::default_delete<CraftingDataPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0280",
+          "operand": "18a43b0 <std::_MakeUniq<CraftingEventPacket>::__single_object std::make_unique<CraftingEventPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0293",
+          "operand": "18a4400 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<CraftingEventPacket, std::default_delete<CraftingEventPacket>, void>(std::unique_ptr<CraftingEventPacket, std::default_delete<CraftingEventPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a029f",
+          "operand": "18a4450 <std::unique_ptr<CraftingEventPacket, std::default_delete<CraftingEventPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a02b0",
+          "operand": "18a44b0 <std::_MakeUniq<AddPaintingPacket>::__single_object std::make_unique<AddPaintingPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a02c3",
+          "operand": "18a4500 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<AddPaintingPacket, std::default_delete<AddPaintingPacket>, void>(std::unique_ptr<AddPaintingPacket, std::default_delete<AddPaintingPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a02cf",
+          "operand": "18a4550 <std::unique_ptr<AddPaintingPacket, std::default_delete<AddPaintingPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a02e0",
+          "operand": "18a45b0 <std::_MakeUniq<AdventureSettingsPacket>::__single_object std::make_unique<AdventureSettingsPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a02f3",
+          "operand": "18a4600 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<AdventureSettingsPacket, std::default_delete<AdventureSettingsPacket>, void>(std::unique_ptr<AdventureSettingsPacket, std::default_delete<AdventureSettingsPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a02ff",
+          "operand": "18a4650 <std::unique_ptr<AdventureSettingsPacket, std::default_delete<AdventureSettingsPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0310",
+          "operand": "18a46b0 <std::_MakeUniq<SetActorLinkPacket>::__single_object std::make_unique<SetActorLinkPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0323",
+          "operand": "18a4700 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetActorLinkPacket, std::default_delete<SetActorLinkPacket>, void>(std::unique_ptr<SetActorLinkPacket, std::default_delete<SetActorLinkPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a032f",
+          "operand": "18a4750 <std::unique_ptr<SetActorLinkPacket, std::default_delete<SetActorLinkPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0340",
+          "operand": "18a47b0 <std::_MakeUniq<BlockActorDataPacket>::__single_object std::make_unique<BlockActorDataPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0353",
+          "operand": "18a4800 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<BlockActorDataPacket, std::default_delete<BlockActorDataPacket>, void>(std::unique_ptr<BlockActorDataPacket, std::default_delete<BlockActorDataPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a035f",
+          "operand": "18a4850 <std::unique_ptr<BlockActorDataPacket, std::default_delete<BlockActorDataPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0370",
+          "operand": "18a48b0 <std::_MakeUniq<PlayerInputPacket>::__single_object std::make_unique<PlayerInputPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0383",
+          "operand": "18a4900 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PlayerInputPacket, std::default_delete<PlayerInputPacket>, void>(std::unique_ptr<PlayerInputPacket, std::default_delete<PlayerInputPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a038f",
+          "operand": "18a4950 <std::unique_ptr<PlayerInputPacket, std::default_delete<PlayerInputPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a03a0",
+          "operand": "18a49b0 <std::_MakeUniq<FullChunkDataPacket>::__single_object std::make_unique<FullChunkDataPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a03b3",
+          "operand": "18a4a00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<FullChunkDataPacket, std::default_delete<FullChunkDataPacket>, void>(std::unique_ptr<FullChunkDataPacket, std::default_delete<FullChunkDataPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a03bf",
+          "operand": "18a4a50 <std::unique_ptr<FullChunkDataPacket, std::default_delete<FullChunkDataPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a03d0",
+          "operand": "18a4ab0 <std::_MakeUniq<SetCommandsEnabledPacket>::__single_object std::make_unique<SetCommandsEnabledPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a03e3",
+          "operand": "18a4b00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetCommandsEnabledPacket, std::default_delete<SetCommandsEnabledPacket>, void>(std::unique_ptr<SetCommandsEnabledPacket, std::default_delete<SetCommandsEnabledPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a03ef",
+          "operand": "18a4b50 <std::unique_ptr<SetCommandsEnabledPacket, std::default_delete<SetCommandsEnabledPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0400",
+          "operand": "18a4bb0 <std::_MakeUniq<SetDifficultyPacket>::__single_object std::make_unique<SetDifficultyPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0413",
+          "operand": "18a4c00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetDifficultyPacket, std::default_delete<SetDifficultyPacket>, void>(std::unique_ptr<SetDifficultyPacket, std::default_delete<SetDifficultyPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a041f",
+          "operand": "18a4c50 <std::unique_ptr<SetDifficultyPacket, std::default_delete<SetDifficultyPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0430",
+          "operand": "18a4cb0 <std::_MakeUniq<ChangeDimensionPacket>::__single_object std::make_unique<ChangeDimensionPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0443",
+          "operand": "18a4d00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ChangeDimensionPacket, std::default_delete<ChangeDimensionPacket>, void>(std::unique_ptr<ChangeDimensionPacket, std::default_delete<ChangeDimensionPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a044f",
+          "operand": "18a4d50 <std::unique_ptr<ChangeDimensionPacket, std::default_delete<ChangeDimensionPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0460",
+          "operand": "18a4db0 <std::_MakeUniq<SetPlayerGameTypePacket>::__single_object std::make_unique<SetPlayerGameTypePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0473",
+          "operand": "18a4e00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetPlayerGameTypePacket, std::default_delete<SetPlayerGameTypePacket>, void>(std::unique_ptr<SetPlayerGameTypePacket, std::default_delete<SetPlayerGameTypePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a047f",
+          "operand": "18a4e50 <std::unique_ptr<SetPlayerGameTypePacket, std::default_delete<SetPlayerGameTypePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0490",
+          "operand": "18a4eb0 <std::_MakeUniq<SetDefaultGameTypePacket>::__single_object std::make_unique<SetDefaultGameTypePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a04a3",
+          "operand": "18a4f00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetDefaultGameTypePacket, std::default_delete<SetDefaultGameTypePacket>, void>(std::unique_ptr<SetDefaultGameTypePacket, std::default_delete<SetDefaultGameTypePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a04af",
+          "operand": "18a4f50 <std::unique_ptr<SetDefaultGameTypePacket, std::default_delete<SetDefaultGameTypePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a04c0",
+          "operand": "18a4fb0 <std::_MakeUniq<UpdateAttributesPacket>::__single_object std::make_unique<UpdateAttributesPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a04d3",
+          "operand": "18a5000 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<UpdateAttributesPacket, std::default_delete<UpdateAttributesPacket>, void>(std::unique_ptr<UpdateAttributesPacket, std::default_delete<UpdateAttributesPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a04df",
+          "operand": "18a5050 <std::unique_ptr<UpdateAttributesPacket, std::default_delete<UpdateAttributesPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a04f0",
+          "operand": "18a50b0 <std::_MakeUniq<PlayerListPacket>::__single_object std::make_unique<PlayerListPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0503",
+          "operand": "18a5100 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PlayerListPacket, std::default_delete<PlayerListPacket>, void>(std::unique_ptr<PlayerListPacket, std::default_delete<PlayerListPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a050f",
+          "operand": "18a5150 <std::unique_ptr<PlayerListPacket, std::default_delete<PlayerListPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0520",
+          "operand": "18a51b0 <std::_MakeUniq<SimpleEventPacket>::__single_object std::make_unique<SimpleEventPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0533",
+          "operand": "18a5200 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SimpleEventPacket, std::default_delete<SimpleEventPacket>, void>(std::unique_ptr<SimpleEventPacket, std::default_delete<SimpleEventPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a053f",
+          "operand": "18a5250 <std::unique_ptr<SimpleEventPacket, std::default_delete<SimpleEventPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0550",
+          "operand": "18a52b0 <std::_MakeUniq<EventPacket>::__single_object std::make_unique<EventPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0563",
+          "operand": "18a5300 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<EventPacket, std::default_delete<EventPacket>, void>(std::unique_ptr<EventPacket, std::default_delete<EventPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a056f",
+          "operand": "18a5350 <std::unique_ptr<EventPacket, std::default_delete<EventPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0580",
+          "operand": "18a53b0 <std::_MakeUniq<SpawnExperienceOrbPacket>::__single_object std::make_unique<SpawnExperienceOrbPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0593",
+          "operand": "18a5400 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SpawnExperienceOrbPacket, std::default_delete<SpawnExperienceOrbPacket>, void>(std::unique_ptr<SpawnExperienceOrbPacket, std::default_delete<SpawnExperienceOrbPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a059f",
+          "operand": "18a5450 <std::unique_ptr<SpawnExperienceOrbPacket, std::default_delete<SpawnExperienceOrbPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a05b0",
+          "operand": "18a54b0 <std::_MakeUniq<RequestChunkRadiusPacket>::__single_object std::make_unique<RequestChunkRadiusPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a05c3",
+          "operand": "18a5500 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<RequestChunkRadiusPacket, std::default_delete<RequestChunkRadiusPacket>, void>(std::unique_ptr<RequestChunkRadiusPacket, std::default_delete<RequestChunkRadiusPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a05cf",
+          "operand": "18a5550 <std::unique_ptr<RequestChunkRadiusPacket, std::default_delete<RequestChunkRadiusPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a05e0",
+          "operand": "18a55b0 <std::_MakeUniq<ChunkRadiusUpdatedPacket>::__single_object std::make_unique<ChunkRadiusUpdatedPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a05f3",
+          "operand": "18a5600 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ChunkRadiusUpdatedPacket, std::default_delete<ChunkRadiusUpdatedPacket>, void>(std::unique_ptr<ChunkRadiusUpdatedPacket, std::default_delete<ChunkRadiusUpdatedPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a05ff",
+          "operand": "18a5650 <std::unique_ptr<ChunkRadiusUpdatedPacket, std::default_delete<ChunkRadiusUpdatedPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0610",
+          "operand": "18a56b0 <std::_MakeUniq<ClientboundMapItemDataPacket>::__single_object std::make_unique<ClientboundMapItemDataPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0623",
+          "operand": "18a5700 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ClientboundMapItemDataPacket, std::default_delete<ClientboundMapItemDataPacket>, void>(std::unique_ptr<ClientboundMapItemDataPacket, std::default_delete<ClientboundMapItemDataPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a062f",
+          "operand": "18a5750 <std::unique_ptr<ClientboundMapItemDataPacket, std::default_delete<ClientboundMapItemDataPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0640",
+          "operand": "18a57b0 <std::_MakeUniq<MapInfoRequestPacket>::__single_object std::make_unique<MapInfoRequestPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0653",
+          "operand": "18a5800 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<MapInfoRequestPacket, std::default_delete<MapInfoRequestPacket>, void>(std::unique_ptr<MapInfoRequestPacket, std::default_delete<MapInfoRequestPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a065f",
+          "operand": "18a5850 <std::unique_ptr<MapInfoRequestPacket, std::default_delete<MapInfoRequestPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0670",
+          "operand": "18a58b0 <std::_MakeUniq<UpdateTradePacket>::__single_object std::make_unique<UpdateTradePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0683",
+          "operand": "18a5900 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<UpdateTradePacket, std::default_delete<UpdateTradePacket>, void>(std::unique_ptr<UpdateTradePacket, std::default_delete<UpdateTradePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a068f",
+          "operand": "18a5950 <std::unique_ptr<UpdateTradePacket, std::default_delete<UpdateTradePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a06a0",
+          "operand": "18a59b0 <std::_MakeUniq<UpdateEquipPacket>::__single_object std::make_unique<UpdateEquipPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a06b3",
+          "operand": "18a5a00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<UpdateEquipPacket, std::default_delete<UpdateEquipPacket>, void>(std::unique_ptr<UpdateEquipPacket, std::default_delete<UpdateEquipPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a06bf",
+          "operand": "18a5a50 <std::unique_ptr<UpdateEquipPacket, std::default_delete<UpdateEquipPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a06d0",
+          "operand": "18a5ab0 <std::_MakeUniq<BossEventPacket>::__single_object std::make_unique<BossEventPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a06e3",
+          "operand": "18a5b00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<BossEventPacket, std::default_delete<BossEventPacket>, void>(std::unique_ptr<BossEventPacket, std::default_delete<BossEventPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a06ef",
+          "operand": "18a5b50 <std::unique_ptr<BossEventPacket, std::default_delete<BossEventPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0700",
+          "operand": "18a5bb0 <std::_MakeUniq<AvailableCommandsPacket>::__single_object std::make_unique<AvailableCommandsPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0713",
+          "operand": "18a5c00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<AvailableCommandsPacket, std::default_delete<AvailableCommandsPacket>, void>(std::unique_ptr<AvailableCommandsPacket, std::default_delete<AvailableCommandsPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a071f",
+          "operand": "18a5c50 <std::unique_ptr<AvailableCommandsPacket, std::default_delete<AvailableCommandsPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0730",
+          "operand": "18a5cb0 <std::_MakeUniq<CommandRequestPacket>::__single_object std::make_unique<CommandRequestPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0743",
+          "operand": "18a5d00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<CommandRequestPacket, std::default_delete<CommandRequestPacket>, void>(std::unique_ptr<CommandRequestPacket, std::default_delete<CommandRequestPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a074f",
+          "operand": "18a5d50 <std::unique_ptr<CommandRequestPacket, std::default_delete<CommandRequestPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0760",
+          "operand": "18a5db0 <std::_MakeUniq<CommandOutputPacket>::__single_object std::make_unique<CommandOutputPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0773",
+          "operand": "18a5e00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<CommandOutputPacket, std::default_delete<CommandOutputPacket>, void>(std::unique_ptr<CommandOutputPacket, std::default_delete<CommandOutputPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a077f",
+          "operand": "18a5e50 <std::unique_ptr<CommandOutputPacket, std::default_delete<CommandOutputPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0790",
+          "operand": "18a5eb0 <std::_MakeUniq<CommandBlockUpdatePacket>::__single_object std::make_unique<CommandBlockUpdatePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a07a3",
+          "operand": "18a5f00 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<CommandBlockUpdatePacket, std::default_delete<CommandBlockUpdatePacket>, void>(std::unique_ptr<CommandBlockUpdatePacket, std::default_delete<CommandBlockUpdatePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a07af",
+          "operand": "18a5f50 <std::unique_ptr<CommandBlockUpdatePacket, std::default_delete<CommandBlockUpdatePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a07c0",
+          "operand": "18a5fb0 <std::_MakeUniq<CameraPacket>::__single_object std::make_unique<CameraPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a07d3",
+          "operand": "18a6000 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<CameraPacket, std::default_delete<CameraPacket>, void>(std::unique_ptr<CameraPacket, std::default_delete<CameraPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a07df",
+          "operand": "18a6050 <std::unique_ptr<CameraPacket, std::default_delete<CameraPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a07f0",
+          "operand": "18a60b0 <std::_MakeUniq<GameRulesChangedPacket>::__single_object std::make_unique<GameRulesChangedPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0803",
+          "operand": "18a6110 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<GameRulesChangedPacket, std::default_delete<GameRulesChangedPacket>, void>(std::unique_ptr<GameRulesChangedPacket, std::default_delete<GameRulesChangedPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a080f",
+          "operand": "1839c30 <std::unique_ptr<GameRulesChangedPacket, std::default_delete<GameRulesChangedPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0820",
+          "operand": "18a6160 <std::_MakeUniq<ShowCreditsPacket>::__single_object std::make_unique<ShowCreditsPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0833",
+          "operand": "18a61c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ShowCreditsPacket, std::default_delete<ShowCreditsPacket>, void>(std::unique_ptr<ShowCreditsPacket, std::default_delete<ShowCreditsPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a083f",
+          "operand": "18a6210 <std::unique_ptr<ShowCreditsPacket, std::default_delete<ShowCreditsPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0850",
+          "operand": "18a6270 <std::_MakeUniq<ResourcePackDataInfoPacket>::__single_object std::make_unique<ResourcePackDataInfoPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0863",
+          "operand": "18a62c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ResourcePackDataInfoPacket, std::default_delete<ResourcePackDataInfoPacket>, void>(std::unique_ptr<ResourcePackDataInfoPacket, std::default_delete<ResourcePackDataInfoPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a086f",
+          "operand": "18a6310 <std::unique_ptr<ResourcePackDataInfoPacket, std::default_delete<ResourcePackDataInfoPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0880",
+          "operand": "18a6370 <std::_MakeUniq<ResourcePackChunkDataPacket>::__single_object std::make_unique<ResourcePackChunkDataPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0893",
+          "operand": "18a63c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ResourcePackChunkDataPacket, std::default_delete<ResourcePackChunkDataPacket>, void>(std::unique_ptr<ResourcePackChunkDataPacket, std::default_delete<ResourcePackChunkDataPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a089f",
+          "operand": "18a6410 <std::unique_ptr<ResourcePackChunkDataPacket, std::default_delete<ResourcePackChunkDataPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a08b0",
+          "operand": "18a6470 <std::_MakeUniq<ResourcePackChunkRequestPacket>::__single_object std::make_unique<ResourcePackChunkRequestPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a08c3",
+          "operand": "18a64c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ResourcePackChunkRequestPacket, std::default_delete<ResourcePackChunkRequestPacket>, void>(std::unique_ptr<ResourcePackChunkRequestPacket, std::default_delete<ResourcePackChunkRequestPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a08cf",
+          "operand": "18a6510 <std::unique_ptr<ResourcePackChunkRequestPacket, std::default_delete<ResourcePackChunkRequestPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a08e0",
+          "operand": "18a6570 <std::_MakeUniq<StructureBlockUpdatePacket>::__single_object std::make_unique<StructureBlockUpdatePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a08f3",
+          "operand": "18a65c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<StructureBlockUpdatePacket, std::default_delete<StructureBlockUpdatePacket>, void>(std::unique_ptr<StructureBlockUpdatePacket, std::default_delete<StructureBlockUpdatePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a08ff",
+          "operand": "18a6610 <std::unique_ptr<StructureBlockUpdatePacket, std::default_delete<StructureBlockUpdatePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0910",
+          "operand": "18a6670 <std::_MakeUniq<TransferPacket>::__single_object std::make_unique<TransferPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0923",
+          "operand": "18a66c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<TransferPacket, std::default_delete<TransferPacket>, void>(std::unique_ptr<TransferPacket, std::default_delete<TransferPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a092f",
+          "operand": "18a6710 <std::unique_ptr<TransferPacket, std::default_delete<TransferPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0940",
+          "operand": "18a6770 <std::_MakeUniq<AddBehaviorTreePacket>::__single_object std::make_unique<AddBehaviorTreePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0953",
+          "operand": "18a67c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<AddBehaviorTreePacket, std::default_delete<AddBehaviorTreePacket>, void>(std::unique_ptr<AddBehaviorTreePacket, std::default_delete<AddBehaviorTreePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a095f",
+          "operand": "18a6810 <std::unique_ptr<AddBehaviorTreePacket, std::default_delete<AddBehaviorTreePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0970",
+          "operand": "18a6870 <std::_MakeUniq<SetTitlePacket>::__single_object std::make_unique<SetTitlePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0983",
+          "operand": "18a68c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetTitlePacket, std::default_delete<SetTitlePacket>, void>(std::unique_ptr<SetTitlePacket, std::default_delete<SetTitlePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a098f",
+          "operand": "18a6910 <std::unique_ptr<SetTitlePacket, std::default_delete<SetTitlePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a09a0",
+          "operand": "18a6970 <std::_MakeUniq<PlaySoundPacket>::__single_object std::make_unique<PlaySoundPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a09b3",
+          "operand": "18a69c0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PlaySoundPacket, std::default_delete<PlaySoundPacket>, void>(std::unique_ptr<PlaySoundPacket, std::default_delete<PlaySoundPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a09bf",
+          "operand": "18a6a10 <std::unique_ptr<PlaySoundPacket, std::default_delete<PlaySoundPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a09d0",
+          "operand": "18a6a70 <std::_MakeUniq<StopSoundPacket>::__single_object std::make_unique<StopSoundPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a09e3",
+          "operand": "18a6ad0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<StopSoundPacket, std::default_delete<StopSoundPacket>, void>(std::unique_ptr<StopSoundPacket, std::default_delete<StopSoundPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a09ef",
+          "operand": "18a6b20 <std::unique_ptr<StopSoundPacket, std::default_delete<StopSoundPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a00",
+          "operand": "18a6b80 <std::_MakeUniq<ShowStoreOfferPacket>::__single_object std::make_unique<ShowStoreOfferPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a13",
+          "operand": "18a6bd0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ShowStoreOfferPacket, std::default_delete<ShowStoreOfferPacket>, void>(std::unique_ptr<ShowStoreOfferPacket, std::default_delete<ShowStoreOfferPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a1f",
+          "operand": "18a6c20 <std::unique_ptr<ShowStoreOfferPacket, std::default_delete<ShowStoreOfferPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a30",
+          "operand": "18a6c80 <std::_MakeUniq<RemoveObjectivePacket>::__single_object std::make_unique<RemoveObjectivePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a43",
+          "operand": "18a6ce0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<RemoveObjectivePacket, std::default_delete<RemoveObjectivePacket>, void>(std::unique_ptr<RemoveObjectivePacket, std::default_delete<RemoveObjectivePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a4f",
+          "operand": "18a6d30 <std::unique_ptr<RemoveObjectivePacket, std::default_delete<RemoveObjectivePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a60",
+          "operand": "18a6d90 <std::_MakeUniq<SetDisplayObjectivePacket>::__single_object std::make_unique<SetDisplayObjectivePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a73",
+          "operand": "18a6df0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetDisplayObjectivePacket, std::default_delete<SetDisplayObjectivePacket>, void>(std::unique_ptr<SetDisplayObjectivePacket, std::default_delete<SetDisplayObjectivePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a7f",
+          "operand": "18a6e40 <std::unique_ptr<SetDisplayObjectivePacket, std::default_delete<SetDisplayObjectivePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0a90",
+          "operand": "18a6ea0 <std::_MakeUniq<PurchaseReceiptPacket>::__single_object std::make_unique<PurchaseReceiptPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0aa3",
+          "operand": "18a6ef0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PurchaseReceiptPacket, std::default_delete<PurchaseReceiptPacket>, void>(std::unique_ptr<PurchaseReceiptPacket, std::default_delete<PurchaseReceiptPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0aaf",
+          "operand": "18a6f40 <std::unique_ptr<PurchaseReceiptPacket, std::default_delete<PurchaseReceiptPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0ac0",
+          "operand": "18a6fa0 <std::_MakeUniq<PlayerSkinPacket>::__single_object std::make_unique<PlayerSkinPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0ad3",
+          "operand": "18a6ff0 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PlayerSkinPacket, std::default_delete<PlayerSkinPacket>, void>(std::unique_ptr<PlayerSkinPacket, std::default_delete<PlayerSkinPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0adf",
+          "operand": "18a7040 <std::unique_ptr<PlayerSkinPacket, std::default_delete<PlayerSkinPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0af0",
+          "operand": "18a70a0 <std::_MakeUniq<SetScorePacket>::__single_object std::make_unique<SetScorePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b03",
+          "operand": "18a7100 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetScorePacket, std::default_delete<SetScorePacket>, void>(std::unique_ptr<SetScorePacket, std::default_delete<SetScorePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b0f",
+          "operand": "18a7150 <std::unique_ptr<SetScorePacket, std::default_delete<SetScorePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b20",
+          "operand": "18a71b0 <std::_MakeUniq<SetScoreboardIdentityPacket>::__single_object std::make_unique<SetScoreboardIdentityPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b33",
+          "operand": "18a7210 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetScoreboardIdentityPacket, std::default_delete<SetScoreboardIdentityPacket>, void>(std::unique_ptr<SetScoreboardIdentityPacket, std::default_delete<SetScoreboardIdentityPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b3f",
+          "operand": "18a7260 <std::unique_ptr<SetScoreboardIdentityPacket, std::default_delete<SetScoreboardIdentityPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b50",
+          "operand": "18a72c0 <std::_MakeUniq<SubClientLoginPacket>::__single_object std::make_unique<SubClientLoginPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b63",
+          "operand": "18a7310 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SubClientLoginPacket, std::default_delete<SubClientLoginPacket>, void>(std::unique_ptr<SubClientLoginPacket, std::default_delete<SubClientLoginPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b6f",
+          "operand": "18a7360 <std::unique_ptr<SubClientLoginPacket, std::default_delete<SubClientLoginPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b80",
+          "operand": "18a73c0 <std::_MakeUniq<SetLastHurtByPacket>::__single_object std::make_unique<SetLastHurtByPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b93",
+          "operand": "18a7410 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetLastHurtByPacket, std::default_delete<SetLastHurtByPacket>, void>(std::unique_ptr<SetLastHurtByPacket, std::default_delete<SetLastHurtByPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0b9f",
+          "operand": "18a7460 <std::unique_ptr<SetLastHurtByPacket, std::default_delete<SetLastHurtByPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0bb0",
+          "operand": "18a74c0 <std::_MakeUniq<BookEditPacket>::__single_object std::make_unique<BookEditPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0bc3",
+          "operand": "18a7510 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<BookEditPacket, std::default_delete<BookEditPacket>, void>(std::unique_ptr<BookEditPacket, std::default_delete<BookEditPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0bcf",
+          "operand": "18a7560 <std::unique_ptr<BookEditPacket, std::default_delete<BookEditPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0be0",
+          "operand": "18a75c0 <std::_MakeUniq<NpcRequestPacket>::__single_object std::make_unique<NpcRequestPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0bf3",
+          "operand": "18a7610 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<NpcRequestPacket, std::default_delete<NpcRequestPacket>, void>(std::unique_ptr<NpcRequestPacket, std::default_delete<NpcRequestPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0bff",
+          "operand": "18a7660 <std::unique_ptr<NpcRequestPacket, std::default_delete<NpcRequestPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c10",
+          "operand": "18a76c0 <std::_MakeUniq<WSConnectPacket>::__single_object std::make_unique<WSConnectPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c23",
+          "operand": "18a7720 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<WSConnectPacket, std::default_delete<WSConnectPacket>, void>(std::unique_ptr<WSConnectPacket, std::default_delete<WSConnectPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c2f",
+          "operand": "18a7770 <std::unique_ptr<WSConnectPacket, std::default_delete<WSConnectPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c40",
+          "operand": "18a77d0 <std::_MakeUniq<ModalFormRequestPacket>::__single_object std::make_unique<ModalFormRequestPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c53",
+          "operand": "18a7820 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ModalFormRequestPacket, std::default_delete<ModalFormRequestPacket>, void>(std::unique_ptr<ModalFormRequestPacket, std::default_delete<ModalFormRequestPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c5f",
+          "operand": "18a7870 <std::unique_ptr<ModalFormRequestPacket, std::default_delete<ModalFormRequestPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c70",
+          "operand": "18a78d0 <std::_MakeUniq<ModalFormResponsePacket>::__single_object std::make_unique<ModalFormResponsePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c83",
+          "operand": "18a7920 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ModalFormResponsePacket, std::default_delete<ModalFormResponsePacket>, void>(std::unique_ptr<ModalFormResponsePacket, std::default_delete<ModalFormResponsePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0c8f",
+          "operand": "18a7970 <std::unique_ptr<ModalFormResponsePacket, std::default_delete<ModalFormResponsePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0ca0",
+          "operand": "18a79d0 <std::_MakeUniq<ServerSettingsRequestPacket>::__single_object std::make_unique<ServerSettingsRequestPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0cb3",
+          "operand": "18a7a20 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ServerSettingsRequestPacket, std::default_delete<ServerSettingsRequestPacket>, void>(std::unique_ptr<ServerSettingsRequestPacket, std::default_delete<ServerSettingsRequestPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0cbf",
+          "operand": "18a7a70 <std::unique_ptr<ServerSettingsRequestPacket, std::default_delete<ServerSettingsRequestPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0cd0",
+          "operand": "18a7ad0 <std::_MakeUniq<ServerSettingsResponsePacket>::__single_object std::make_unique<ServerSettingsResponsePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0ce3",
+          "operand": "18a7b20 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ServerSettingsResponsePacket, std::default_delete<ServerSettingsResponsePacket>, void>(std::unique_ptr<ServerSettingsResponsePacket, std::default_delete<ServerSettingsResponsePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0cef",
+          "operand": "18a7b70 <std::unique_ptr<ServerSettingsResponsePacket, std::default_delete<ServerSettingsResponsePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d00",
+          "operand": "18a7bd0 <std::_MakeUniq<PhotoTransferPacket>::__single_object std::make_unique<PhotoTransferPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d13",
+          "operand": "18a7c20 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<PhotoTransferPacket, std::default_delete<PhotoTransferPacket>, void>(std::unique_ptr<PhotoTransferPacket, std::default_delete<PhotoTransferPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d1f",
+          "operand": "18a7c70 <std::unique_ptr<PhotoTransferPacket, std::default_delete<PhotoTransferPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d30",
+          "operand": "18a7cd0 <std::_MakeUniq<ShowProfilePacket>::__single_object std::make_unique<ShowProfilePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d43",
+          "operand": "18a7d20 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<ShowProfilePacket, std::default_delete<ShowProfilePacket>, void>(std::unique_ptr<ShowProfilePacket, std::default_delete<ShowProfilePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d4f",
+          "operand": "18a7d70 <std::unique_ptr<ShowProfilePacket, std::default_delete<ShowProfilePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d60",
+          "operand": "18a7dd0 <std::_MakeUniq<LabTablePacket>::__single_object std::make_unique<LabTablePacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d73",
+          "operand": "18a7e20 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<LabTablePacket, std::default_delete<LabTablePacket>, void>(std::unique_ptr<LabTablePacket, std::default_delete<LabTablePacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d7f",
+          "operand": "18a7e70 <std::unique_ptr<LabTablePacket, std::default_delete<LabTablePacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0d90",
+          "operand": "18a7ed0 <std::_MakeUniq<NetworkStackLatencyPacket>::__single_object std::make_unique<NetworkStackLatencyPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0da3",
+          "operand": "18a7f30 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<NetworkStackLatencyPacket, std::default_delete<NetworkStackLatencyPacket>, void>(std::unique_ptr<NetworkStackLatencyPacket, std::default_delete<NetworkStackLatencyPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0daf",
+          "operand": "18a7f80 <std::unique_ptr<NetworkStackLatencyPacket, std::default_delete<NetworkStackLatencyPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0dc0",
+          "operand": "18a7fe0 <std::_MakeUniq<UpdateSoftEnumPacket>::__single_object std::make_unique<UpdateSoftEnumPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0dd3",
+          "operand": "18a8040 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<UpdateSoftEnumPacket, std::default_delete<UpdateSoftEnumPacket>, void>(std::unique_ptr<UpdateSoftEnumPacket, std::default_delete<UpdateSoftEnumPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0ddf",
+          "operand": "18a8090 <std::unique_ptr<UpdateSoftEnumPacket, std::default_delete<UpdateSoftEnumPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0df0",
+          "operand": "18a80f0 <std::_MakeUniq<SetLocalPlayerAsInitializedPacket>::__single_object std::make_unique<SetLocalPlayerAsInitializedPacket>()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0e03",
+          "operand": "18a8150 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr<SetLocalPlayerAsInitializedPacket, std::default_delete<SetLocalPlayerAsInitializedPacket>, void>(std::unique_ptr<SetLocalPlayerAsInitializedPacket, std::default_delete<SetLocalPlayerAsInitializedPacket> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0e0f",
+          "operand": "18a81a0 <std::unique_ptr<SetLocalPlayerAsInitializedPacket, std::default_delete<SetLocalPlayerAsInitializedPacket> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18a0e24",
+          "operand": "18a8200 <std::unique_ptr<Packet, std::default_delete<Packet> >::unique_ptr(decltype(nullptr))>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "ServerNetworkHandler::handle(NetworkIdentifier const&, LoginPacket const&)",
+      "address": "0x1827e50",
+      "size": 5710,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1827e81",
+          "operand": "18365f0 <Packet::getClientSubId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827e97",
+          "operand": "1825970 <ServerNetworkHandler::_getServerPlayer(NetworkIdentifier const&, unsigned char)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827f12",
+          "operand": "1836db0 <PlayStatusPacket::PlayStatusPacket(PlayStatus)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827f3b",
+          "operand": "18364a0 <PacketSender::sendToPrimaryClient(NetworkIdentifier const&, Packet const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827f59",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827f6d",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827f86",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827f8f",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827f98",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827fb4",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827fce",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827fea",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1827ff6",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828002",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182800b",
+          "operand": "1836df0 <PlayStatusPacket::~PlayStatusPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828024",
+          "operand": "1836e10 <bool std::operator==<ConnectionRequest, std::default_delete<ConnectionRequest> >(std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> > const&, decltype(nullptr))>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828048",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828062",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182807e",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182808a",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828096",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18280a0",
+          "operand": "26e5160 <getEpochTimeS()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18280b7",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18280e2",
+          "operand": "18f4030 <ConnectionRequest::verify(std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > const&, long)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828118",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828120",
+          "operand": "18f42a0 <ConnectionRequest::verifySelfSigned()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828142",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182814a",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828184",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182818c",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828194",
+          "operand": "19e5440 <Certificate::isValid() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18281c5",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18281cd",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18281d5",
+          "operand": "19e50e0 <Certificate::getNotBeforeDate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182821c",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828224",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182822c",
+          "operand": "19e5180 <Certificate::getExpirationDate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828266",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182826e",
+          "operand": "18f42a0 <ConnectionRequest::verifySelfSigned()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828281",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828289",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18282aa",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18282b2",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18282c1",
+          "operand": "19e4480 <Certificate::getIdentityPublicKey[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18282d2",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18282f3",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828311",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182831d",
+          "operand": "1756b10 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::c_str() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182833b",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828355",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828371",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182837d",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828389",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828395",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18283af",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18283b7",
+          "operand": "18f2e20 <ConnectionRequest::getCertificate() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18283ca",
+          "operand": "1836e60 <ExtendedCertificate::getIdentity(Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18283eb",
+          "operand": "17fdd10 <ExtendedCertificate::getXuid[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18283f7",
+          "operand": "1836fd0 <PlayerStorageIds::PlayerStorageIds()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828403",
+          "operand": "17573a0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::empty() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182842c",
+          "operand": "26ed0e0 <mce::UUID::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182843f",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828452",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828474",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828483",
+          "operand": "18f3260 <ConnectionRequest::getClientPlatformOnlineId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828496",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18284a9",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18284cb",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18284da",
+          "operand": "18f3320 <ConnectionRequest::getClientPlatformOfflineId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18284ed",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828500",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828524",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828533",
+          "operand": "18f2e40 <ConnectionRequest::getSelfSignedId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828546",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828559",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182857d",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828585",
+          "operand": "18f3060 <ConnectionRequest::getClientRandomId() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828596",
+          "operand": "17578f0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(char)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18285bc",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18285cb",
+          "operand": "18f30e0 <ConnectionRequest::getClientPlatformId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18285de",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18285f1",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828601",
+          "operand": "1c87180 <Level::getLevelStorage()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828617",
+          "operand": "1cd67c0 <LevelStorage::getServerId[abi:cxx11](PlayerStorageIds const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828623",
+          "operand": "17573a0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::empty() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828642",
+          "operand": "1c8c290 <Level::getPlayerFromServerId(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182866e",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828688",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18286a4",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18286b0",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18286bc",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18286f0",
+          "operand": "1836e60 <ExtendedCertificate::getIdentity(Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182871a",
+          "operand": "17f4810 <mce::UUID::operator!=(mce::UUID const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182873e",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828758",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828774",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828780",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182878c",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18287ab",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18287b3",
+          "operand": "18f3a50 <ConnectionRequest::isEduMode() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18287ce",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18287d6",
+          "operand": "1cd1ab0 <LevelData::isEducationEditionLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18287f9",
+          "operand": "1c8b170 <Level::getLevelData()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828801",
+          "operand": "1cd1ab0 <LevelData::isEducationEditionLevel() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828836",
+          "operand": "1836db0 <PlayStatusPacket::PlayStatusPacket(PlayStatus)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828862",
+          "operand": "18364a0 <PacketSender::sendToPrimaryClient(NetworkIdentifier const&, Packet const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18288af",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18288c9",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18288d5",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18288ee",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828904",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828910",
+          "operand": "1836df0 <PlayStatusPacket::~PlayStatusPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182892e",
+          "operand": "*0x20(%rdx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x1828952",
+          "operand": "*0x28(%rdx)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182896d",
+          "operand": "17573a0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::empty() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18289aa",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18289b9",
+          "operand": "18f3910 <ConnectionRequest::getTenantId[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18289d3",
+          "operand": "1837040 <bool std::operator!=<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828a03",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828a32",
+          "operand": "1836db0 <PlayStatusPacket::PlayStatusPacket(PlayStatus)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828a5e",
+          "operand": "18364a0 <PacketSender::sendToPrimaryClient(NetworkIdentifier const&, Packet const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828a75",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828a8f",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828aab",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828ab7",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828ac3",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828ad9",
+          "operand": "1836df0 <PlayStatusPacket::~PlayStatusPacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828aef",
+          "operand": "1836e60 <ExtendedCertificate::getIdentity(Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828b10",
+          "operand": "17fdd10 <ExtendedCertificate::getXuid[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828b23",
+          "operand": "1837070 <ExtendedCertificate::getIdentityName[abi:cxx11](Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828b50",
+          "operand": "17f47e0 <bool std::operator!=<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828b82",
+          "operand": "25f5ac0 <Whitelist::tryUpdateEntries(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828ba0",
+          "operand": "25f5410 <Whitelist::isAllowed(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828bbf",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828bd9",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828bf5",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828c01",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828c0d",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828c3b",
+          "operand": "1837160 <Blacklist::Entry::Entry(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828c58",
+          "operand": "25e4ff0 <Blacklist::isBlocked(Blacklist::Entry const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828c81",
+          "operand": "25e50d0 <Blacklist::getMessage[abi:cxx11](Blacklist::Entry const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828c90",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828ca7",
+          "operand": "17573a0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::empty() const@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828cc7",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828ce8",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828d00",
+          "operand": "1756410 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828d1c",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828d28",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828d46",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828d62",
+          "operand": "25e5170 <Blacklist::getDuration(Blacklist::Entry const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828d85",
+          "operand": "18294a0 <ServerNetworkHandler::removeFromBlacklist(mce::UUID const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828d9b",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828db0",
+          "operand": "1836e40 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828dbf",
+          "operand": "18f34a0 <ConnectionRequest::getSkinData() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828dcb",
+          "operand": "18371d0 <std::vector<unsigned char, std::allocator<unsigned char> >::size() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828dde",
+          "operand": "18371f0 <std::vector<unsigned char, std::allocator<unsigned char> >::~vector()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828e36",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828e50",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828e6c",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828e78",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828e84",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828ea8",
+          "operand": "1837240 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::size() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828ecb",
+          "operand": "1757fe0 <Crypto::Random::generateUUID()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828eec",
+          "operand": "26ed0e0 <mce::UUID::asString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828eff",
+          "operand": "1756dc0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828f12",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828f26",
+          "operand": "1880ed0 <NetworkHandler::getEncryptedPeerForUser(NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828f54",
+          "operand": "1836b50 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::operator[](NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828f6b",
+          "operand": "1837390 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828f7a",
+          "operand": "1837330 <std::_MakeUniq<ConnectionRequest>::__single_object std::make_unique<ConnectionRequest, ConnectionRequest&>(ConnectionRequest&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828f8d",
+          "operand": "18372c0 <std::_MakeUniq<ServerNetworkHandler::Client>::__single_object std::make_unique<ServerNetworkHandler::Client, std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> > >(std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828fa0",
+          "operand": "1837260 <std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >::operator=(std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828fb3",
+          "operand": "18373b0 <std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828fbf",
+          "operand": "1837410 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828fcb",
+          "operand": "1757440 <Crypto::Random::Random::Random()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828fe3",
+          "operand": "1757c10 <Crypto::Random::Random::getBytes[abi:cxx11](unsigned int)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1828fef",
+          "operand": "1757f80 <Crypto::Random::Random::~Random()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829017",
+          "operand": "19e4480 <Certificate::getIdentityPublicKey[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182902f",
+          "operand": "19e5720 <KeyManager::KeyManager(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Crypto::Asymmetric::System)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829049",
+          "operand": "19e38f0 <PrivateKeyManager::computeSecret[abi:cxx11](KeyManager const&) const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829055",
+          "operand": "1837470 <KeyManager::~KeyManager()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829061",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182906f",
+          "operand": "27cc9d0 <Json::Value::Value(Json::ValueType)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829082",
+          "operand": "27ceb70 <Json::Value::operator[](char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18290a1",
+          "operand": "1939760 <Util::base64_encode(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18290b4",
+          "operand": "27ccc90 <Json::Value::Value(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18290c7",
+          "operand": "27ccfc0 <Json::Value::operator=(Json::Value const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18290da",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18290e6",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18290ff",
+          "operand": "*0x20(%rsi)",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182911d",
+          "operand": "27ceb70 <Json::Value::operator[](char const*)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182913e",
+          "operand": "27ccc90 <Json::Value::Value(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829151",
+          "operand": "27ccfc0 <Json::Value::operator=(Json::Value const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829164",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829182",
+          "operand": "19dce60 <WebToken::createFromData(Json::Value const&, PrivateKeyManager const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182918e",
+          "operand": "18374c0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::operator->() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182919d",
+          "operand": "19dd340 <WebToken::toString[abi:cxx11]() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18291b0",
+          "operand": "18374e0 <ServerToClientHandshakePacket::ServerToClientHandshakePacket(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18291bc",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18291da",
+          "operand": "18364a0 <PacketSender::sendToPrimaryClient(NetworkIdentifier const&, Packet const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829211",
+          "operand": "1837530 <std::function<void ()>::function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829232",
+          "operand": "*%rax",
+          "kind": "indirect"
+        },
+        {
+          "site": "0x182923b",
+          "operand": "1804310 <std::function<void ()>::~function()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829255",
+          "operand": "181e040 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182926d",
+          "operand": "1757390 <Crypto::Hash::hash(Crypto::Hash::HashType, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829279",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182928c",
+          "operand": "1897300 <EncryptedNetworkPeer::enableEncryption(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18292a0",
+          "operand": "1880be0 <NetworkHandler::enableAsyncFlush(NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18292ac",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18292b8",
+          "operand": "1837550 <ServerToClientHandshakePacket::~ServerToClientHandshakePacket()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18292c4",
+          "operand": "18375a0 <std::unique_ptr<WebToken, std::default_delete<WebToken> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18292d0",
+          "operand": "27ccec0 <Json::Value::~Value()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18292dc",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18292e8",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829301",
+          "operand": "1880de0 <NetworkHandler::getPeerForUser(NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829324",
+          "operand": "1836b50 <std::unordered_map<NetworkIdentifier, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >, std::hash<NetworkIdentifier>, std::equal_to<NetworkIdentifier>, std::allocator<std::pair<NetworkIdentifier const, std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> > > > >::operator[](NetworkIdentifier const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182933b",
+          "operand": "1837390 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::operator*() const>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182934a",
+          "operand": "1837330 <std::_MakeUniq<ConnectionRequest>::__single_object std::make_unique<ConnectionRequest, ConnectionRequest&>(ConnectionRequest&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182935d",
+          "operand": "18372c0 <std::_MakeUniq<ServerNetworkHandler::Client>::__single_object std::make_unique<ServerNetworkHandler::Client, std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> > >(std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829370",
+          "operand": "1837260 <std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >::operator=(std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >&&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829383",
+          "operand": "18373b0 <std::unique_ptr<ServerNetworkHandler::Client, std::default_delete<ServerNetworkHandler::Client> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182938f",
+          "operand": "1837410 <std::unique_ptr<ConnectionRequest, std::default_delete<ConnectionRequest> >::~unique_ptr()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18293a6",
+          "operand": "1829510 <ServerNetworkHandler::_onClientAuthenticated(NetworkIdentifier const&, Certificate const&)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18293c2",
+          "operand": "1756930 <std::allocator<char>::allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18293dc",
+          "operand": "1757750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&)@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x18293f8",
+          "operand": "1825660 <ServerNetworkHandler::disconnectClient(NetworkIdentifier const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829404",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829410",
+          "operand": "1758340 <std::allocator<char>::~allocator()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182943a",
+          "operand": "1837600 <Blacklist::Entry::~Entry()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829446",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829452",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182945e",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x182946a",
+          "operand": "1837640 <PlayerStorageIds::~PlayerStorageIds()>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1829476",
+          "operand": "1758370 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()@plt>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "DisconnectPacket::write(BinaryStream&) const",
+      "address": "0x1840f10",
+      "size": 83,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x1840f36",
+          "operand": "26eb060 <BinaryStream::writeBool(bool)>",
+          "kind": "direct"
+        },
+        {
+          "site": "0x1840f58",
+          "operand": "26eb9b0 <BinaryStream::writeString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>",
+          "kind": "direct"
+        }
+      ]
+    },
+    {
+      "symbol": "PlayStatusPacket::write(BinaryStream&) const",
+      "address": "0x1843960",
+      "size": 38,
+      "confidence": "VERIFIED_BINARY",
+      "calls": [
+        {
+          "site": "0x184397b",
+          "operand": "26eb1f0 <BinaryStream::writeSignedBigEndianInt(int)>",
+          "kind": "direct"
+        }
+      ]
     }
   ]
 }
