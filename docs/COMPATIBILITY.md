@@ -16,7 +16,7 @@ The current executable is a development harness. Its --ticks, --tick-ms, --max-c
 | opsfile.json and ops list/reload | Implemented file/command model; session role enforcement pending | Load XUID entries and reload on command; enforce roles once sessions exist |
 | changesetting allow-cheats/difficulty | Implemented runtime settings mutation; gameplay effects pending | Apply changes in memory without rewriting server.properties |
 | save hold/query/resume | Asynchronous immutable checkpoint lifecycle implemented for internal storage; original LevelDB backup pending | Implement asynchronous backup preparation and retained-file lifecycle; query reports file paths and copy lengths while simulation continues; resume releases retention |
-| Networking, Xbox Live authentication and session limits | IPv4/IPv6 offline discovery implemented; connection/login/admission pending | Implement and test actual protocol behavior; parsing configuration alone does not enforce any of these settings |
+| Networking, Xbox Live authentication and session limits | IPv4/IPv6 discovery and RakNet 9 transport foundation implemented; authenticated login/admission pending | Implement and test actual protocol behavior; parsing configuration alone does not enforce any of these settings |
 
 ## Guide defaults
 

@@ -2,9 +2,9 @@
 
 | Platform/toolchain | Debug | Release | Sanitizers | Notes |
 |---|---|---|---|---|
-| Linux x86-64 GCC 14.2.0 | PASS, 11/11 CTest | PASS, 11/11 CTest | ASan+UBSan PASS, 11/11 CTest | CMake 4.4.5, Ninja 1.13.2 |
-| Linux Clang | PASS (native CI) | PASS (native CI) | UNRUN | CI run 43839417910 at 43d46b6; compiler absent locally |
-| Windows MSVC / VS 2022 | PASS (native CI) | PASS (native CI) | N/A | windows-2022; CI run 43839417910 at 43d46b6 |
+| Linux x86-64 GCC 14.2.0 | PASS, 13/13 CTest | PASS, 13/13 CTest | ASan+UBSan PASS, 13/13 CTest | CMake 4.4.5, Ninja 1.13.2 |
+| Linux Clang | PASS (native CI) | PASS (native CI) | UNRUN | CI run 43843720476 at 4cdd95e; compiler absent locally |
+| Windows MSVC / VS 2022 | PASS (native CI) | PASS (native CI) | N/A | windows-2022; CI run 43843720476 at 4cdd95e |
 | Windows Clang | UNRUN | UNRUN | UNRUN | Not configured |
 
 CTest cases: server (properties, access lists, commands, backup), discovery (offline wire codec), login_codec (bounded unverified packet body), server_console (live native process, console, backup and IPv4/IPv6 UDP); persistence (independent golden fixture, malformed/truncated inputs, duplicate positions, resource limits, deterministic round trips and filesystem replacement), world_lifecycle (two native executable runs restore age 2 then 5; corrupt file is preserved); chunks (full-column placement/read/removal, extreme coordinates, 4,000 fixed-seed updates against independent sparse map); core (scheduler/config/runtime), world (block ownership and age), lifecycle (three ticks and expected shutdown output), invalid_config (expected nonzero exit). Checks remain active in Release and do not use disabled `assert` macros. All 11 cases executed in each final local build.
@@ -42,6 +42,8 @@ The initial operational CI at 250e810 passed all Linux GCC/Clang/sanitizer jobs 
 
 [Run 43839417910](https://github.com/canhphung/BDS-RE/actions/runs/43839417910), source commit `43d46b64df09d15a7e5db73ebba99a934256b95b`, completed with all seven jobs successful. Windows MSVC Debug and Release logs each explicitly report 100% tests passed, 0 tests failed out of 11. Linux GCC/Clang Debug/Release and the sanitizer job also passed. This replaces the earlier operational Windows failures; no tests were skipped or disabled to make them pass. Login/JWT verification, real-client spawn, world streaming and networked gameplay remain unimplemented.
 
-## Current RakNet foundation (CI pending)
+## Current RakNet foundation (native CI verified)
 
 Linux GCC Debug, Release and ASan+UBSan each execute 13/13 CTest cases successfully. New tests are raknet (wire fixtures, sequence wrap arithmetic, padding, ACK/NACK, loss/retry, duplicates, ordered/sequenced delivery, bounded split reassembly, peer limits/expiry) and raknet_handshake (independent Python client over real IPv4/IPv6 UDP, protocol 9 negotiation, 20-address acceptance, forced retransmission, ping/pong and unauthenticated-application rejection). These do not count as Minecraft client or differential verification. The accompanying local source-map correlator processed 2,500 supplied module rows and produced 1,429 INFERRED navigation candidates; its raw input/output remain ignored.
+
+[Run 43843720476](https://github.com/canhphung/BDS-RE/actions/runs/43843720476) completed successfully for source commit `4cdd95e317bb311e52eb64478bdf6d225c509578`. All seven jobs passed: GCC/Clang Debug/Release, Linux sanitizers, native Windows MSVC Debug/Release. Both Windows logs explicitly report 100% tests passed, 0 tests failed out of 13. This includes actual IPv4/IPv6 UDP handshake tests with an independent protocol client, not a Minecraft client. No authenticated login, spawn or gameplay verification is claimed.

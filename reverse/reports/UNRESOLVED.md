@@ -14,3 +14,5 @@ Operational follow-up: canonical permission key and initial thread/view defaults
 Current implementation verification: operational controls, backup, discovery and the bounded unverified login decoder pass CI run 43839417910 at 43d46b6 on native Windows/Linux. This does not resolve original storage formats, authenticated login, world streaming, gameplay or real-client verification.
 
 RakNet follow-up: open/connected handshake and a bounded reliability implementation now exist. Original congestion control, security extensions, arbitrary bit-length payload support, application batching, trusted login/certificate validation and real Minecraft interoperability remain unresolved. Supplied module source paths support navigation only; raw metadata is kept locally and no Windows GUID/Age match was independently verified.
+
+Native CI run 43843720476 at 4cdd95e verifies the RakNet foundation with all seven jobs passed, including 13/13 tests on both Windows configurations. It remains an independent implementation/synthetic-client result, not Minecraft client or differential verification.
