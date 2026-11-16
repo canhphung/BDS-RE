@@ -524,5 +524,44 @@
     },
     "destroy_time_gate": false,
     "oracle": "tests/reference/break_bds_1.6.0.15.json"
+  },
+  "item_actor": {
+    "confidence": "VERIFIED_BINARY+DIFFERENTIAL_VERIFIED",
+    "size": [
+      0.25,
+      0.25
+    ],
+    "height_offset": 0.125,
+    "spawn_offset": "0.15 + 0.7 * nextFloat per axis",
+    "initial_motion": "(nextFloat*0.2-0.1, 0.2, nextFloat*0.2-0.1)",
+    "pickup_delay": 10,
+    "lifetime": 6000,
+    "gravity": 0.04,
+    "air_friction": "0x3f7ae148 (0.98f)",
+    "ground_friction": "0x3f16872c (0.6f*0.98f)",
+    "merge_period_ticks": 25,
+    "merge_grow": 0.5,
+    "pickup_grow": [
+      1.0,
+      0.5,
+      1.0
+    ],
+    "merge_actor_event": 69,
+    "move_delta_flags": {
+      "x": 1,
+      "y": 2,
+      "z": 4,
+      "pitch": 8,
+      "yaw": 16,
+      "head_yaw": 32,
+      "on_ground_from_last_sent": 64,
+      "teleported_from_last_sent": 128
+    },
+    "significant": "rotation sum > 4 deg or moved^2 > 1e-4 or (speed^2 < 0x358637be and moved^2 > 0x358637be)",
+    "set_actor_motion": "|motion - last sent|^2 > 0.04 or (> 0 and motion == 0)",
+    "oracle": [
+      "tests/reference/item_actor_bds_1.6.0.15.json",
+      "tests/reference/item_actor_merge_bds_1.6.0.15.json"
+    ]
   }
 }

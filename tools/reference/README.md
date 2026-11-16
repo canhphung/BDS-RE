@@ -105,3 +105,19 @@ python3 tools/reference/capture_break_oracle.py \
   --preload input/reference-runtime/ipv6_shim.so \
   --output input/reference/break-new
 ```
+
+## Item entity traces (gdb)
+
+`trace_item_actor.py` runs the original server under gdb with
+`gdb_item_actor.py`, which logs the ItemActor state at every
+`ItemActor::normalTick` entry and the related calls, while a reference client
+breaks blocks (`--scenario pickup` or `merge`). The item replay references in
+tests/reference/item_actor*_bds_1.6.0.15.json were extracted from these logs.
+
+```sh
+python3 tools/reference/trace_item_actor.py \
+  --runtime input/reference-runtime/bds \
+  --library-path input/reference-runtime/openssl-local/lib \
+  --preload input/reference-runtime/ipv6_shim.so \
+  --output input/reference/items-new --scenario merge
+```

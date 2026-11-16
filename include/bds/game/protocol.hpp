@@ -3,6 +3,7 @@
 #include "bds/network/connection.hpp"
 #include "bds/network/packet_ids.hpp"
 #include "bds/world/world.hpp"
+#include "bds/game/item_actor.hpp"
 namespace bds::game {
 using protocol::ByteReader;
 using protocol::Bytes;
@@ -51,4 +52,27 @@ struct Transaction {
     ItemStack held;
 };
 Transaction transaction(std::span<const std::uint8_t> bytes);
+
+// Item entity packets (protocol 282).
+// SynchedActorData::packAll of a fresh ItemActor, as captured from the original.
+Bytes item_actor_data(std::uint64_t runtime);                  // SetActorDataPacket
+Bytes add_item_actor(const ItemActor &a);                      // AddItemActorPacket::write 0x18b0680
+// MoveActorDeltaPacket: runtime id, flags (x, y, z, pitch, yaw, head yaw,
+// onGround, teleported), then each present position delta as a zigzag varint
+// of the difference of the float bit patterns (MoveActorAbsoluteData::getIntDelta).
+Bytes move_actor_delta(std::uint64_t runtime, std::uint8_t flags, const std::int32_t delta[3]);
+Bytes set_actor_motion(std::uint64_t runtime, Vec3 motion);
+Bytes take_item_actor(std::uint64_t item, std::uint64_t player);
+Bytes remove_actor(std::int64_t unique);
+Bytes actor_event(std::uint64_t runtime, std::uint8_t event, std::int32_t data);
+struct SlotChange {
+    unsigned slot = 0;
+    ItemStack before, after;
+};
+// InventoryTransactionPacket (normal) sent after Player::take: the
+// world-interaction action (taken -> left), then one container action per
+// changed inventory slot (byte order checked against the original capture).
+Bytes pickup_transaction(const std::vector<SlotChange> &slots, ItemStack taken, ItemStack left);
+// Per-tick replication of an added item (MoveActorDelta, SetActorMotion).
+std::vector<GamePacket> replicate(ItemActor &a);
 } // namespace bds::game

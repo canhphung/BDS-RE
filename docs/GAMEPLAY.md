@@ -6,8 +6,9 @@ inventory plus cursor. This is an independent implementation. It does not reprod
 all Bedrock gameplay or the original terrain generator. The existing terrain,
 movement, mining and inventory algorithms are experimental, not a completed
 reconstruction of BDS. Movement and block breaking (timing, reach, crack events)
-are now translated from the binary; known remaining mismatches are direct inventory
-drops and full inventory responses to successful predicted transactions.
+and dropped items (ItemActor physics, replication and pickup) are now translated
+from the binary; a known remaining mismatch is the full inventory response to
+successful predicted transactions.
 
 The ItemUse held-item/selected-slot rejection branch has now been traced in the
 original binary and compared with 37 original-server cases. It validates all
@@ -39,8 +40,8 @@ world generator. Original BDS LevelDB directories are still refused.
 
 In Creative, the creative inventory contains stone, grass, dirt and bedrock.
 Select one, place it, break it, and check the changes from a second client.
-In Survival, break grass/dirt to obtain dirt directly in inventory and place it;
-placement consumes one item. Bare-hand stone breaking yields no item. Tools,
+In Survival, break grass/dirt: a dirt item entity drops, falls, and is picked up
+when you walk over it; place it; placement consumes one item. Bare-hand stone breaking yields no item. Tools,
 normal item drops/entities, ores, liquids, biomes, trees/caves, recipes/crafting,
 chests, armor, damage, hunger and mobs are not implemented.
 
@@ -67,8 +68,35 @@ against the original server with tools/reference/capture_break_oracle.py
   send no crack event.
 - Adventure and Visitor players are refused with resendBlocksAroundArea (permission
   check reduced to these two settings, INFERRED).
-- PLACEHOLDER: drops still go straight into the inventory (lost when full) instead
-  of spawning an ItemActor; this is the next reconstruction step.
+- Drops are item entities (next section).
+
+## Dropped items
+
+Translated from ItemActor and Actor in the original and replayed bit for bit
+against gdb traces of the original (tests/reference/item_actor*_bds_1.6.0.15.json,
+test `item_actor_reference`; trace tool tools/reference/trace_item_actor.py):
+
+- Block::playerDestroy -> spawnResources -> BlockLegacy::popResource: the item
+  appears at block + 0.15 + 0.7 x nextFloat per axis (Level random), with motion
+  (±0.1, 0.2, ±0.1) from the actor constructor, pickup delay 10 and lifetime 6000.
+  Both random sources are seeded from std::random_device, like the original.
+- Every server tick, ItemActor::normalTick: pushOutOfBlocks, gravity 0.04,
+  Actor::move with the original collision order and AABB::clipCollide (including
+  overlap push-out and the stuck-in-collider flag), air friction 0.98 and ground
+  friction 0.6 x 0.98; merging with matching items within 0.5 every 25 ticks;
+  removal below y = 0 or at the end of the lifetime.
+- Replication: SetActorData then AddItemActor after the first tick (metadata as
+  captured), MoveActorDelta with float-bit deltas when isDifferenceSignificant
+  holds (the onGround flag comes from the previously sent state, as in the
+  original), SetActorMotion when the motion changed by more than 0.2, ActorEvent 69
+  on merge, RemoveActor on removal. Packets go to every active player (the
+  original sends only to players viewing the chunk).
+- Pickup: Player::aiStep touches items within the player box grown by (1, 0.5, 1);
+  with no pickup delay and a slot that can take it, Player::take fills the first
+  unfinished stack or first empty slot, sends the InventoryTransaction (world
+  action, then container actions) to the player and broadcasts TakeItemActor.
+- Not modelled: saving item entities with the world, fall distance, lava/water/fire, unique-id high bits from the level's
+  world start count (BDS-RE uses one counter for runtime and unique ids).
 
 Move/split/merge the supported block stacks between inventory and cursor. Closing
 the inventory returns cursor items to available inventory space. If full, remaining

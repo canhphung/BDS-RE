@@ -6,8 +6,8 @@ ES384 Login, encrypted chunk streaming and basic gameplay: seeded flat/rolling
 terrain, player movement/visibility, block placement/breaking and persistent
 36-slot inventories with a cursor. The supported block set is stone, grass, dirt
 and bedrock. **Gameplay is experimental and differs from original BDS behavior.**
-Movement and block breaking are translated from the binary; terrain, item drops and
-inventory execution remain independent algorithms;
+Movement, block breaking and dropped items are translated from the binary; terrain
+and inventory transactions remain independent algorithms;
 tools, crafting, chests, mobs and full physics remain pending. The user confirmed the M4 join path
 with Minecraft 1.6.0.14; the new gameplay is integration-tested with two independent
 protocol clients. A [scoped ItemUse validation audit](reverse/reports/ITEM_USE.md)

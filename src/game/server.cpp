@@ -1,6 +1,7 @@
 #include "bds/game/server.hpp"
 #include "bds/network/spawn.hpp"
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <set>
 namespace bds::game {
@@ -236,7 +237,6 @@ std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
     // GameMode::destroyBlock (vtable +0x18); on failure resendBlocksAroundArea.
     // There is no destroy-time check: StartBreak is not required and the
     // elapsed time is never compared (oracle: tests/reference/break_bds_1.6.0.15.json).
-    auto &p = world_.players().at(s.key);
     const auto b = t.block;
     const auto id = world_.block(b);
     // SurvivalMode::destroyBlock (0x1abcd90) -> GameMode::destroyBlock
@@ -267,28 +267,115 @@ std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
     stop.signed_varint(0);
     std::vector<GamePacket> out{update, particles, packet(PacketId::PlayerAction, stop.take())};
     if (!creative && hardness(id).always_destroyable) {
-        // Block::playerDestroy runs only when Player::canDestroy holds (stone by
-        // hand drops nothing). PLACEHOLDER (invented): the original spawns an
-        // ItemActor (AddItemActor) that is picked up later; BDS-RE still puts the
-        // drop straight into the inventory and loses it when the inventory is full.
-        const auto drop = static_cast<std::uint16_t>(id == 2 ? 3 : id);
-        bool stored = false;
-        for (auto &stack : p.inventory)
-            if (stack.block == drop && stack.count < 64) {
-                ++stack.count;
-                stored = true;
-                break;
-            }
-        if (!stored)
-            for (auto &stack : p.inventory)
-                if (!stack.block) {
-                    stack = {drop, 1};
-                    break;
-                }
-        out.push_back(packet(PacketId::InventoryContent, inventory(p)));
-        out.push_back(packet(PacketId::InventoryContent, cursor_inventory(p)));
+        // Block::playerDestroy (0x1e558a0) runs only when Player::canDestroy
+        // holds (stone by hand drops nothing) and calls spawnResources: grass
+        // and dirt drop one dirt item entity.
+        spawn_item(b, {3, 1});
     }
     return out;
+}
+void Server::spawn_item(World::Position block, ItemStack item) {
+    // BlockLegacy::spawnResources (0x1e54360) with chance 1.0: one
+    // Level::getRandom().nextFloat() test per resource, then popResource.
+    level_random_.next_float();
+    auto a = pop_resource(block, item, level_random_, actor_random_);
+    const auto id = allocate_entity_id();
+    a.runtime_id = static_cast<std::uint64_t>(id);
+    a.unique_id = id;
+    items_.push_back(a);
+}
+void Server::tick_item(ItemActor &a) {
+    normal_tick(a, world_, [this](ItemActor &self) {
+        // ItemActor::_mergeWithNeighbours (0x23feee0): items whose box meets
+        // the box grown by 0.5 on every axis; Level::broadcastEntityEvent
+        // (ActorEvent 69, new stack size) for the absorbing item.
+        const auto area = merge_area(self);
+        for (auto &other : items_)
+            if (!other.removed && other.bb.intersects(area))
+                if (auto *kept = merge(self, other))
+                    broadcast(packet(PacketId::ActorEvent, actor_event(kept->runtime_id, 69, kept->item.count)));
+    });
+    if (a.removed)
+        return;
+    if (!a.added) {
+        // The entity reaches clients after its first tick: dirty actor data,
+        // then AddItemActorPacket built from the last sent position.
+        a.sent_pos = a.pos;
+        a.sent_on_ground = a.on_ground;
+        broadcast(packet(PacketId::SetActorData, item_actor_data(a.runtime_id)));
+        broadcast(packet(PacketId::AddItemActor, add_item_actor(a)));
+        a.added = true;
+        return;
+    }
+    for (auto &q : replicate(a))
+        broadcast(std::move(q));
+}
+void Server::touch(Session &s, ItemActor &a) {
+    // ItemActor::playerTouch (0x23ff130): no throw time, no pickup delay and
+    // PlayerInventoryProxy::canAdd (an unfinished matching stack or an empty
+    // slot among the 36 inventory slots).
+    if (a.throw_time != 0 || a.pickup_delay != 0)
+        return;
+    auto &p = world_.players().at(s.key);
+    const auto fits = [&](const ItemStack &stack) {
+        return (stack.block == a.item.block && stack.count < 64) || !stack.block;
+    };
+    if (std::none_of(p.inventory.begin(), p.inventory.end(), fits))
+        return;
+    // Player::take (0x22f0640) with slot -1: PlayerInventoryProxy::add ->
+    // FillingContainer::add/_addResource: fill the first unfinished matching
+    // stack, else the first empty slot, until nothing more fits.
+    std::vector<SlotChange> changes;
+    ItemStack left = a.item;
+    while (left.count) {
+        int slot = -1;
+        for (int i = 0; i < 36 && slot < 0; ++i)
+            if (p.inventory[i].block == left.block && p.inventory[i].count < 64)
+                slot = i;
+        for (int i = 0; i < 36 && slot < 0; ++i)
+            if (!p.inventory[i].block)
+                slot = i;
+        if (slot < 0)
+            break;
+        auto &target = p.inventory[static_cast<unsigned>(slot)];
+        const auto before = target;
+        const auto add = std::min<int>(left.count, 64 - target.count);
+        target = {left.block, static_cast<std::uint8_t>(target.count + add)};
+        left.count = static_cast<std::uint8_t>(left.count - add);
+        changes.push_back({static_cast<unsigned>(slot), before, target});
+    }
+    if (!left.count)
+        left = {};
+    enqueue(s.game.runtime_id, packet(PacketId::InventoryTransaction, pickup_transaction(changes, a.item, left)));
+    broadcast(packet(PacketId::TakeItemActor, take_item_actor(a.runtime_id, s.game.runtime_id)));
+    if (left.count) {
+        // INFERRED: a partially taken stack keeps the remainder on the ground.
+        a.item = left;
+        return;
+    }
+    a.removed = true;
+}
+void Server::tick() {
+    for (std::size_t i = 0; i < items_.size(); ++i)
+        if (!items_[i].removed)
+            tick_item(items_[i]);
+    // Player::aiStep (0x22ebd40): living players touch every entity whose box
+    // meets their box grown by (1, 0.5, 1).
+    for (auto &[id, s] : sessions_) {
+        if (!s.active)
+            continue;
+        const auto &p = world_.players().at(s.key);
+        const float feet = p.y - 1.62f;
+        const AABB area{{p.x - 0.3f - 1.0f, feet - 0.5f, p.z - 0.3f - 1.0f},
+                        {p.x + 0.3f + 1.0f, feet + 1.8f + 0.5f, p.z + 0.3f + 1.0f}};
+        for (auto &a : items_)
+            if (!a.removed && a.added && area.intersects(a.bb))
+                touch(s, a);
+    }
+    for (const auto &a : items_)
+        if (a.removed && a.added)
+            broadcast(packet(PacketId::RemoveActor, remove_actor(a.unique_id)));
+    std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
 }
 std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
     auto &p = world_.players().at(s.key);
@@ -364,6 +451,10 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
                     enqueue(other_id,
                             packet(PacketId::AddPlayer, add_player(s.identity, s.game, p)));
                 }
+            // Item entities already in the level become visible to the new player.
+            for (const auto &a : items_)
+                if (a.added)
+                    enqueue(id, packet(PacketId::AddItemActor, add_item_actor(a)));
             return {};
         }
         if (!s.active)
