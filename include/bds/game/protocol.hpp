@@ -77,7 +77,25 @@ Transaction transaction(std::span<const std::uint8_t> bytes);
 
 // Item entity packets (protocol 282).
 // SynchedActorData::packAll of a fresh ItemActor, as captured from the original.
-Bytes item_actor_data(std::uint64_t runtime);                  // SetActorDataPacket
+Bytes item_actor_data(std::uint64_t runtime);
+// AddActorPacket for a mob (protocol 282: numeric ActorType). Attribute and
+// metadata lists as the original sends them for a newly spawned animal
+// (input capture world-mobs-p1: chicken and pig AddActor bodies).
+struct MobView {
+    std::int64_t unique_id;
+    std::uint64_t runtime_id;
+    std::uint32_t type;
+    Vec3 pos, motion;
+    float pitch, yaw, head_yaw;
+    bool baby;
+    float scale, width, height;
+    int variant, mark_variant;
+    std::uint8_t color;
+    float health, max_health, movement, fall_damage;
+};
+Bytes add_mob_actor(const MobView &mob);
+// MobArmorEquipmentPacket with four empty slots.
+Bytes empty_armor_equipment(std::uint64_t runtime);                  // SetActorDataPacket
 Bytes add_item_actor(const ItemActor &a);                      // AddItemActorPacket::write 0x18b0680
 // MoveActorDeltaPacket: runtime id, flags (x, y, z, pitch, yaw, head yaw,
 // onGround, teleported), then each present position delta as a zigzag varint

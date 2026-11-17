@@ -998,6 +998,9 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
         if (a.added && !a.removed && chunks.contains(a.owner_chunk) &&
             world_.chunk(a.owner_chunk.first, a.owner_chunk.second))
             scan.insert(a.runtime_id);
+    for (const auto &m : mobs_)
+        if (!m.removed && chunks.contains(m.owner_chunk) && world_.chunk(m.owner_chunk.first, m.owner_chunk.second))
+            scan.insert(m.runtime_id);
     for (auto entity : scan) {
         if (s.known.contains(entity))
             continue;
@@ -1020,6 +1023,17 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
                 held.byte(0);
                 enqueue(id, packet(PacketId::MobEquipment, held.take()));
             }
+        } else if (const auto mob = std::find_if(mobs_.begin(), mobs_.end(),
+                                                  [&](const MobActor &m) { return m.runtime_id == entity; });
+                   mob != mobs_.end()) {
+            // Actor::tryCreateAddActorPacket then MobArmorEquipment (capture
+            // world-mobs-p1: AddActor 0x0d followed by 0x20 per mob).
+            enqueue(id, packet(PacketId::AddActor,
+                               add_mob_actor({mob->unique_id, mob->runtime_id, mob->data->type, mob->pos, mob->motion, 0,
+                                              0, 0, mob->baby, mob->scale, mob->data->width, mob->data->height,
+                                              mob->variant, mob->mark_variant, mob->color, mob->health,
+                                              mob->max_health, mob->movement, mob->fall_damage})));
+            enqueue(id, packet(PacketId::MobArmorEquipment, empty_armor_equipment(entity)));
         } else
             for (const auto &a : items_)
                 if (a.runtime_id == entity) {
@@ -1038,6 +1052,9 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
         for (const auto &a : items_)
             if (a.runtime_id == *it)
                 unique = a.unique_id;
+        for (const auto &m : mobs_)
+            if (m.runtime_id == *it)
+                unique = m.unique_id;
         if (auto other = sessions_.find(*it); other != sessions_.end())
             unique = other->second.game.unique_id;
         enqueue(id, packet(PacketId::RemoveActor, remove_actor(unique)));
@@ -1169,10 +1186,13 @@ class Server::Region final : public SpawnRegion {
                         return std::nullopt;
         MobActor mob;
         mob.runtime_id = static_cast<std::uint64_t>(s_.allocate_entity_id());
-        mob.unique_id = static_cast<std::int64_t>(mob.runtime_id);
+        // Level::getNewUniqueID: the original's mob unique ids carry 0xffffffff
+        // in the high half (capture: runtime 4 -> unique -4294967292).
+        mob.unique_id = static_cast<std::int64_t>(0xffffffff00000000ULL | mob.runtime_id);
         mob.data = &data;
         mob.pos = {x, y, z};
         mob.surface = surface;
+        define(mob);
         mob.owner_chunk = {static_cast<int>(std::floor(x)) >> 4, static_cast<int>(std::floor(z)) >> 4};
         s_.chunk_actors_.add(mob.owner_chunk, mob.runtime_id); // LevelChunk::addEntity
         s_.mobs_.push_back(mob);
@@ -1187,6 +1207,47 @@ class Server::Region final : public SpawnRegion {
     }
 
   private:
+    // The vanilla behavior pack's minecraft:entity_spawned event (entities/
+    // <name>.json): a weighted adult/baby choice (baby: scale 0.5 where the
+    // group sets it), sheep colours, horse/donkey health and speed ranges.
+    // The definition system draws from the actor's own Random, which here is
+    // the host thread Random (actor_random_).
+    void define(MobActor &mob) {
+        auto &random = s_.actor_random_;
+        const auto pick = [&](std::initializer_list<int> weights) {
+            int total = 0;
+            for (const auto w : weights)
+                total += w;
+            int roll = random.next_int(total), index = 0;
+            for (const auto w : weights) {
+                if ((roll -= w) < 0)
+                    return index;
+                ++index;
+            }
+            return index - 1;
+        };
+        const auto type = mob.data->type;
+        mob.movement = 0.25f;
+        if (type == actor_type::Horse || type == actor_type::Donkey) {
+            mob.baby = pick(type == actor_type::Horse ? std::initializer_list<int>{36, 9}
+                                                     : std::initializer_list<int>{80, 20}) == 1;
+            mob.max_health = mob.health = static_cast<float>(random.next_int(15, 31));
+            mob.movement = type == actor_type::Horse ? random.next_float(0.1125f, 0.3375f) : 0.175f;
+            return;
+        }
+        mob.baby = pick({95, 5}) == 1;
+        mob.scale = mob.baby ? 0.5f : 1.0f;
+        if (type == actor_type::Sheep) {
+            mob.max_health = 8;
+            static constexpr std::uint8_t colors[]{0, 15, 7, 8, 12, 6};
+            mob.color = colors[pick({81836, 5000, 5000, 5000, 3000, 164})];
+        } else if (type == actor_type::Chicken) {
+            mob.max_health = 4;
+            mob.fall_damage = 0; // minecraft:fall_damage value 0
+        } else
+            mob.max_health = 10; // pig, cow
+        mob.health = mob.max_health;
+    }
     Server &s_;
 };
 bool Server::tick_chunk_state(int chunk_x, int chunk_z) {

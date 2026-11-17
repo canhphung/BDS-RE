@@ -41,6 +41,8 @@ def main():
     parser.add_argument("--lighting-oracle", action="store_true")
     parser.add_argument("--lighting-cases", type=int, default=128)
     parser.add_argument("--tick-order", action="store_true")
+    parser.add_argument("--packet-log", action="store_true",
+                        help="Write every packet each client received to packets_<name>.json")
     parser.add_argument("--spawn-oracle", action="store_true",
                         help="Also dump biome spawn lists and every Spawner::spawnMob call")
     parser.add_argument("--drop-items", action="store_true",
@@ -171,6 +173,9 @@ def main():
             oracle = output / "grass_ticks.json"
             if not oracle.exists() or len(json.loads(oracle.read_text())["cases"]) != 80:
                 raise RuntimeError("grass oracle failed: " + "\n".join(lines[-20:]))
+        if args.packet_log:
+            for client in clients:
+                (output / f"packets_{client.name}.json").write_text(json.dumps(client.log) + "\n")
         metadata = {"binary_sha256": ORIGINAL_SHA256, "properties": properties,
                     "generator_override": args.generator, "players": names,
                     "commands": setup_commands, "item_drop_requests": dropped,

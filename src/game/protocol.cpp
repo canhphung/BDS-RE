@@ -510,6 +510,69 @@ Bytes item_actor_data(std::uint64_t runtime) {
     write_item_metadata(out);
     return out.take();
 }
+Bytes add_mob_actor(const MobView &m) {
+    ByteWriter out;
+    out.signed_varint64(m.unique_id);
+    out.varint64(m.runtime_id);
+    out.varint(m.type);
+    for (float v : {m.pos.x, m.pos.y, m.pos.z, m.motion.x, m.motion.y, m.motion.z, m.pitch, m.yaw, m.head_yaw})
+        out.float32(v);
+    constexpr float max = std::numeric_limits<float>::max();
+    const struct {
+        const char *name;
+        float min, current, max;
+    } attributes[] = {{"minecraft:underwater_movement", 0, 0.02f, max},
+                      {"minecraft:movement", 0, m.movement, max},
+                      {"minecraft:fall_damage", 0, m.fall_damage, max},
+                      {"minecraft:luck", -1024, 0, 1024},
+                      {"minecraft:absorption", 0, 0, 16},
+                      {"minecraft:health", 0, m.health, m.max_health}};
+    out.varint(static_cast<std::uint32_t>(std::size(attributes)));
+    for (const auto &a : attributes) {
+        out.string(a.name);
+        out.float32(a.min);
+        out.float32(a.current);
+        out.float32(a.max);
+    }
+    struct Entry {
+        unsigned key, type;
+        std::int64_t value;
+        float real;
+    };
+    // Flags: bits 19, 22, 34, 46 (HAS_COLLISION), 47 (AFFECTED_BY_GRAVITY);
+    // BABY (11) for babies.
+    const Entry entries[] = {
+        {0, 7, static_cast<std::int64_t>(0xC00400480000ULL | (m.baby ? 0x800ULL : 0)), 0},
+        {1, 2, 1, 0}, {2, 2, m.variant, 0}, {3, 0, m.color, 0}, {4, 4, 0, 0}, {5, 7, -1, 0}, {7, 1, 300, 0},
+        {8, 2, 0, 0}, {9, 0, 0, 0}, {10, 0, 0, 0}, {22, 0, 0, 0}, {37, 7, 0, 0}, {38, 3, 0, m.scale},
+        {42, 1, 300, 0}, {43, 2, m.mark_variant, 0}, {44, 0, 0, 0}, {45, 2, 0, 0}, {46, 2, 0, 0},
+        {53, 3, 0, m.width}, {54, 3, 0, m.height}, {56, 8, 0, 0}, {57, 0, 0, 0}, {58, 3, 0, 0.0f},
+        {59, 3, 0, 0.0f}, {69, 0, 0, 0}, {70, 4, 0, 0}, {71, 4, 0, 0}, {72, 0, 1, 0}, {73, 0, 0, 0},
+        {74, 2, 0, 0}, {75, 2, 0, 0}, {76, 2, 0, 0}, {77, 2, -1, 0}, {80, 0, 0, 0}, {81, 0, 0, 0}};
+    out.varint(static_cast<std::uint32_t>(std::size(entries)));
+    for (const auto &e : entries) {
+        out.varint(e.key);
+        out.varint(e.type);
+        switch (e.type) {
+        case 0: out.byte(static_cast<std::uint8_t>(e.value)); break;
+        case 1: out.little_endian(static_cast<std::uint16_t>(e.value), 2); break;
+        case 2: out.signed_varint(static_cast<std::int32_t>(e.value)); break;
+        case 3: out.float32(e.real); break;
+        case 4: out.varint(0); break;
+        case 7: out.signed_varint64(e.value); break;
+        case 8: out.float32(0); out.float32(0); out.float32(0); break;
+        }
+    }
+    out.varint(0); // links
+    return out.take();
+}
+Bytes empty_armor_equipment(std::uint64_t runtime) {
+    ByteWriter out;
+    out.varint64(runtime);
+    for (int i = 0; i < 4; ++i)
+        out.signed_varint(0);
+    return out.take();
+}
 Bytes add_item_actor(const ItemActor &a) {
     ByteWriter out;
     out.signed_varint64(a.unique_id);

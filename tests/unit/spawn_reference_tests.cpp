@@ -3,6 +3,7 @@
 // trace: the level Random is re-seeded and advanced to each event's draw
 // index, the translated spawner runs on the same chunk, and the words it draws
 // and the mobs it spawns must equal the original's.
+#include "bds/game/protocol.hpp"
 #include "bds/game/spawner.hpp"
 #include "bds/world/lighting.hpp"
 #include <cmath>
@@ -155,6 +156,32 @@ int main(int argc, char **argv) {
                       region.mobs[i].x == position[0] && region.mobs[i].y == position[1] &&
                       region.mobs[i].z == position[2],
                   "spawned mob " + std::to_string(i) + " differs from the original");
+        }
+        // AddActorPacket / MobArmorEquipment bodies the original sent for a
+        // baby chicken and a pig (world-mobs-p1 capture).
+        for (const auto &c : reference.at("add_actor").at("cases")) {
+            const auto pos = c.at("pos").get<std::array<float, 3>>();
+            const auto motion = c.at("motion").get<std::array<float, 3>>();
+            MobView view{c.at("unique").get<std::int64_t>(), c.at("runtime").get<std::uint64_t>(),
+                                   c.at("type").get<std::uint32_t>(), {pos[0], pos[1], pos[2]},
+                                   {motion[0], motion[1], motion[2]}, 0, 0, 0, c.at("baby").get<bool>(),
+                                   c.at("scale").get<float>(), c.at("width").get<float>(),
+                                   c.at("height").get<float>(), 0, 0, 0, c.at("health").get<float>(),
+                                   c.at("health").get<float>(), c.at("movement").get<float>(),
+                                   c.at("fall_damage").get<float>()};
+            const auto hex = [](const Bytes &b) {
+                std::string out;
+                for (const auto byte : b) {
+                    static const char digits[] = "0123456789abcdef";
+                    out += digits[byte >> 4];
+                    out += digits[byte & 15];
+                }
+                return out;
+            };
+            check(hex(add_mob_actor(view)) == c.at("body").get<std::string>(),
+                  "AddActor body differs from the original");
+            check(hex(empty_armor_equipment(view.runtime_id)) == c.at("armor").get<std::string>(),
+                  "MobArmorEquipment body differs from the original");
         }
         std::cout << events << " original spawn events, " << words_checked << " level-Random words and "
                   << spawns.size() << " spawned mobs match\n";

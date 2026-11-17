@@ -50,6 +50,11 @@ class Server {
         Vec3 pos;                    // StateVectorComponent position (feet)
         bool surface = false;        // Mob::setSurfaceMob
         int variant = 0, mark_variant = 0;
+        // Behavior-pack definition state chosen at minecraft:entity_spawned.
+        bool baby = false;
+        std::uint8_t color = 0;
+        float scale = 1.0f, health = 0, max_health = 0, movement = 0, fall_damage = 1.0f;
+        Vec3 motion;
         std::pair<int, int> owner_chunk{};
         bool removed = false;
     };
