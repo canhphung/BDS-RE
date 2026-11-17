@@ -3,6 +3,7 @@
 #include "bds/game/mce_math.hpp"
 #include "bds/network/spawn.hpp"
 #include <algorithm>
+#include <charconv>
 #include <bit>
 #include <cmath>
 #include <limits>
@@ -95,6 +96,19 @@ void Server::enqueue(std::uint64_t id, GamePacket packet) {
         return;
     }
     s.queue.push_back(std::move(packet));
+}
+std::int32_t level_seed(const World &world, const Properties &p) {
+    // A purely numeric level-seed is used as-is, anything else as 0 (policy).
+    std::int32_t seed = 0;
+    const auto *begin = p.seed.data();
+    if (!p.seed.empty() && std::from_chars(begin, begin + p.seed.size(), seed).ptr != begin + p.seed.size())
+        seed = 0;
+    return world.terrain().kind ? static_cast<std::int32_t>(world.terrain().seed) : seed;
+}
+Server::Server(World &world, const Properties &properties, AccessLists &access)
+    : world_(world), properties_(properties), access_(access) {
+    level_random_.set_seed(static_cast<std::uint32_t>(level_seed(world, properties)));
+    protocol::shuffle_block_palette(level_random_);
 }
 std::uint64_t Server::Session::flags() const {
     // Actor flags of a standing survival player in the original (bits 14, 19,

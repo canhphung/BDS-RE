@@ -234,6 +234,9 @@ Translated from the original and checked byte for byte against
   re-broadcasts MobArmorEquipment.
 - Death: the dead flags go out when the death animation ends (death time 20);
   respawning (Player::resetPos) removes all effects first.
+- Block runtime ids: the palette order is the original's for the same level
+  seed (BlockPalette shuffle with the level Random, which is seeded with the
+  level seed as in Level::Level), so ids in sounds, particles and chunks match.
 - Order: the original ticks players in the order of their actor addresses
   (not reproducible) and shuffles its player list with the level Random every
   tick; BDS-RE ticks by runtime id and performs the same shuffle draws.

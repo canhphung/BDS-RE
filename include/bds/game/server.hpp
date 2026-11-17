@@ -9,10 +9,15 @@
 namespace bds::game {
 // Level client ticking offsets (Level::Level 0x1c814e9) for a tick range.
 std::vector<std::pair<int, int>> client_ticking_offsets(int range);
+// The level seed (LevelSettings::getSeed) as sent in StartGame: the terrain
+// seed of generated worlds, else a purely numeric level-seed (0 otherwise).
+std::int32_t level_seed(const World &world, const Properties &properties);
 class Server {
   public:
-    Server(World &world, const Properties &properties, AccessLists &access)
-        : world_(world), properties_(properties), access_(access) {}
+    // Level::Level seeds Level::getRandom() with the level seed (0x1c8038f);
+    // the first draws shuffle the block palette (ServerLevel::ServerLevel ->
+    // BlockPalette::initFromBlockDefinitions), so runtime ids match the original.
+    Server(World &world, const Properties &properties, AccessLists &access);
     std::vector<GamePacket> prepare(const auth::Identity &identity, protocol::StartGame &game);
     std::vector<GamePacket> handle(std::uint64_t runtime, const GamePacket &packet,
                                    std::uint64_t now);
@@ -82,9 +87,10 @@ class Server {
     std::map<std::uint64_t, Session> sessions_;
     std::vector<ItemActor> items_;
     std::int64_t next_entity_id_ = 1;
-    // Level::getRandom and the thread-local Random of the original are both
-    // seeded from std::random_device (Random::Random() 0x187d430).
-    Random level_random_{std::random_device{}()};
+    // Level::getRandom (Level +0x568): seeded with the level seed in the
+    // constructor. The thread-local Random is seeded from std::random_device
+    // (Random::Random() 0x187d430).
+    Random level_random_{0};
     Random actor_random_{std::random_device{}()};
     void spawn_item(World::Position block, ItemStack item);
     void tick_item(ItemActor &a);

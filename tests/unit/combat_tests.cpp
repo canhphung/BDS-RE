@@ -247,12 +247,9 @@ int main(int argc, char **argv) {
         server.handle(A, fall(A, 10.0f), 0);
         Seen fell = relevant(server.drain(A));
         run(1, &fell);
-        // The block-fall sound carries the block's runtime id: air is 3757 in
-        // the captured session's palette and 834 in BDS-RE's.
+        // The block-fall sound carries air's runtime id (3757 for seed 123,
+        // the same palette order as the original's).
         auto fell_want = reference(ref, "a_fall", "a");
-        for (auto &[id, body] : fell_want)
-            if (id == 0x18 && body.rfind("09", 0) == 0)
-                body.replace(body.find("da3a"), 4, "840d");
         if (fell != fell_want)
             show("fall", fell, fell_want);
         check(fell == fell_want, "fall sounds, hurt event and health");

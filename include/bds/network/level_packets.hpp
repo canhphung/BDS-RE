@@ -12,6 +12,9 @@
 // (ServerNetworkHandler::_sendLevelData 0x182fd90). Layouts follow the
 // protocol-282 writers; evidence in reverse/evidence/network_constants.json
 // ("start_game").
+namespace bds {
+class Random;
+}
 namespace bds::protocol {
 struct BlockPosition {
     std::int32_t x = 0, y = 0, z = 0;
@@ -111,4 +114,7 @@ const std::vector<PaletteEntry> &internal_block_palette();
 // static table in the binary. Index = runtime id sent by this server.
 const std::vector<PaletteEntry> &vanilla_block_palette();
 std::optional<std::uint32_t> runtime_id(std::string_view name, std::int16_t data);
+// Shuffle the palette with the level Random as the original does at level
+// creation; the runtime ids then equal the original's for the same seed.
+void shuffle_block_palette(Random &level_random);
 } // namespace bds::protocol

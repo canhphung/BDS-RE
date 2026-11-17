@@ -251,14 +251,8 @@ struct DiscoveryServer::Impl {
         game.runtime_id = static_cast<std::uint64_t>(game.unique_id);
         game.player_game_type = static_cast<std::int32_t>(p.gamemode);
         auto &s = game.settings;
-        // The seed is only advertised: this server does not generate terrain.
-        // A purely numeric level-seed is sent as-is, anything else as 0 (policy).
-        std::int32_t seed = 0;
-        const auto *begin = p.seed.data();
-        if (!p.seed.empty() &&
-            std::from_chars(begin, begin + p.seed.size(), seed).ptr != begin + p.seed.size())
-            seed = 0;
-        s.seed = world->terrain().kind ? static_cast<std::int32_t>(world->terrain().seed) : seed;
+        // The level seed; it also ordered the block palette (game::Server).
+        s.seed = game::level_seed(*world, p);
         s.generator = p.level_type == "FLAT"     ? protocol::Generator::Flat
                       : p.level_type == "LEGACY" ? protocol::Generator::Legacy
                                                  : protocol::Generator::Overworld;
