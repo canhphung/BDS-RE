@@ -61,6 +61,7 @@ private:
     std::map<std::pair<int, int>, Chunk> columns_;
     std::size_t count_ = 0;
     std::uint64_t age_ = 0;
+    std::uint64_t light_revision_ = 0;
     TerrainConfig terrain_;
     std::set<std::pair<int,int>> legacy_columns_;
     std::map<Position, BlockId> edits_; // includes air, so removed terrain never regenerates

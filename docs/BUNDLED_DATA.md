@@ -48,3 +48,12 @@ item crossing z=16 whose owner changes one tick after the move is queued.
 Captured player lists, offsets and availability are explicit test inputs, not
 recorded RNG replay in the runtime. The exporter and source trace hash are
 retained; raw binary/capture data remains under ignored `input/`.
+
+Five `tests/reference/lighting_*_bds_1.6.0.15.json` fixtures retain original live
+lighting and native tickBlocks outputs: 10,145 sky/block pairs, raw brightness
+with both darkening flags, 247 clear-sky time inputs repeated per scene, and
+2,560 seeded function calls with all RNG words/LCG boundaries/mutations. The live
+five-block material/tick/light registry values are retained too.
+`tools/re/export_lighting_reference.py` validates the completed raw trace hash
+and native-oracle provenance; it does not calculate expected results.
+See `reverse/reports/BLOCK_LIGHTING.md` for inputs, addresses and limits.

@@ -25,8 +25,8 @@ class GrassTickSource {
     virtual int dirt_variant(World::Position position) = 0;
     virtual void set_block(World::Position position, GrassTickBlockKind kind, int flags) = 0;
 };
-// GrassBlock::tick (Linux BDS 1.6.0.15, 0x1e716a0). Not yet connected to
-// Server::tick: the chunk scheduler/light backend must be translated first.
+// GrassBlock::tick (Linux BDS 1.6.0.15, 0x1e716a0). Connected through
+// tick_clear_chunk for the documented clear-weather host palette.
 void tick_grass(GrassTickSource &source, World::Position position, Random &random,
                 bool client_side = false);
 } // namespace bds

@@ -1,6 +1,7 @@
 #pragma once
 #include "bds/game/protocol.hpp"
 #include "bds/game/world_tick.hpp"
+#include "bds/world/chunk_ticks.hpp"
 #include "bds/server/access.hpp"
 #include "bds/server/properties.hpp"
 #include <deque>
@@ -84,6 +85,8 @@ class Server {
         std::uint64_t flags() const;
     };
     World &world_;
+    WorldLighting lighting_;
+    BlockTickRandom block_tick_random_;
     const Properties &properties_;
     AccessLists &access_;
     std::map<std::uint64_t, Session> sessions_;

@@ -38,10 +38,16 @@ def main():
                         help="Original console command to execute after every client has spawned")
     parser.add_argument("--grass-oracle", action="store_true",
                         help="After tracing, execute the original GrassBlock::tick oracle in the paused world")
+    parser.add_argument("--lighting-oracle", action="store_true")
+    parser.add_argument("--lighting-cases", type=int, default=128)
     parser.add_argument("--tick-order", action="store_true")
     parser.add_argument("--drop-items", action="store_true",
                         help="Give/drop one dirt per spawned client for chunk/item order traces")
     args = parser.parse_args()
+    if not 1 <= args.lighting_cases <= 4096:
+        parser.error("lighting-cases must be 1..4096")
+    if args.grass_oracle and args.lighting_oracle:
+        parser.error("grass and lighting function oracles need separate scene runs")
     names = args.players.split(",")
     if not 1 <= args.ticks <= 10000 or not 1 <= len(names) <= 10:
         parser.error("ticks must be 1..10000 and players 1..10")
@@ -64,6 +70,8 @@ def main():
                TRACE_PLAYERS=str(len(names)), TRACE_GENERATOR=args.generator)
     env["TRACE_BLOCK_SAMPLES"] = str(int(args.block_samples))
     env["TRACE_TICK_ORDER"] = str(int(args.tick_order))
+    env["LIGHTING_CASES"] = str(args.lighting_cases)
+    env["LIGHTING_ORACLE_OUT"] = str(output / "lighting.json")
     env["GRASS_ORACLE_OUT"] = str(output / "grass_ticks.json")
     command = [args.gdb, "-nx", "-q", "-batch", "-ex", "set pagination off", "-ex", "set confirm off",
                "-ex", "set debuginfod enabled off", "-ex", "handle SIGPIPE nostop noprint pass",
@@ -75,6 +83,8 @@ def main():
                 "-ex", "continue"]
     if args.grass_oracle:
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_grass_ticks.py"))]
+    if args.lighting_oracle:
+        command += ["-ex", "source " + str(Path(__file__).with_name("gdb_lighting_oracle.py"))]
     command += ["-ex", "kill", "--args", "./bedrock_server"]
     process = subprocess.Popen(command, cwd=run, env=env, stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
@@ -168,6 +178,14 @@ def main():
             fixture.update(scene_setup_commands=args.command,
                            generator_override=args.generator,
                            source_trace_sha256=metadata["trace_sha256"])
+            oracle.write_text(json.dumps(fixture, indent=1) + "\n")
+        if args.lighting_oracle:
+            oracle = output / "lighting.json"
+            fixture = json.loads(oracle.read_text())
+            if len(fixture["block_ticks"]) != args.lighting_cases:
+                raise RuntimeError("incomplete original lighting oracle")
+            fixture.update(scene_setup_commands=setup_commands, source_trace_sha256=metadata["trace_sha256"],
+                           generator_override=args.generator)
             oracle.write_text(json.dumps(fixture, indent=1) + "\n")
         print(json.dumps(metadata["completion"]))
     finally:

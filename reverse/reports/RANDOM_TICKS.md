@@ -2,10 +2,12 @@
 
 This report tracks implementation checkpoints for
 `docs/handoff/random_ticks_and_mobs.md`. It does **not** complete that handoff.
-Random block selection is translated and reference-tested, but has not yet been
-wired into the per-player chunk scheduler. Grass behavior now has a separate
-function-level checkpoint below, while its host integration, spawn/despawn, mob AI,
-season processing and the save scheduler still need translation/integration.
+Random block selection and GrassBlock are now wired into the per-player chunk
+scheduler for clear weather and the current host palette. The lighting integration
+has 10,145 original pair samples and 2,560 native tickBlocks cases; its synchronous
+cache adapter is inferred. See [function evidence and boundaries](BLOCK_LIGHTING.md).
+Spawn/despawn, mob AI, seasons and save scheduling still need integration.
+The sections below preserve evidence from the earlier function checkpoints.
 The existing combat comparison remains unchanged; packet-order sorting has not
 been removed.
 

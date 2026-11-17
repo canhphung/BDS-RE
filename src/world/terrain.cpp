@@ -98,6 +98,7 @@ void World::ensure_chunk(int x, int z) {
     }
     count_ += chunk.stored_blocks();
     columns_.emplace(std::pair{x, z}, std::move(chunk));
+    columns_.at({x,z}).set_light_revision(++light_revision_);
     terrain_cache_.push_back({x, z});
     while (terrain_cache_.size() > 256) {
         const auto old = terrain_cache_.front();
@@ -105,6 +106,7 @@ void World::ensure_chunk(int x, int z) {
         if (auto i = columns_.find(old); i != columns_.end()) {
             count_ -= i->second.stored_blocks();
             columns_.erase(i);
+            ++light_revision_;
         }
     }
 }
@@ -128,6 +130,8 @@ void World::set_block(Position p, Block value) {
             return;
         i = columns_.try_emplace(key).first;
     }
+    const auto old = i->second.block(local_coordinate(x), static_cast<unsigned>(y), local_coordinate(z));
+    if ((old == 0) != (value == 0)) i->second.set_light_revision(++light_revision_);
     const auto before = i->second.stored_blocks();
     i->second.set_block(local_coordinate(x), static_cast<unsigned>(y), local_coordinate(z), value);
     count_ = count_ - before + i->second.stored_blocks();

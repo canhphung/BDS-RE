@@ -111,7 +111,7 @@ std::int32_t level_seed(const World &world, const Properties &p) {
 }
 Server::Server(World &world, const Properties &properties, AccessLists &access,
                Random::DrawObserver random_observer)
-    : world_(world), properties_(properties), access_(access) {
+    : world_(world), lighting_(world), properties_(properties), access_(access) {
     level_random_.set_seed(static_cast<std::uint32_t>(level_seed(world, properties)));
     level_random_.observe_draws(std::move(random_observer));
     level_tick_ = world.age(); // Level::getCurrentTick
@@ -1057,7 +1057,7 @@ void Server::tick() {
     // (Level +0x50, Level::addPlayer appends, removal keeps the order). The
     // players then tick in that list's order (Level::forEachPlayer ->
     // ServerPlayer::tickWorld). The original's level Random is also drawn by
-    // random block ticks, mob spawning and mob AI, which BDS-RE does not have.
+    // mob spawning/despawning, mob AI, seasons and saves, still missing here.
     if (level_tick_ % 20 == 0) {
         const auto shuffle = [&](auto &list) {
             for (std::size_t i = 1; i < list.size(); ++i) {
@@ -1087,9 +1087,16 @@ void Server::tick() {
         },
         [this](TickChunkPosition chunk) { return world_.chunk(chunk.first, chunk.second) != nullptr; },
         [this](TickChunkPosition chunk) {
+            // Clear-weather tickBlocks now precedes the actor phase. The
+            // native spawner/despawn phases (0x1de4501 / 0x1de451d) still need
+            // their translated hosts; no draw-count padding substitutes them.
+            tick_clear_chunk(world_,lighting_,chunk.first,chunk.second,level_random_,block_tick_random_,
+                             clear_sky_darken(static_cast<int>(level_tick_%24000)),
+                             [this](World::Position at,BlockId id,int) {
+                                 broadcast(packet(PacketId::UpdateBlock,block_update(at,id)));
+                             });
             // LevelChunk::tick snapshots its actor pointers before iterating.
-            // Spawner/despawn/block consumers must be inserted before this
-            // actor phase (0x1de4501 / 0x1de451d / 0x1de452d).
+            // Block consumer call site: 0x1de452d.
             const auto actors = chunk_actors_.members(chunk);
             for (const auto id : actors)
                 for (auto &actor : items_)

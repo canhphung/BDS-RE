@@ -5,8 +5,11 @@ oracle and the random block-position generator has reference tests. GrassBlock's
 server algorithm also has 160 original day/night dependency/RNG cases. The runtime now ticks items in their owner chunks during each player world,
 then the player and its nearby scan. Five original frames check this order,
 including overlapping player areas and a deferred chunk transfer.
-Grass/lighting integration and mob spawning/AI are still in progress. See
-[scope and evidence](../reverse/reports/RANDOM_TICKS.md).
+Clear-weather grass/lighting integration now matches 10,145 original light
+points and 2,560 native tickBlocks calls. Relight scheduling uses a synchronous
+host cache; mob spawning/AI remain unfinished. See
+[lighting evidence and boundaries](../reverse/reports/BLOCK_LIGHTING.md) and
+[the broader handoff evidence](../reverse/reports/RANDOM_TICKS.md).
 
 The server now supports a small playable block world: terrain, authenticated
 player movement and visibility, block breaking/placement, and a 36-slot player
@@ -254,8 +257,8 @@ Translated from the original and checked byte for byte against
   player ticks the loaded chunks in its current Level offset list once per world
   tick, then its normalTick and nearby scan. Items follow the owning chunk's
   SmallSet order, whose erase replaces an entry with the last element. The original
-  chunk consumer order is spawner, despawn, blocks, then actors; the first three
-  are not yet wired in this runtime. `chunk_order_reference` compares five
+  chunk consumer order is spawner, despawn, blocks, then actors. Runtime phases
+  now include the clear-weather block phase; spawning/despawning remain unwired. `chunk_order_reference` compares five
   original frames under captured player/offset lists and chunk availability;
   it does not establish the missing RNG consumers.
 - Order: Level::tick ticks the players in its player list (join order,
@@ -263,8 +266,8 @@ Translated from the original and checked byte for byte against
   lists and then that list with the level Random; BDS-RE does the same with the
   same draw counts (checked under gdb). The resulting order equals the
   original's only as far as the level Random's state does: the original also
-  draws it for random block ticks, mob spawning/despawning, mob AI and season
-  ticks, which BDS-RE does not simulate, so tests compare one tick's packets of
+  draws it for mob spawning/despawning, mob AI, season and save scheduling,
+  which BDS-RE does not yet simulate, so tests compare one tick's packets of
   two players as a set.
 - Synched data dirtied after _sendDirtyActorData (the effect colour from
   tickEffects) goes out at the end of Mob::normalTick in the same tick.
