@@ -117,6 +117,12 @@ Server::Server(World &world, const Properties &properties, AccessLists &access,
     level_tick_ = world.age(); // Level::getCurrentTick
     protocol::shuffle_block_palette(level_random_);
     chunk_offsets_ = ticking_offsets(); // Level::Level constructs the list even on non-shuffle ticks.
+    // LevelChunk +0x1054 (Finalization) is stored with the chunk
+    // (serializeFinalization 0x1de651f; legacy deserialize sets 2). BDS-RE does
+    // not persist it: INFERRED, chunks present at startup count as finalized,
+    // generated ones start at 0 (LevelChunk::LevelChunk 0x1de08cf).
+    for (const auto &position : world.chunk_positions())
+        chunk_state_[position] = 2;
 }
 std::uint64_t Server::Session::flags() const {
     // Actor flags of a standing survival player in the original (bits 14, 19,
@@ -1105,6 +1111,109 @@ void Server::save_some_chunks() {
         // deterministic in the original either.
     }
 }
+class Server::Region final : public SpawnRegion {
+  public:
+    explicit Region(Server &server) : s_(server) {}
+    bool has_chunk(int x, int z) const override { return s_.world_.chunk(x, z) != nullptr; }
+    BlockId block(World::Position at) const override {
+        const auto [x, y, z] = at;
+        if (y < 0 || y >= static_cast<int>(Chunk::height) || !s_.world_.chunk(x >> 4, z >> 4))
+            return 0;
+        return s_.world_.block(at);
+    }
+    unsigned raw_brightness(World::Position at) const override {
+        const auto [x, y, z] = at;
+        if (!s_.world_.chunk(x >> 4, z >> 4))
+            return 0; // INFERRED: no loaded chunk reads as dark
+        return s_.lighting_.raw(at, clear_sky_darken(static_cast<int>(s_.level_tick_ % 24000)));
+    }
+    bool sky(World::Position at) const override { return can_see_sky(s_.world_, at); }
+    std::optional<float> nearest_player_distance_sqr(float x, float y, float z, float max) const override {
+        // Dimension::fetchNearestPlayer $_4 (0x1d6a3c0): best starts at -1;
+        // a player within `max` (any when max < 0) closer than the best wins.
+        float best = -1.0f;
+        for (const auto id : s_.player_order_)
+            if (const auto found = s_.sessions_.find(id); found != s_.sessions_.end()) {
+                const auto &p = s_.world_.players().at(found->second.key);
+                const float dx = static_cast<float>(p.x) - x, dy = static_cast<float>(p.y) - y,
+                            dz = static_cast<float>(p.z) - z;
+                const float d = dx * dx + dy * dy + dz * dz; // Actor::distanceToSqr
+                if ((max < 0.0f || d < max * max) && (best == -1.0f || d < best))
+                    best = d;
+            }
+        if (best == -1.0f)
+            return std::nullopt;
+        return best;
+    }
+    int difficulty() const override { return static_cast<int>(s_.properties_.difficulty); }
+    int ticked_mob_count_previous() const override { return s_.ticked_mobs_previous_; }
+    void chunk_mobs(int x, int z, const std::function<void(std::uint32_t, bool)> &visit) const override {
+        for (const auto id : s_.chunk_actors_.members({x, z}))
+            for (const auto &mob : s_.mobs_)
+                if (mob.runtime_id == id && !mob.removed)
+                    visit(mob.data->type, mob.surface);
+    }
+    std::optional<std::uint64_t> spawn_mob(const MobSpawnerData &data, float x, float y, float z,
+                                           bool surface) override {
+        // Mob::checkSpawnRules (0x22bb790): no solid block and no liquid in
+        // the collision box, no magma floor, Animal::_getWalkTargetValue >= 0
+        // (grass below: 10), BlockLegacy::canSpawnOn (true).
+        const float half = data.width / 2.0f;
+        const int x0 = static_cast<int>(std::floor(x - half)), x1 = static_cast<int>(std::floor(x + half));
+        const int z0 = static_cast<int>(std::floor(z - half)), z1 = static_cast<int>(std::floor(z + half));
+        const int y0 = static_cast<int>(std::floor(y)), y1 = static_cast<int>(std::floor(y + data.height));
+        for (int bx = x0; bx <= x1; ++bx)
+            for (int by = y0; by <= y1; ++by)
+                for (int bz = z0; bz <= z1; ++bz)
+                    if (spawn_block_solid_blocking(block({bx, by, bz})))
+                        return std::nullopt;
+        MobActor mob;
+        mob.runtime_id = static_cast<std::uint64_t>(s_.allocate_entity_id());
+        mob.unique_id = static_cast<std::int64_t>(mob.runtime_id);
+        mob.data = &data;
+        mob.pos = {x, y, z};
+        mob.surface = surface;
+        mob.owner_chunk = {static_cast<int>(std::floor(x)) >> 4, static_cast<int>(std::floor(z)) >> 4};
+        s_.chunk_actors_.add(mob.owner_chunk, mob.runtime_id); // LevelChunk::addEntity
+        s_.mobs_.push_back(mob);
+        return mob.runtime_id;
+    }
+    void set_variant(std::uint64_t id, int variant, int mark) override {
+        for (auto &mob : s_.mobs_)
+            if (mob.runtime_id == id) {
+                mob.variant = variant;
+                mob.mark_variant = mark;
+            }
+    }
+
+  private:
+    Server &s_;
+};
+bool Server::tick_chunk_state(int chunk_x, int chunk_z) {
+    auto &state = chunk_state_[{chunk_x, chunk_z}];
+    if (state == 0) {
+        // 0x1de403b..0x1de4144: once BlockSource::hasChunksAt covers the chunk
+        // bounds grown by 1.0 (the 3x3 neighbourhood), the pending block ticks
+        // run (none in BDS-RE: tickPendingTicks returns false) and the state
+        // becomes 1. Nothing else happens on this tick.
+        bool neighbours = true;
+        for (int dz = -1; dz <= 1; ++dz)
+            for (int dx = -1; dx <= 1; ++dx)
+                neighbours = neighbours && world_.chunk(chunk_x + dx, chunk_z + dz) != nullptr;
+        if (neighbours)
+            state = 1;
+        return false;
+    }
+    if (state == 1) {
+        // 0x1de438c..0x1de4418: Spawner::postProcessSpawnMobs with the level
+        // Random, WorldGenerator::postProcessMobsAt (no draws for the flat
+        // generator), LevelChunk::setUnsaved, state 2; the tick continues.
+        Region region(*this);
+        spawner_.post_process_spawn_mobs(region, chunk_x, chunk_z, level_random_);
+        state = 2;
+    }
+    return true;
+}
 void Server::tick_spawner(int chunk_x, int chunk_z) {
     // LevelChunk::tick 0x1de4433..0x1de4501: Spawner::tick runs only when the
     // chunk centre ((min + max) / 2 of its block bounds, Y cleared) is closer
@@ -1126,10 +1235,8 @@ void Server::tick_spawner(int chunk_x, int chunk_z) {
         // BDS-RE has no gamerule command, so it is the default true), then
         // nextInt(2000) > 10 returns.
         if (level_random_.next_int(2000) <= 10) {
-            // NOT TRANSLATED: _updateBaseTypeCount, two nextInt(0, 16)
-            // offsets, findNextSpawnBlockUnder and _spawnMobCluster
-            // (0x1c6ae00) need the biome spawn lists and mob actors. From
-            // here the level Random stream diverges from the original.
+            Region region(*this);
+            spawner_.tick_spawn(region, chunk_x, chunk_z, level_random_);
         }
     }
     // Spawner::tickDespawn (0x1c6c460): nextInt(50) > 0 returns; otherwise a
@@ -1160,6 +1267,8 @@ void Server::tick() {
                 break;
             }
     pending_item_moves_.clear();
+    ticked_mobs_previous_ = ticked_mobs_;
+    ticked_mobs_ = 0;
     // Level::tick (0x1c86000): when the current tick is a multiple of 20 it
     // std::shuffles, with the level Random, the two chunk-offset lists
     // (Level +0x8, and +0x20 refreshed from gMasterClientTickingChunksOffsetList;
@@ -1202,8 +1311,8 @@ void Server::tick() {
         [this](TickChunkPosition chunk) {
             // LevelChunk::tick: Spawner::tick (0x1de4501), tickDespawn
             // (0x1de451d), tickBlocks (0x1de452d), then the actor phase.
-            // The first-tick pending ticks and the post-processing state
-            // (+0x1054, Spawner::postProcessSpawnMobs) are not modelled.
+            if (!tick_chunk_state(chunk.first, chunk.second))
+                return;
             tick_spawner(chunk.first, chunk.second);
             tick_clear_chunk(world_,lighting_,chunk.first,chunk.second,level_random_,block_tick_random_,
                              clear_sky_darken(static_cast<int>(level_tick_%24000)),
@@ -1213,6 +1322,10 @@ void Server::tick() {
             // LevelChunk::tick snapshots its actor pointers before iterating.
             // Block consumer call site: 0x1de452d.
             const auto actors = chunk_actors_.members(chunk);
+            for (const auto id : actors)
+                for (const auto &mob : mobs_)
+                    if (mob.runtime_id == id && !mob.removed)
+                        ++ticked_mobs_; // INFERRED: Mob ticks counted for getTickedMobCountPrevious
             for (const auto id : actors)
                 for (auto &actor : items_)
                     if (actor.runtime_id == id && !actor.removed) {

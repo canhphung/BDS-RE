@@ -41,6 +41,8 @@ def main():
     parser.add_argument("--lighting-oracle", action="store_true")
     parser.add_argument("--lighting-cases", type=int, default=128)
     parser.add_argument("--tick-order", action="store_true")
+    parser.add_argument("--spawn-oracle", action="store_true",
+                        help="Also dump biome spawn lists and every Spawner::spawnMob call")
     parser.add_argument("--drop-items", action="store_true",
                         help="Give/drop one dirt per spawned client for chunk/item order traces")
     args = parser.parse_args()
@@ -73,14 +75,17 @@ def main():
     env["LIGHTING_CASES"] = str(args.lighting_cases)
     env["LIGHTING_ORACLE_OUT"] = str(output / "lighting.json")
     env["GRASS_ORACLE_OUT"] = str(output / "grass_ticks.json")
+    env["SPAWN_ORACLE_OUT"] = str(output / "spawns.json")
     command = [args.gdb, "-nx", "-q", "-batch", "-ex", "set pagination off", "-ex", "set confirm off",
                "-ex", "set debuginfod enabled off", "-ex", "handle SIGPIPE nostop noprint pass",
                "-ex", f"set environment LD_LIBRARY_PATH={args.library_path.resolve()}:."]
     if args.preload:
         command += ["-ex", f"set environment LD_PRELOAD={args.preload.resolve()}"]
     command += ["-ex", "break main", "-ex", "run", "-ex",
-                "source " + str(Path(__file__).with_name("gdb_level_random_sequence.py")),
-                "-ex", "continue"]
+                "source " + str(Path(__file__).with_name("gdb_level_random_sequence.py"))]
+    if args.spawn_oracle:
+        command += ["-ex", "source " + str(Path(__file__).with_name("gdb_spawn_oracle.py"))]
+    command += ["-ex", "continue"]
     if args.grass_oracle:
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_grass_ticks.py"))]
     if args.lighting_oracle:

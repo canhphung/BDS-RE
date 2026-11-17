@@ -1,5 +1,6 @@
 #pragma once
 #include "bds/game/protocol.hpp"
+#include "bds/game/spawner.hpp"
 #include "bds/game/world_tick.hpp"
 #include "bds/world/chunk_ticks.hpp"
 #include "bds/server/access.hpp"
@@ -41,6 +42,18 @@ class Server {
     // Level::getNewUniqueID / getNextRuntimeID share one counter in BDS-RE.
     std::int64_t allocate_entity_id() { return next_entity_id_++; }
     const std::vector<ItemActor> &items() const { return items_; }
+    // Mobs spawned by the natural spawner (Spawner::spawnMob).
+    struct MobActor {
+        std::uint64_t runtime_id = 0;
+        std::int64_t unique_id = 0;
+        const MobSpawnerData *data = nullptr;
+        Vec3 pos;                    // StateVectorComponent position (feet)
+        bool surface = false;        // Mob::setSurfaceMob
+        int variant = 0, mark_variant = 0;
+        std::pair<int, int> owner_chunk{};
+        bool removed = false;
+    };
+    const std::vector<MobActor> &mobs() const { return mobs_; }
 
   private:
     struct Session {
@@ -131,6 +144,15 @@ class Server {
     void background_tick_seasons();
     void save_some_chunks();
     void tick_spawner(int chunk_x, int chunk_z);
+    // LevelChunk::tick's state +0x1054 (0 new, 1 to post-process, 2 done);
+    // returns false when the rest of LevelChunk::tick is skipped.
+    bool tick_chunk_state(int chunk_x, int chunk_z);
+    class Region;
+    friend class Region;
+    Spawner spawner_;                    // Level::getSpawner
+    std::vector<MobActor> mobs_;
+    std::map<std::pair<int, int>, int> chunk_state_;
+    int ticked_mobs_ = 0, ticked_mobs_previous_ = 0; // Level tickedMobCount(Previous)
     // Items: ItemUse click air (GameMode::useItem), ItemRelease consume,
     // ItemUseOnActor attack, and Player::drop.
     std::vector<GamePacket> use_item(std::uint64_t id, Session &s, const Transaction &t);

@@ -76,6 +76,8 @@ public:
     std::uint64_t light_revision() const { return light_revision_; }
     void set_light_revision(std::uint64_t revision) { light_revision_=revision; }
     unsigned allocated_height() const { return allocated_height_; }
+    // LevelChunk +0xd18 heightmap (first Y above the highest opaque block).
+    unsigned heightmap(unsigned x, unsigned z) const { return heightmap_[z * 16 + x]; }
     std::size_t stored_blocks() const { return count_; }
     std::size_t allocated_sections() const { return sections_.size(); }
 
