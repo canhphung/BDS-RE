@@ -7,7 +7,10 @@ observer and reference-tested LevelChunk random coordinate selection (32
 groups, 672 positions). The next checkpoint translates GrassBlock::tick against
 160 original day/night dependency/RNG cases. A third checkpoint moves item
 ticking into the per-player owner-chunk scheduler, including the deferred owner
-transfer and nearby scan order (five original frames). Full block ticks, spawn/despawn, mobs and
+transfer and nearby scan order (five original frames). Clear-weather block
+ticks now use translated lighting, including Y=255 removal history (10,145
+original light points, 2,560 native tickBlocks calls). The relight job adapter is
+synchronous and inferred; see [scope](../reverse/reports/BLOCK_LIGHTING.md). Spawn/despawn, mobs and
 strict combat packet order are not implemented by this checkpoint. See
 [evidence and next integration requirements](../reverse/reports/RANDOM_TICKS.md).
 

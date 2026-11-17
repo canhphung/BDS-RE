@@ -141,6 +141,11 @@ int main() {
         check(simple.bytes() == Bytes({2, 2, 0, 0, 0, 0}), "original legacy stone item encoding");
         World w;
         w.configure_terrain({1, 123});
+        // An already finalized area (LevelChunk +0x1054 = 2), as in a world
+        // that has run before: no first-tick or post-processing ticks here.
+        for (int cx = -5; cx <= 5; ++cx)
+            for (int cz = -5; cz <= 5; ++cz)
+                w.ensure_chunk(cx, cz);
         Properties properties;
         AccessLists access(".");
         Server server(w, properties, access);

@@ -466,6 +466,11 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                             # ServerPlayer::normalTick: ActorEvent 66 (structure
                             # feature) every 80 ticks from the first tick.
                             require(body == client_uvarint(game['runtime_id']) + b'\x42\x00', 'feature event')
+                        elif packet_id in (0x0d, 0x0e, 0x20):
+                            # Naturally spawned animals in post-processed chunks:
+                            # AddActor then MobArmorEquipment (RemoveActor when the
+                            # player moves away), as the original.
+                            pass
                         else:
                             raise AssertionError(f"unexpected packet during streaming: {packet_id:#x}")
                 require(lost and retried, f"{name}: chunk retransmission was exercised")

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "bds/world/chunk.hpp"
 #include "bds/game/player.hpp"
 #include <deque>
@@ -40,6 +41,11 @@ public:
     std::uint64_t age() const { return age_; }
     std::size_t stored_blocks() const { return count_; }
     std::size_t loaded_chunks() const { return columns_.size(); }
+    std::vector<std::pair<int, int>> chunk_positions() const {
+        std::vector<std::pair<int, int>> result;
+        for (const auto& [key, chunk] : columns_) result.push_back(key);
+        return result;
+    }
 
     std::size_t allocated_sections() const {
         std::size_t result = 0;
@@ -61,6 +67,7 @@ private:
     std::map<std::pair<int, int>, Chunk> columns_;
     std::size_t count_ = 0;
     std::uint64_t age_ = 0;
+    std::uint64_t light_revision_ = 0;
     TerrainConfig terrain_;
     std::set<std::pair<int,int>> legacy_columns_;
     std::map<Position, BlockId> edits_; // includes air, so removed terrain never regenerates

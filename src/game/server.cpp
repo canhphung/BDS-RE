@@ -111,12 +111,18 @@ std::int32_t level_seed(const World &world, const Properties &p) {
 }
 Server::Server(World &world, const Properties &properties, AccessLists &access,
                Random::DrawObserver random_observer)
-    : world_(world), properties_(properties), access_(access) {
+    : world_(world), lighting_(world), properties_(properties), access_(access) {
     level_random_.set_seed(static_cast<std::uint32_t>(level_seed(world, properties)));
     level_random_.observe_draws(std::move(random_observer));
     level_tick_ = world.age(); // Level::getCurrentTick
     protocol::shuffle_block_palette(level_random_);
     chunk_offsets_ = ticking_offsets(); // Level::Level constructs the list even on non-shuffle ticks.
+    // LevelChunk +0x1054 (Finalization) is stored with the chunk
+    // (serializeFinalization 0x1de651f; legacy deserialize sets 2). BDS-RE does
+    // not persist it: INFERRED, chunks present at startup count as finalized,
+    // generated ones start at 0 (LevelChunk::LevelChunk 0x1de08cf).
+    for (const auto &position : world.chunk_positions())
+        chunk_state_[position] = 2;
 }
 std::uint64_t Server::Session::flags() const {
     // Actor flags of a standing survival player in the original (bits 14, 19,
@@ -282,6 +288,11 @@ std::vector<GamePacket> Server::prepare(const auth::Identity &identity, protocol
     const auto spawn_attributes_body = spawn_attributes(g.runtime_id, s.attributes);
     sessions_.emplace(g.runtime_id, std::move(s));
     player_order_.push_back(g.runtime_id); // Level::addPlayer: emplace_back
+    // The overworld Dimension is created for the first player; before it the
+    // original's Level::_saveSomeChunks returns at its empty dimension map
+    // (reference trace: no level-Random draws between startup and the first
+    // player's tick).
+    overworld_created_ = true;
     ByteWriter hotbar;
     hotbar.varint(p.selected);
     hotbar.byte(0);
@@ -987,6 +998,9 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
         if (a.added && !a.removed && chunks.contains(a.owner_chunk) &&
             world_.chunk(a.owner_chunk.first, a.owner_chunk.second))
             scan.insert(a.runtime_id);
+    for (const auto &m : mobs_)
+        if (!m.removed && chunks.contains(m.owner_chunk) && world_.chunk(m.owner_chunk.first, m.owner_chunk.second))
+            scan.insert(m.runtime_id);
     for (auto entity : scan) {
         if (s.known.contains(entity))
             continue;
@@ -1009,6 +1023,17 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
                 held.byte(0);
                 enqueue(id, packet(PacketId::MobEquipment, held.take()));
             }
+        } else if (const auto mob = std::find_if(mobs_.begin(), mobs_.end(),
+                                                  [&](const MobActor &m) { return m.runtime_id == entity; });
+                   mob != mobs_.end()) {
+            // Actor::tryCreateAddActorPacket then MobArmorEquipment (capture
+            // world-mobs-p1: AddActor 0x0d followed by 0x20 per mob).
+            enqueue(id, packet(PacketId::AddActor,
+                               add_mob_actor({mob->unique_id, mob->runtime_id, mob->data->type, mob->pos, mob->motion, 0,
+                                              0, 0, mob->baby, mob->scale, mob->data->width, mob->data->height,
+                                              mob->variant, mob->mark_variant, mob->color, mob->health,
+                                              mob->max_health, mob->movement, mob->fall_damage})));
+            enqueue(id, packet(PacketId::MobArmorEquipment, empty_armor_equipment(entity)));
         } else
             for (const auto &a : items_)
                 if (a.runtime_id == entity) {
@@ -1027,11 +1052,264 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
         for (const auto &a : items_)
             if (a.runtime_id == *it)
                 unique = a.unique_id;
+        for (const auto &m : mobs_)
+            if (m.runtime_id == *it)
+                unique = m.unique_id;
         if (auto other = sessions_.find(*it); other != sessions_.end())
             unique = other->second.game.unique_id;
         enqueue(id, packet(PacketId::RemoveActor, remove_actor(unique)));
         it = s.known.erase(it);
     }
+}
+void Server::set_chunk_radius(std::uint64_t runtime, int radius) {
+    if (auto found = sessions_.find(runtime); found != sessions_.end())
+        found->second.chunk_radius = static_cast<unsigned>(radius);
+}
+void Server::background_tick_seasons() {
+    // Dimension::backgroundTickSeasons (0x1d64680): the overworld has weather;
+    // TickingAreaList::tickSeasons has no ticking areas here; then for every
+    // player of the level's active list (Dimension::forEachPlayer 0x1d64760,
+    // the shuffled Level +0x50 order) the callback 0x1d694b0 tries ten points
+    // around the player and post-processes the first loaded chunk whose seasons
+    // state is dirty.
+    constexpr float tau = std::bit_cast<float>(0x40c90fdbu); // mce::Math::TAU
+    for (const auto id : player_order_) {
+        const auto found = sessions_.find(id);
+        if (found == sessions_.end())
+            continue;
+        const auto &p = world_.players().at(found->second.key);
+        const float radius = static_cast<float>(found->second.chunk_radius) * 0.7f;
+        for (int attempt = 0; attempt < 10; ++attempt) {
+            const float distance = level_random_.next_float(0.0f, radius * 16.0f);
+            const float angle = level_random_.next_float(0.0f, tau);
+            // Vec3(distance, 0, 0).yRot(angle) (0x1d768b0): double libm cos/sin
+            // rounded to float.
+            const float c = static_cast<float>(std::cos(static_cast<double>(angle)));
+            const float sn = static_cast<float>(std::sin(static_cast<double>(angle)));
+            const float x = distance * c + 0.0f * sn, z = 0.0f * c - distance * sn;
+            const int bx = static_cast<int>(std::floor(p.x + x)), bz = static_cast<int>(std::floor(p.z + z));
+            // LevelChunk::checkSeasonsPostProcessDirty (0x1dea0f0): a biome of
+            // the chunk whose snow state differs from
+            // Biome::getSnowAccumulationLayers. BDS-RE's terrain has no snow
+            // accumulating biomes, so a loaded chunk is never dirty and
+            // applySeasonsPostProcess never runs.
+            const bool loaded = world_.chunk(bx >> 4, bz >> 4) != nullptr;
+            const bool dirty = false;
+            if (loaded && dirty)
+                break;
+        }
+    }
+}
+void Server::save_some_chunks() {
+    // Level::_saveSomeChunks (0x1c86c30). It returns while a save task is
+    // queued (+0x19b0), without level storage or without dimensions. Up to 30
+    // attempts: nextInt(dimension count) (always one draw, also for a single
+    // dimension), then MainChunkSource::getRandomChunk (0x1e22a80): an empty
+    // storage map returns null without drawing, otherwise nextInt(map size)
+    // selects the chunk in unordered_map iteration order, which is returned
+    // only at ChunkState >= 8. The first chunk for which
+    // LevelChunk::needsSaving(60, 300) (0x1de83d0) holds is queued and the loop
+    // stops; a non-empty queue sets +0x19b0 and posts the save task.
+    if (!overworld_created_)
+        return;
+    for (int attempt = 0; attempt < 30; ++attempt) {
+        level_random_.next_int(1);
+        const auto stored = world_.loaded_chunks();
+        if (stored == 0)
+            continue;
+        level_random_.next_int(static_cast<std::int32_t>(stored));
+        // needsSaving checks the chunk's 21 DirtyTicksCounters (touched by
+        // setBlock, add/removeEntity, ticking-queue changes; set to max by
+        // LevelChunk::setUnsaved after post-processing; incremented by
+        // LevelChunk::tick). BDS-RE does not keep those counters or chunk
+        // states, so no chunk is selected and all 30 attempts run, as in the
+        // original before its first post-processed chunk. The save task then
+        // completes on a worker thread, so the ticks it skips are not
+        // deterministic in the original either.
+    }
+}
+class Server::Region final : public SpawnRegion {
+  public:
+    explicit Region(Server &server) : s_(server) {}
+    bool has_chunk(int x, int z) const override { return s_.world_.chunk(x, z) != nullptr; }
+    BlockId block(World::Position at) const override {
+        const auto [x, y, z] = at;
+        if (y < 0 || y >= static_cast<int>(Chunk::height) || !s_.world_.chunk(x >> 4, z >> 4))
+            return 0;
+        return s_.world_.block(at);
+    }
+    unsigned raw_brightness(World::Position at) const override {
+        const auto [x, y, z] = at;
+        if (!s_.world_.chunk(x >> 4, z >> 4))
+            return 0; // INFERRED: no loaded chunk reads as dark
+        return s_.lighting_.raw(at, clear_sky_darken(static_cast<int>(s_.level_tick_ % 24000)));
+    }
+    bool sky(World::Position at) const override { return can_see_sky(s_.world_, at); }
+    std::optional<float> nearest_player_distance_sqr(float x, float y, float z, float max) const override {
+        // Dimension::fetchNearestPlayer $_4 (0x1d6a3c0): best starts at -1;
+        // a player within `max` (any when max < 0) closer than the best wins.
+        float best = -1.0f;
+        for (const auto id : s_.player_order_)
+            if (const auto found = s_.sessions_.find(id); found != s_.sessions_.end()) {
+                const auto &p = s_.world_.players().at(found->second.key);
+                const float dx = static_cast<float>(p.x) - x, dy = static_cast<float>(p.y) - y,
+                            dz = static_cast<float>(p.z) - z;
+                const float d = dx * dx + dy * dy + dz * dz; // Actor::distanceToSqr
+                if ((max < 0.0f || d < max * max) && (best == -1.0f || d < best))
+                    best = d;
+            }
+        if (best == -1.0f)
+            return std::nullopt;
+        return best;
+    }
+    int difficulty() const override { return static_cast<int>(s_.properties_.difficulty); }
+    int ticked_mob_count_previous() const override { return s_.ticked_mobs_previous_; }
+    void chunk_mobs(int x, int z, const std::function<void(std::uint32_t, bool)> &visit) const override {
+        for (const auto id : s_.chunk_actors_.members({x, z}))
+            for (const auto &mob : s_.mobs_)
+                if (mob.runtime_id == id && !mob.removed)
+                    visit(mob.data->type, mob.surface);
+    }
+    std::optional<std::uint64_t> spawn_mob(const MobSpawnerData &data, float x, float y, float z,
+                                           bool surface) override {
+        // Mob::checkSpawnRules (0x22bb790): no solid block and no liquid in
+        // the collision box, no magma floor, Animal::_getWalkTargetValue >= 0
+        // (grass below: 10), BlockLegacy::canSpawnOn (true).
+        const float half = data.width / 2.0f;
+        const int x0 = static_cast<int>(std::floor(x - half)), x1 = static_cast<int>(std::floor(x + half));
+        const int z0 = static_cast<int>(std::floor(z - half)), z1 = static_cast<int>(std::floor(z + half));
+        const int y0 = static_cast<int>(std::floor(y)), y1 = static_cast<int>(std::floor(y + data.height));
+        for (int bx = x0; bx <= x1; ++bx)
+            for (int by = y0; by <= y1; ++by)
+                for (int bz = z0; bz <= z1; ++bz)
+                    if (spawn_block_solid_blocking(block({bx, by, bz})))
+                        return std::nullopt;
+        MobActor mob;
+        mob.runtime_id = static_cast<std::uint64_t>(s_.allocate_entity_id());
+        // Level::getNewUniqueID: the original's mob unique ids carry 0xffffffff
+        // in the high half (capture: runtime 4 -> unique -4294967292).
+        mob.unique_id = static_cast<std::int64_t>(0xffffffff00000000ULL | mob.runtime_id);
+        mob.data = &data;
+        mob.pos = {x, y, z};
+        mob.surface = surface;
+        define(mob);
+        mob.owner_chunk = {static_cast<int>(std::floor(x)) >> 4, static_cast<int>(std::floor(z)) >> 4};
+        s_.chunk_actors_.add(mob.owner_chunk, mob.runtime_id); // LevelChunk::addEntity
+        s_.mobs_.push_back(mob);
+        return mob.runtime_id;
+    }
+    void set_variant(std::uint64_t id, int variant, int mark) override {
+        for (auto &mob : s_.mobs_)
+            if (mob.runtime_id == id) {
+                mob.variant = variant;
+                mob.mark_variant = mark;
+            }
+    }
+
+  private:
+    // The vanilla behavior pack's minecraft:entity_spawned event (entities/
+    // <name>.json): a weighted adult/baby choice (baby: scale 0.5 where the
+    // group sets it), sheep colours, horse/donkey health and speed ranges.
+    // The definition system draws from the actor's own Random, which here is
+    // the host thread Random (actor_random_).
+    void define(MobActor &mob) {
+        auto &random = s_.actor_random_;
+        const auto pick = [&](std::initializer_list<int> weights) {
+            int total = 0;
+            for (const auto w : weights)
+                total += w;
+            int roll = random.next_int(total), index = 0;
+            for (const auto w : weights) {
+                if ((roll -= w) < 0)
+                    return index;
+                ++index;
+            }
+            return index - 1;
+        };
+        const auto type = mob.data->type;
+        mob.movement = 0.25f;
+        if (type == actor_type::Horse || type == actor_type::Donkey) {
+            mob.baby = pick(type == actor_type::Horse ? std::initializer_list<int>{36, 9}
+                                                     : std::initializer_list<int>{80, 20}) == 1;
+            mob.max_health = mob.health = static_cast<float>(random.next_int(15, 31));
+            mob.movement = type == actor_type::Horse ? random.next_float(0.1125f, 0.3375f) : 0.175f;
+            return;
+        }
+        mob.baby = pick({95, 5}) == 1;
+        mob.scale = mob.baby ? 0.5f : 1.0f;
+        if (type == actor_type::Sheep) {
+            mob.max_health = 8;
+            static constexpr std::uint8_t colors[]{0, 15, 7, 8, 12, 6};
+            mob.color = colors[pick({81836, 5000, 5000, 5000, 3000, 164})];
+        } else if (type == actor_type::Chicken) {
+            mob.max_health = 4;
+            mob.fall_damage = 0; // minecraft:fall_damage value 0
+        } else
+            mob.max_health = 10; // pig, cow
+        mob.health = mob.max_health;
+    }
+    Server &s_;
+};
+bool Server::tick_chunk_state(int chunk_x, int chunk_z) {
+    auto &state = chunk_state_[{chunk_x, chunk_z}];
+    if (state == 0) {
+        // 0x1de403b..0x1de4144: once BlockSource::hasChunksAt covers the chunk
+        // bounds grown by 1.0 (the 3x3 neighbourhood), the pending block ticks
+        // run (none in BDS-RE: tickPendingTicks returns false) and the state
+        // becomes 1. Nothing else happens on this tick.
+        bool neighbours = true;
+        for (int dz = -1; dz <= 1; ++dz)
+            for (int dx = -1; dx <= 1; ++dx)
+                neighbours = neighbours && world_.chunk(chunk_x + dx, chunk_z + dz) != nullptr;
+        if (neighbours)
+            state = 1;
+        return false;
+    }
+    if (state == 1) {
+        // 0x1de438c..0x1de4418: Spawner::postProcessSpawnMobs with the level
+        // Random, WorldGenerator::postProcessMobsAt (no draws for the flat
+        // generator), LevelChunk::setUnsaved, state 2; the tick continues.
+        Region region(*this);
+        spawner_.post_process_spawn_mobs(region, chunk_x, chunk_z, level_random_);
+        state = 2;
+    }
+    return true;
+}
+void Server::tick_spawner(int chunk_x, int chunk_z) {
+    // LevelChunk::tick 0x1de4433..0x1de4501: Spawner::tick runs only when the
+    // chunk centre ((min + max) / 2 of its block bounds, Y cleared) is closer
+    // than 96 blocks (9216 squared) to the nearest player of the dimension
+    // (Dimension::distanceToNearestPlayerSqr2D 0x1d672a0: starts at FLT_MAX,
+    // min over forEachPlayer of Vec3::distanceToSqr with the player's Y
+    // cleared).
+    const auto centre = [](int c) { return static_cast<float>((c * 16 + c * 16 + 15) / 2); };
+    const float cx = centre(chunk_x), cz = centre(chunk_z);
+    float nearest = std::numeric_limits<float>::max();
+    for (const auto id : player_order_)
+        if (const auto found = sessions_.find(id); found != sessions_.end()) {
+            const auto &p = world_.players().at(found->second.key);
+            const float dx = static_cast<float>(p.x) - cx, dz = static_cast<float>(p.z) - cz;
+            nearest = std::min(nearest, dx * dx + 0.0f * 0.0f + dz * dz);
+        }
+    if (nearest < 9216.0f) {
+        // Spawner::tick (0x1c6c020): GameRules::getBool(5, doMobSpawning;
+        // BDS-RE has no gamerule command, so it is the default true), then
+        // nextInt(2000) > 10 returns.
+        if (level_random_.next_int(2000) <= 10) {
+            Region region(*this);
+            spawner_.tick_spawn(region, chunk_x, chunk_z, level_random_);
+        }
+    }
+    // Spawner::tickDespawn (0x1c6c460): nextInt(50) > 0 returns; otherwise a
+    // non-empty chunk entity set picks one with nextInt(0, size). Only a Mob
+    // (ActorCategory 2) that may despawn (vtable +0x840) with no player within
+    // MobSpawnRules::MAX_SPAWN_DISTANCE is removed; items never are. Players
+    // are owned by the Level, not by chunks.
+    if (level_random_.next_int(50) > 0)
+        return;
+    const auto members = chunk_actors_.members({chunk_x, chunk_z});
+    if (!members.empty())
+        level_random_.next_int(0, static_cast<std::int32_t>(members.size()));
 }
 void Server::tick() {
     // Dimension::_tickEntityChunkMoves (0x1d65130) runs before players.
@@ -1050,6 +1328,8 @@ void Server::tick() {
                 break;
             }
     pending_item_moves_.clear();
+    ticked_mobs_previous_ = ticked_mobs_;
+    ticked_mobs_ = 0;
     // Level::tick (0x1c86000): when the current tick is a multiple of 20 it
     // std::shuffles, with the level Random, the two chunk-offset lists
     // (Level +0x8, and +0x20 refreshed from gMasterClientTickingChunksOffsetList;
@@ -1057,7 +1337,7 @@ void Server::tick() {
     // (Level +0x50, Level::addPlayer appends, removal keeps the order). The
     // players then tick in that list's order (Level::forEachPlayer ->
     // ServerPlayer::tickWorld). The original's level Random is also drawn by
-    // random block ticks, mob spawning and mob AI, which BDS-RE does not have.
+    // mob spawning/despawning, mob AI, seasons and saves, still missing here.
     if (level_tick_ % 20 == 0) {
         const auto shuffle = [&](auto &list) {
             for (std::size_t i = 1; i < list.size(); ++i) {
@@ -1076,6 +1356,9 @@ void Server::tick() {
         shuffle(client_offsets);
         shuffle(player_order_);
     }
+    // Dimension::tick (0x1d64e50): weather and seasons, then
+    // backgroundTickSeasons (level Random), then the entity chunk moves.
+    background_tick_seasons();
     ++level_tick_;
     const auto players = player_order_;
     tick_player_worlds(players, chunk_offsets_, {
@@ -1087,10 +1370,23 @@ void Server::tick() {
         },
         [this](TickChunkPosition chunk) { return world_.chunk(chunk.first, chunk.second) != nullptr; },
         [this](TickChunkPosition chunk) {
+            // LevelChunk::tick: Spawner::tick (0x1de4501), tickDespawn
+            // (0x1de451d), tickBlocks (0x1de452d), then the actor phase.
+            if (!tick_chunk_state(chunk.first, chunk.second))
+                return;
+            tick_spawner(chunk.first, chunk.second);
+            tick_clear_chunk(world_,lighting_,chunk.first,chunk.second,level_random_,block_tick_random_,
+                             clear_sky_darken(static_cast<int>(level_tick_%24000)),
+                             [this](World::Position at,BlockId id,int) {
+                                 broadcast(packet(PacketId::UpdateBlock,block_update(at,id)));
+                             });
             // LevelChunk::tick snapshots its actor pointers before iterating.
-            // Spawner/despawn/block consumers must be inserted before this
-            // actor phase (0x1de4501 / 0x1de451d / 0x1de452d).
+            // Block consumer call site: 0x1de452d.
             const auto actors = chunk_actors_.members(chunk);
+            for (const auto id : actors)
+                for (const auto &mob : mobs_)
+                    if (mob.runtime_id == id && !mob.removed)
+                        ++ticked_mobs_; // INFERRED: Mob ticks counted for getTickedMobCountPrevious
             for (const auto id : actors)
                 for (auto &actor : items_)
                     if (actor.runtime_id == id && !actor.removed) {
@@ -1118,6 +1414,8 @@ void Server::tick() {
             chunk_actors_.erase(actor.owner_chunk, actor.runtime_id);
     std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
     fresh_items_.clear();
+    // Level::tick ends with Level::_saveSomeChunks (after the player worlds).
+    save_some_chunks();
 }
 std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
     auto &p = world_.players().at(s.key);

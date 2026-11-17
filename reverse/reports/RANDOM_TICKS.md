@@ -2,10 +2,14 @@
 
 This report tracks implementation checkpoints for
 `docs/handoff/random_ticks_and_mobs.md`. It does **not** complete that handoff.
-Random block selection is translated and reference-tested, but has not yet been
-wired into the per-player chunk scheduler. Grass behavior now has a separate
-function-level checkpoint below, while its host integration, spawn/despawn, mob AI,
-season processing and the save scheduler still need translation/integration.
+Random block selection and GrassBlock are now wired into the per-player chunk
+scheduler for clear weather and the current host palette. The lighting integration
+has 10,145 original pair samples and 2,560 native tickBlocks cases; its synchronous
+cache adapter is inferred. See [function evidence and boundaries](BLOCK_LIGHTING.md).
+Seasons, chunk-save scheduling and the Spawner/despawn decision draws are now
+integrated (see "Level Random consumers, second checkpoint"); the mob spawn
+cluster, chunk post-processing spawns and mob AI still need integration.
+The sections below preserve evidence from the earlier function checkpoints.
 The existing combat comparison remains unchanged; packet-order sorting has not
 been removed.
 
@@ -123,7 +127,7 @@ are unchanged. No native CI result is claimed for this checkpoint here.
   draws each, with radius `chunk_radius * 0.7f * 16` and angle in [0,TAU).
   It stops after finding a loaded season-dirty chunk and applying processing.
   Vec3::yRot at 0x1d768b0 uses double libm sin/cos rounded to float, rather
-  than the mce sine table. These consumers are not yet integrated.
+  than the mce sine table. Integrated: `Server::background_tick_seasons`.
 - Save scheduling attempts up to 30 chunks (0x1c86ca0), draws a dimension and
   then a chunk, and depends on dirty/save state. The 5,409 observed attempts
   over 200 ticks are not a constant budget.
@@ -218,3 +222,50 @@ and Clang 19.1 Release each passed **30/30 CTest** locally. The broad gameplay
 test's old global-item-phase expectation now follows the per-player order
 (item announcement before the later player's dirty attributes); original packet
 reference expectations and combat's bounded set comparison remain unchanged.
+
+## Level Random consumers, second checkpoint
+
+Trace `world-random-s1` (seed 123, flat, tick-distance 4, players A and B, 105
+ticks; draws.jsonl sha256 185283ff…b963) per Level tick:
+
+| ticks | draws |
+|---|---|
+| 0 | block palette shuffle (4,492) |
+| 1, 21, 41, … | the three Level::tick shuffles (56 + 56 + players − 1) |
+| 2–8 | none: no dimension exists before the first player |
+| 9 (A), 10– (A, B) | seasons 20 per listed player, then 30 × (`nextInt(1)`, `getRandomChunk` `nextInt(size)`) |
+| 12– | chunk ticks begin (before the players initialise at 39/45): `postProcessSpawnMobs` on each chunk's post-processing tick, then per chunk `Spawner::tick`, `tickDespawn`, `tickBlocks`; mob goals; fewer save attempts once post-processed chunks need saving |
+
+Implemented in `src/game/server.cpp`:
+
+- `Server::background_tick_seasons` — Dimension::tick 0x1d64e50 →
+  backgroundTickSeasons 0x1d64680 → callback 0x1d694b0. Player chunk radius is
+  Player +0x1a68 (6 in Player::Player, from RequestChunkRadius). BDS-RE terrain
+  has no snow-accumulating biome, so no chunk is season-dirty and all ten tries
+  draw.
+- `Server::save_some_chunks` — Level::_saveSomeChunks 0x1c86c30 at the end of
+  Level::tick; `MainChunkSource::getRandomChunk` 0x1e22a80 draws only for a
+  non-empty storage map. `LevelChunk::needsSaving(60, 300)` (0x1de83d0) reads 21
+  `DirtyTicksCounter`s {total = INT_MIN, last = 0}: `touch` (0x1df89e0) starts a
+  dirty run, `operator++` (safeIncrement) runs in LevelChunk::tick, and
+  `setUnsaved` (0x1de4fa0) sets them to `max()` after post-processing. BDS-RE
+  keeps neither counters nor chunk states, so it never selects a chunk; the
+  original selects its first post-processed chunks from tick 13 and the save
+  task then finishes on a worker thread (ticks skipped while +0x19b0 is set are
+  timing dependent).
+- `Server::tick_spawner` — LevelChunk::tick 0x1de4433..0x1de451d. Spawner::tick
+  (0x1c6c020) runs when the chunk centre is within 96 blocks (9216 at
+  0x283c86c) of the nearest player (Dimension::distanceToNearestPlayerSqr2D
+  0x1d672a0, Y cleared on both sides); doMobSpawning (GameRuleId 5) is the
+  default true; `nextInt(2000) > 10` returns. The spawn branch
+  (`_spawnMobCluster` 0x1c6ae00) is **not translated**: the stream diverges
+  when it is taken. tickDespawn (0x1c6c460): `nextInt(50)`; on 0 a non-empty
+  chunk entity set draws `nextInt(0, size)`; only despawnable mobs with no
+  player within MAX_SPAWN_DISTANCE are removed.
+
+`world_tick_reference` now also replays ticks 2–11 of that trace (joins before
+ticks 9 and 10) and requires every level-Random word to match. Known
+divergences after tick 11: BDS-RE ticks chunks only for initialised players
+(the original starts at tick 12, during the join), does not model the chunk
+post-processing state (+0x1054) or `postProcessSpawnMobs`, has no mobs (goal
+draws) and no chunk save selection.

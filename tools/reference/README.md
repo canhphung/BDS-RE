@@ -235,3 +235,18 @@ normalTick/owner, player tick and nearby callbacks.
 five complete item frames including both player orders. Tests supply the
 recorded list order and chunk availability explicitly; this fixture does not
 pretend the missing level RNG consumers have been implemented.
+
+## Integrated lighting / block ticks
+
+`tools/re/capture_level_random.py --lighting-oracle` runs
+`tools/re/gdb_lighting_oracle.py` after the normal initialized-tick capture.
+Use separate fresh runs for `time set 6000` / `18000`, with
+`gamerule dodaylightcycle false`, `weather clear`, and the structure commands
+retained in the lighting fixtures. Native queries read pairs and combined light;
+native tickBlocks uses explicitly seeded original Random inputs and the evolving
+original LCG. No lighting/branch outputs are patched. The mutually exclusive
+Grass-only oracle uses a different scene setup. Export with
+`python3 tools/re/export_lighting_reference.py TRACE_DIRECTORY OUT.json`.
+Full commands, addresses, scope and the Y=255 removal finding are documented in
+`reverse/reports/BLOCK_LIGHTING.md`. These are function/integration references,
+not a claim that the complete later level RNG sequence matches.

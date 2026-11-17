@@ -193,7 +193,10 @@ with tempfile.TemporaryDirectory(prefix='bds-gameplay-') as directory:
         body = wait(alpha, 58, lambda b: (parse_chunk(b)['x'],parse_chunk(b)['z']) == (0,0))
         chunk = parse_chunk(body)
         require(chunk['sections'][0][0][(2<<8)|(1<<4)|3] == air, 'broken terrain remains air after restart')
-        require(chunk['sections'][0][0][(2<<8)|4] == dirt, 'placed block survives restart')
+        # GrassBlock::tick may spread the neighbouring grass onto the placed,
+        # sky-lit dirt before the server stops (random ticks, timing dependent).
+        grass = game_a['palette'].index(['minecraft:grass', 0])
+        require(chunk['sections'][0][0][(2<<8)|4] in (dirt, grass), 'placed block survives restart')
         print('Two encrypted clients: terrain, AddPlayer, movement, dynamic chunks, survival break/place, cursor inventory, anti-duplication and restart passed')
     finally:
         if alpha: alpha.raknet.close()
