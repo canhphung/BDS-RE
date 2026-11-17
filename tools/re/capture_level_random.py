@@ -38,6 +38,9 @@ def main():
                         help="Original console command to execute after every client has spawned")
     parser.add_argument("--grass-oracle", action="store_true",
                         help="After tracing, execute the original GrassBlock::tick oracle in the paused world")
+    parser.add_argument("--tick-order", action="store_true")
+    parser.add_argument("--drop-items", action="store_true",
+                        help="Give/drop one dirt per spawned client for chunk/item order traces")
     args = parser.parse_args()
     names = args.players.split(",")
     if not 1 <= args.ticks <= 10000 or not 1 <= len(names) <= 10:
@@ -60,6 +63,7 @@ def main():
     env.update(TRACE_OUT=str(output / "draws.jsonl"), TRACE_TICKS=str(args.ticks),
                TRACE_PLAYERS=str(len(names)), TRACE_GENERATOR=args.generator)
     env["TRACE_BLOCK_SAMPLES"] = str(int(args.block_samples))
+    env["TRACE_TICK_ORDER"] = str(int(args.tick_order))
     env["GRASS_ORACLE_OUT"] = str(output / "grass_ticks.json")
     command = [args.gdb, "-nx", "-q", "-batch", "-ex", "set pagination off", "-ex", "set confirm off",
                "-ex", "set debuginfod enabled off", "-ex", "handle SIGPIPE nostop noprint pass",
@@ -75,7 +79,11 @@ def main():
     process = subprocess.Popen(command, cwd=run, env=env, stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                start_new_session=True)
-    lines, errors, clients, threads, spawned = [], [], [], [], []
+    lines, errors, clients, threads, spawned, dropped = [], [], [], [], [], []
+    commands_ready = threading.Event()
+    setup_commands = list(args.command)
+    if args.drop_items:
+        setup_commands += [f"give {name} dirt 1" for name in names]
     command_lock = threading.Lock()
     stopping = threading.Event()
 
@@ -98,11 +106,28 @@ def main():
             with command_lock:
                 spawned.append(name)
                 if len(spawned) == len(names):
-                    for text in args.command:
+                    for text in setup_commands:
                         process.stdin.write(text + "\n")
                     process.stdin.flush()
+                    commands_ready.set()
+            sent_drop = False
             while not stopping.is_set() and process.poll() is None:
                 client.drain(.2)
+                if args.drop_items and commands_ready.is_set() and not sent_drop:
+                    from analyze_capture import Reader
+                    from combat_oracle import drop, item
+                    for packet in reversed(client.log):
+                        if packet["id"] != 0x31:
+                            continue
+                        data = Reader(bytes.fromhex(packet["body"]))
+                        if data.uvarint() != 0 or data.uvarint() == 0:
+                            continue
+                        if data.varint() == 3 and data.varint() == 1:
+                            request = drop(0, item(3), item(0), item(3))
+                            client.send_packets([request])
+                            dropped.append({"player": name, "id": request[0], "body": request[1].hex()})
+                            sent_drop = True
+                        break
         except (ProtocolFailure, OSError) as error:
             if process.poll() is None and not stopping.is_set():
                 errors.append(f"{name}: {error}")
@@ -125,13 +150,16 @@ def main():
         records = [json.loads(line) for line in (output / "draws.jsonl").read_text().splitlines()]
         if not records or records[-1]["event"] != "complete" or process.returncode:
             raise RuntimeError("incomplete trace: " + "\n".join(lines[-15:]))
+        if args.drop_items and len(dropped) != len(names):
+            raise RuntimeError("not all original clients dropped their items")
         if args.grass_oracle:
             oracle = output / "grass_ticks.json"
             if not oracle.exists() or len(json.loads(oracle.read_text())["cases"]) != 80:
                 raise RuntimeError("grass oracle failed: " + "\n".join(lines[-20:]))
         metadata = {"binary_sha256": ORIGINAL_SHA256, "properties": properties,
                     "generator_override": args.generator, "players": names,
-                    "commands": args.command,
+                    "commands": setup_commands, "item_drop_requests": dropped,
+                    "tick_order": args.tick_order,
                     "trace_sha256": hashlib.sha256((output / "draws.jsonl").read_bytes()).hexdigest(),
                     "completion": records[-1]}
         (output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")

@@ -223,3 +223,15 @@ weakness, punches, clear) and `instant_effect_oracle.py` (one client: instant
 health, instant damage II) use the same console FIFO setup; their results are in
 tests/reference/effect_modifiers_bds_1.6.0.15.json, also replayed by
 `combat_reference`.
+
+## Chunk/item scheduling trace
+
+Add `--tick-order --drop-items` to `tools/re/capture_level_random.py` with two
+players and e.g. `--command 'tp A 0.5 4 15.75' --command 'tp B 32.5 4 0.5'`.
+The runner gives each client one dirt; each sends a normal drop transaction
+after receiving it. GDB records player-world lists, chunk actor lists, item
+normalTick/owner, player tick and nearby callbacks.
+`tools/re/export_chunk_order_reference.py TRACE_DIRECTORY OUT.json` retains
+five complete item frames including both player orders. Tests supply the
+recorded list order and chunk availability explicitly; this fixture does not
+pretend the missing level RNG consumers have been implemented.

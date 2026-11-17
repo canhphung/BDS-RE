@@ -145,6 +145,55 @@ class BlockEntry(gdb.Breakpoint):
         return False
 
 
+class OrderActor(gdb.Breakpoint):
+    def __init__(self, address, event):
+        super().__init__("*" + hex(address), internal=True)
+        self.event = event
+
+    def stop(self):
+        if not state["recording"]:
+            return False
+        actor = reg("rdi")
+        fields = {"tick": state["tick"],
+                  "actor": struct.unpack("<Q", memory(actor + 0xec0, 8))[0]}
+        if self.event == "player_world":
+            begin, end = struct.unpack("<QQ", memory(state["level"] + 8, 16))
+            fields["offsets"] = [list(struct.unpack("<ii", memory(at, 8)))
+                                 for at in range(begin, end, 8)]
+            fields["position"] = list(struct.unpack("<fff", memory(actor + 0xe7c, 12)))
+        elif self.event == "item_tick":
+            fields["owner_chunk"] = list(struct.unpack("<ii", memory(actor + 0xc8, 8)))
+            fields["position"] = list(struct.unpack("<fff", memory(actor + 0xe7c, 12)))
+            fields["age"] = struct.unpack("<i", memory(actor + 0x1228, 4))[0]
+        record(self.event, **fields)
+        return False
+
+
+class OrderChunk(gdb.Breakpoint):
+    def stop(self):
+        if not state["recording"]:
+            return False
+        chunk = reg("rdi")
+        begin, end = struct.unpack("<QQ", memory(chunk + 0x1338, 16))
+        if end < begin or end - begin > 80000:
+            raise RuntimeError("unexpected original SmallSet layout")
+        items = []
+        for at in range(begin, end, 8):
+            actor = struct.unpack("<Q", memory(at, 8))[0]
+            if actor and struct.unpack("<Q", memory(actor, 8))[0] == 0x326e780:
+                items.append(struct.unpack("<Q", memory(actor + 0xec0, 8))[0])
+        record("chunk_tick", tick=state["tick"],
+               chunk=list(struct.unpack("<ii", memory(chunk + 0x28, 8))), items=items)
+        return False
+
+
+class ChunkMoves(gdb.Breakpoint):
+    def stop(self):
+        if state["recording"]:
+            record("chunk_moves", tick=state["tick"])
+        return False
+
+
 draws = Draw("*0x187e704", internal=True)
 draws.enabled = False
 seeds = Seed("*0x187e380", internal=True)
@@ -158,3 +207,10 @@ if os.environ.get("TRACE_BLOCK_SAMPLES") == "1":
     BlockSamples(0x1de5a30, "block_samples_begin")
     BlockSamples(0x1de5b32, "block_sample")
     BlockSamples(0x1de5c49, "block_samples_end")
+if os.environ.get("TRACE_TICK_ORDER") == "1":
+    OrderActor(0x22f4ba0, "player_world")
+    OrderActor(0x25fac60, "player_tick")
+    OrderActor(0x25f90e0, "nearby")
+    OrderActor(0x23fe8a0, "item_tick")
+    OrderChunk("*0x1de3ff0", internal=True)
+    ChunkMoves("*0x1d65130", internal=True)

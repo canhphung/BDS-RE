@@ -225,10 +225,12 @@ int main() {
         // First tick: actor data and AddItemActor; the pickup delay of 10 ticks
         // then expires and player 2, standing on the hole, takes the item.
         server.tick();
-        // The first tick also flushes player 1's dirty attribute list (UpdateAttributes).
+        // The chunk actor and player 2 tick before player 1 in this shuffle:
+        // player 2 announces the new item before player 1 flushes its attributes.
+        // See chunk_order_reference for the original per-player scheduler trace.
         auto added = server.drain(1);
-        check(added.size() == 3 && added[0].header.id == 0x1d && added[1].header.id == 0x27 &&
-                  added[2].header.id == 0x0f,
+        check(added.size() == 3 && added[0].header.id == 0x27 && added[1].header.id == 0x0f &&
+                  added[2].header.id == 0x1d,
               "item entity added after its first tick");
         // Player::aiStep touches entities within the player box grown by
         // (1, 0.5, 1): player 2 steps into the hole the item fell into.

@@ -18,6 +18,10 @@ bool stacks_with(const ItemStack &a, const ItemStack &b) { return a.block == b.b
 // point before setTeleportDestination / RespawnPacket: 0x3fcf5c7e (1.62001014),
 // not the 1.62001002 heightOffset.
 constexpr float kSpawnEyeOffset = std::bit_cast<float>(0x3fcf5c7eu);
+TickChunkPosition item_chunk(const ItemActor &actor) {
+    return {chunk_coordinate(static_cast<int>(std::floor(actor.pos.x))),
+            chunk_coordinate(static_cast<int>(std::floor(actor.pos.z)))};
+}
 void require(bool ok) {
     if (!ok)
         throw protocol::ProtocolError("invalid gameplay request");
@@ -112,6 +116,7 @@ Server::Server(World &world, const Properties &properties, AccessLists &access,
     level_random_.observe_draws(std::move(random_observer));
     level_tick_ = world.age(); // Level::getCurrentTick
     protocol::shuffle_block_palette(level_random_);
+    chunk_offsets_ = ticking_offsets(); // Level::Level constructs the list even on non-shuffle ticks.
 }
 std::uint64_t Server::Session::flags() const {
     // Actor flags of a standing survival player in the original (bits 14, 19,
@@ -358,7 +363,12 @@ void Server::spawn_item(World::Position block, ItemStack item) {
     const auto id = allocate_entity_id();
     a.runtime_id = static_cast<std::uint64_t>(id);
     a.unique_id = id;
-    items_.push_back(a);
+    add_item(std::move(a));
+}
+void Server::add_item(ItemActor actor) {
+    actor.owner_chunk = item_chunk(actor); // LevelChunk::addEntity writes Actor +0xc8.
+    chunk_actors_.add(actor.owner_chunk, actor.runtime_id);
+    items_.push_back(std::move(actor));
 }
 void Server::tick_item(ItemActor &a) {
     normal_tick(a, world_, [this](ItemActor &self) {
@@ -974,9 +984,8 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
                 scan.insert(other_id);
         }
     for (const auto &a : items_)
-        if (a.added && !a.removed && near(a.pos.x, a.pos.z) &&
-            world_.chunk(chunk_coordinate(static_cast<int>(std::floor(a.pos.x))),
-                         chunk_coordinate(static_cast<int>(std::floor(a.pos.z)))))
+        if (a.added && !a.removed && chunks.contains(a.owner_chunk) &&
+            world_.chunk(a.owner_chunk.first, a.owner_chunk.second))
             scan.insert(a.runtime_id);
     for (auto entity : scan) {
         if (s.known.contains(entity))
@@ -1025,9 +1034,22 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
     }
 }
 void Server::tick() {
-    for (std::size_t i = 0; i < items_.size(); ++i)
-        if (!items_[i].removed)
-            tick_item(items_[i]);
+    // Dimension::_tickEntityChunkMoves (0x1d65130) runs before players.
+    // Actor::_updateOwnerChunk queues changes before its normalTick, so an
+    // item crossing during normalTick keeps its old owner for the next tick.
+    for (const auto id : pending_item_moves_)
+        for (auto &actor : items_)
+            if (actor.runtime_id == id && !actor.removed) {
+                const auto target = item_chunk(actor);
+                // INFERRED host boundary for an unloaded target: keep its
+                // inactive record in that column. The original saves/transfers
+                // through NBT; actor persistence is not implemented here.
+                // Missing columns are neither simulated nor announced below.
+                chunk_actors_.move(actor.owner_chunk, target, id);
+                actor.owner_chunk = target;
+                break;
+            }
+    pending_item_moves_.clear();
     // Level::tick (0x1c86000): when the current tick is a multiple of 20 it
     // std::shuffles, with the level Random, the two chunk-offset lists
     // (Level +0x8, and +0x20 refreshed from gMasterClientTickingChunksOffsetList;
@@ -1055,13 +1077,46 @@ void Server::tick() {
         shuffle(player_order_);
     }
     ++level_tick_;
-    for (const auto id : std::vector<std::uint64_t>(player_order_))
-        if (auto found = sessions_.find(id); found != sessions_.end() && found->second.active)
-            tick_player(id, found->second);
+    const auto players = player_order_;
+    tick_player_worlds(players, chunk_offsets_, {
+        [this](std::uint64_t id) -> std::optional<TickChunkPosition> {
+            auto player = sessions_.find(id);
+            if (player == sessions_.end() || !player->second.active)
+                return {};
+            return center(id);
+        },
+        [this](TickChunkPosition chunk) { return world_.chunk(chunk.first, chunk.second) != nullptr; },
+        [this](TickChunkPosition chunk) {
+            // LevelChunk::tick snapshots its actor pointers before iterating.
+            // Spawner/despawn/block consumers must be inserted before this
+            // actor phase (0x1de4501 / 0x1de451d / 0x1de452d).
+            const auto actors = chunk_actors_.members(chunk);
+            for (const auto id : actors)
+                for (auto &actor : items_)
+                    if (actor.runtime_id == id && !actor.removed) {
+                        // Actor::tick (0x21adc77): no normalTick when the
+                        // actor's current position has no loaded block source.
+                        const auto current = item_chunk(actor);
+                        if (!world_.chunk(current.first, current.second))
+                            break;
+                        if (current != actor.owner_chunk)
+                            pending_item_moves_.push_back(id); // 0x21aa419
+                        tick_item(actor);
+                        break;
+                    }
+        },
+        [this](std::uint64_t id) {
+            auto found = sessions_.find(id);
+            if (found != sessions_.end() && found->second.active) {
+                tick_player(id, found->second);
+                update_nearby(id, found->second); // ServerPlayer::tickWorld, 0x25f8bd3
+            }
+        }
+    });
+    for (const auto &actor : items_)
+        if (actor.removed)
+            chunk_actors_.erase(actor.owner_chunk, actor.runtime_id);
     std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
-    for (auto &[id, s] : sessions_)
-        if (s.active)
-            update_nearby(id, s);
     fresh_items_.clear();
 }
 std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {

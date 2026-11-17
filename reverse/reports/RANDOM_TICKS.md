@@ -172,3 +172,49 @@ global level-Random acceptance trace.
 Grass checkpoint validation: GCC 14.2 Debug, ASan+UBSan, GCC Release and
 Clang 19.1 Release each passed **29/29 CTest** locally, including the new
 160-case function comparison and all earlier item/combat/network references.
+
+## Per-player chunk/item scheduler checkpoint
+
+The original run `chunk-item-order-v1` places A at (0.5,4,15.75), B at
+(32.5,4,0.5), gives each one dirt, and drops it using ordinary client inventory
+transactions. `--tick-order --drop-items` records the actual post-shuffle lists,
+chunk actor lists, item owner/position/age, player normalTick and nearby scans.
+The trace hash is retained in `chunk_order_bds_1.6.0.15.json`.
+
+The runtime now uses `tick_player_worlds` with its real Level offset/player
+lists and loaded columns. Ordinary items tick in owner-chunk order; each chunk
+ticks once across overlapping player areas, followed by that player's normalTick
+and nearby scan. The shared chunk actor index appends and uses the original
+SmallSet swap-last erase. It is ready to hold mob IDs, but no mobs are added yet.
+
+| Original site | Scheduling evidence |
+|---|---|
+| 0x22f5520 / 0x22fb580 | Player tick offsets are Level +0x8 |
+| 0x22f4ba0 | Player::tickWorld chunk traversal |
+| 0x1de4501 / 0x1de451d / 0x1de452d | Spawner, despawn, then tickBlocks precede actor snapshot (corrects the handoff's suggested inner order) |
+| 0x1de3b30 / 0x1de31e0 / 0x1de3260 / 0x1deb820 | Chunk actor SmallSet enumeration, add, remove and swap-last erase |
+| 0x21aa380 / 0x21aa419 | Actor::_updateOwnerChunk queues transfer before normalTick |
+| 0x1d65130 / 0x21aa490 | Dimension processes queued moves before player worlds; move removes old owner then appends to new |
+| 0x25f8bd3 | Nearby scan follows each player's world, not all players together |
+
+Five distilled original frames (48,49,50,61,70) cover two items, 75 distinct
+chunks per frame, overlap and both player orders. Item 12 ticks before item 11
+despite being created later. Item 11 crosses z=16 on tick 48, is still owned by
+(0,0) at tick 49 entry, and is owned by (0,1) at tick 50 entry. The reference
+test compares callback order exactly for captured list/availability inputs, then
+runs real runtime drops for three ticks to check this deferred transfer and
+once-per-tick age progression. It also checks items stop ticking without players.
+
+This is not a full later-RNG or mob comparison. Missing-target transfer keeps
+an inactive host record (marked INFERRED); the original NBT transfer/removal and
+reload are not translated. Mixed mob/item storage, original chunk readiness,
+nearby scan enumeration order, lighting and spawner/block/AI/season/save
+consumers remain unfinished. The original mature chunk's neighbor guard only
+applies before postprocessing; a blanket 3x3-neighbor requirement must not be
+imposed on already processed chunks.
+
+Scheduler checkpoint validation: GCC 14.2 Debug and ASan+UBSan, GCC Release
+and Clang 19.1 Release each passed **30/30 CTest** locally. The broad gameplay
+test's old global-item-phase expectation now follows the per-player order
+(item announcement before the later player's dirty attributes); original packet
+reference expectations and combat's bounded set comparison remain unchanged.

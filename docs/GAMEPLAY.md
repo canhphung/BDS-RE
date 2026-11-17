@@ -2,9 +2,10 @@
 
 Random ticks/mobs handoff (2026-11-17): the original now has a draw-by-draw RNG
 oracle and the random block-position generator has reference tests. GrassBlock's
-server algorithm also has 160 original day/night dependency/RNG cases. The full
-chunk scheduler, grass/lighting integration and mob spawning/AI are still in progress; the
-runtime order described below has not yet been changed. See
+server algorithm also has 160 original day/night dependency/RNG cases. The runtime now ticks items in their owner chunks during each player world,
+then the player and its nearby scan. Five original frames check this order,
+including overlapping player areas and a deferred chunk transfer.
+Grass/lighting integration and mob spawning/AI are still in progress. See
 [scope and evidence](../reverse/reports/RANDOM_TICKS.md).
 
 The server now supports a small playable block world: terrain, authenticated
@@ -93,7 +94,7 @@ test `item_actor_reference`; trace tool tools/reference/trace_item_actor.py):
   appears at block + 0.15 + 0.7 x nextFloat per axis (Level random), with motion
   (±0.1, 0.2, ±0.1) from the actor constructor, pickup delay 10 and lifetime 6000.
   Both random sources are seeded from std::random_device, like the original.
-- Every server tick, ItemActor::normalTick: pushOutOfBlocks, gravity 0.04,
+- In each ticked owner chunk, ItemActor::normalTick: pushOutOfBlocks, gravity 0.04,
   Actor::move with the original collision order and AABB::clipCollide (including
   overlap push-out and the stuck-in-collider flag), air friction 0.98 and ground
   friction 0.6 x 0.98; merging with matching items within 0.5 every 25 ticks;
@@ -108,6 +109,11 @@ test `item_actor_reference`; trace tool tools/reference/trace_item_actor.py):
   with no pickup delay and a slot that can take it, Player::take fills the first
   unfinished stack or first empty slot, sends the InventoryTransaction (world
   action, then container actions) to the player and broadcasts TakeItemActor.
+- Ownership follows the original deferred move queue: a crossing discovered
+  before normalTick is applied before the next player-world phase. Items outside
+  all active player ticking areas do not run normalTick. The host keeps an
+  inactive record if the target column is absent (INFERRED); original NBT actor
+  transfer/reload is not implemented.
 - Not modelled: saving item entities with the world, fall distance, lava/water/fire, unique-id high bits from the level's
   world start count (BDS-RE uses one counter for runtime and unique ids).
 
@@ -244,6 +250,14 @@ Translated from the original and checked byte for byte against
 - Block runtime ids: the palette order is the original's for the same level
   seed (BlockPalette shuffle with the level Random, which is seeded with the
   level seed as in Level::Level), so ids in sounds, particles and chunks match.
+- Chunk/item order: after deferred owner transfers and Level shuffling, each
+  player ticks the loaded chunks in its current Level offset list once per world
+  tick, then its normalTick and nearby scan. Items follow the owning chunk's
+  SmallSet order, whose erase replaces an entry with the last element. The original
+  chunk consumer order is spawner, despawn, blocks, then actors; the first three
+  are not yet wired in this runtime. `chunk_order_reference` compares five
+  original frames under captured player/offset lists and chunk availability;
+  it does not establish the missing RNG consumers.
 - Order: Level::tick ticks the players in its player list (join order,
   order-preserving removal). Every 20 ticks it first shuffles two chunk-offset
   lists and then that list with the level Random; BDS-RE does the same with the
