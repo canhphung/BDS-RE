@@ -31,6 +31,32 @@ int main(int argc, char **argv) {
         server.tick();
         check(words == reference.at("first_empty_tick_words").get<std::vector<std::uint32_t>>(),
               "empty first tick draw order/values differ from original");
+        // Ticks 2..11 of a two-player capture: the players enter the Level list
+        // before ticks 9 and 10; seasons and chunk-save draws follow.
+        world.ensure_chunk(0, 0);
+        const auto &prefix = reference.at("player_join_prefix");
+        unsigned joined = 0;
+        for (int tick = 2; tick <= 11; ++tick) {
+            const auto key = std::to_string(tick);
+            for (int n = prefix.at("joins").value(key, 0); n > 0; --n) {
+                ++joined;
+                bds::auth::Identity id;
+                id.identity = "00000000-0000-4000-8000-00000000000" + std::to_string(joined);
+                id.display_name = "Player" + std::to_string(joined);
+                id.client_data_json = "{}";
+                bds::protocol::StartGame g;
+                g.runtime_id = joined;
+                g.unique_id = static_cast<std::int64_t>(joined);
+                g.x = 0.5f;
+                g.y = 5.62f;
+                g.z = 0.5f;
+                server.prepare(id, g);
+            }
+            words.clear();
+            server.tick();
+            check(words == prefix.at("tick_words").at(key).get<std::vector<std::uint32_t>>(),
+                  ("level Random draws differ from original at tick " + key).c_str());
+        }
         check(reference.at("block_samples").size() == 32, "missing block sample groups");
         bool negative_y = false;
         for (const auto &group : reference.at("block_samples")) {
@@ -58,7 +84,7 @@ int main(int argc, char **argv) {
                   "final LCG state differs from original");
         }
         check(negative_y, "corpus must retain the original signed negative-Y samples");
-        std::cout << "Original startup/empty-tick RNG and 32 block-selection groups match\n";
+        std::cout << "Original startup/join-prefix RNG and 32 block-selection groups match\n";
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

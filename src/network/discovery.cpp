@@ -422,6 +422,8 @@ void DiscoveryServer::poll(const Properties &p, AccessLists &access, World &worl
             continue;
         }
         try {
+            if (const auto radius = i->second.chunk_radius())
+                impl_->gameplay->set_chunk_radius(i->second.runtime_id(), *radius);
             auto output = i->second.push(impl_->gameplay->drain(i->second.runtime_id()));
             for (const auto &message : output.messages)
                 for (const auto &outgoing : impl_->transport->send(i->first, message, now))

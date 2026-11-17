@@ -89,6 +89,8 @@ class GameConnection {
     enum class State { awaiting_login, awaiting_handshake, awaiting_packs, spawning, streaming, awaiting_initialized, active, closed };
     ConnectionOutput poll(unsigned chunk_budget = 1);
     std::uint64_t runtime_id() const {return game_?game_->runtime_id:0;}
+    // The chunk radius granted to RequestChunkRadius (Player::setChunkRadius).
+    std::optional<std::int32_t> chunk_radius() const {return radius_;}
     ConnectionOutput push(std::vector<GamePacket> packets);
     ConnectionOutput receive(std::span<const std::uint8_t> message);
     State state() const { return state_; }

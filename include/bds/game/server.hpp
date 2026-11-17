@@ -31,6 +31,8 @@ class Server {
     // Returns false for an unknown runtime id.
     bool give_effect(std::uint64_t runtime, int effect, int seconds, int amplifier);
     bool clear_effects(std::uint64_t runtime);
+    // Player::setChunkRadius (0x22f5730): the radius granted to the client.
+    void set_chunk_radius(std::uint64_t runtime, int radius);
     std::optional<std::pair<int, int>> center(std::uint64_t runtime) const;
     void leave(std::uint64_t runtime);
     // One level tick: item entities (ItemActor::normalTick, replication) and
@@ -78,6 +80,7 @@ class Server {
         ItemStack using_item;
         int use_duration = 0;
         float fall_distance = 0;                  // Actor +0x138
+        unsigned chunk_radius = 6;                // Player +0x1a68 (6 in Player::Player)
         // Actor +0x2b0: the actor's own Random, Random::Random() (seeded from
         // std::random_device, never reseeded): drop throws, knockback roll.
         Random random{std::random_device{}()};
@@ -125,6 +128,9 @@ class Server {
     void apply_effect(std::uint64_t id, Session &s, const Session::Effect &e);
     void remove_effect_buffs(std::uint64_t id, Session &s, int effect);
     void tick_effects(std::uint64_t id, Session &s);
+    void background_tick_seasons();
+    void save_some_chunks();
+    void tick_spawner(int chunk_x, int chunk_z);
     // Items: ItemUse click air (GameMode::useItem), ItemRelease consume,
     // ItemUseOnActor attack, and Player::drop.
     std::vector<GamePacket> use_item(std::uint64_t id, Session &s, const Transaction &t);
@@ -145,6 +151,7 @@ class Server {
     std::vector<std::uint64_t> player_order_; // Level +0x50: players in join order, shuffled every 20 ticks
     std::vector<std::pair<int, int>> chunk_offsets_; // Level +0x8
     std::uint64_t level_tick_ = 0;              // Level::getCurrentTick
+    bool overworld_created_ = false;            // Level dimension map non-empty (first player)
     void broadcast(GamePacket packet, std::uint64_t exclude = 0);
     bool collides(const PlayerData &p) const;
     bool reach(const PlayerData &p, World::Position block) const;
