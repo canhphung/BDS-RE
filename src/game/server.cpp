@@ -105,9 +105,11 @@ std::int32_t level_seed(const World &world, const Properties &p) {
         seed = 0;
     return world.terrain().kind ? static_cast<std::int32_t>(world.terrain().seed) : seed;
 }
-Server::Server(World &world, const Properties &properties, AccessLists &access)
+Server::Server(World &world, const Properties &properties, AccessLists &access,
+               Random::DrawObserver random_observer)
     : world_(world), properties_(properties), access_(access) {
     level_random_.set_seed(static_cast<std::uint32_t>(level_seed(world, properties)));
+    level_random_.observe_draws(std::move(random_observer));
     level_tick_ = world.age(); // Level::getCurrentTick
     protocol::shuffle_block_palette(level_random_);
 }

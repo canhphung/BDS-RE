@@ -17,7 +17,8 @@ class Server {
     // Level::Level seeds Level::getRandom() with the level seed (0x1c8038f);
     // the first draws shuffle the block palette (ServerLevel::ServerLevel ->
     // BlockPalette::initFromBlockDefinitions), so runtime ids match the original.
-    Server(World &world, const Properties &properties, AccessLists &access);
+    Server(World &world, const Properties &properties, AccessLists &access,
+           Random::DrawObserver random_observer = {});
     std::vector<GamePacket> prepare(const auth::Identity &identity, protocol::StartGame &game);
     std::vector<GamePacket> handle(std::uint64_t runtime, const GamePacket &packet,
                                    std::uint64_t now);

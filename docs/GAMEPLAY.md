@@ -1,5 +1,11 @@
 # Experimental gameplay (protocol 282)
 
+Random ticks/mobs handoff (2026-11-17): the original now has a draw-by-draw RNG
+oracle and the random block-position generator has reference tests. The full
+chunk scheduler, grass behavior and mob spawning/AI are still in progress; the
+runtime order described below has not yet been changed. See
+[scope and evidence](../reverse/reports/RANDOM_TICKS.md).
+
 The server now supports a small playable block world: terrain, authenticated
 player movement and visibility, block breaking/placement, and a 36-slot player
 inventory plus cursor. This is an independent implementation. It does not reproduce

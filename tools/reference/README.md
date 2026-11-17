@@ -1,5 +1,38 @@
 # Reference runs of the original BDS 1.6.0.15
 
+## Draw-by-draw world-tick oracle
+
+The random-tick/mob handoff is on `claude/clever-newton-bboqgm`. For a bounded
+trace, use the safe child-process runner (GDB must support Python):
+
+```sh
+python3 tools/re/capture_level_random.py \
+  --runtime input/reference-runtime/bds \
+  --library-path input/reference-runtime/openssl-local/lib \
+  --preload input/reference-runtime/ipv6_shim.so \
+  --output input/reference/world-random-new \
+  --players A,B --ticks 200 --block-samples
+```
+
+`--output` must be new. `--gdb` can select a local GDB installation. The default
+port is 19220. For a high-subchunk reference run, add
+`--command 'setblock 0 255 0 stone'`; commands execute after all clients spawn.
+The original ignores `level-type=FLAT`, so this oracle explicitly selects flat
+LevelSettings in GDB and records that override; `--generator original` retains
+the stock setting. Algorithm instructions and RNG results are not patched.
+
+Export bounded fixtures from a full run and a high-subchunk run:
+
+```sh
+python3 tools/re/export_world_tick_reference.py \
+  tests/reference/world_ticks_bds_1.6.0.15.json \
+  input/reference/world-random-new input/reference/world-random-high
+```
+
+See [trace evidence and current implementation boundary](../../reverse/reports/RANDOM_TICKS.md).
+Only startup/first-empty-tick RNG and block coordinate selection currently have
+regression comparisons; full random block ticks and mobs remain in progress.
+
 These tools run the original Linux server locally and talk to it with an independent protocol-282 client, for reference captures and differential checks. The original server, its libraries, worlds and full captures stay under the ignored `input/` directory.
 
 ## Running the original server

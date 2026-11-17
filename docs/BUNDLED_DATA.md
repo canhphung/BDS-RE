@@ -26,3 +26,10 @@ At the user's direction the original BDS was executed locally (see tools/referen
 - `tests/reference/start_game_bds_1.6.0.15.bin`: one complete StartGame body (111,701 bytes) from that run, used by the `level_packets` test to check that BDS-RE reproduces the original encoding byte for byte.
 
 Full captures (including chunk data), the extracted server and the OpenSSL 1.0.2u build stay under the ignored `input/` and scratch directories.
+
+`tests/reference/world_ticks_bds_1.6.0.15.json` is distilled from original-server
+GDB traces on 2026-11-17: 4,492 startup RNG words, 112 first-empty-tick words and
+32 block sample groups at allocated heights 16/256. Captured values are retained
+with source trace hashes/configuration. The flat generator setting is explicitly
+selected in GDB and recorded; algorithms and RNG outputs are unmodified. See
+`tools/re/export_world_tick_reference.py` and `reverse/reports/RANDOM_TICKS.md`.
