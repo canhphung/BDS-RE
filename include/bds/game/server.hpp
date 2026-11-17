@@ -134,7 +134,9 @@ class Server {
     void update_nearby(std::uint64_t id, Session &s);
     std::vector<std::pair<int, int>> ticking_offsets() const;
     std::set<std::uint64_t> fresh_items_; // added to the level this tick
-    std::vector<std::uint64_t> player_order_; // Level +0x50 active players, shuffled every tick
+    std::vector<std::uint64_t> player_order_; // Level +0x50: players in join order, shuffled every 20 ticks
+    std::vector<std::pair<int, int>> chunk_offsets_; // Level +0x8
+    std::uint64_t level_tick_ = 0;              // Level::getCurrentTick
     void broadcast(GamePacket packet, std::uint64_t exclude = 0);
     bool collides(const PlayerData &p) const;
     bool reach(const PlayerData &p, World::Position block) const;

@@ -237,9 +237,16 @@ Translated from the original and checked byte for byte against
 - Block runtime ids: the palette order is the original's for the same level
   seed (BlockPalette shuffle with the level Random, which is seeded with the
   level seed as in Level::Level), so ids in sounds, particles and chunks match.
-- Order: the original ticks players in the order of their actor addresses
-  (not reproducible) and shuffles its player list with the level Random every
-  tick; BDS-RE ticks by runtime id and performs the same shuffle draws.
+- Order: Level::tick ticks the players in its player list (join order,
+  order-preserving removal). Every 20 ticks it first shuffles two chunk-offset
+  lists and then that list with the level Random; BDS-RE does the same with the
+  same draw counts (checked under gdb). The resulting order equals the
+  original's only as far as the level Random's state does: the original also
+  draws it for random block ticks, mob spawning/despawning, mob AI and season
+  ticks, which BDS-RE does not simulate, so tests compare one tick's packets of
+  two players as a set.
+- Synched data dirtied after _sendDirtyActorData (the effect colour from
+  tickEffects) goes out at the end of Mob::normalTick in the same tick.
 
 ## Persistence
 

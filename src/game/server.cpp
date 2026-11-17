@@ -108,6 +108,7 @@ std::int32_t level_seed(const World &world, const Properties &p) {
 Server::Server(World &world, const Properties &properties, AccessLists &access)
     : world_(world), properties_(properties), access_(access) {
     level_random_.set_seed(static_cast<std::uint32_t>(level_seed(world, properties)));
+    level_tick_ = world.age(); // Level::getCurrentTick
     protocol::shuffle_block_palette(level_random_);
 }
 std::uint64_t Server::Session::flags() const {
@@ -273,6 +274,7 @@ std::vector<GamePacket> Server::prepare(const auth::Identity &identity, protocol
     s.attributes.last_food = p.hunger;
     const auto spawn_attributes_body = spawn_attributes(g.runtime_id, s.attributes);
     sessions_.emplace(g.runtime_id, std::move(s));
+    player_order_.push_back(g.runtime_id); // Level::addPlayer: emplace_back
     ByteWriter hotbar;
     hotbar.varint(p.selected);
     hotbar.byte(0);
@@ -300,6 +302,7 @@ void Server::leave(std::uint64_t runtime) {
     if (i->second.active)
         broadcast(packet(PacketId::PlayerList, remove_player_list(i->second.identity)), runtime);
     sessions_.erase(i);
+    std::erase(player_order_, runtime); // Level::_cleanupDisconnectedPlayers: vector::erase
 }
 std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
     // Break branch of ItemUseInventoryTransaction::handle ($_2, 0x1ae6d20):
@@ -446,14 +449,17 @@ void Server::tick_player(std::uint64_t id, Session &s) {
                                    update_attributes(id, s.attributes, s.attributes.dirty)));
         s.attributes.dirty.clear();
     }
-    if (s.death_data_dirty)
-        send_for_entity(id, packet(PacketId::SetActorData, actor_bounding_box(id, 0.2f, 0.2f)));
-    if (s.flags_dirty)
-        send_for_entity(id, packet(PacketId::SetActorData, actor_flags(id, s.flags())));
-    if (s.effect_keys)
-        send_for_entity(id, packet(PacketId::SetActorData, effect_data(id, s.effect_color, false, s.effect_keys)));
-    s.flags_dirty = s.death_data_dirty = false;
-    s.effect_keys = 0;
+    const auto send_dirty_data = [&] {
+        if (s.death_data_dirty)
+            send_for_entity(id, packet(PacketId::SetActorData, actor_bounding_box(id, 0.2f, 0.2f)));
+        if (s.flags_dirty)
+            send_for_entity(id, packet(PacketId::SetActorData, actor_flags(id, s.flags())));
+        if (s.effect_keys)
+            send_for_entity(id, packet(PacketId::SetActorData, effect_data(id, s.effect_color, false, s.effect_keys)));
+        s.flags_dirty = s.death_data_dirty = false;
+        s.effect_keys = 0;
+    };
+    send_dirty_data();
     // Mob::tickEffects (0x22b2050) after the dirty data went out.
     tick_effects(id, s);
     const float before[3] = {p.x, p.y, p.z};
@@ -488,6 +494,10 @@ void Server::tick_player(std::uint64_t id, Session &s) {
         }
         --s.lerp.steps;
     }
+    // The end of Mob::normalTick (0x22b356a): synched data dirtied since
+    // _sendDirtyActorData (the effect colour of tickEffects) goes out in the
+    // same tick (traced under gdb: instant health capture).
+    send_dirty_data();
     // Actor::checkFallDamage with this tick's movement: falling adds the drop,
     // landing resets (ServerPlayer::checkFallDamage deals no damage; the
     // client reports falls with ActorFallPacket).
@@ -1016,32 +1026,37 @@ void Server::tick() {
     for (std::size_t i = 0; i < items_.size(); ++i)
         if (!items_[i].removed)
             tick_item(items_[i]);
-    for (auto &[id, s] : sessions_)
-        if (s.active)
-            tick_player(id, s);
-    std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
-    // Level::tick (0x1c86000) then shuffles its active-player list with the
-    // level Random (std::shuffle with libstdc++'s classic Fisher-Yates and
-    // uniform_int_distribution over Random::operator() = _genRandInt32). The
-    // list orders chunk ticking around players, which BDS-RE does not have,
-    // but the draws advance the level Random. (Players themselves tick in
-    // the order of their Actor addresses, Level::tickEntities' SmallSet.)
-    std::erase_if(player_order_, [&](std::uint64_t id) {
-        const auto found = sessions_.find(id);
-        return found == sessions_.end() || !found->second.active;
-    });
-    for (auto &[id, s] : sessions_)
-        if (s.active && std::find(player_order_.begin(), player_order_.end(), id) == player_order_.end())
-            player_order_.push_back(id);
-    for (std::size_t i = 1; i < player_order_.size(); ++i) {
-        const std::uint64_t range = 0xffffffffULL, buckets = i + 1, scaling = range / buckets,
-                            past = buckets * scaling;
-        std::uint64_t r;
-        do
-            r = level_random_.next_uint();
-        while (r >= past);
-        std::swap(player_order_[i], player_order_[r / scaling]);
+    // Level::tick (0x1c86000): when the current tick is a multiple of 20 it
+    // std::shuffles, with the level Random, the two chunk-offset lists
+    // (Level +0x8, and +0x20 refreshed from gMasterClientTickingChunksOffsetList;
+    // both hold the client ticking offsets) and then the player list
+    // (Level +0x50, Level::addPlayer appends, removal keeps the order). The
+    // players then tick in that list's order (Level::forEachPlayer ->
+    // ServerPlayer::tickWorld). The original's level Random is also drawn by
+    // random block ticks, mob spawning and mob AI, which BDS-RE does not have.
+    if (level_tick_ % 20 == 0) {
+        const auto shuffle = [&](auto &list) {
+            for (std::size_t i = 1; i < list.size(); ++i) {
+                const std::uint64_t buckets = i + 1, scaling = 0xffffffffULL / buckets, past = buckets * scaling;
+                std::uint64_t r;
+                do
+                    r = level_random_.next_uint();
+                while (r >= past);
+                std::swap(list[i], list[r / scaling]);
+            }
+        };
+        if (chunk_offsets_.empty())
+            chunk_offsets_ = ticking_offsets();
+        auto client_offsets = ticking_offsets();
+        shuffle(chunk_offsets_);
+        shuffle(client_offsets);
+        shuffle(player_order_);
     }
+    ++level_tick_;
+    for (const auto id : std::vector<std::uint64_t>(player_order_))
+        if (auto found = sessions_.find(id); found != sessions_.end() && found->second.active)
+            tick_player(id, found->second);
+    std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
     for (auto &[id, s] : sessions_)
         if (s.active)
             update_nearby(id, s);

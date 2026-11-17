@@ -330,6 +330,10 @@ int main(int argc, char **argv) {
             if (id == 0x1d && body.rfind("0702", 0) == 0)
                 body.replace(20, 8, "0bd7a33e");
         check(std::abs(b.exhaustion - 3.32f) < 1e-5f || std::abs(b.exhaustion - 0.32f) < 1e-5f, "B exhaustion");
+        // The players' own updates of that tick (the level Random's shuffle
+        // decides who ticks first) are compared as a set.
+        std::sort(sa.end() - 3, sa.end());
+        std::sort(ws.end() - 3, ws.end());
         if (sa != ws)
             show("B sprint-hits A", sa, ws);
         check(sa == ws, "sprint hit: absorption, armor packet, knockback, push, attacker stops sprinting");
@@ -536,10 +540,7 @@ void instant(const nlohmann::json &ref) {
         check(got == want, std::string("effect: ") + name);
     };
     server.give_effect(1, 6, 1, 0);
-    // The capture has the colour data before the second UpdateAttributes,
-    // although a gdb trace puts both in one tick and _sendDirtyActorData
-    // (0x21bd970) sends attributes first; compared as a set.
-    watch("instant_heal", 30, true);
+    watch("instant_heal", 30);
     server.give_effect(1, 7, 1, 1);
     watch("instant_harm", 40);
 }
