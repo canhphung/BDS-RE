@@ -45,12 +45,48 @@ the level Random, advances it to each event and runs the translated spawner:
 original sent for a baby chicken and a pig are compared byte for byte with
 `add_mob_actor` / `empty_armor_equipment`.
 
+## Mob AI (src/game/mob_ai.cpp)
+
+| Original | BDS-RE |
+|---|---|
+| GoalSelector::tick 0x23b3950, _canUseInSystem 0x23b3c80, _canCoExist 0x23b3e60 | `tick_goals` |
+| LookAtActorGoal canUse/canContinueToUse/start/stop/tick 0x233b300..0x233ba80 | `GoalKind::LookAtPlayer` |
+| RandomLookAroundGoal 0x23aa880..0x23aa9b0 | `GoalKind::RandomLookAround` |
+| RandomStrollGoal::canUse 0x23c46f0 (the `nextInt(interval)` draw) | `GoalKind::RandomStroll` |
+| EatBlockGoal 0x23bec40..0x23beeb0 (ActorEvent 10, grass → dirt at tick 4) | `GoalKind::EatBlock` |
+| LookControl::tick 0x2335ef0, Actor::getAttachPos 0x21aaaa0 (locations 3, 7) | `tick_look` |
+| Mob::normalTick body turn → BodyControl::clientTick 0x2331a00, clampEnough 0x2331c60 | `tick_body` |
+| SpawnActorComponent::tick 0x2439460 (egg timer, `nextInt(6000) + 6000`) | `tick_spawn_actor` |
+| mce::Math::wrapDegrees 0x26ddf10 / clampRotate 0x26de0f0; RADDEG/DEGRAD bit patterns | `wrap_degrees`, `clamp_rotate` |
+| SpatialActorNetworkData / MoveActorAbsoluteData::isDifferenceSignificant 0x1919f70 (rotation sum > 4°), PacketUtil::degreesToByte 0x18a0f40 | `Server::tick_mob` (MoveActorDelta) |
+
+Goal lists, priorities, control flags and parameters were dumped from the
+original's GoalSelector objects (`tools/re/gdb_goal_oracle.py`): the order is
+the definition's behavior components alphabetically, then those of the groups
+added at spawn; a group component already present replaces it in place.
+
+`tools/re/gdb_mob_ai_oracle.py` records each mob's AI step (draw index,
+position), LookAtActorGoal::canUse results and LookControl inputs/outputs;
+`tools/re/make_mob_ai_reference.py` builds `tests/reference/mob_ai_bds_1.6.0.15.json`.
+`mob_ai_reference` replays 783 steps of 5 mobs: 2164 level-Random words and
+778 pitch/head-yaw results match exactly. A mob's replay ends at the step in
+which the original starts a random stroll.
+
 ## Not yet translated (the level Random diverges when they run)
 
-- Mob AI (GoalSelector: RandomStroll, LookAtActor, RandomLookAround,
-  EatBlock, …), Mob::travel physics, MoveActorDelta replication, and the
-  per-tick chicken egg timer (SpawnActorComponent) — the original's mobs draw
-  from the level Random every tick.
+- RandomPos::getPos, PathFinder, PathNavigation, MoveControl, JumpControl,
+  Mob::travel / Actor::move for mobs and Actor::push between mobs: a stroll
+  never starts (RandomStrollGoal::canUse draws, then returns false) and mobs
+  never move; motion stays zero (the original's standing mob has motion.y
+  -0.0784).
+- TemptGoal, FollowParentGoal, PanicGoal, BreedGoal, FloatGoal,
+  MountPathingGoal, RunAroundLikeCrazyGoal: their preconditions (tempt items,
+  babies following, damage, love mode, water, riders) are not handled; they
+  never start.
+- SpawnActorComponent::spawnEntity (the egg item and sound).
+- INFERRED: Actor::getAttachPos offsets (0, 0.85·h, 0.85·w) / (0, 0.85·h, 0)
+  from the oracle values; a player's attach position 3 taken as its eye
+  position.
 - getDefaultEnemyCountCallback 0x1db5530 (monster cluster size at night):
   `spawn_count` returns 0 there.
 - Water spawning (no liquids in this world), structure spawning areas,

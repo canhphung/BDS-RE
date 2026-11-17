@@ -462,14 +462,16 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                             # the original join capture (packet 247).
                             require(body == client_uvarint(game['runtime_id']) + bytes.fromhex('0100078080c280808160'),
                                     f'initialized flags {body.hex()}')
-                        elif packet_id == 0x1b and spawned:
+                        elif packet_id == 0x1b and spawned and body.startswith(client_uvarint(game['runtime_id'])):
                             # ServerPlayer::normalTick: ActorEvent 66 (structure
                             # feature) every 80 ticks from the first tick.
                             require(body == client_uvarint(game['runtime_id']) + b'\x42\x00', 'feature event')
-                        elif packet_id in (0x0d, 0x0e, 0x20):
+                        elif packet_id in (0x0d, 0x0e, 0x20, 0x1b, 0x6f, 0x15, 0x19):
                             # Naturally spawned animals in post-processed chunks:
                             # AddActor then MobArmorEquipment (RemoveActor when the
-                            # player moves away), as the original.
+                            # player moves away), head turns (MoveActorDelta) and
+                            # grazing sheep (ActorEvent, UpdateBlock, LevelEvent),
+                            # as the original.
                             pass
                         else:
                             raise AssertionError(f"unexpected packet during streaming: {packet_id:#x}")

@@ -1029,8 +1029,10 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
             // Actor::tryCreateAddActorPacket then MobArmorEquipment (capture
             // world-mobs-p1: AddActor 0x0d followed by 0x20 per mob).
             enqueue(id, packet(PacketId::AddActor,
-                               add_mob_actor({mob->unique_id, mob->runtime_id, mob->data->type, mob->pos, mob->motion, 0,
-                                              0, 0, mob->baby, mob->scale, mob->data->width, mob->data->height,
+                               add_mob_actor({mob->unique_id, mob->runtime_id, mob->data->type, mob->sent_pos, mob->motion,
+                                              mob->sent_rotation[0] / 256.0f * 360.0f,
+                                              mob->sent_rotation[1] / 256.0f * 360.0f,
+                                              mob->sent_rotation[2] / 256.0f * 360.0f, mob->baby, mob->scale, mob->data->width, mob->data->height,
                                               mob->variant, mob->mark_variant, mob->color, mob->health,
                                               mob->max_health, mob->movement, mob->fall_damage})));
             enqueue(id, packet(PacketId::MobArmorEquipment, empty_armor_equipment(entity)));
@@ -1193,6 +1195,8 @@ class Server::Region final : public SpawnRegion {
         mob.pos = {x, y, z};
         mob.surface = surface;
         define(mob);
+        mob.brain = make_brain(data.type, mob.baby, data.width, data.height);
+        mob.sent_pos = mob.pos;
         mob.owner_chunk = {static_cast<int>(std::floor(x)) >> 4, static_cast<int>(std::floor(z)) >> 4};
         s_.chunk_actors_.add(mob.owner_chunk, mob.runtime_id); // LevelChunk::addEntity
         s_.mobs_.push_back(mob);
@@ -1274,6 +1278,122 @@ bool Server::tick_chunk_state(int chunk_x, int chunk_z) {
         state = 2;
     }
     return true;
+}
+class Server::Senses final : public MobSenses {
+  public:
+    Senses(Server &server, MobActor &mob) : s_(server), mob_(mob) {}
+    Random &level_random() override { return s_.level_random_; }
+    std::vector<NearbyPlayer> players_in(float grow) override {
+        // BlockSource::fetchEntities(mob, mob AABB grown by `grow`): actors
+        // whose box intersects (AABB::intersects, strict); the player box is
+        // 0.6 x 1.8 from the feet (eye position - 1.62). Sorted by distance
+        // (LookAtActorGoal::canUse std::sort on distanceToSqr).
+        const auto &d = *mob_.data;
+        const float half = d.width / 2.0f;
+        const AABB area{{mob_.pos.x - half - grow, mob_.pos.y - grow, mob_.pos.z - half - grow},
+                        {mob_.pos.x + half + grow, mob_.pos.y + d.height + grow, mob_.pos.z + half + grow}};
+        std::vector<NearbyPlayer> out;
+        for (const auto id : s_.player_order_)
+            if (const auto p = player(id)) {
+                const AABB box{{p->pos.x - 0.3f, p->pos.y - 1.62f, p->pos.z - 0.3f},
+                               {p->pos.x + 0.3f, p->pos.y - 1.62f + 1.8f, p->pos.z + 0.3f}};
+                if (area.intersects(box))
+                    out.push_back(*p);
+            }
+        std::stable_sort(out.begin(), out.end(),
+                         [](const NearbyPlayer &a, const NearbyPlayer &b) { return a.distance_sqr < b.distance_sqr; });
+        return out;
+    }
+    std::optional<NearbyPlayer> player(std::uint64_t id) override {
+        const auto found = s_.sessions_.find(id);
+        if (found == s_.sessions_.end() || !found->second.active)
+            return std::nullopt;
+        const auto &p = s_.world_.players().at(found->second.key);
+        const Vec3 pos{static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z)};
+        const float dx = pos.x - mob_.pos.x, dy = pos.y - mob_.pos.y, dz = pos.z - mob_.pos.z;
+        return NearbyPlayer{id, pos, dx * dx + dy * dy + dz * dz, p.health > 0};
+    }
+    BlockId block(World::Position at) override {
+        const auto [x, y, z] = at;
+        if (y < 0 || y >= static_cast<int>(Chunk::height) || !s_.world_.chunk(x >> 4, z >> 4))
+            return 0;
+        return s_.world_.block(at);
+    }
+    void eat_start() override {
+        // Level::broadcastEntityEvent(mob, 10 EAT_GRASS_ANIMATION, 0).
+        s_.send_for_entity(mob_.runtime_id, packet(PacketId::ActorEvent, actor_event(mob_.runtime_id, 10, 0)));
+    }
+    void eat_grass(World::Position at) override {
+        // broadcastDimensionEvent(ParticlesDestroyBlock, pos + 0.5, grass
+        // runtime id), then BlockSource::setBlock(pos, dirt, 3).
+        const auto [x, y, z] = at;
+        s_.broadcast(level_event(LevelEventParticlesDestroyBlock, x + .5f, y + .5f, z + .5f,
+                                 static_cast<int>(block_runtime_id(2))));
+        s_.world_.set_block(at, 3);
+        s_.broadcast(packet(PacketId::UpdateBlock, block_update(at, 3)));
+    }
+
+  private:
+    Server &s_;
+    MobActor &mob_;
+};
+void Server::tick_mob(MobActor &mob) {
+    // Actor::tick -> Mob::normalTick (0x22b2c60): Actor::normalTick runs the
+    // components (SpawnActorComponent::tick, the egg timer), then aiStep ->
+    // Mob::newServerAiStep (GoalSelector::tick, LookControl::tick), then the
+    // body turn (BodyControl::clientTick for useNewAi mobs).
+    if (tick_spawn_actor(mob.brain, level_random_)) {
+        // NOT TRANSLATED: SpawnActorComponent::spawnEntity (the egg item and
+        // the "plop" sound).
+    }
+    Senses senses(*this, mob);
+    tick_goals(mob.brain, mob.pos, senses);
+    // NOT TRANSLATED: PathNavigation, MoveControl, JumpControl and
+    // Mob::travel; mobs do not move (motion stays zero).
+    tick_look(mob.brain, mob.pos);
+    tick_body(mob.brain, mob.motion.x, mob.motion.z);
+    // Actor::sendMotionPacketIfNeeded: SpatialActorNetworkData::shouldSendUpdate
+    // -> MoveActorAbsoluteData::isDifferenceSignificant (0x1919f70): the sum of
+    // the three rotation differences (PacketUtil::byteToDegrees of the sent
+    // bytes) above 4, or the position thresholds used for items.
+    const auto to_byte = [](float degrees) { // PacketUtil::degreesToByte 0x18a0f40
+        return static_cast<std::int8_t>(static_cast<std::int32_t>(degrees / 360.0f * 256.0f));
+    };
+    const auto to_degrees = [](std::int8_t b) { return static_cast<float>(b) / 256.0f * 360.0f; };
+    const std::int8_t rotation[3]{to_byte(mob.brain.pitch), to_byte(mob.brain.yaw), to_byte(mob.brain.head_yaw)};
+    float turned = 0;
+    for (int i = 0; i < 3; ++i)
+        turned += std::fabs(to_degrees(rotation[i]) - to_degrees(mob.sent_rotation[i]));
+    const Vec3 d{mob.pos.x - mob.sent_pos.x, mob.pos.y - mob.sent_pos.y, mob.pos.z - mob.sent_pos.z};
+    const float moved2 = d.x * d.x + d.y * d.y + d.z * d.z;
+    const float speed2 = mob.motion.x * mob.motion.x + mob.motion.y * mob.motion.y + mob.motion.z * mob.motion.z;
+    const float tiny = std::bit_cast<float>(0x358637beU);
+    if (turned > 4.0f || moved2 > 1e-4f || (tiny > speed2 && moved2 > tiny)) {
+        ByteWriter out;
+        out.varint64(mob.runtime_id);
+        const std::int32_t delta[3] = {
+            static_cast<std::int32_t>(std::bit_cast<std::uint32_t>(mob.pos.x) - std::bit_cast<std::uint32_t>(mob.sent_pos.x)),
+            static_cast<std::int32_t>(std::bit_cast<std::uint32_t>(mob.pos.y) - std::bit_cast<std::uint32_t>(mob.sent_pos.y)),
+            static_cast<std::int32_t>(std::bit_cast<std::uint32_t>(mob.pos.z) - std::bit_cast<std::uint32_t>(mob.sent_pos.z))};
+        std::uint8_t flags = mob.sent_on_ground ? 0x40 : 0;
+        for (int i = 0; i < 3; ++i) {
+            if (delta[i] != 0)
+                flags |= static_cast<std::uint8_t>(1U << i);
+            if (rotation[i] != mob.sent_rotation[i])
+                flags |= static_cast<std::uint8_t>(8U << i);
+        }
+        out.byte(flags);
+        for (int i = 0; i < 3; ++i)
+            if (flags & (1U << i))
+                out.signed_varint(delta[i]);
+        for (int i = 0; i < 3; ++i)
+            if (flags & (8U << i))
+                out.byte(static_cast<std::uint8_t>(rotation[i]));
+        send_for_entity(mob.runtime_id, packet(PacketId::MoveActorDelta, out.take()));
+        mob.sent_pos = mob.pos;
+        std::copy(std::begin(rotation), std::end(rotation), mob.sent_rotation);
+        mob.sent_on_ground = mob.on_ground;
+    }
 }
 void Server::tick_spawner(int chunk_x, int chunk_z) {
     // LevelChunk::tick 0x1de4433..0x1de4501: Spawner::tick runs only when the
@@ -1383,11 +1503,16 @@ void Server::tick() {
             // LevelChunk::tick snapshots its actor pointers before iterating.
             // Block consumer call site: 0x1de452d.
             const auto actors = chunk_actors_.members(chunk);
-            for (const auto id : actors)
-                for (const auto &mob : mobs_)
-                    if (mob.runtime_id == id && !mob.removed)
-                        ++ticked_mobs_; // INFERRED: Mob ticks counted for getTickedMobCountPrevious
-            for (const auto id : actors)
+            for (const auto id : actors) {
+                if (const auto mob = std::find_if(mobs_.begin(), mobs_.end(),
+                                                  [&](const MobActor &m) { return m.runtime_id == id; });
+                    mob != mobs_.end()) {
+                    if (!mob->removed) {
+                        ++ticked_mobs_; // INFERRED: counted for getTickedMobCountPrevious
+                        tick_mob(*mob);
+                    }
+                    continue;
+                }
                 for (auto &actor : items_)
                     if (actor.runtime_id == id && !actor.removed) {
                         // Actor::tick (0x21adc77): no normalTick when the
@@ -1400,6 +1525,7 @@ void Server::tick() {
                         tick_item(actor);
                         break;
                     }
+            }
         },
         [this](std::uint64_t id) {
             auto found = sessions_.find(id);
