@@ -1193,6 +1193,9 @@ class Server::Region final : public SpawnRegion {
         mob.unique_id = static_cast<std::int64_t>(0xffffffff00000000ULL | mob.runtime_id);
         mob.data = &data;
         mob.pos = {x, y, z};
+        // Actor::setPos/AABBShapeComponent: collision box uses definition
+        // dimensions (native cow/pig/sheep traces); scale is render metadata.
+        mob.bb={{x-half,y,z-half},{x+half,y+data.height,z+half}};
         mob.surface = surface;
         define(mob);
         mob.brain = make_brain(data.type, mob.baby, data.width, data.height);
@@ -1348,9 +1351,12 @@ void Server::tick_mob(MobActor &mob) {
     }
     Senses senses(*this, mob);
     tick_goals(mob.brain, mob.pos, senses);
-    // NOT TRANSLATED: PathNavigation, MoveControl, JumpControl and
-    // Mob::travel; mobs do not move (motion stays zero).
+    // PathNavigation/MoveControl are still pending; the land/air physics
+    // now executes with zero control input until a movement goal is available.
     tick_look(mob.brain, mob.pos);
+    mob.pos_prev=mob.pos;
+    travel_mob(mob,world_,{},mob.brain.yaw,0.0f);
+    push_mob_entities(mob); // Mob::aiStep -> pushEntities, 0x22ba628
     tick_body(mob.brain, mob.motion.x, mob.motion.z);
     // Actor::sendMotionPacketIfNeeded: SpatialActorNetworkData::shouldSendUpdate
     // -> MoveActorAbsoluteData::isDifferenceSignificant (0x1919f70): the sum of
@@ -1395,6 +1401,28 @@ void Server::tick_mob(MobActor &mob) {
         mob.sent_on_ground = mob.on_ground;
     }
 }
+void Server::push_mob_entities(MobActor &mob) {
+    // Mob::pushEntities 0x22bfa60: grow the box 0.2 in X/Z, fetch chunk
+    // actors in region order, then invoke the other actor's push(this,false).
+    // Non-riding, pushable mobs only; player/item/vehicle branches are pending.
+    const AABB area{{mob.bb.min.x-0.2f,mob.bb.min.y,mob.bb.min.z-0.2f},
+                    {mob.bb.max.x+0.2f,mob.bb.max.y,mob.bb.max.z+0.2f}};
+    const int x0=chunk_coordinate(static_cast<int>(std::floor(area.min.x-2.0f)));
+    const int x1=chunk_coordinate(static_cast<int>(std::floor(area.max.x+2.0f)));
+    const int z0=chunk_coordinate(static_cast<int>(std::floor(area.min.z-2.0f)));
+    const int z1=chunk_coordinate(static_cast<int>(std::floor(area.max.z+2.0f)));
+    // Server-side BlockSource::fetchEntities, 0x1c5be17: chunk bounds
+    // include an extra 2 blocks in X/Z, retaining chunk SmallSet order.
+    for(int x=x0;x<=x1;++x) for(int z=z0;z<=z1;++z) {
+        if(!world_.chunk(x,z)) continue;
+        for(const auto id:chunk_actors_.members({x,z})) {
+            if(id==mob.runtime_id) continue;
+            auto other=std::find_if(mobs_.begin(),mobs_.end(),[&](const MobActor &a){return a.runtime_id==id;});
+            if(other!=mobs_.end() && !other->removed && other->bb.intersects(area))
+                push_actors(*other,mob,false);
+        }
+    }
+}
 void Server::tick_spawner(int chunk_x, int chunk_z) {
     // LevelChunk::tick 0x1de4433..0x1de4501: Spawner::tick runs only when the
     // chunk centre ((min + max) / 2 of its block bounds, Y cleared) is closer
@@ -1435,7 +1463,15 @@ void Server::tick() {
     // Dimension::_tickEntityChunkMoves (0x1d65130) runs before players.
     // Actor::_updateOwnerChunk queues changes before its normalTick, so an
     // item crossing during normalTick keeps its old owner for the next tick.
-    for (const auto id : pending_item_moves_)
+    for (const auto id : pending_actor_moves_) {
+        for (auto &actor : mobs_)
+            if(actor.runtime_id==id && !actor.removed) {
+                const auto target=TickChunkPosition{chunk_coordinate(static_cast<int>(std::floor(actor.pos.x))),
+                                                    chunk_coordinate(static_cast<int>(std::floor(actor.pos.z)))};
+                chunk_actors_.move(actor.owner_chunk,target,id);
+                actor.owner_chunk=target;
+                break;
+            }
         for (auto &actor : items_)
             if (actor.runtime_id == id && !actor.removed) {
                 const auto target = item_chunk(actor);
@@ -1447,7 +1483,8 @@ void Server::tick() {
                 actor.owner_chunk = target;
                 break;
             }
-    pending_item_moves_.clear();
+    }
+    pending_actor_moves_.clear();
     ticked_mobs_previous_ = ticked_mobs_;
     ticked_mobs_ = 0;
     // Level::tick (0x1c86000): when the current tick is a multiple of 20 it
@@ -1508,6 +1545,10 @@ void Server::tick() {
                                                   [&](const MobActor &m) { return m.runtime_id == id; });
                     mob != mobs_.end()) {
                     if (!mob->removed) {
+                        const auto current=TickChunkPosition{chunk_coordinate(static_cast<int>(std::floor(mob->pos.x))),
+                                                            chunk_coordinate(static_cast<int>(std::floor(mob->pos.z)))};
+                        if(!world_.chunk(current.first,current.second)) continue;
+                        if(current!=mob->owner_chunk) pending_actor_moves_.push_back(id);
                         ++ticked_mobs_; // INFERRED: counted for getTickedMobCountPrevious
                         tick_mob(*mob);
                     }
@@ -1521,7 +1562,7 @@ void Server::tick() {
                         if (!world_.chunk(current.first, current.second))
                             break;
                         if (current != actor.owner_chunk)
-                            pending_item_moves_.push_back(id); // 0x21aa419
+                            pending_actor_moves_.push_back(id); // 0x21aa419
                         tick_item(actor);
                         break;
                     }

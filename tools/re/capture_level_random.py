@@ -43,6 +43,8 @@ def main():
     parser.add_argument("--tick-order", action="store_true")
     parser.add_argument("--gdb-script", action="append", default=[], type=Path,
                         help="Extra gdb Python oracle sourced after the sequence probe (may use `state`)")
+    parser.add_argument("--gdb-post-script", action="append", default=[], type=Path,
+                        help="Native function oracle sourced at the final paused tick")
     parser.add_argument("--packet-log", action="store_true",
                         help="Write every packet each client received to packets_<name>.json")
     parser.add_argument("--spawn-oracle", action="store_true",
@@ -97,6 +99,8 @@ def main():
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_grass_ticks.py"))]
     if args.lighting_oracle:
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_lighting_oracle.py"))]
+    for script in args.gdb_post_script:
+        command += ["-ex", "source " + str(script.resolve())]
     command += ["-ex", "kill", "--args", "./bedrock_server"]
     process = subprocess.Popen(command, cwd=run, env=env, stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
@@ -169,6 +173,8 @@ def main():
             if errors or time.monotonic() >= deadline:
                 raise RuntimeError(f"trace did not finish: {errors}")
             time.sleep(.1)
+        if any("Error occurred in Python" in line or "Python Exception" in line for line in lines):
+            raise RuntimeError("native GDB oracle failed: " + "\n".join(lines[-20:]))
         records = [json.loads(line) for line in (output / "draws.jsonl").read_text().splitlines()]
         if not records or records[-1]["event"] != "complete" or process.returncode:
             raise RuntimeError("incomplete trace: " + "\n".join(lines[-15:]))

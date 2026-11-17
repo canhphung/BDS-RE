@@ -24,19 +24,25 @@ struct AABB {
     void move(Vec3 d);
 };
 
-struct ItemActor {
-    std::uint64_t runtime_id = 0;
-    std::int64_t unique_id = 0;
-    ItemStack item;
+// Shared Actor collision state: both dropped items and mobs use Actor::move.
+struct ActorMotion {
     Vec3 pos, pos_prev, motion; // StateVectorComponent +0xe7c / +0xe88, Actor +0xa0
     AABB bb;                    // AABBShapeComponent +0xe58
     float height_offset = 0.125f; // +0x194: getAABBDim().y / 2 for the 0.25 x 0.25 item box
-    float y_rot = 0, bob = 0;     // +0xb0 and ItemActor +0x1234 (bobbing offset, client only)
     bool on_ground = true;        // +0x124 (observed set before the first tick)
     bool horizontal_collision = false, vertical_collision = false, collision = false; // +0x126..+0x128
     bool stuck_in_collider = false; // +0x1190
     bool no_exit = false;           // +0xf18, written by pushOutOfBlocks
     float last_penetration = 0;     // +0x1194
+    float max_step = 0; // Actor +0x1a0; items 0, mobs from their native definition
+    float slide_offset = 0; // Actor +0x1c4
+};
+
+struct ItemActor : ActorMotion {
+    std::uint64_t runtime_id = 0;
+    std::int64_t unique_id = 0;
+    ItemStack item;
+    float y_rot = 0, bob = 0;
     int age = 0, throw_time = 0, pickup_delay = 0, lifetime = 6000; // +0x1228 +0x122c +0x1230 +0x123c
     bool removed = false;
     // Actor +0xc8. Updated by deferred Dimension::_tickEntityChunkMoves,
@@ -66,9 +72,9 @@ ItemActor *merge(ItemActor &a, ItemActor &b);
 // ItemActor::_mergeWithNeighbours (0x23feee0) area: the box grown by 0.5.
 AABB merge_area(const ItemActor &a);
 
-// Actor::move (0x21a6b50) for an item: collision on, not sneaking, no web,
-// no step-up (maxAutoStep 0), no collidable mobs.
-void move(ItemActor &a, const World &world, Vec3 delta);
+// Actor::move (0x21a6b50), shared cube collision path: no sneaking/web,
+// optional maxAutoStep; hard collidable actor shapes are not supplied here.
+void move(ActorMotion &a, const World &world, Vec3 delta);
 // Actor::pushOutOfBlocks (0x21bb8a0).
 void push_out_of_blocks(ItemActor &a, const World &world, Vec3 feet);
 // ItemActor::normalTick (0x23fe8a0). `merge` is ItemActor::_mergeWithNeighbours,

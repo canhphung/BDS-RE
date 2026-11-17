@@ -199,7 +199,7 @@ ItemActor drop_item(Vec3 at, ItemStack item, Random &actor_random) {
     return a;
 }
 
-void move(ItemActor &a, const World &world, Vec3 delta) {
+void move(ActorMotion &a, const World &world, Vec3 delta) {
     if (!has_chunk(world, a.pos))
         return;
     Vec3 d = delta;
@@ -207,6 +207,7 @@ void move(ItemActor &a, const World &world, Vec3 delta) {
     if (std::abs(d.x) > 500.0f || std::abs(d.y) > 500.0f || std::abs(d.z) > 500.0f)
         d = {};
     const Vec3 d0 = d;
+    const AABB initial_box = a.bb;
     const auto shapes = collision_shapes(world, expanded(a.bb, d));
     // The sub-collider list (+0x1178) is empty and +0x2a1 is false for items.
     const bool keep_overlap = a.stuck_in_collider && !a.no_exit;
@@ -229,8 +230,31 @@ void move(ItemActor &a, const World &world, Vec3 delta) {
     a.last_penetration = total;
     d = {axes[0].x + axes[1].x + axes[2].x, axes[0].y + axes[1].y + axes[2].y,
          axes[0].z + axes[1].z + axes[2].z};
-    // Position from the box (ySlideOffset is always 0 for items).
-    a.pos = {(a.bb.min.x + a.bb.max.x) / 2.0f, a.bb.min.y + a.height_offset,
+    // Actor::move step branch, 0x21a7bb6..0x21a8675. Try up, original
+    // horizontal X/Z, then down; prefer strictly larger horizontal progress
+    // and reject an intersecting final box. The supported shapes are cubes.
+    if (a.max_step > 0 && (a.on_ground || (d0.y != d.y && d0.y < 0)) &&
+        (d0.x != d.x || d0.z != d.z)) {
+        const auto ordinary_box = a.bb;
+        a.bb = initial_box;
+        const auto step_shapes = collision_shapes(world, expanded(a.bb, d0));
+        Vec3 step[4]={{0,a.max_step,0},{d0.x,0,0},{0,0,d0.z},{}};
+        for (int i=0;i<4;++i) {
+            if (i==3) step[3]={0,-step[0].y,0};
+            for (const auto &shape : step_shapes)
+                step[i]=shape.clip_collide(a.bb,step[i],keep_overlap,nullptr);
+            a.bb.move(step[i]);
+        }
+        const bool overlaps = !collision_shapes(world,a.bb).empty();
+        if (overlaps || d.x*d.x+d.z*d.z >= step[1].x*step[1].x+step[2].z*step[2].z)
+            a.bb=ordinary_box;
+        else {
+            d={step[1].x,step[0].y+step[3].y,step[2].z};
+            a.slide_offset+=d.y; // 0x21a8656
+        }
+    }
+    // Position from the collision box, Actor::move 0x21a86b5..0x21a8739.
+    a.pos = {(a.bb.min.x + a.bb.max.x) / 2.0f, a.bb.min.y + a.height_offset - a.slide_offset,
              (a.bb.min.z + a.bb.max.z) / 2.0f};
     a.horizontal_collision = d0.x != d.x || d0.z != d.z;
     a.vertical_collision = d0.y != d.y;
@@ -243,6 +267,7 @@ void move(ItemActor &a, const World &world, Vec3 delta) {
         a.motion.y = 0; // Block::updateEntityAfterFallOn
     if (d0.z != d.z)
         a.motion.z = 0;
+    a.slide_offset *= 0.4f; // Actor::move epilogue, 0x21a8a97..0x21a8aae
 }
 
 void push_out_of_blocks(ItemActor &a, const World &world, Vec3 p) {

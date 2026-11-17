@@ -72,13 +72,23 @@ position), LookAtActorGoal::canUse results and LookControl inputs/outputs;
 778 pitch/head-yaw results match exactly. A mob's replay ends at the step in
 which the original starts a random stroll.
 
+## Land/air motion checkpoint (2026-11-17)
+
+The next checkpoint shares Actor collision state with items, translates ordinary
+Mob::travel / Actor::moveRelative, auto-step/slide and non-riding pair push, and
+connects land/air physics to the runtime. `mob_motion_reference` compares 647
+native function cases, including explicit step inputs and a retained-motion
+fall. `random_pos_reference` compares 96 destinations/failures and 2,880 own-RNG
+words. The destination helper is not yet connected to RandomStroll; navigation
+and movement/jump control are still missing. See
+[MOB_MOTION.md](MOB_MOTION.md) for addresses, raw-run provenance and boundaries.
+
 ## Not yet translated (the level Random diverges when they run)
 
-- RandomPos::getPos, PathFinder, PathNavigation, MoveControl, JumpControl,
-  Mob::travel / Actor::move for mobs and Actor::push between mobs: a stroll
-  never starts (RandomStrollGoal::canUse draws, then returns false) and mobs
-  never move; motion stays zero (the original's standing mob has motion.y
-  -0.0784).
+- PathFinder, PathNavigation, MoveControl and JumpControl: a stroll never
+  starts (RandomStrollGoal::canUse draws, then returns false). RandomPos land
+  destinations and basic motion/push now have separate verified functions;
+  runtime mobs can fall and push each other, but cannot choose and follow paths.
 - TemptGoal, FollowParentGoal, PanicGoal, BreedGoal, FloatGoal,
   MountPathingGoal, RunAroundLikeCrazyGoal: their preconditions (tempt items,
   babies following, damage, love mode, water, riders) are not handled; they
