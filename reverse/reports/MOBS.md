@@ -131,7 +131,37 @@ HURT event, health attribute (2/4), DEATH event, MobKilled EventPacket and
 zero health byte for byte, the loot (one raw chicken, 0..2 feathers) and the
 RemoveActor after the death time.
 
-Not yet translated: ExperienceOrb::spawnOrbs and the orb entity (the reward
-count is drawn from the level Random, but no orb appears), fire and its
-smelted loot, Looting, the unique-id high half for dropped items (the
-original's item unique ids also carry 0xffffffff).
+Not yet translated: fire and its smelted loot, Looting, the unique-id high
+half for dropped items (the original's item unique ids also carry 0xffffffff).
+
+## Experience orbs (src/game/experience_orb.cpp, src/game/experience_orb_server.cpp)
+
+| Original | BDS-RE |
+|---|---|
+| Mob::tickDeath 0x22b2970: getExperienceReward (vtable +0xa10), spawnOrbs at getPos with DropType 2 (3 for players) | `Server::base_tick_mob` |
+| ExperienceOrb::spawnOrbs 0x2405910 (doMobLoot, truncateExperienceAmount 0x2405750 pieces, ActorFactory::createSpawnedEntity ActorType 0x45, setValue 0x2405110) | `Server::spawn_orbs`, `truncate_experience_amount` |
+| ExperienceOrb::ExperienceOrb 0x24042f0, reloadHardcoded 0x24043b0 (level Random: yaw, motion x/y/z; size 0.25, flag 46 on, 48 off) | `make_orb` |
+| ExperienceOrb::normalTick 0x24045d0: LIFETIME 6000, gravity 0.04, lava bounce (nextGaussianFloat 0x1b30420), pushOutOfBlocks, move, friction, ground bounce ×-0.5 | `orb_physics` |
+| normalTick follow step: Level::fetchEntity, every 20 + uniqueId % 100 ticks Dimension::fetchNearestPlayer(orb, 8) 0x1d66f10; pull (delta/8, horizontal length > 0.225) or move and playerTouch; target Actor::getAttachPos(1) 0x21aaaa0 = AABB centre | `Server::tick_orb`, `orb_attract` |
+| ExperienceOrb::playerTouch 0x2405150 (alive, level Random nextInt(6) == 0, LevelEvent 1051, handleMending, addExperience, remove); Player::aiStep touches orbs as items | `Server::orb_touch` |
+| Player::addExperience 0x22f6750, getXpNeededForNextLevel 0x22ef140 / _computeLevelXp 0x22f69d0, addLevels 0x22f68a0 / _addLevels 0x22f48a0 (LEVELUP sound every 5 levels, at most once per 100 ticks) | `Server::add_experience`, `Server::add_levels`, `level_xp` |
+
+Evidence: the mob-combat-c1 level-Random trace shows the reward draw
+(caller 0x22b29ff), then exactly the four reloadHardcoded draws
+(0x240440c..0x24044e1) and one nextInt(6) per touch attempt from both the
+orb's tick (0x2404dfa) and Player::aiStep (0x22ec557). `mob_combat_reference`
+compares the orb's SetActorData (packAll) and AddActor attributes/metadata
+bytes, the whole-byte yaw, the pickup LevelEvent, and the two
+`player.experience` entries (reset to the minimum, then the 1/7 buff) with the
+original's packets 346, 351, 402 and 406.
+
+- INFERRED from the capture: the orb's full actor data reaches the players
+  around it when it spawns, its AddActor follows at the next
+  _updateNearbyEntities (the first tick after it ticked once), no
+  MoveActorDelta/SetActorMotion is ever sent for it, and its RemoveActor comes
+  a tick after the pickup (after the experience attributes).
+- INFERRED: Player::aiStep touches items before orbs; a removed orb is not
+  touched again; the player's Actor +0x208 tick count advances once per player
+  tick (used by the level-up sound gate).
+- Not translated: mending (no enchantments exist), the FIZZ sound's actor type
+  (lava never reaches an orb here), orb merging (none in 1.6), saving orbs.

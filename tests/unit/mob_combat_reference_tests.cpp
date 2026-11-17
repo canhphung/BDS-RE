@@ -2,10 +2,14 @@
 // packets (tests/reference/mob_combat_bds_1.6.0.15.json, recorded with
 // tools/re/scenarios.py mob_combat): the hit sound, the HURT event and the
 // health attribute, then the DEATH event, the MobKilled EventPacket, the
-// zero health, the loot items and the RemoveActor after the death time.
+// zero health, the loot items and the RemoveActor after the death time; then
+// the experience orb: its actor data and AddActor bytes, the pickup
+// LevelEvent and the player's experience attributes.
 #include "bds/game/items.hpp"
 #include "bds/game/server.hpp"
 #include <algorithm>
+#include <cmath>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -42,6 +46,16 @@ GamePacket attack(std::uint64_t target, const float at[3]) {
         w.float32(v);
     return packet(PacketId::InventoryTransaction, w.take());
 }
+std::int64_t zigzag64(ByteReader &in) {
+    const auto v = in.varint64();
+    return static_cast<std::int64_t>(v >> 1) ^ -static_cast<std::int64_t>(v & 1);
+}
+float float32(ByteReader &in) {
+    const auto b = in.take(4);
+    float v;
+    std::memcpy(&v, b.data(), 4);
+    return v;
+}
 const GamePacket *find(const std::vector<GamePacket> &packets, PacketId id, const std::string &prefix = "") {
     for (const auto &p : packets)
         if (p.header.id == static_cast<unsigned>(id) && hex(p.body).rfind(prefix, 0) == 0)
@@ -55,6 +69,12 @@ int main(int argc, char **argv) {
         std::cerr << "expected mob combat reference path\n";
         return 1;
     }
+    // ExperienceOrb::truncateExperienceAmount and _computeLevelXp.
+    check(truncate_experience_amount(1) == 1 && truncate_experience_amount(2) == 1 &&
+              truncate_experience_amount(3) == 3 && truncate_experience_amount(16) == 7 &&
+              truncate_experience_amount(5000) == 2477,
+          "truncateExperienceAmount");
+    check(level_xp(0) == 7 && level_xp(14) == 35 && level_xp(15) == 37 && level_xp(30) == 112, "_computeLevelXp");
     std::ifstream input(argv[1]);
     const auto reference = nlohmann::json::parse(input);
     World w;
@@ -138,17 +158,93 @@ int main(int argc, char **argv) {
     check(chickens == 1, "one raw chicken dropped");
     check(feathers <= 2, "at most two feathers dropped");
 
-    // Mob::tickDeath removes the body after more than 20 death ticks.
-    int removed_at = -1;
+    // Mob::tickDeath removes the body after more than 20 death ticks and
+    // spawns the experience orbs (Chicken reward 1..2, split into value-1 orbs).
+    const auto &xp = reference.at("experience_orb");
+    int removed_at = -1, data_at = -1, add_at = -1;
+    std::uint64_t orb = 0;
     for (int t = 1; t <= 25 && removed_at < 0; ++t) {
         server.tick();
-        if (find(server.drain(1), PacketId::RemoveActor, reference.at("remove").get<std::string>()))
+        seen = server.drain(1);
+        if (find(seen, PacketId::RemoveActor, reference.at("remove").get<std::string>()))
             removed_at = t;
+        if (!server.orbs().empty() && data_at < 0) {
+            orb = server.orbs().front().runtime_id;
+            const auto *data = find(seen, PacketId::SetActorData, hex(Bytes{static_cast<std::uint8_t>(orb)}));
+            if (data) {
+                data_at = t;
+                check(hex(data->body).substr(2) == xp.at("actor_data_after_runtime").get<std::string>(),
+                      "orb SetActorData (packAll) bytes");
+            }
+        }
     }
     check(removed_at >= 19 && removed_at <= 21, "RemoveActor after the death time (" + std::to_string(removed_at) + ")");
     check(std::none_of(server.mobs().begin(), server.mobs().end(),
                        [](const Server::MobActor &m) { return m.runtime_id == 8; }),
           "the dead chicken left the level");
+    const auto orbs = server.orbs().size();
+    check(orbs == 1 || orbs == 2, "one or two experience orbs (" + std::to_string(orbs) + ")");
+    for (const auto &o : server.orbs()) {
+        check(o.value == xp.at("value").get<int>(), "orb value 1 (truncateExperienceAmount)");
+        check(static_cast<std::uint64_t>(o.unique_id) == (0xffffffff00000000ULL | o.runtime_id), "orb unique id");
+    }
+    check(data_at > 0, "the orb's actor data is sent when it spawns");
+
+    // The orb follows the player (within 8 blocks), the player picks it up
+    // (1 in 6 per touch): LevelEvent 1051, the experience attributes, and the
+    // RemoveActor in the next tick.
+    int event_at = -1, attributes_at = -1, orb_removed_at = -1;
+    std::int64_t orb_unique = 0;
+    for (const auto &o : server.orbs())
+        if (o.runtime_id == orb)
+            orb_unique = o.unique_id;
+    for (int t = data_at + 1; t <= 400 && (orb_removed_at < 0 || attributes_at < 0); ++t) {
+        server.tick();
+        seen = server.drain(1);
+        for (const auto &p : seen) {
+            const auto body = hex(p.body);
+            if (p.header.id == static_cast<unsigned>(PacketId::AddActor) && add_at < 0) {
+                ByteReader in(p.body);
+                if (zigzag64(in) == orb_unique && in.varint64() == orb && in.varint() == 69u) {
+                    add_at = t;
+                    for (int i = 0; i < 6; ++i)
+                        float32(in);
+                    check(float32(in) == 0.0f, "AddActor pitch 0");
+                    const float yaw = float32(in);
+                    check(std::fmod(yaw / 360.0f * 256.0f, 1.0f) == 0.0f, "AddActor yaw is a whole byte angle");
+                    check(float32(in) == 0.0f, "AddActor head yaw 0");
+                    check(body.substr(body.size() - xp.at("add_actor_after_rotation").get<std::string>().size()) ==
+                              xp.at("add_actor_after_rotation").get<std::string>(),
+                          "orb AddActor attributes, metadata and links bytes");
+                }
+            }
+            if (p.header.id == static_cast<unsigned>(PacketId::LevelEvent) && event_at < 0) {
+                ByteReader in(p.body);
+                if (in.signed_varint() == xp.at("pickup_event").get<int>())
+                    event_at = t;
+            }
+            if (p.header.id == static_cast<unsigned>(PacketId::UpdateAttributes) && body.rfind("0102", 0) == 0 &&
+                body.find("706c617965722e657870657269656e6365") != std::string::npos && attributes_at < 0) {
+                attributes_at = t;
+                check(body == xp.at("experience").get<std::string>(),
+                      "player.experience 1/7 UpdateAttributes bytes (reset, then the buff)");
+            }
+            if (p.header.id == static_cast<unsigned>(PacketId::RemoveActor) && orb_removed_at < 0) {
+                ByteReader in(p.body);
+                if (zigzag64(in) == orb_unique) {
+                    orb_removed_at = t;
+                    check(attributes_at > 0, "the orb's RemoveActor follows the experience update");
+                }
+            }
+        }
+    }
+    check(add_at == data_at + 1, "orb AddActor one tick after its data (" + std::to_string(add_at - data_at) + ")");
+    check(event_at > 0, "pickup LevelEvent 1051");
+    // Touched in the orb's own tick (chunk phase) the attributes go out in the
+    // same tick's player baseTick; touched by Player::aiStep (the capture's
+    // case) in the next one, before the RemoveActor.
+    check(attributes_at == event_at || attributes_at == event_at + 1, "experience attributes after the pickup");
+    check(orb_removed_at == event_at + 1, "orb RemoveActor in the tick after the pickup");
     if (failures)
         return 1;
     std::cout << "Chicken hit, death, loot and removal match the original's packets\n";

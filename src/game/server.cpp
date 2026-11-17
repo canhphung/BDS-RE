@@ -546,6 +546,10 @@ void Server::tick_player(std::uint64_t id, Session &s) {
         for (auto &a : items_)
             if (!a.removed && a.added && area.intersects(a.bb))
                 touch(s, a);
+        // INFERRED order: items, then orbs (BlockSource::fetchEntities order).
+        for (auto &o : orbs_)
+            if (!o.removed && area.intersects(o.bb))
+                orb_touch(id, s, o);
     }
     // Player::normalTick -> Player::_applyExhaustion (0x22e9e20) with this
     // tick's movement: on ground, 0.01 (walk) or EXHAUSTION_SPRINT (sprint) per
@@ -566,6 +570,7 @@ void Server::tick_player(std::uint64_t id, Session &s) {
         send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 66, 0)));
     }
     s.was_on_ground = p.on_ground; // 0x25fb074
+    ++s.tick_count; // INFERRED: Actor +0x208 counts the player's ticks
     p.health = s.attributes[kHealth];
     p.hunger = s.attributes[kHunger];
     p.saturation = s.attributes[kSaturation];
@@ -1014,6 +1019,10 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
     for (const auto &m : mobs_)
         if (!m.removed && chunks.contains(m.owner_chunk) && world_.chunk(m.owner_chunk.first, m.owner_chunk.second))
             scan.insert(m.runtime_id);
+    for (const auto &o : orbs_)
+        if (o.added && !o.gone && chunks.contains(o.owner_chunk) &&
+            world_.chunk(o.owner_chunk.first, o.owner_chunk.second))
+            scan.insert(o.runtime_id);
     for (auto entity : scan) {
         if (s.known.contains(entity))
             continue;
@@ -1074,6 +1083,15 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
                     enqueue(id, packet(PacketId::SetActorLink, link.take()));
                 }
             }
+        } else if (const auto orb = std::find_if(orbs_.begin(), orbs_.end(),
+                                                  [&](const ExperienceOrb &o) { return o.runtime_id == entity; });
+                   orb != orbs_.end()) {
+            // Actor::tryCreateAddActorPacket: the current position and motion,
+            // the rotation through PacketUtil::degreesToByte (capture: yaw
+            // 75.9375 = 54 * 360 / 256), no attributes.
+            const auto yaw = static_cast<std::int8_t>(static_cast<std::int32_t>(orb->yaw / 360.0f * 256.0f));
+            enqueue(id, packet(PacketId::AddActor, add_orb_actor(orb->unique_id, orb->runtime_id, orb->pos, orb->motion,
+                                                                 static_cast<float>(yaw) / 256.0f * 360.0f, orb->value)));
         } else
             for (const auto &a : items_)
                 if (a.runtime_id == entity) {
@@ -1095,6 +1113,9 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
         for (const auto &m : mobs_)
             if (m.runtime_id == *it)
                 unique = m.unique_id;
+        for (const auto &o : orbs_)
+            if (o.runtime_id == *it)
+                unique = o.unique_id;
         if (auto other = sessions_.find(*it); other != sessions_.end())
             unique = other->second.game.unique_id;
         enqueue(id, packet(PacketId::RemoveActor, remove_actor(unique)));
@@ -1638,6 +1659,14 @@ void Server::tick() {
                 actor.owner_chunk=target;
                 break;
             }
+        for (auto &orb : orbs_)
+            if (orb.runtime_id == id && !orb.removed) {
+                const auto target = TickChunkPosition{chunk_coordinate(static_cast<int>(std::floor(orb.pos.x))),
+                                                      chunk_coordinate(static_cast<int>(std::floor(orb.pos.z)))};
+                chunk_actors_.move(orb.owner_chunk, target, id);
+                orb.owner_chunk = target;
+                break;
+            }
         for (auto &actor : items_)
             if (actor.runtime_id == id && !actor.removed) {
                 const auto target = item_chunk(actor);
@@ -1721,6 +1750,20 @@ void Server::tick() {
                     }
                     continue;
                 }
+                if (const auto orb = std::find_if(orbs_.begin(), orbs_.end(),
+                                                  [&](const ExperienceOrb &o) { return o.runtime_id == id; });
+                    orb != orbs_.end()) {
+                    if (!orb->removed) {
+                        const auto current = TickChunkPosition{chunk_coordinate(static_cast<int>(std::floor(orb->pos.x))),
+                                                               chunk_coordinate(static_cast<int>(std::floor(orb->pos.z)))};
+                        if (!world_.chunk(current.first, current.second))
+                            continue;
+                        if (current != orb->owner_chunk)
+                            pending_actor_moves_.push_back(id);
+                        tick_orb(*orb);
+                    }
+                    continue;
+                }
                 for (auto &actor : items_)
                     if (actor.runtime_id == id && !actor.removed) {
                         // Actor::tick (0x21adc77): no normalTick when the
@@ -1753,6 +1796,15 @@ void Server::tick() {
     for (const auto &mob : mobs_)
         if (mob.removed)
             chunk_actors_.erase(mob.owner_chunk, mob.runtime_id);
+    // A removed orb is still seen by the next tick's _updateNearbyEntities:
+    // the original sends its RemoveActor a tick after the pickup, after the
+    // player's experience attributes (capture mob-combat-c1 packets 402..407).
+    std::erase_if(orbs_, [](const ExperienceOrb &o) { return o.gone; });
+    for (auto &orb : orbs_)
+        if (orb.removed) {
+            chunk_actors_.erase(orb.owner_chunk, orb.runtime_id);
+            orb.gone = true;
+        }
     std::erase_if(mobs_, [](const MobActor &m) { return m.removed; });
     std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
     fresh_items_.clear();

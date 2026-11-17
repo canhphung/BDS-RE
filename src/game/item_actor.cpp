@@ -287,7 +287,7 @@ void move(ActorMotion &a, const World &world, Vec3 delta) {
     a.slide_offset *= 0.4f; // Actor::move epilogue, 0x21a8a97..0x21a8aae
 }
 
-void push_out_of_blocks(ItemActor &a, const World &world, Vec3 p) {
+void push_out_of_blocks(ActorMotion &a, const World &world, Vec3 p) {
     const int bx = floor_int(p.x), by = floor_int(p.y), bz = floor_int(p.z);
     const Vec3 frac{p.x - static_cast<float>(bx), p.y - static_cast<float>(by), p.z - static_cast<float>(bz)};
     if (!solid(block_at(world, bx, by, bz)))

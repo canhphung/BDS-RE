@@ -283,12 +283,14 @@ void Server::base_tick_mob(MobActor &mob) {
         // Mob::tickDeath 0x22b2970.
         ++mob.death_time;
         if (!mob.death_handled && mob.death_time > 20) {
-            // Animal/Chicken::getExperienceReward: 1 + nextInt(2) from the
-            // level Random when a player hurt it within 400 ticks and it is
-            // not a baby. NOT TRANSLATED: ExperienceOrb::spawnOrbs (the
-            // orb entities and their pickup).
+            // Animal/Chicken::getExperienceReward (vtable +0xa10): 1 + nextInt(2)
+            // from the level Random when a player hurt it within 400 ticks and
+            // it is not a baby, else 0. ExperienceOrb::spawnOrbs at the mob's
+            // position with DropType 2 (3 for a player).
+            int reward = 0;
             if (mob.hurt_by_player_time > 0 && !mob.baby)
-                level_random_.next_int(1, 3);
+                reward = level_random_.next_int(1, 3);
+            spawn_orbs(mob.pos, reward);
             mob.death_handled = true;
             mob.removed = true; // Actor::remove: RemoveActor at the next _updateNearbyEntities
             // Actor::spawnDeathParticles: 20 x 6 nextFloat of the actor's

@@ -95,6 +95,11 @@ struct MobView {
     bool tamed = false, saddled = false;
 };
 Bytes add_mob_actor(const MobView &mob);
+// Experience orb packets (capture mob-combat-c1 packets 346 and 351): the
+// orb's SynchedActorData::packAll as SetActorData, and AddActorPacket
+// (ActorType 69, no attributes) with the same metadata.
+Bytes orb_actor_data(std::uint64_t runtime, int value);
+Bytes add_orb_actor(std::int64_t unique, std::uint64_t runtime, Vec3 pos, Vec3 motion, float yaw, int value);
 // MobArmorEquipmentPacket with four empty slots.
 Bytes empty_armor_equipment(std::uint64_t runtime);                  // SetActorDataPacket
 Bytes add_item_actor(const ItemActor &a);                      // AddItemActorPacket::write 0x18b0680
