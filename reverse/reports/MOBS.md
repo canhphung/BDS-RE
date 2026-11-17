@@ -109,3 +109,29 @@ and movement/jump control are still missing. See
   original stores +0x1054 with the chunk); mob unique ids use the high half
   0xffffffff seen in the capture; the ticked-mob count for the 200 cap counts
   mobs in ticked chunks.
+
+## Mob damage, death and loot (src/game/mob_combat.cpp, src/game/loot.cpp)
+
+| Original | BDS-RE |
+|---|---|
+| Player::attack 0x22f1570 on a Mob (damage, ATTACK_STRONG/NODAMAGE at the AABB centre, crits, sprint push, weapon wear, exhaustion 0.3) | `Server::attack_mob` (from `use_on_actor`) |
+| Mob::_hurt 0x22b37f0 (hurt time / last hurt, setLastHurtByPlayer 0x22bf2f0: 400 ticks, setLastHurtByMob 0x22bf120: 60 ticks) | `Server::hurt_mob` |
+| Mob::actuallyHurt 0x22b44c0 (no armour for animals) | `Server::actually_hurt_mob` |
+| Mob::hurtEffects 0x22b3b60, Mob::knockback 0x22b4880 (the mob's own Random; motion sent by sendMotionPacketIfNeeded) | `Server::hurt_effects_mob`, `Server::send_mob_motion` |
+| Mob::die 0x22b4a00: resolveDeathLoot 0x22b4da0 on a copy of the actor Random, Actor::spawnAtLocation(item, -0.05) 0x21b8e40, ActorEvent DEATH, EventPacket MobKilled to the killer | `Server::die_mob` |
+| LootTable::getRandomItems 0x1d0faa0, LootPool::addRandomItems/addRandomItem, LootItem::_createItem, set_count / looting_enchant / furnace_smelt / set_data_from_color_index | `death_loot` (tables of the vanilla behavior pack, adults only) |
+| Mob::baseTick 0x22b1770 (hurt time, last attacker timers, death) and Mob::tickDeath 0x22b2970 (removal after 20 ticks, Animal::getExperienceReward level-Random draw, death particles on the actor Random) | `Server::base_tick_mob` |
+| Mob::isImmobile in Mob::aiStep 0x22b9f85: a dead mob skips its AI and stops | `Server::tick_mob` |
+| PanicGoal 0x23c8740..0x23c8d30 with RandomPos::getPosAvoid 0x231bbc0 (direction filter 0x231b7ca) | `GoalKind::Panic`, `random_stroll_position(direction)` |
+
+Evidence: `tools/re/scenarios.py mob_combat` drives a client against the
+original (summoned chicken and cow, punched once a second);
+`mob_combat_reference` repeats it on BDS-RE and compares the hit sound,
+HURT event, health attribute (2/4), DEATH event, MobKilled EventPacket and
+zero health byte for byte, the loot (one raw chicken, 0..2 feathers) and the
+RemoveActor after the death time.
+
+Not yet translated: ExperienceOrb::spawnOrbs and the orb entity (the reward
+count is drawn from the level Random, but no orb appears), fire and its
+smelted loot, Looting, the unique-id high half for dropped items (the
+original's item unique ids also carry 0xffffffff).

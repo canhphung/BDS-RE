@@ -1303,6 +1303,26 @@ class Server::Region final : public SpawnRegion {
     }
     Server &s_;
 };
+std::optional<std::uint64_t> Server::summon(std::uint32_t type, Vec3 at, bool adult) {
+    const auto &mobs = plains_mobs();
+    const auto data = std::find_if(mobs.begin(), mobs.end(), [&](const MobSpawnerData &d) { return d.type == type; });
+    if (data == mobs.end())
+        return std::nullopt;
+    Region region(*this);
+    const auto id = region.spawn_mob(*data, at.x, at.y, at.z, true);
+    if (id && adult)
+        for (auto &mob : mobs_)
+            if (mob.runtime_id == *id && mob.baby) {
+                mob.baby = false;
+                mob.scale = 1.0f;
+                mob.width = data->width;
+                mob.height = data->height;
+                const float half = mob.width / 2.0f;
+                mob.bb = {{at.x - half, at.y, at.z - half}, {at.x + half, at.y + mob.height, at.z + half}};
+                mob.brain = make_brain(type, false, mob.width, mob.height);
+            }
+    return id;
+}
 bool Server::tick_chunk_state(int chunk_x, int chunk_z) {
     auto &state = chunk_state_[{chunk_x, chunk_z}];
     if (state == 0) {
@@ -1372,6 +1392,20 @@ class Server::Senses final : public MobSenses {
         return random_stroll_position(s_.world_, s_.lighting_, mob_.pos, mob_.random, xz, y,
                                       clear_sky_darken(static_cast<int>(s_.level_tick_ % 24000)));
     }
+    std::optional<Vec3> last_attacker() const override {
+        if (!mob_.hurt_by_mob)
+            return std::nullopt;
+        const auto found = s_.sessions_.find(*mob_.hurt_by_mob);
+        if (found == s_.sessions_.end())
+            return std::nullopt;
+        const auto &p = s_.world_.players().at(found->second.key);
+        return Vec3{p.x, p.y, p.z}; // Actor::getPos (eye position for players)
+    }
+    std::optional<Vec3> avoid_position(int xz, int y, Vec3 avoid) override {
+        const Vec3 direction{mob_.pos.x - avoid.x, mob_.pos.y - avoid.y, mob_.pos.z - avoid.z};
+        return random_stroll_position(s_.world_, s_.lighting_, mob_.pos, mob_.random, xz, y,
+                                      clear_sky_darken(static_cast<int>(s_.level_tick_ % 24000)), &direction);
+    }
     bool in_liquid() const override { return travel_medium(mob_, s_.world_) != TravelMedium::Land; }
     void float_jump() override {
         mob_.jump_control.jump();
@@ -1415,6 +1449,11 @@ class Server::Senses final : public MobSenses {
     MobActor &mob_;
 };
 void Server::tick_mob(MobActor &mob) {
+    // Actor::normalTick starts with Mob::baseTick (hurt time, last attacker
+    // timers, death and Mob::tickDeath).
+    base_tick_mob(mob);
+    if (mob.removed)
+        return;
     update_water_current(mob, world_);
     // Actor::tick -> Mob::normalTick (0x22b2c60): Actor::normalTick runs the
     // components (SpawnActorComponent::tick, the egg timer), then aiStep ->
@@ -1437,13 +1476,22 @@ void Server::tick_mob(MobActor &mob) {
     }
     tick_effects(mob.runtime_id, mob);
     position_rider(mob); // Actor::_manageRiders precedes Mob::normalTick.
-    Senses senses(*this, mob);
-    tick_goals(mob.brain, mob.pos, senses);
-    // Mob::newServerAiStep: goals, navigation, MoveControl, LookControl,
-    // JumpControl, in that order (0x22bad00).
-    mob.navigation.tick(world_, mob, mob.width, mob.height, mob.move_control);
-    mob.move_control.tick(mob, mob.brain, mob.attributes[kMovement], mob.jump_control);
-    tick_look(mob.brain, mob.pos);
+    // Mob::aiStep 0x22b9f85: an immobile mob (Mob::isImmobile: health <= 0)
+    // stops jumping, clears its inputs and motion and skips the AI step.
+    const bool immobile = mob.attributes[kHealth] <= 0.0f;
+    if (immobile) {
+        mob.jump_control.jumping = false;
+        mob.move_control.forward = 0.0f;
+        mob.motion = {};
+    } else {
+        Senses senses(*this, mob);
+        tick_goals(mob.brain, mob.pos, senses);
+        // Mob::newServerAiStep: goals, navigation, MoveControl, LookControl,
+        // JumpControl, in that order (0x22bad00).
+        mob.navigation.tick(world_, mob, mob.width, mob.height, mob.move_control);
+        mob.move_control.tick(mob, mob.brain, mob.attributes[kMovement], mob.jump_control);
+        tick_look(mob.brain, mob.pos);
+    }
     mob.jump_control.tick();
     if (mob.jump_delay > 0)
         --mob.jump_delay;
@@ -1517,6 +1565,7 @@ void Server::tick_mob(MobActor &mob) {
         std::copy(std::begin(rotation), std::end(rotation), mob.sent_rotation);
         mob.sent_on_ground = mob.on_ground;
     }
+    send_mob_motion(mob);
 }
 void Server::push_mob_entities(MobActor &mob) {
     // Mob::pushEntities 0x22bfa60: grow the box 0.2 in X/Z, fetch chunk
@@ -1699,6 +1748,12 @@ void Server::tick() {
     for (const auto &actor : items_)
         if (actor.removed)
             chunk_actors_.erase(actor.owner_chunk, actor.runtime_id);
+    // Removed mobs (Mob::tickDeath -> Actor::remove) leave their chunk and
+    // the level after the players' _updateNearbyEntities sent RemoveActor.
+    for (const auto &mob : mobs_)
+        if (mob.removed)
+            chunk_actors_.erase(mob.owner_chunk, mob.runtime_id);
+    std::erase_if(mobs_, [](const MobActor &m) { return m.removed; });
     std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
     fresh_items_.clear();
     // Level::tick ends with Level::_saveSomeChunks (after the player worlds).

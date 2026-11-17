@@ -46,7 +46,8 @@ std::optional<Vec3> random_stroll_position(const World &world,
                                            WorldLighting &lighting, Vec3 p,
                                            Random &random, int xz,
                                            int y_distance,
-                                           unsigned sky_darken) {
+                                           unsigned sky_darken,
+                                           const Vec3 *direction) {
   // The original goal supplies positive bounded xz/y ranges (10,7).
   if (xz <= 0 || xz > 1024 || y_distance <= 0 || y_distance > 256)
     throw std::invalid_argument("unsupported RandomPos search range");
@@ -57,6 +58,8 @@ std::optional<Vec3> random_stroll_position(const World &world,
     const int dz = random.next_int(2 * xz) - xz;
     const int dy = random.next_int(2 * y_distance) - y_distance;
     const int dx = random.next_int(2 * xz) - xz;
+    if (direction && 0.0f > static_cast<float>(dx) * direction->x + static_cast<float>(dz) * direction->z)
+      continue;
     World::Position at{static_cast<int>(std::floor(p.x)) + dx,
                        static_cast<int>(std::floor(p.y)) + dy,
                        static_cast<int>(std::floor(p.z)) + dz};

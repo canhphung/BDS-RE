@@ -157,6 +157,20 @@ bool can_use(Goal &g, MobBrain &b, Vec3 pos, MobSenses &senses) {
     case GoalKind::RandomLookAround:
         // RandomLookAroundGoal::canUse 0x23aa880: nextFloat() < 0.02.
         return senses.level_random().next_float() < 0.02f;
+    case GoalKind::Panic: {
+        // PanicGoal::canUse 0x23c8740: a remembered attacker (not ignored:
+        // +0x1c is false for the vanilla animals) or burning; then a
+        // position away from the attacker (RandomPos::getPosAvoid, 5, 4) or
+        // any (RandomPos::getPos, 5, 4). The water preference (+0x1d) is off.
+        const auto attacker = senses.last_attacker();
+        if (!attacker && !senses.on_fire())
+            return false;
+        const auto wanted = attacker ? senses.avoid_position(5, 4, *attacker) : senses.stroll_position(5, 4);
+        if (!wanted)
+            return false;
+        g.panic_wanted = *wanted;
+        return true; // Actor::isSitting: never for these animals
+    }
     case GoalKind::RandomStroll:
         // RandomStrollGoal::canUse 0x23c46f0: nextInt(interval) == 0, then
         // _setWantedPosition (RandomPos::getPos with the mob's own Random).
@@ -203,6 +217,8 @@ bool can_continue(Goal &g, MobSenses &senses, Vec3 pos) {
             return false;
         return g.look_time > 0;
     }
+    case GoalKind::Panic:
+        return !senses.navigation_done(); // PanicGoal::canContinueToUse 0x23c8d30
     case GoalKind::RandomStroll:
         return !senses.navigation_done(); // 0x23c4790
     case GoalKind::RandomLookAround:
@@ -228,6 +244,9 @@ void start(Goal &g, MobSenses &senses) {
         g.look_around_time = 20 + senses.level_random().next_int(20);
         break;
     }
+    case GoalKind::Panic:
+        senses.navigate(g.panic_wanted, g.speed); // PanicGoal::start 0x23c8c50: moveTo(wanted, speed)
+        break;
     case GoalKind::RandomStroll:
         senses.navigate(g.stroll_wanted, g.speed);
         g.stroll_last_end.reset();
@@ -246,6 +265,8 @@ void start(Goal &g, MobSenses &senses) {
 void stop(Goal &g, MobSenses &senses) {
     if (g.kind == GoalKind::RandomStroll)
         senses.stop_navigation();
+    if (g.kind == GoalKind::Panic)
+        senses.navigate(g.panic_wanted, 1.0f); // PanicGoal::stop 0x23c8cc0: moveTo(wanted, 1.0)
     if (g.kind == GoalKind::LookAtPlayer)
         g.target.reset(); // 0x233ba60
     if (g.kind == GoalKind::EatBlock)

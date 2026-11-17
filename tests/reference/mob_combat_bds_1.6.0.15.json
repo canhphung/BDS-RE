@@ -1,0 +1,39 @@
+{
+ "binary_sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+ "trace_sha256": "4478ce8ed785f003fe6366d01d009e8369d485a09466ebdd328994081bd510a0",
+ "generator": "tools/re/capture_level_random.py --scenario mob_combat --packet-log --command 'summon chicken 2 4 0' --command 'summon cow -2 4 0'",
+ "player": {
+  "runtime": 1,
+  "unique": -4294967295,
+  "eye": [
+   0.5,
+   5.62,
+   0.5
+  ]
+ },
+ "chicken": {
+  "runtime": 8,
+  "unique": -4294967288,
+  "summoned_at": [
+   2.5,
+   4.0,
+   0.5
+  ]
+ },
+ "first_hit": {
+  "sound": "2b00002040cdcc8c400000003f01fe040000",
+  "hurt_event": "080204",
+  "health": "080100000000000080400000004000008040106d696e6563726166743a6865616c7468"
+ },
+ "killing_hit": {
+  "sound_id": 43,
+  "death_event": "080300",
+  "mob_killed": "fdffffff1f0801fdffffff1fefffffff1f04",
+  "health": "080100000000000080400000000000008040106d696e6563726166743a6865616c7468"
+ },
+ "loot_item_ids": [
+  365,
+  288
+ ],
+ "remove": "efffffff1f"
+}
