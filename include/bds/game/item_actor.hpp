@@ -74,6 +74,7 @@ AABB merge_area(const ItemActor &a);
 
 // Actor::move (0x21a6b50), shared cube collision path: no sneaking/web,
 // optional maxAutoStep; hard collidable actor shapes are not supplied here.
+bool is_free(const ActorMotion &, const World &, Vec3 delta);
 void move(ActorMotion &a, const World &world, Vec3 delta);
 // Actor::pushOutOfBlocks (0x21bb8a0).
 void push_out_of_blocks(ItemActor &a, const World &world, Vec3 feet);

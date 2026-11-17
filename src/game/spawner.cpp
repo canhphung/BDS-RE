@@ -93,7 +93,7 @@ const std::vector<MobSpawnerData> &plains_mobs() {
 }
 
 bool spawn_block_is_air(BlockId block) { return block == 0; }
-bool spawn_block_solid_blocking(BlockId block) { return block != 0; }
+bool spawn_block_solid_blocking(BlockId block) { return block_has_collision(block); }
 bool can_see_sky(const World &world, World::Position at) {
     const auto [x, y, z] = at;
     if (y >= static_cast<int>(Chunk::height)) // Dimension height +0x30

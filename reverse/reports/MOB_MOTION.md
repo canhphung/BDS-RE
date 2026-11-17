@@ -1,5 +1,8 @@
 # Mob motion and random destinations — 2026-11-17
 
+Navigation/water/riding follow-up: see [MOB_NAVIGATION.md](MOB_NAVIGATION.md).
+The limitations below describe the earlier `2593094` checkpoint.
+
 Builds on the user's `4e2f630` stationary AI checkpoint. Original Linux binary
 SHA256 `69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad`.
 This checkpoint adds land/air motion and non-riding mob push to the runtime,

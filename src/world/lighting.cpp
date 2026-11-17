@@ -6,16 +6,18 @@
 
 namespace bds {
 const TickBlockProperties &tick_block_properties(BlockId block) {
-  static constexpr std::array<TickBlockProperties, 5> table{{
-      {0, 0, false, false, false, 1.0f, false}, // air
-      {15, 0, true, false, false, 0.0f, false}, // stone
-      {15, 0, true, false, true, 0.0f, false},  // grass
-      {15, 0, true, false, false, 0.0f, false}, // dirt, mapped type 0
-      {15, 0, true, false, false, 0.0f, false}, // bedrock
-  }};
-  if (block >= table.size())
-    throw std::out_of_range("block has no translated lighting/tick properties");
-  return table[block];
+    static constexpr std::array<TickBlockProperties, 7> table{{
+        {0, 0, false, false, false, 1.0f, false}, // air
+        {15, 0, true, false, false, 0.0f, false}, // stone
+        {15, 0, true, false, true, 0.0f, false},  // grass
+        {15, 0, true, false, false, 0.0f, false}, // dirt, mapped type 0
+        {15, 0, true, false, false, 0.0f, false}, // bedrock
+        {2, 0, false, false, false, 1.0f, true},  // still water
+        {14, 15, false, false, true, 1.0f, true}, // still lava
+    }};
+    if (block >= table.size())
+        throw std::out_of_range("block has no translated lighting/tick properties");
+    return table[block];
 }
 unsigned clear_sky_darken(int time) {
   constexpr float pi = std::bit_cast<float>(0x40490fdbu);

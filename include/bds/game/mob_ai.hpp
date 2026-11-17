@@ -42,6 +42,8 @@ struct Goal {
     // RandomStrollGoal (+0x18 speed, +0x1c xz, +0x20 y, +0x24 interval).
     float speed = 1.0f;
     int xz_dist = 10, y_dist = 7, interval = 120;
+    Vec3 stroll_wanted;
+    std::optional<World::Position> stroll_last_end;
     // EatBlockGoal (+0xc eat animation tick).
     int eat_tick = 0;
 };
@@ -92,6 +94,14 @@ class MobSenses {
     // EatBlockGoal: ActorEvent 10, then the grass under the mob turns to dirt
     // with LevelEvent 2001 (mobGriefing is the default true).
     virtual void eat_start() = 0;
+    virtual std::optional<Vec3> stroll_position(int, int) { return std::nullopt; }
+    virtual bool navigation_done() const { return true; }
+    virtual void navigate(Vec3, float) {}
+    virtual void stop_navigation() {}
+    virtual bool navigation_close(float) const { return false; }
+    virtual std::optional<World::Position> navigation_end() const { return std::nullopt; }
+    virtual bool in_liquid() const { return false; }
+    virtual void float_jump() {}
     virtual void eat_grass(World::Position at) = 0;
 };
 

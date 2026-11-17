@@ -18,7 +18,7 @@ int floor_int(float v) { return static_cast<int>(std::floor(v)); } // mce::Math:
 // Blocks of the internal palette (air, stone, grass, dirt, bedrock) are full
 // cubes: BlockLegacy defaults give pushesOutItems, a unit collision shape,
 // friction 0.6 and updateEntityAfterFallOn (0x1e56a10) setting motion.y = 0.
-bool solid(BlockId id) { return id != 0; }
+bool solid(BlockId id) { return block_has_collision(id); }
 constexpr float default_friction = 0.6f; // Block::getFriction 0x1e68d90
 
 bool has_chunk(const World &world, Vec3 p) {
@@ -66,6 +66,22 @@ std::vector<AABB> collision_shapes(const World &world, const AABB &box) {
     return out;
 }
 } // namespace
+
+bool is_free(const ActorMotion &a, const World &world, Vec3 delta) {
+    // Actor::isFree 0x21a6aa0: test the destination box, then liquid occupancy.
+    auto box = a.bb;
+    box.move(delta);
+    if (!collision_shapes(world, box).empty())
+        return false;
+    for (int x = floor_int(box.min.x); x < int(std::floor(box.max.x + 1.0f)); ++x)
+        for (int y = floor_int(box.min.y); y < int(std::floor(box.max.y + 1.0f)); ++y)
+            for (int z = floor_int(box.min.z); z < int(std::floor(box.max.z + 1.0f)); ++z) {
+                const auto id = block_at(world, x, y, z);
+                if (id == kStillWater || id == kStillLava)
+                    return false;
+            }
+    return true;
+}
 
 bool AABB::intersects(const AABB &o) const {
     return !(o.min.x >= max.x || min.x >= o.max.x || o.min.y >= max.y || min.y >= o.max.y ||

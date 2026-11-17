@@ -90,7 +90,7 @@ constexpr EffectModifier kEffectModifiers[] = {
 };
 } // namespace
 
-void Server::apply_effect(std::uint64_t id, Session &s, const Session::Effect &e) {
+void Server::apply_effect(std::uint64_t id, EffectState &s, const EffectState::Effect &e) {
     // MobEffect::applyEffects (0x1b0fb90): buffs, then modifiers;
     // AbsorptionMobEffect::applyEffects (0x1b183f0) first resets absorption.
     if (s.dead)
@@ -132,7 +132,7 @@ void Server::apply_effect(std::uint64_t id, Session &s, const Session::Effect &e
     modifiers();
 }
 
-void Server::remove_effect_buffs(std::uint64_t, Session &s, int effect) {
+void Server::remove_effect_buffs(std::uint64_t, EffectState &s, int effect) {
     // MobEffect::removeEffects (0x1b10260): the effect's buffs go;
     // AbsorptionMobEffect::removeEffects (0x1b18390) resets absorption.
     for (auto &list : s.attributes.temporal)
@@ -147,7 +147,7 @@ void Server::remove_effect_buffs(std::uint64_t, Session &s, int effect) {
     }
 }
 
-void Server::add_effect(std::uint64_t id, Session &s, int effect, int duration, int amplifier) {
+void Server::add_effect(std::uint64_t id, EffectState &s, int effect, int duration, int amplifier) {
     // Mob::addEffect (0x22b0630). ServerPlayer::onEffectAdded / Updated send
     // MobEffectPacket ADD (1) / MODIFY (2) through the packet sender (every
     // client).
@@ -176,7 +176,7 @@ void Server::add_effect(std::uint64_t id, Session &s, int effect, int duration, 
     broadcast(packet(PacketId::MobEffect, mob_effect(id, 1, effect, amplifier, true, duration)));
 }
 
-void Server::remove_effect(std::uint64_t id, Session &s, int effect) {
+void Server::remove_effect(std::uint64_t id, EffectState &s, int effect) {
     // Mob::removeEffect -> ServerPlayer::onEffectRemoved (0x25fec20): REMOVE (3).
     auto &e = s.effects[static_cast<std::size_t>(effect)];
     if (!e.id)
@@ -189,20 +189,36 @@ void Server::remove_effect(std::uint64_t id, Session &s, int effect) {
 
 bool Server::give_effect(std::uint64_t runtime, int effect, int seconds, int amplifier) {
     const auto found = sessions_.find(runtime);
-    if (found == sessions_.end() || !found->second.active)
+    if (seconds < 0 || seconds > 1000000 || amplifier < 0 || amplifier > 255 || !effect_info(effect))
         return false;
+    if (found == sessions_.end() || !found->second.active) {
+        if (effect != 1 && effect != 2 && effect != 8 && effect != 24 && effect != 27)
+            return false;
+        for (auto &mob : mobs_)
+            if (mob.runtime_id == runtime && !mob.removed) {
+                add_effect(runtime, mob, effect, seconds * 20, amplifier);
+                return true;
+            }
+        return false;
+    }
     add_effect(runtime, found->second, effect, seconds * 20, amplifier);
     return true;
 }
 bool Server::clear_effects(std::uint64_t runtime) {
     const auto found = sessions_.find(runtime);
-    if (found == sessions_.end() || !found->second.active)
+    if (found == sessions_.end() || !found->second.active) {
+        for (auto &mob : mobs_)
+            if (mob.runtime_id == runtime && !mob.removed) {
+                remove_all_effects(runtime, mob);
+                return true;
+            }
         return false;
+    }
     remove_all_effects(runtime, found->second);
     return true;
 }
 
-void Server::remove_all_effects(std::uint64_t id, Session &s) {
+void Server::remove_all_effects(std::uint64_t id, EffectState &s) {
     // Mob::removeAllEffects (0x22b1580): removeEffectParticles (data 8 and 9
     // to 0, dirty only where they change; 9 is never set here), every effect
     // removed in id order, removeEffectParticles again.
@@ -215,7 +231,7 @@ void Server::remove_all_effects(std::uint64_t id, Session &s) {
             remove_effect(id, s, static_cast<int>(e));
 }
 
-void Server::tick_effects(std::uint64_t id, Session &s) {
+void Server::tick_effects(std::uint64_t id, EffectState &s) {
     // Mob::tickEffects (0x22b2050): MobEffectInstance::tick counts the
     // duration down and the effect is removed when it reaches 0.
     for (std::size_t i = 1; i < s.effects.size(); ++i)
@@ -380,6 +396,13 @@ std::vector<GamePacket> Server::use_on_actor(std::uint64_t id, Session &s, const
     auto &p = world_.players().at(s.key);
     if (t.held != p.inventory[p.selected] || t.slot != static_cast<int>(p.selected))
         return inventory_resend(s);
+    if (t.action == 0) {
+        const float dx = p.x - t.from[0], dy = p.y - t.from[1], dz = p.z - t.from[2];
+        if (dx * dx + dy * dy + dz * dz > 36.0f)
+            return inventory_resend(s);
+        if (!s.sneaking)
+            mount(id, t.target);
+    }
     const auto target = sessions_.find(t.target);
     if (target == sessions_.end() || !target->second.active || t.target == id)
         return {};
