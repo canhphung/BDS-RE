@@ -140,6 +140,8 @@ constexpr float kMaxHeadXRot = 40.0f; // Mob::getMaxHeadXRot (0x2833128)
 
 bool can_use(Goal &g, MobBrain &b, Vec3 pos, MobSenses &senses) {
     switch (g.kind) {
+    case GoalKind::Float:
+        return senses.in_liquid(); // FloatGoal::canUse 0x233af70
     case GoalKind::LookAtPlayer: {
         // LookAtActorGoal::canUse 0x233b300.
         if (senses.level_random().next_float() >= g.probability)
@@ -160,9 +162,10 @@ bool can_use(Goal &g, MobBrain &b, Vec3 pos, MobSenses &senses) {
         // _setWantedPosition (RandomPos::getPos with the mob's own Random).
         if (g.interval != 0 && senses.level_random().next_int(g.interval) != 0)
             return false;
-        // NOT TRANSLATED: RandomPos::getPos and PathNavigation (moveTo).
-        // The stroll never starts; the level Random diverges from the
-        // original when the original would have started walking.
+        if (auto wanted = senses.stroll_position(g.xz_dist, g.y_dist)) {
+            g.stroll_wanted = *wanted;
+            return true;
+        }
         return false;
     case GoalKind::EatBlock: {
         // EatBlockGoal::canUse 0x23bec40: nextInt(baby ? 50 : 1000) == 0,
@@ -185,6 +188,8 @@ bool can_use(Goal &g, MobBrain &b, Vec3 pos, MobSenses &senses) {
 }
 bool can_continue(Goal &g, MobSenses &senses, Vec3 pos) {
     switch (g.kind) {
+    case GoalKind::Float:
+        return senses.in_liquid(); // FloatGoal::canUse 0x233af70
     case GoalKind::LookAtPlayer: {
         // LookAtActorGoal::canContinueToUse 0x233b910: alive target within the
         // look distance (Actor::distanceToSqr), still in view, time left.
@@ -198,6 +203,8 @@ bool can_continue(Goal &g, MobSenses &senses, Vec3 pos) {
             return false;
         return g.look_time > 0;
     }
+    case GoalKind::RandomStroll:
+        return !senses.navigation_done(); // 0x23c4790
     case GoalKind::RandomLookAround:
         return g.look_around_time >= 0; // 0x23aa8d0
     case GoalKind::EatBlock:
@@ -221,7 +228,12 @@ void start(Goal &g, MobSenses &senses) {
         g.look_around_time = 20 + senses.level_random().next_int(20);
         break;
     }
+    case GoalKind::RandomStroll:
+        senses.navigate(g.stroll_wanted, g.speed);
+        g.stroll_last_end.reset();
+        break;
     case GoalKind::EatBlock:
+        senses.stop_navigation();
         // EatBlockGoal::start 0x23bedf0: 40 ticks, ActorEvent 10, stop the
         // navigation.
         g.eat_tick = 40;
@@ -231,7 +243,9 @@ void start(Goal &g, MobSenses &senses) {
         break;
     }
 }
-void stop(Goal &g) {
+void stop(Goal &g, MobSenses &senses) {
+    if (g.kind == GoalKind::RandomStroll)
+        senses.stop_navigation();
     if (g.kind == GoalKind::LookAtPlayer)
         g.target.reset(); // 0x233ba60
     if (g.kind == GoalKind::EatBlock)
@@ -239,6 +253,25 @@ void stop(Goal &g) {
 }
 void tick(Goal &g, MobBrain &b, Vec3 pos, MobSenses &senses) {
     switch (g.kind) {
+    case GoalKind::Float:
+        if (senses.level_random().next_float() < 0.8f)
+            senses.float_jump(); // 0x233b050
+        break;
+    case GoalKind::RandomStroll:
+        // RandomStrollGoal::tick 0x23c4840: retry a partial path only once
+        // per distinct end node, when within two blocks of that end.
+        if (senses.navigation_done() || senses.navigation_close(2.0f)) {
+            if (auto end = senses.navigation_end()) {
+                const World::Position wanted{int(std::floor(g.stroll_wanted.x)),
+                                             int(std::floor(g.stroll_wanted.y)),
+                                             int(std::floor(g.stroll_wanted.z))};
+                if (*end != wanted && (!g.stroll_last_end || *g.stroll_last_end != *end)) {
+                    g.stroll_last_end = end;
+                    senses.navigate(g.stroll_wanted, g.speed);
+                }
+            }
+        }
+        break;
     case GoalKind::LookAtPlayer: {
         // LookAtActorGoal::tick 0x233ba80: look at the target's
         // getAttachPos(3) at 10 / getMaxHeadXRot. INFERRED: a player's
@@ -296,7 +329,7 @@ void tick_goals(MobBrain &brain, Vec3 pos, MobSenses &senses) {
         if (g.used) {
             if (can_use_in_system(brain, g) && can_continue(g, senses, pos))
                 continue;
-            stop(g);
+            stop(g, senses);
             g.used = false;
         }
         if (can_use_in_system(brain, g) && can_use(g, brain, pos, senses)) {
@@ -308,7 +341,7 @@ void tick_goals(MobBrain &brain, Vec3 pos, MobSenses &senses) {
     if (started)
         for (auto &g : brain.goals)
             if (g.used && !can_use_in_system(brain, g)) {
-                stop(g);
+                stop(g, senses);
                 g.used = false;
                 g.to_start = false;
             }

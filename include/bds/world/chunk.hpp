@@ -9,7 +9,13 @@
 #include <stdexcept>
 
 namespace bds {
-using BlockId = std::uint16_t; // Internal IDs; no wire palette assigned yet.
+using BlockId = std::uint16_t;
+// Stable internal block indices; item indices have a separate registry.
+constexpr BlockId kStillWater = 5, kStillLava = 6;
+constexpr bool block_has_collision(BlockId id) { return id != 0 && id != kStillWater && id != kStillLava; }
+constexpr unsigned block_opacity(BlockId id) {
+    return id == 0 ? 0 : id == kStillWater ? 2 : id == kStillLava ? 14 : 15;
+}
 
 // C++ division truncates toward zero; chunk coordinates need floor division.
 constexpr int chunk_coordinate(int block) {
@@ -46,7 +52,7 @@ public:
         if (cell == value) return;
         if (cell == 0) { ++data.count; ++count_; }
         if (value == 0) { --data.count; --count_; }
-        const bool changed_opacity = (cell == 0) != (value == 0);
+        const bool changed_opacity = block_opacity(cell) != block_opacity(value);
         cell = value;
         if (changed_opacity) {
             // LevelChunk::_recalcHeight, 0x1de1bf0: old height is masked to

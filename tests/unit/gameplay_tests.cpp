@@ -375,10 +375,21 @@ int main() {
         server.drain(2);
         server.leave(1);
         server.tick();
-        auto removed = server.drain(2);
-        check(
-            std::any_of(removed.begin(), removed.end(), [](auto &p) { return p.header.id == 14; }),
-            "disconnect removes actor");
+        std::vector<GamePacket> removed;
+        // drain() is a bounded network batch (64 packets). Walking mobs can
+        // enqueue additional movement before the disconnect notification.
+        for (;;) {
+            auto batch=server.drain(2);
+            if(batch.empty())break;
+            removed.insert(removed.end(),batch.begin(),batch.end());
+        }
+        check(std::any_of(removed.begin(),removed.end(),[](const auto &packet) {
+            if(packet.header.id!=14)return false;
+            ByteReader body(packet.body);
+            const auto encoded=body.varint64();body.finish();
+            const auto id=(encoded>>1)^(0ULL-(encoded&1));
+            return id==1;
+        }),"disconnect removes the departing player across bounded batches");
         auto again = make_game(3, 1);
         server.prepare(identity(1), again);
         check(again.x > 16 && pa.inventory[5].count == 64, "rejoin restores state");

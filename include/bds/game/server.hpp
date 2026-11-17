@@ -1,12 +1,14 @@
 #pragma once
-#include "bds/game/protocol.hpp"
-#include "bds/game/spawner.hpp"
 #include "bds/game/mob_ai.hpp"
 #include "bds/game/mob_motion.hpp"
+#include "bds/game/navigation.hpp"
+#include "bds/game/protocol.hpp"
+#include "bds/game/riding.hpp"
+#include "bds/game/spawner.hpp"
 #include "bds/game/world_tick.hpp"
-#include "bds/world/chunk_ticks.hpp"
 #include "bds/server/access.hpp"
 #include "bds/server/properties.hpp"
+#include "bds/world/chunk_ticks.hpp"
 #include <deque>
 #include <map>
 #include <random>
@@ -19,6 +21,19 @@ std::vector<std::pair<int, int>> client_ticking_offsets(int range);
 std::int32_t level_seed(const World &world, const Properties &properties);
 class Server {
   public:
+    struct EffectState {
+        Attributes attributes;
+        bool dead = false;
+        // Mob +0x1248 effects indexed by id (id 0: none), +0x1359 dirty.
+        struct Effect {
+            int id = 0, duration = 0, amplifier = 0;
+            bool ambient = false, visible = true;
+        };
+        std::array<Effect, 28> effects{};
+        bool effects_dirty = false;
+        unsigned effect_keys = 0;      // dirty synched data: bit 0 key 8 (colour), bit 1 key 9 (ambient)
+        std::int32_t effect_color = 0; // synched data 8
+    };
     // Level::Level seeds Level::getRandom() with the level seed (0x1c8038f);
     // the first draws shuffle the block palette (ServerLevel::ServerLevel ->
     // BlockPalette::initFromBlockDefinitions), so runtime ids match the original.
@@ -34,6 +49,11 @@ class Server {
     // Returns false for an unknown runtime id.
     bool give_effect(std::uint64_t runtime, int effect, int seconds, int amplifier);
     bool clear_effects(std::uint64_t runtime);
+    bool mount(std::uint64_t rider, std::uint64_t vehicle);
+    void dismount(std::uint64_t rider);
+    // Component state supplied by the definition/equipment layer. Steering
+    // requires tamed + saddled horses; mounting wild adults remains allowed.
+    bool configure_mount(std::uint64_t vehicle, bool tamed, bool saddled);
     // Player::setChunkRadius (0x22f5730): the radius granted to the client.
     void set_chunk_radius(std::uint64_t runtime, int radius);
     std::optional<std::pair<int, int>> center(std::uint64_t runtime) const;
@@ -45,7 +65,7 @@ class Server {
     std::int64_t allocate_entity_id() { return next_entity_id_++; }
     const std::vector<ItemActor> &items() const { return items_; }
     // Mobs spawned by the natural spawner (Spawner::spawnMob).
-    struct MobActor : ActorMotion {
+    struct MobActor : ActorMotion, EffectState {
         MobActor() { height_offset=0.0f; max_step=0.5625f; }
         std::uint64_t runtime_id = 0;
         std::int64_t unique_id = 0;
@@ -56,7 +76,15 @@ class Server {
         bool baby = false;
         std::uint8_t color = 0;
         float scale = 1.0f, health = 0, max_health = 0, movement = 0, fall_damage = 1.0f;
+        float width = 0, height = 0, jump_strength = 0.7f, jump_power = 0, air_speed = 0.02f;
+        bool tamed = false, saddled = false;
+        std::optional<std::uint64_t> rider;
         MobBrain brain;
+        Random random{std::random_device{}()}; // Actor +0x2b0, never the level/thread RNG
+        PathNavigation navigation;
+        MoveControl move_control;
+        JumpControl jump_control;
+        int jump_delay = 0;
         // SpatialActorNetworkData last sent values (rotation as packet bytes).
         bool sent_on_ground = true;
         Vec3 sent_pos;
@@ -67,7 +95,7 @@ class Server {
     const std::vector<MobActor> &mobs() const { return mobs_; }
 
   private:
-    struct Session {
+    struct Session : EffectState {
         auth::Identity identity;
         protocol::StartGame game;
         std::string key;
@@ -82,24 +110,16 @@ class Server {
             int steps = 0;
         } lerp;
         bool was_on_ground = false; // Actor +0x125, written at the end of each tick
+        std::optional<std::uint64_t> vehicle;
+        RiderControl rider_input;
         bool sneaking = false, sprinting = false; // actor flags 1 and 3
         bool flags_dirty = false;
         // Attributes, hurt state (Mob +0x20c hurt time, +0x12c0 last hurt) and death.
-        Attributes attributes;
         int hurt_time = 0, last_hurt = 0;
-        bool dead = false, death_data_dirty = false;
+        bool death_data_dirty = false;
         int death_time = 0; // Mob +0x11d8
         float motion[3] = {0, 0, 0}; // Actor +0xa0, set by MovePlayer to the move delta
         int feature_timer = 0;                    // ServerPlayer +0x1b5c
-        // Mob +0x1248 effects indexed by id (id 0: none), +0x1359 dirty.
-        struct Effect {
-            int id = 0, duration = 0, amplifier = 0;
-            bool ambient = false, visible = true;
-        };
-        std::array<Effect, 28> effects{};
-        bool effects_dirty = false;
-        unsigned effect_keys = 0; // dirty synched data: bit 0 key 8 (colour), bit 1 key 9 (ambient)
-        std::int32_t effect_color = 0; // synched data 8
         // Player +0x1808 item in use and +0x1878 its duration (status flag 4).
         ItemStack using_item;
         int use_duration = 0;
@@ -136,7 +156,7 @@ class Server {
     void send_for_entity(std::uint64_t entity, const GamePacket &packet, std::uint64_t except = 0);
     void tick_player(std::uint64_t id, Session &s);
     // Attribute system (see src/game/server.cpp for the original functions).
-    void add_buff(std::uint64_t id, Session &s, int attribute, float amount, int type);
+    void add_buff(std::uint64_t id, EffectState &s, int attribute, float amount, int type);
     bool health_change(std::uint64_t id, Session &s, float old_value, float new_value, int type);
     void cause_food_exhaustion(std::uint64_t id, Session &s, float amount);
     void tick_attributes(std::uint64_t id, Session &s);
@@ -146,12 +166,12 @@ class Server {
     void actually_hurt(std::uint64_t id, Session &s, int cause, int damage);
     void knockback(std::uint64_t id, Session &s, float xd, float zd);
     // Effects (Mob::addEffect 0x22b0630, tickEffects 0x22b2050).
-    void add_effect(std::uint64_t id, Session &s, int effect, int duration, int amplifier);
-    void remove_effect(std::uint64_t id, Session &s, int effect);
-    void remove_all_effects(std::uint64_t id, Session &s);
-    void apply_effect(std::uint64_t id, Session &s, const Session::Effect &e);
-    void remove_effect_buffs(std::uint64_t id, Session &s, int effect);
-    void tick_effects(std::uint64_t id, Session &s);
+    void add_effect(std::uint64_t id, EffectState &s, int effect, int duration, int amplifier);
+    void remove_effect(std::uint64_t id, EffectState &s, int effect);
+    void remove_all_effects(std::uint64_t id, EffectState &s);
+    void apply_effect(std::uint64_t id, EffectState &s, const EffectState::Effect &e);
+    void remove_effect_buffs(std::uint64_t id, EffectState &s, int effect);
+    void tick_effects(std::uint64_t id, EffectState &s);
     void background_tick_seasons();
     void save_some_chunks();
     void tick_spawner(int chunk_x, int chunk_z);
@@ -160,6 +180,7 @@ class Server {
     bool tick_chunk_state(int chunk_x, int chunk_z);
     void tick_mob(MobActor &mob);
     void push_mob_entities(MobActor &mob);
+    void position_rider(MobActor &mob);
     class Senses;
     class Region;
     friend class Region;

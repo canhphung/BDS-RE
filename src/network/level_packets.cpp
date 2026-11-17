@@ -210,8 +210,8 @@ std::optional<std::uint32_t> runtime_id(std::string_view name, std::int16_t data
 
 const std::vector<PaletteEntry> &internal_block_palette() {
     static const std::vector<PaletteEntry> palette{
-        {"minecraft:air", 0}, {"minecraft:stone", 0}, {"minecraft:grass", 0}, {"minecraft:dirt", 0},
-        {"minecraft:bedrock", 0}};
+        {"minecraft:air", 0},     {"minecraft:stone", 0}, {"minecraft:grass", 0}, {"minecraft:dirt", 0},
+        {"minecraft:bedrock", 0}, {"minecraft:water", 0}, {"minecraft:lava", 0}};
     return palette;
 }
 } // namespace bds::protocol

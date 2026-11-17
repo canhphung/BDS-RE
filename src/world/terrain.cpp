@@ -131,7 +131,8 @@ void World::set_block(Position p, Block value) {
         i = columns_.try_emplace(key).first;
     }
     const auto old = i->second.block(local_coordinate(x), static_cast<unsigned>(y), local_coordinate(z));
-    if ((old == 0) != (value == 0)) i->second.set_light_revision(++light_revision_);
+    if (block_opacity(old) != block_opacity(value) || (old == kStillLava) != (value == kStillLava))
+        i->second.set_light_revision(++light_revision_);
     const auto before = i->second.stored_blocks();
     i->second.set_block(local_coordinate(x), static_cast<unsigned>(y), local_coordinate(z), value);
     count_ = count_ - before + i->second.stored_blocks();

@@ -1,10 +1,11 @@
 #include "bds/game/server.hpp"
 #include "bds/game/effects.hpp"
 #include "bds/game/mce_math.hpp"
+#include "bds/game/random_pos.hpp"
 #include "bds/network/spawn.hpp"
 #include <algorithm>
-#include <charconv>
 #include <bit>
+#include <charconv>
 #include <cmath>
 #include <limits>
 #include <numbers>
@@ -134,6 +135,8 @@ std::uint64_t Server::Session::flags() const {
     if (dead && death_time >= 20)
         return 0xc00400080020ULL;
     std::uint64_t f = active ? 0xc00400084000ULL : 0xc00400080000ULL;
+    if (vehicle)
+        f |= 1ULL << 2;
     if (sneaking)
         f |= 1ULL << 1;
     if (sprinting)
@@ -312,6 +315,7 @@ std::vector<GamePacket> Server::prepare(const auth::Identity &identity, protocol
             packet(PacketId::SetActorData, actor_flags(g.runtime_id, 0xc00400080000ULL))};
 }
 void Server::leave(std::uint64_t runtime) {
+    dismount(runtime);
     auto i = sessions_.find(runtime);
     if (i == sessions_.end())
         return;
@@ -488,6 +492,8 @@ void Server::tick_player(std::uint64_t id, Session &s) {
     const float before[3] = {p.x, p.y, p.z};
     // Mob::normalTick -> MovementInterpolator::tick (0x23cf280): move a
     // 1/steps share towards the MovePlayer target, the last step exactly.
+    if (s.vehicle)
+        s.lerp.steps = 0;
     if (s.lerp.steps > 0) {
         // The interpolator clears the motion (+0xa0, the MovePlayer delta)
         // whenever it steps (traced under gdb).
@@ -562,7 +568,7 @@ void Server::tick_player(std::uint64_t id, Session &s) {
     p.saturation = s.attributes[kSaturation];
     p.exhaustion = s.attributes[kExhaustion];
 }
-void Server::add_buff(std::uint64_t id, Session &s, int attribute, float amount, int type) {
+void Server::add_buff(std::uint64_t id, EffectState &s, int attribute, float amount, int type) {
     // AttributeInstance::addBuff (0x24a7760) for an InstantaneousAttributeBuff:
     // value = clamp(value + amount), the delegate may reject the change
     // (HealthAttributeDelegate::change), and a changed value is marked dirty.
@@ -571,8 +577,11 @@ void Server::add_buff(std::uint64_t id, Session &s, int attribute, float amount,
     auto &a = s.attributes.values[static_cast<std::size_t>(attribute)];
     const float old = a.value;
     a.value = Attributes::apply(a, amount);
-    if (attribute == kHealth && !health_change(id, s, old, a.value, type))
-        a.value = old;
+    if (attribute == kHealth) {
+        const auto session = sessions_.find(id);
+        if (session != sessions_.end() && !health_change(id, session->second, old, a.value, type))
+            a.value = old;
+    }
     if (old != a.value)
         s.attributes.mark(attribute);
 }
@@ -895,6 +904,7 @@ void Server::die(std::uint64_t id, Session &s, int cause) {
     // observed on the original (tools/reference/hunger_health_oracle.py).
     if (s.dead)
         return;
+    dismount(id);
     s.dead = true;
     auto &p = world_.players().at(s.key);
     // keepInventory is false: the cursor item and every inventory slot are
@@ -1028,14 +1038,39 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
                    mob != mobs_.end()) {
             // Actor::tryCreateAddActorPacket then MobArmorEquipment (capture
             // world-mobs-p1: AddActor 0x0d followed by 0x20 per mob).
-            enqueue(id, packet(PacketId::AddActor,
-                               add_mob_actor({mob->unique_id, mob->runtime_id, mob->data->type, mob->sent_pos, mob->motion,
-                                              mob->sent_rotation[0] / 256.0f * 360.0f,
-                                              mob->sent_rotation[1] / 256.0f * 360.0f,
-                                              mob->sent_rotation[2] / 256.0f * 360.0f, mob->baby, mob->scale, mob->data->width, mob->data->height,
-                                              mob->variant, mob->mark_variant, mob->color, mob->health,
-                                              mob->max_health, mob->movement, mob->fall_damage})));
+            enqueue(id, packet(PacketId::AddActor, add_mob_actor({mob->unique_id,
+                                                                  mob->runtime_id,
+                                                                  mob->data->type,
+                                                                  mob->sent_pos,
+                                                                  mob->motion,
+                                                                  mob->sent_rotation[0] / 256.0f * 360.0f,
+                                                                  mob->sent_rotation[1] / 256.0f * 360.0f,
+                                                                  mob->sent_rotation[2] / 256.0f * 360.0f,
+                                                                  mob->baby,
+                                                                  mob->scale,
+                                                                  mob->width,
+                                                                  mob->height,
+                                                                  mob->variant,
+                                                                  mob->mark_variant,
+                                                                  mob->color,
+                                                                  mob->health,
+                                                                  mob->max_health,
+                                                                  mob->movement,
+                                                                  mob->fall_damage,
+                                                                  mob->tamed,
+                                                                  mob->saddled})));
             enqueue(id, packet(PacketId::MobArmorEquipment, empty_armor_equipment(entity)));
+            if (mob->rider) {
+                const auto rider = sessions_.find(*mob->rider);
+                if (rider != sessions_.end()) {
+                    ByteWriter link;
+                    link.signed_varint64(mob->unique_id);
+                    link.signed_varint64(rider->second.game.unique_id);
+                    link.byte(1);
+                    link.boolean(false);
+                    enqueue(id, packet(PacketId::SetActorLink, link.take()));
+                }
+            }
         } else
             for (const auto &a : items_)
                 if (a.runtime_id == entity) {
@@ -1198,7 +1233,14 @@ class Server::Region final : public SpawnRegion {
         mob.bb={{x-half,y,z-half},{x+half,y+data.height,z+half}};
         mob.surface = surface;
         define(mob);
-        mob.brain = make_brain(data.type, mob.baby, data.width, data.height);
+        mob.width = data.width * mob.scale;
+        mob.height = data.height * mob.scale;
+        const float scaled_half = mob.width / 2.0f;
+        mob.bb = {{x - scaled_half, y, z - scaled_half}, {x + scaled_half, y + mob.height, z + scaled_half}};
+        mob.attributes.values[kMovement].value = mob.attributes.values[kMovement].fallback = mob.movement;
+        mob.attributes.values[kHealth].value = mob.attributes.values[kHealth].fallback = mob.health;
+        mob.attributes.values[kHealth].max = mob.attributes.values[kHealth].default_max = mob.max_health;
+        mob.brain = make_brain(data.type, mob.baby, mob.width, mob.height);
         mob.sent_pos = mob.pos;
         mob.owner_chunk = {static_cast<int>(std::floor(x)) >> 4, static_cast<int>(std::floor(z)) >> 4};
         s_.chunk_actors_.add(mob.owner_chunk, mob.runtime_id); // LevelChunk::addEntity
@@ -1217,10 +1259,9 @@ class Server::Region final : public SpawnRegion {
     // The vanilla behavior pack's minecraft:entity_spawned event (entities/
     // <name>.json): a weighted adult/baby choice (baby: scale 0.5 where the
     // group sets it), sheep colours, horse/donkey health and speed ranges.
-    // The definition system draws from the actor's own Random, which here is
-    // the host thread Random (actor_random_).
+    // Definition events draw from Actor's own Random (+0x2b0).
     void define(MobActor &mob) {
-        auto &random = s_.actor_random_;
+        auto &random = mob.random;
         const auto pick = [&](std::initializer_list<int> weights) {
             int total = 0;
             for (const auto w : weights)
@@ -1238,7 +1279,9 @@ class Server::Region final : public SpawnRegion {
         if (type == actor_type::Horse || type == actor_type::Donkey) {
             mob.baby = pick(type == actor_type::Horse ? std::initializer_list<int>{36, 9}
                                                      : std::initializer_list<int>{80, 20}) == 1;
+            mob.scale = mob.baby ? 0.5f : 1.0f;
             mob.max_health = mob.health = static_cast<float>(random.next_int(15, 31));
+            mob.jump_strength = random.next_float(0.4f, 1.0f);
             mob.movement = type == actor_type::Horse ? random.next_float(0.1125f, 0.3375f) : 0.175f;
             return;
         }
@@ -1291,7 +1334,7 @@ class Server::Senses final : public MobSenses {
         // whose box intersects (AABB::intersects, strict); the player box is
         // 0.6 x 1.8 from the feet (eye position - 1.62). Sorted by distance
         // (LookAtActorGoal::canUse std::sort on distanceToSqr).
-        const auto &d = *mob_.data;
+        const auto &d = mob_;
         const float half = d.width / 2.0f;
         const AABB area{{mob_.pos.x - half - grow, mob_.pos.y - grow, mob_.pos.z - half - grow},
                         {mob_.pos.x + half + grow, mob_.pos.y + d.height + grow, mob_.pos.z + half + grow}};
@@ -1322,6 +1365,34 @@ class Server::Senses final : public MobSenses {
             return 0;
         return s_.world_.block(at);
     }
+    std::optional<Vec3> stroll_position(int xz, int y) override {
+        return random_stroll_position(s_.world_, s_.lighting_, mob_.pos, mob_.random, xz, y,
+                                      clear_sky_darken(static_cast<int>(s_.level_tick_ % 24000)));
+    }
+    bool in_liquid() const override { return travel_medium(mob_, s_.world_) != TravelMedium::Land; }
+    void float_jump() override {
+        mob_.jump_control.jump();
+        const auto p = mob_.pos;
+        if (mob_.rider && s_.world_.block({int(std::floor(p.x)), int(std::floor(p.y + mob_.height * 0.85f)),
+                                           int(std::floor(p.z))}) == kStillWater)
+            s_.dismount(*mob_.rider);
+    }
+    bool navigation_done() const override { return mob_.navigation.done(); }
+    void navigate(Vec3 at, float speed) override {
+        if (mob_.on_ground)
+            mob_.navigation.move_to(s_.world_, mob_, at, speed, mob_.width, mob_.height);
+    }
+    void stop_navigation() override { mob_.navigation.stop(); }
+    bool navigation_close(float distance) const override {
+        return mob_.navigation.close_to_done(mob_.pos, distance);
+    }
+    std::optional<World::Position> navigation_end() const override {
+        const auto &nav = mob_.navigation;
+        if (!nav.path || nav.path->nodes.empty())
+            return std::nullopt;
+        const auto end = nav.path->position(mob_.width, nav.path->nodes.size() - 1);
+        return World::Position{int(std::floor(end.x)), int(std::floor(end.y)), int(std::floor(end.z))};
+    }
     void eat_start() override {
         // Level::broadcastEntityEvent(mob, 10 EAT_GRASS_ANIMATION, 0).
         s_.send_for_entity(mob_.runtime_id, packet(PacketId::ActorEvent, actor_event(mob_.runtime_id, 10, 0)));
@@ -1349,13 +1420,55 @@ void Server::tick_mob(MobActor &mob) {
         // NOT TRANSLATED: SpawnActorComponent::spawnEntity (the egg item and
         // the "plop" sound).
     }
+    if(!mob.attributes.dirty.empty()) {
+        send_for_entity(mob.runtime_id,packet(PacketId::UpdateAttributes,
+            update_attributes(mob.runtime_id,mob.attributes,mob.attributes.dirty)));
+        mob.attributes.dirty.clear();
+    }
+    if (mob.effect_keys) {
+        send_for_entity(mob.runtime_id,
+                        packet(PacketId::SetActorData,
+                               effect_data(mob.runtime_id, mob.effect_color, false, mob.effect_keys)));
+        mob.effect_keys = 0;
+    }
+    tick_effects(mob.runtime_id, mob);
+    position_rider(mob); // Actor::_manageRiders precedes Mob::normalTick.
     Senses senses(*this, mob);
     tick_goals(mob.brain, mob.pos, senses);
-    // PathNavigation/MoveControl are still pending; the land/air physics
-    // now executes with zero control input until a movement goal is available.
+    // Mob::newServerAiStep: goals, navigation, MoveControl, LookControl,
+    // JumpControl, in that order (0x22bad00).
+    mob.navigation.tick(world_, mob, mob.width, mob.height, mob.move_control);
+    mob.move_control.tick(mob, mob.brain, mob.attributes[kMovement], mob.jump_control);
     tick_look(mob.brain, mob.pos);
+    mob.jump_control.tick();
+    if (mob.jump_delay > 0)
+        --mob.jump_delay;
+    const auto medium = travel_medium(mob, world_);
+    if (medium == TravelMedium::Land && mob.jump_control.jumping && mob.on_ground && mob.jump_delay == 0) {
+        mob.motion.y = 0.42f;
+        if (mob.effects[8].id)
+            mob.motion.y += 0.1f * static_cast<float>(mob.effects[8].amplifier + 1);
+        mob.jump_delay = 10;
+    } else if (!mob.jump_control.jumping)
+        mob.jump_delay = 0;
     mob.pos_prev=mob.pos;
-    travel_mob(mob,world_,{},mob.brain.yaw,0.0f);
+    TravelOptions options;
+    options.medium = medium;
+    if (options.medium != TravelMedium::Land && mob.jump_control.jumping)
+        mob.motion.y += 0.04f;
+    options.underwater_speed = mob.attributes[kUnderwaterMovement];
+    options.levitation = mob.effects[24].id ? mob.effects[24].amplifier : -1;
+    options.slow_falling = mob.effects[27].id != 0;
+    position_rider(mob); // Mob::travel positions riders before moving the vehicle.
+    Vec3 input{0, 0, mob.move_control.forward * 0.98f};
+    if (mob.rider && mob.tamed && mob.saddled) {
+        const auto rider = sessions_.find(*mob.rider);
+        if (rider != sessions_.end())
+            input = ridden_input(mob, mob.brain, rider->second.rider_input, mob.attributes[kMovement],
+                                 mob.move_control.speed, mob.air_speed, mob.jump_power, mob.jump_strength,
+                                 mob.effects[8].id ? mob.effects[8].amplifier : -1);
+    }
+    travel_mob(mob, world_, input, mob.brain.yaw, mob.move_control.speed, mob.air_speed, 1.0f, true, options);
     push_mob_entities(mob); // Mob::aiStep -> pushEntities, 0x22ba628
     tick_body(mob.brain, mob.motion.x, mob.motion.z);
     // Actor::sendMotionPacketIfNeeded: SpatialActorNetworkData::shouldSendUpdate
@@ -1684,6 +1797,17 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             // player yields null and the packet is ignored.
             if (m.runtime != id)
                 return {};
+            if (s.vehicle && (!std::isfinite(m.data.yaw) || !std::isfinite(m.data.pitch)))
+                return {};
+            s.rider_input.yaw = std::isfinite(m.data.yaw) ? wrap_degrees(m.data.yaw) : 0.0f;
+            s.rider_input.pitch =
+                std::isfinite(m.data.pitch) ? std::clamp(m.data.pitch, -90.0f, 90.0f) : 0.0f;
+            if (s.vehicle) {
+                p.yaw = m.data.yaw;
+                p.pitch = m.data.pitch;
+                p.head_yaw = m.data.head_yaw;
+                return {};
+            }
             // Skipped while the player changes dimension or is not yet
             // initialised (+0x140c / +0x1410); BDS-RE has no dimension change,
             // and inactive sessions returned above. Riding (getRide) does not
@@ -1730,6 +1854,41 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             // received packet is relayed unchanged to the players that know
             // this one.
             send_for_entity(id, packet(PacketId::MovePlayer, packet_in.body), id);
+            return {};
+        }
+        if (type == PacketId::PlayerInput) {
+            const float strafe = number(in), forward = number(in);
+            const bool jumping = in.boolean(), sneaking = in.boolean();
+            in.finish();
+            if (s.vehicle) {
+                s.rider_input.strafe = std::clamp(strafe, -1.0f, 1.0f);
+                s.rider_input.forward = std::clamp(forward, -1.0f, 1.0f);
+                if (sneaking)
+                    dismount(id);
+            }
+            (void)jumping;
+            return {};
+        }
+        if (type == PacketId::RiderJump) {
+            const auto charge = in.signed_varint();
+            in.finish();
+            if (s.vehicle)
+                for (auto &mob : mobs_)
+                    if (mob.runtime_id == *s.vehicle && mob.rider == id && mob.tamed && mob.saddled)
+                        mob.jump_power = player_jump_power(charge);
+            return {};
+        }
+        if (type == PacketId::Interact) {
+            const auto action = in.byte();
+            const auto target = in.varint64();
+            if (action == 4) {
+                number(in);
+                number(in);
+                number(in);
+            }
+            in.finish();
+            if (action == 3 && s.vehicle && *s.vehicle == target)
+                dismount(id);
             return {};
         }
         if (type == PacketId::MobEquipment) {
@@ -1847,6 +2006,8 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
                 if (s.sneaking != (action == 11)) {
                     s.sneaking = action == 11;
                     s.flags_dirty = true;
+                    if (s.sneaking && s.vehicle)
+                        dismount(id);
                 }
                 return {};
             case 17:

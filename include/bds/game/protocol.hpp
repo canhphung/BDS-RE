@@ -92,6 +92,7 @@ struct MobView {
     int variant, mark_variant;
     std::uint8_t color;
     float health, max_health, movement, fall_damage;
+    bool tamed = false, saddled = false;
 };
 Bytes add_mob_actor(const MobView &mob);
 // MobArmorEquipmentPacket with four empty slots.

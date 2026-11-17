@@ -5,8 +5,8 @@
 namespace bds::game {
 namespace {
 bool solid(const World &world, int x, int y, int z) {
-  return world.chunk(chunk_coordinate(x), chunk_coordinate(z)) &&
-         world.block({x, y, z}) != 0;
+    return world.chunk(chunk_coordinate(x), chunk_coordinate(z)) &&
+           block_has_collision(world.block({x, y, z}));
 }
 // RandomPos::snapToGround 0x231bc40. Its initial solid/air transition
 // succeeds without changing Y; the subsequent scans store current Y+1.
