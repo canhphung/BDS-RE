@@ -42,9 +42,14 @@ In Creative, the creative inventory contains stone, grass, dirt and bedrock.
 Select one, place it, break it, and check the changes from a second client.
 In Survival, break grass/dirt: a dirt item entity drops, falls, and is picked up
 when you walk over it; place it; placement consumes one item. Bare-hand stone breaking yields no item. Tools,
-normal item drops/entities, ores, liquids, biomes, trees/caves, recipes/crafting,
-chests, armor, combat and mobs are not implemented. Hunger, regeneration, fall
-and void damage, starvation, death and respawn work as described below.
+normal block drops, ores, liquids, biomes, trees/caves, recipes/crafting,
+chests and mobs are not implemented. Hunger, regeneration, fall and void damage,
+starvation, death and respawn, eating, effects, absorption, armor and fighting
+between players work as described below. Besides the four blocks the item table
+holds the original's swords, armor, bowl and every food item (ids, stack sizes,
+durability, damage, defense and food values dumped from the original's item
+registry); creative players find them in the creative inventory and can hand
+them to survival players by dropping them (Q).
 
 ## Block breaking
 
@@ -182,7 +187,43 @@ Translated from the original (AttributeInstance::addBuff 0x24a7760 and tick
 - PlayerAction 7 respawns: ActorEvent RESPAWN, SetHealth 20, health, food,
   saturation, exhaustion, level and experience reset, the living box restored.
 - Health, food, saturation and exhaustion are persisted with the player.
-- Not modelled: combat, effects, armor, absorption and food items.
+
+## Eating, effects, armor and combat
+
+Translated from the original and checked byte for byte against
+`tests/reference/combat_bds_1.6.0.15.json` (test `combat_reference`):
+
+- Eating: using food in the air starts eating (FoodItemComponent::use: hungry,
+  or a golden apple; not in creative) and sets actor flag 4 (using item); the
+  client's consume (ItemRelease) completes it: the food's effects (chance
+  rolled on the level Random), food + nutrition, saturation's maximum becomes
+  the food level, saturation + nutrition * modifier * 2, one item less, the
+  burp sound, and a bowl for stews.
+- Effects: MobEffect ADD/MODIFY/REMOVE go to every client; the durations count
+  down per tick. Regeneration, poison (never below 1 health), wither, hunger and
+  saturation are timed attribute buffs (AttributeInstance::tick), absorption
+  resets and adds 4 per level, resistance reduces damage by 20% per level. The
+  particle colour (actor data 8/9) is the original's average. Speed, slowness,
+  strength/weakness modifiers, health boost and the instant effects are not
+  modelled (no food grants them).
+- Armor: worn by using it or through the armor container (window 120); the
+  armor value reduces damage (Mob::getDamageAfterArmorAbsorb with the 1/25
+  remainders), every hit wears each piece by max(1, damage / 4) and the victim
+  gets HurtArmor. Absorption takes damage before health.
+- Combat: ItemUseOnActor attack (from at most 6 blocks off the server position,
+  target within 12): damage = attack attribute + weapon (1 becomes 2), critical
+  x1.5 while falling (AnimatePacket to everyone), the attack sound, SetLastHurtBy,
+  the hurt event, knockback (SetActorMotion), attack exhaustion 0.3, sword wear.
+  Sprinting adds a push and stops the attacker's sprint. Creative players are not
+  hurt. Transactions whose predicted inventory changes differ from the server's
+  get the inventories resent, as in the original.
+- Dropping (Q) throws the item forward (Player::drop) with pickup delay 40.
+- Deviations: the server does not simulate player physics, so the motion a
+  knockback starts from is the last tick's movement (the original's differs by
+  a few thousandths) and the collision move after a sprint push is not applied;
+  the throw of dropped items and the knockback resistance roll use the shared
+  thread-local Random instead of each player's own; sounds other than the
+  attack and burp sounds (hurt, fall, equip, break) are not sent.
 
 ## Persistence
 

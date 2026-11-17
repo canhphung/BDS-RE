@@ -50,6 +50,19 @@ class Server {
         bool dead = false, death_data_dirty = false;
         float motion[3] = {0, 0, 0}; // Actor +0xa0, set by MovePlayer to the move delta
         int feature_timer = 0;                    // ServerPlayer +0x1b5c
+        // Mob +0x1248 effects indexed by id (id 0: none), +0x1359 dirty.
+        struct Effect {
+            int id = 0, duration = 0, amplifier = 0;
+            bool ambient = false, visible = true;
+        };
+        std::array<Effect, 28> effects{};
+        bool effects_dirty = false, effect_data_dirty = false;
+        std::int32_t effect_color = 0; // synched data 8
+        // Player +0x1808 item in use and +0x1878 its duration (status flag 4).
+        ItemStack using_item;
+        int use_duration = 0;
+        float fall_distance = 0;                  // Actor +0x138
+        int damage_remainder = 0, absorb_remainder = 0; // Mob +0x12c4, +0x12c8
         std::uint64_t flags() const;
     };
     World &world_;
@@ -75,8 +88,27 @@ class Server {
     bool health_change(std::uint64_t id, Session &s, float old_value, float new_value, int type);
     void cause_food_exhaustion(std::uint64_t id, Session &s, float amount);
     void tick_attributes(std::uint64_t id, Session &s);
-    bool hurt(std::uint64_t id, Session &s, int cause, int damage);
-    bool hurt_effects(std::uint64_t id, Session &s, int cause, int damage);
+    // attacker: runtime id of the player behind an ActorDamageByActorSource, 0 for none.
+    bool hurt(std::uint64_t id, Session &s, int cause, int damage, std::uint64_t attacker = 0, bool knock = true);
+    bool hurt_effects(std::uint64_t id, Session &s, int cause, int damage, std::uint64_t attacker = 0, bool knock = true);
+    void actually_hurt(std::uint64_t id, Session &s, int cause, int damage);
+    void knockback(std::uint64_t id, Session &s, float xd, float zd);
+    // Effects (Mob::addEffect 0x22b0630, tickEffects 0x22b2050).
+    void add_effect(std::uint64_t id, Session &s, int effect, int duration, int amplifier);
+    void remove_effect(std::uint64_t id, Session &s, int effect);
+    void apply_effect(std::uint64_t id, Session &s, const Session::Effect &e);
+    void remove_effect_buffs(std::uint64_t id, Session &s, int effect);
+    void tick_effects(std::uint64_t id, Session &s);
+    // Items: ItemUse click air (GameMode::useItem), ItemRelease consume,
+    // ItemUseOnActor attack, and Player::drop.
+    std::vector<GamePacket> use_item(std::uint64_t id, Session &s, const Transaction &t);
+    std::vector<GamePacket> release_item(std::uint64_t id, Session &s, const Transaction &t);
+    std::vector<GamePacket> use_on_actor(std::uint64_t id, Session &s, const Transaction &t);
+    void attack(std::uint64_t id, Session &s, std::uint64_t target);
+    void eat(std::uint64_t id, Session &s, const ItemStack &item);
+    void drop(std::uint64_t id, Session &s, ItemStack item, bool randomly);
+    void set_sprinting(Session &s, bool sprinting);
+    std::vector<GamePacket> inventory_resend(const Session &s) const;
     void cause_fall_damage(std::uint64_t id, Session &s, float distance);
     void die(std::uint64_t id, Session &s, int cause);
     void respawn(std::uint64_t id, Session &s);

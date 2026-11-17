@@ -139,3 +139,14 @@ Respawn and SetHealth per step. tests/reference/hunger_health_bds_1.6.0.15.json
 holds the original's packets (runtime id 1) that `gameplay_tests` compares byte
 for byte. Run it against the original with the same runtime options as the
 other oracles.
+
+## Combat oracle
+
+`combat_oracle.py HOST PORT OUT.json CONSOLE_FIFO` joins two survival clients
+(difficulty normal, cheats on) next to each other; the server's standard input
+is the FIFO, through which the script types `give`/`effect` console commands. A
+falls, eats a golden apple (start, then consume with its predicted inventory
+change), B wears an iron helmet, A hits B with a diamond sword, B sprint-hits A,
+B gets poison, A drops a spider eye. tests/reference/combat_bds_1.6.0.15.json is
+the original's result (packets of other actors and chunk traffic removed); the
+`combat_reference` test replays the scenario on BDS-RE.

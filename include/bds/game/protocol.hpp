@@ -5,6 +5,7 @@
 #include "bds/world/world.hpp"
 #include "bds/game/item_actor.hpp"
 #include "bds/game/attributes.hpp"
+#include "bds/game/items.hpp"
 namespace bds::game {
 using protocol::ByteReader;
 using protocol::Bytes;
@@ -35,6 +36,8 @@ Bytes motion(const Motion &value);
 Bytes inventory(const PlayerData &p);
 Bytes cursor_inventory(const PlayerData &p);
 Bytes creative_inventory();
+Bytes armor_inventory(const PlayerData &p); // InventoryContent window 120
+Bytes armor_equipment(std::uint64_t runtime, const PlayerData &p); // MobArmorEquipment
 Bytes block_update(World::Position p, BlockId id);
 Bytes equipment(std::uint64_t runtime, const PlayerData &p);
 // AddPlayerPacket with the original's full player metadata and device id.
@@ -57,11 +60,12 @@ Bytes set_health(int health);
 Bytes remove_player_list(const auth::Identity &identity);
 struct Action {
     unsigned source = 0, slot = 0;
-    int window = 0;
+    int window = 0;       // container id (source 0), flags (source 2, world interaction)
     ItemStack before, after;
 };
 struct Transaction {
     unsigned type = 0, action = 0;
+    std::uint64_t target = 0;   // ItemUseOnActor (3): entity runtime id
     std::vector<Action> changes;
     World::Position block{};
     int face = 0, slot = 0;
@@ -91,6 +95,14 @@ struct SlotChange {
 // world-interaction action (taken -> left), then one container action per
 // changed inventory slot (byte order checked against the original capture).
 Bytes pickup_transaction(const std::vector<SlotChange> &slots, ItemStack taken, ItemStack left);
+
+// Combat, effects and eating (packet formats from their write functions).
+Bytes mob_effect(std::uint64_t runtime, int event, int effect, int amplifier, bool particles, int duration); // 0x18bc1e0
+Bytes level_sound(int sound, Vec3 pos, int extra, int entity_type, bool baby = false, bool global = false); // V1
+Bytes set_last_hurt_by(int actor_type);
+Bytes hurt_armor(int damage);
+Bytes animate(int action, std::uint64_t runtime);
+Bytes effect_data(std::uint64_t runtime, std::int32_t color, bool ambient); // SetActorData keys 8, 9
 // Per-tick replication of an added item (MoveActorDelta, SetActorMotion).
 std::vector<GamePacket> replicate(ItemActor &a);
 } // namespace bds::game

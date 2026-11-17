@@ -1,4 +1,5 @@
 #include "bds/world/store.hpp"
+#include "bds/game/items.hpp"
 #include "bds/core/atomic_file.hpp"
 #include <algorithm>
 #include <array>
@@ -88,14 +89,21 @@ std::vector<std::uint8_t> WorldStore::encode(const World &world) {
         }
         require(world.players_.size() <= 1024, "player limit exceeded");
         for (const auto &[key, p] : world.players_) {
-            Json inventory = Json::array();
+            // [item, count] or [item, count, damage] for a damaged item.
+            const auto stack = [](const ItemStack &item) {
+                return item.aux ? Json{item.block, item.count, item.aux} : Json{item.block, item.count};
+            };
+            Json inventory = Json::array(), armor = Json::array();
             for (const auto &item : p.inventory)
-                inventory.push_back({item.block, item.count});
+                inventory.push_back(stack(item));
+            for (const auto &item : p.armor)
+                armor.push_back(stack(item));
             metadata["players"][key] = {{"pos", {p.x, p.y, p.z}},
                                         {"rot", {p.pitch, p.yaw, p.head_yaw}},
                                         {"selected", p.selected},
                                         {"inventory", inventory},
-                                        {"cursor", {p.cursor.block, p.cursor.count}},
+                                        {"cursor", stack(p.cursor)},
+                                        {"armor", armor},
                                         {"attributes", {p.health, p.hunger, p.saturation, p.exhaustion}}};
         }
         const auto text = metadata.dump();
@@ -213,20 +221,30 @@ World WorldStore::decode(std::span<const std::uint8_t> bytes, Limits limits) {
             p.yaw = number(rot[1]);
             p.head_yaw = number(rot[2]);
             p.selected = static_cast<unsigned>(integer(value.at("selected"), 0, 8));
-            for (unsigned i = 0; i < 36; ++i) {
-                require(inventory[i].is_array() && inventory[i].size() == 2,
-                        "invalid inventory slot");
-                p.inventory[i] = {static_cast<std::uint16_t>(integer(inventory[i][0], 0, 4)),
-                                  static_cast<std::uint8_t>(integer(inventory[i][1], 0, 64))};
-                require((p.inventory[i].block == 0) == (p.inventory[i].count == 0),
+            const auto stack = [&](const Json &j) {
+                require(j.is_array() && (j.size() == 2 || j.size() == 3), "invalid item stack");
+                ItemStack item{static_cast<std::uint16_t>(integer(j[0], 0, game::item_count() - 1)),
+                               static_cast<std::uint8_t>(integer(j[1], 0, 64))};
+                const auto &info = game::item_info(item.block);
+                if (j.size() == 3)
+                    item.aux = static_cast<std::int16_t>(integer(j[2], 0, info.max_damage));
+                require((item.block == 0) == (item.count == 0) && item.count <= info.max_stack,
                         "invalid item stack");
-            }
-            if (value.contains("cursor")) {
-                const auto &cursor = value["cursor"];
-                require(cursor.is_array() && cursor.size() == 2, "invalid cursor stack");
-                p.cursor = {static_cast<std::uint16_t>(integer(cursor[0], 0, 4)),
-                            static_cast<std::uint8_t>(integer(cursor[1], 0, 64))};
-                require((p.cursor.block == 0) == (p.cursor.count == 0), "invalid cursor stack");
+                return item;
+            };
+            for (unsigned i = 0; i < 36; ++i)
+                p.inventory[i] = stack(inventory[i]);
+            if (value.contains("cursor"))
+                p.cursor = stack(value["cursor"]);
+            if (value.contains("armor")) {
+                const auto &armor = value["armor"];
+                require(armor.is_array() && armor.size() == 4, "invalid armor");
+                for (unsigned i = 0; i < 4; ++i) {
+                    p.armor[i] = stack(armor[i]);
+                    const auto &info = game::item_info(p.armor[i].block);
+                    require(!p.armor[i].block || (info.kind == game::ItemKind::Armor && info.armor_slot == static_cast<int>(i)),
+                            "invalid armor");
+                }
             }
             if (value.contains("attributes")) {
                 const auto &a = value["attributes"];
