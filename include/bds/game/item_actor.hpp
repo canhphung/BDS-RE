@@ -7,6 +7,7 @@
 #include "bds/world/random.hpp"
 #include "bds/world/world.hpp"
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 namespace bds::game {
@@ -38,6 +39,9 @@ struct ItemActor {
     float last_penetration = 0;     // +0x1194
     int age = 0, throw_time = 0, pickup_delay = 0, lifetime = 6000; // +0x1228 +0x122c +0x1230 +0x123c
     bool removed = false;
+    // Actor +0xc8. Updated by deferred Dimension::_tickEntityChunkMoves,
+    // not immediately when normalTick moves across a chunk boundary.
+    std::pair<int, int> owner_chunk{};
     // Replication state (SpatialActorNetworkData / Actor +0x110).
     bool added = false;
     Vec3 sent_pos, sent_motion;

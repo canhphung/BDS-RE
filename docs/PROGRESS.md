@@ -1,5 +1,16 @@
 # Progress — 2026-11-16
 
+2026-11-17 random-tick/mob handoff: **IN PROGRESS** on
+`claude/clever-newton-bboqgm`. A 200-initialized-tick original-server trace now
+records every level RNG word and caller. The first checkpoint adds a draw
+observer and reference-tested LevelChunk random coordinate selection (32
+groups, 672 positions). The next checkpoint translates GrassBlock::tick against
+160 original day/night dependency/RNG cases. A third checkpoint moves item
+ticking into the per-player owner-chunk scheduler, including the deferred owner
+transfer and nearby scan order (five original frames). Full block ticks, spawn/despawn, mobs and
+strict combat packet order are not implemented by this checkpoint. See
+[evidence and next integration requirements](../reverse/reports/RANDOM_TICKS.md).
+
 | Slice | Status | Scope |
 |---|---|---|
 | M0 bootstrap | IMPLEMENTED, UNIT_TESTED, INTEGRATION_TESTED on Linux and Windows | CMake, CLI, logger, lifecycle, native executable; Linux GCC/Clang and Windows MSVC Debug/Release build and CTest pass in native CI at 43d46b6 |

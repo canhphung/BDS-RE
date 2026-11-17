@@ -1,5 +1,72 @@
 # Reference runs of the original BDS 1.6.0.15
 
+## Draw-by-draw world-tick oracle
+
+The random-tick/mob handoff is on `claude/clever-newton-bboqgm`. For a bounded
+trace, use the safe child-process runner (GDB must support Python):
+
+```sh
+python3 tools/re/capture_level_random.py \
+  --runtime input/reference-runtime/bds \
+  --library-path input/reference-runtime/openssl-local/lib \
+  --preload input/reference-runtime/ipv6_shim.so \
+  --output input/reference/world-random-new \
+  --players A,B --ticks 200 --block-samples
+```
+
+`--output` must be new. `--gdb` can select a local GDB installation. The default
+port is 19220. For a high-subchunk reference run, add
+`--command 'setblock 0 255 0 stone'`; commands execute after all clients spawn.
+The original ignores `level-type=FLAT`, so this oracle explicitly selects flat
+LevelSettings in GDB and records that override; `--generator original` retains
+the stock setting. Algorithm instructions and RNG results are not patched.
+
+Export bounded fixtures from a full run and a high-subchunk run:
+
+```sh
+python3 tools/re/export_world_tick_reference.py \
+  tests/reference/world_ticks_bds_1.6.0.15.json \
+  input/reference/world-random-new input/reference/world-random-high
+```
+
+See [trace evidence and current implementation boundary](../../reverse/reports/RANDOM_TICKS.md).
+Startup/first-empty-tick RNG, block coordinate selection and the GrassBlock
+function below have bounded regression comparisons; full random block ticks
+and mobs remain in progress.
+
+### GrassBlock function oracle
+
+The paused-world oracle records live light/material/block queries and mutation
+requests from the original GrassBlock::tick, using a separate seeded original
+Random for every case:
+
+```sh
+python3 tools/re/capture_level_random.py \
+  --runtime input/reference-runtime/bds \
+  --library-path input/reference-runtime/openssl-local/lib \
+  --preload input/reference-runtime/ipv6_shim.so \
+  --output input/reference/grass-day-new --ticks 20 --grass-oracle \
+  --command 'fill -2 4 -2 14 10 10 air' \
+  --command 'fill 7 4 -1 9 4 1 stone' \
+  --command 'fill 7 3 7 9 3 9 dirt 1' \
+  --command 'setblock 12 4 0 grass_path' \
+  --command 'setblock 0 7 8 grass'
+```
+
+Repeat into a different `--output` directory with the same scene commands and
+an additional `--command 'time set 18000'` for night. Then:
+
+```sh
+python3 tools/re/export_grass_tick_reference.py \
+  tests/reference/grass_ticks_bds_1.6.0.15.json \
+  input/reference/grass-day-new input/reference/grass-night-new
+```
+
+`grass_tick_reference` compares all 160 cases, including the exact dependency
+call order, query positions, mutation flags and RNG words. This is a function
+comparison with original live dependency inputs; host lighting and tick scheduling
+are still pending.
+
 These tools run the original Linux server locally and talk to it with an independent protocol-282 client, for reference captures and differential checks. The original server, its libraries, worlds and full captures stay under the ignored `input/` directory.
 
 ## Running the original server
@@ -156,3 +223,15 @@ weakness, punches, clear) and `instant_effect_oracle.py` (one client: instant
 health, instant damage II) use the same console FIFO setup; their results are in
 tests/reference/effect_modifiers_bds_1.6.0.15.json, also replayed by
 `combat_reference`.
+
+## Chunk/item scheduling trace
+
+Add `--tick-order --drop-items` to `tools/re/capture_level_random.py` with two
+players and e.g. `--command 'tp A 0.5 4 15.75' --command 'tp B 32.5 4 0.5'`.
+The runner gives each client one dirt; each sends a normal drop transaction
+after receiving it. GDB records player-world lists, chunk actor lists, item
+normalTick/owner, player tick and nearby callbacks.
+`tools/re/export_chunk_order_reference.py TRACE_DIRECTORY OUT.json` retains
+five complete item frames including both player orders. Tests supply the
+recorded list order and chunk availability explicitly; this fixture does not
+pretend the missing level RNG consumers have been implemented.

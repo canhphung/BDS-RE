@@ -69,6 +69,8 @@ std::uint32_t Random::next_uint() {
     y ^= (y << 7) & 0x9d2c5680U;
     y ^= (y << 15) & 0xefc60000U;
     y ^= y >> 18;
+    if (observer_)
+        observer_(y);
     return y;
 }
 

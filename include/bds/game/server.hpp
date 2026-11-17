@@ -1,5 +1,6 @@
 #pragma once
 #include "bds/game/protocol.hpp"
+#include "bds/game/world_tick.hpp"
 #include "bds/server/access.hpp"
 #include "bds/server/properties.hpp"
 #include <deque>
@@ -17,7 +18,8 @@ class Server {
     // Level::Level seeds Level::getRandom() with the level seed (0x1c8038f);
     // the first draws shuffle the block palette (ServerLevel::ServerLevel ->
     // BlockPalette::initFromBlockDefinitions), so runtime ids match the original.
-    Server(World &world, const Properties &properties, AccessLists &access);
+    Server(World &world, const Properties &properties, AccessLists &access,
+           Random::DrawObserver random_observer = {});
     std::vector<GamePacket> prepare(const auth::Identity &identity, protocol::StartGame &game);
     std::vector<GamePacket> handle(std::uint64_t runtime, const GamePacket &packet,
                                    std::uint64_t now);
@@ -86,6 +88,8 @@ class Server {
     AccessLists &access_;
     std::map<std::uint64_t, Session> sessions_;
     std::vector<ItemActor> items_;
+    ChunkActorIndex chunk_actors_;
+    std::vector<std::uint64_t> pending_item_moves_;
     std::int64_t next_entity_id_ = 1;
     // Level::getRandom (Level +0x568): seeded with the level seed in the
     // constructor. The thread-local Random is seeded from std::random_device
@@ -94,6 +98,7 @@ class Server {
     Random actor_random_{std::random_device{}()};
     void spawn_item(World::Position block, ItemStack item);
     void tick_item(ItemActor &a);
+    void add_item(ItemActor actor);
     void touch(Session &s, ItemActor &a);
     void enqueue(std::uint64_t runtime, GamePacket packet);
     // Dimension::sendPacketForEntity (0x1d69020): players for whom the entity

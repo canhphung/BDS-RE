@@ -512,6 +512,6 @@ void Server::drop(std::uint64_t, Session &s, ItemStack stack, bool randomly) {
     const auto entity = allocate_entity_id();
     a.runtime_id = static_cast<std::uint64_t>(entity);
     a.unique_id = entity;
-    items_.push_back(a);
+    add_item(std::move(a));
 }
 } // namespace bds::game

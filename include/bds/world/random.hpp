@@ -1,6 +1,8 @@
 #pragma once
 #include <array>
 #include <cstdint>
+#include <functional>
+#include <utility>
 
 namespace bds {
 // Translation of the original `Random` class (BDS 1.6.0.15 Linux), the RNG
@@ -16,6 +18,11 @@ class Random {
     explicit Random(std::uint32_t seed);
     void set_seed(std::uint32_t seed);              // Random::setSeed / _setSeed 0x187e380
     std::uint32_t seed() const { return seed_; }
+    // Optional diagnostic hook: one notification per _genRandInt32 result,
+    // including draws made by float/gaussian/shuffle callers. It never draws
+    // from the generator itself; reseeding preserves the observer.
+    using DrawObserver = std::function<void(std::uint32_t)>;
+    void observe_draws(DrawObserver observer) { observer_ = std::move(observer); }
 
     std::uint32_t next_uint();                      // _genRandInt32 0x187e460
     std::int32_t next_int() { return static_cast<std::int32_t>(next_uint() >> 1); } // nextInt() 0x187d470
@@ -41,5 +48,6 @@ class Random {
     bool have_gaussian_ = false;
     float gaussian_ = 0.0f;
     std::int32_t initialised_ = 0;
+    DrawObserver observer_;
 };
 } // namespace bds

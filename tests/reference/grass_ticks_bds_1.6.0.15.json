@@ -1,0 +1,9257 @@
+{
+ "binary_sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+ "generator": "tools/re/gdb_grass_ticks.py + export_grass_tick_reference.py",
+ "scope": "Original server-side GrassBlock::tick dependency calls, mutation requests and raw RNG words. Live day/night light/material values recorded without replacement. Host lighting/chunk scheduler not tested.",
+ "min_brightness": 4,
+ "max_brightness": 15,
+ "sources": [
+  {
+   "oracle_sha256": "ea143c18683db996ddfef05cc916a6f693f721c93304dbc82f9fe0b381fae4b1",
+   "source_trace_sha256": "9a0c36b8947d4a6640aaca25011648551c6f59f6a9f582736efc18b40f453fac",
+   "generator_override": "flat",
+   "scene_setup_commands": [
+    "fill -2 4 -2 14 10 10 air",
+    "fill 7 4 -1 9 4 1 stone",
+    "fill 7 3 7 9 3 9 dirt 1",
+    "setblock 12 4 0 grass_path",
+    "setblock 0 7 8 grass"
+   ]
+  },
+  {
+   "oracle_sha256": "6e2718654a0a8c88d714fd403ae633237a7a65b524ca55d674ed61bc4d33df1d",
+   "source_trace_sha256": "f974f125faea41184fabf96bd085589c0e1a599bde9c46d8c314b86569290ced",
+   "generator_override": "flat",
+   "scene_setup_commands": [
+    "fill -2 4 -2 14 10 10 air",
+    "fill 7 4 -1 9 4 1 stone",
+    "fill 7 3 7 9 3 9 dirt 1",
+    "setblock 12 4 0 grass_path",
+    "setblock 0 7 8 grass",
+    "time set 18000"
+   ]
+  }
+ ],
+ "cases": [
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      4,
+      1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      3,
+      1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      1,
+      3,
+      1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      4,
+      1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      1,
+      4,
+      1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      1,
+      4,
+      1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      1,
+      3,
+      1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    2357136044,
+    2546248239,
+    3071714933
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      0
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      0
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    1791095845,
+    4282876139,
+    3093770124
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      3,
+      -1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      1,
+      3,
+      -1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      1,
+      4,
+      -1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      1,
+      4,
+      -1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      1,
+      3,
+      -1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    1872583848,
+    794921487,
+    111352301
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      0
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    2365658986,
+    303761048,
+    3041471737
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      0
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    4153361530,
+    3868139694,
+    2350344631
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      0,
+      3,
+      1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      0,
+      4,
+      1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      0,
+      3,
+      1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    953453411,
+    236996814,
+    3739766767
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3834805130,
+    4069378761,
+    1425842403
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    327741615,
+    976413892,
+    3349725721
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3751350723,
+    47736148,
+    4159850481
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      0
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      0
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    44556670,
+    1565348188,
+    2155534974
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3312796937,
+    1283169405,
+    89128932
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    774252441,
+    293375679,
+    83645520
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    662124363,
+    1916507803,
+    3178489222
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      0
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    3340206418,
+    2608511152,
+    1020231754
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      -1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      0,
+      3,
+      -1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    2207369835,
+    3959502168,
+    3320718604
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      -1
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      -1
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3645644232,
+    3494301429,
+    768352140
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      8,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    2357136044
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    1791095845
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      8,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    1872583848
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    2365658986
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    4153361530
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    953453411
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3834805130
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    327741615
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3751350723
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    44556670
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3312796937
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    774252441
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    662124363
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3340206418
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    2207369835
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      8,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3645644232
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      8,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      7,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      6,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      5,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      3,
+      9
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      1,
+      3,
+      9
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      1,
+      4,
+      9
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      1,
+      4,
+      9
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      1,
+      3,
+      9
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    2357136044,
+    2546248239,
+    3071714933
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      7,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      6,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      5,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      8
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      8
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      8
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      8
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    1791095845,
+    4282876139,
+    3093770124
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      8,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      7,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      6,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      5,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      1,
+      3,
+      7
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      1,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      1,
+      4,
+      7
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      1,
+      4,
+      7
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      1,
+      3,
+      7
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    1872583848,
+    794921487,
+    111352301
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      7,
+      8
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    2365658986,
+    303761048,
+    3041471737
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      7,
+      8
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    4153361530,
+    3868139694,
+    2350344631
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      7,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      6,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      5,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      9
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      0,
+      3,
+      9
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      0,
+      4,
+      9
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      9
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      0,
+      3,
+      9
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    953453411,
+    236996814,
+    3739766767
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      8,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      7,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      6,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      5,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      9
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      9
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      9
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      9
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      9
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3834805130,
+    4069378761,
+    1425842403
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      7,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      6,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      5,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    327741615,
+    976413892,
+    3349725721
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      7,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      6,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      5,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3751350723,
+    47736148,
+    4159850481
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      7,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      6,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      5,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      8
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      8
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      8
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      8
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    44556670,
+    1565348188,
+    2155534974
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      8,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      7,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      6,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      5,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      9
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      9
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      9
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      9
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      9
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3312796937,
+    1283169405,
+    89128932
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      8,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      7,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      6,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      5,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    774252441,
+    293375679,
+    83645520
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      7,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      6,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      5,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    662124363,
+    1916507803,
+    3178489222
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      7,
+      8
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    3340206418,
+    2608511152,
+    1020231754
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      7,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      6,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      5,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      7
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      0,
+      3,
+      7
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    2207369835,
+    3959502168,
+    3320718604
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      8,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      7,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      6,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      5,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": 0
+    },
+    {
+     "kind": "block",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 1.0
+     }
+    },
+    {
+     "kind": "brightness",
+     "position": [
+      -1,
+      4,
+      7
+     ],
+     "value": 15
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      -1,
+      3,
+      7
+     ],
+     "value": "grass",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3645644232,
+    3494301429,
+    768352140
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      9,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      9,
+      3,
+      9
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      9,
+      3,
+      9
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    2357136044,
+    2546248239,
+    3071714933
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      3,
+      8
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      7,
+      3,
+      8
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    1791095845,
+    4282876139,
+    3093770124
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      9,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      9,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      9,
+      3,
+      7
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    1872583848,
+    794921487,
+    111352301
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      3,
+      8
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    2365658986,
+    303761048,
+    3041471737
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      3,
+      8
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    4153361530,
+    3868139694,
+    2350344631
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      3,
+      9
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      8,
+      3,
+      9
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    953453411,
+    236996814,
+    3739766767
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      3,
+      9
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      7,
+      3,
+      9
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    3834805130,
+    4069378761,
+    1425842403
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      8,
+      3,
+      7
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    327741615,
+    976413892,
+    3349725721
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      7,
+      3,
+      7
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    3751350723,
+    47736148,
+    4159850481
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      3,
+      8
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      7,
+      3,
+      8
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    44556670,
+    1565348188,
+    2155534974
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      4,
+      9
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      3,
+      9
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      7,
+      3,
+      9
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    3312796937,
+    1283169405,
+    89128932
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      7,
+      3,
+      7
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    774252441,
+    293375679,
+    83645520
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      8,
+      3,
+      7
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    662124363,
+    1916507803,
+    3178489222
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      3,
+      8
+     ],
+     "value": {
+      "kind": "grass",
+      "solid": true
+     }
+    }
+   ],
+   "words": [
+    3340206418,
+    2608511152,
+    1020231754
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      8,
+      3,
+      7
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    2207369835,
+    3959502168,
+    3320718604
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      4,
+      7
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    },
+    {
+     "kind": "block",
+     "position": [
+      7,
+      3,
+      7
+     ],
+     "value": {
+      "kind": "dirt",
+      "solid": true
+     }
+    },
+    {
+     "kind": "variant",
+     "position": [
+      7,
+      3,
+      7
+     ],
+     "value": 1
+    }
+   ],
+   "words": [
+    3645644232,
+    3494301429,
+    768352140
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      12,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    2357136044
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    1791095845
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      12,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    1872583848
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    2365658986
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    4153361530
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    953453411
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3834805130
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    327741615
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3751350723
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    44556670
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3312796937
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    774252441
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    662124363
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3340206418
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    2207369835
+   ]
+  },
+  {
+   "source": 0,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 15
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      12,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3645644232
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "bright",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      8,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    2357136044
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    1791095845
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      8,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    1872583848
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    2365658986
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    4153361530
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    953453411
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3834805130
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    327741615
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3751350723
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    44556670
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3312796937
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    774252441
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    662124363
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3340206418
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    2207369835
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "covered",
+   "position": [
+    8,
+    3,
+    0
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": 0
+    },
+    {
+     "kind": "material",
+     "position": [
+      8,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      8,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3645644232
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "descent",
+   "position": [
+    0,
+    7,
+    8
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      0,
+      8,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "coarse_dirt",
+   "position": [
+    8,
+    3,
+    8
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      8,
+      4,
+      8
+     ],
+     "value": {
+      "kind": "air",
+      "solid": false
+     }
+    }
+   ],
+   "words": []
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 0,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      12,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    2357136044
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 1,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    1791095845
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 2,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      12,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    1872583848
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 3,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    2365658986
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 4,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    4153361530
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 5,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    953453411
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 6,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3834805130
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 7,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    327741615
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 8,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3751350723
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 9,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    44556670
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 10,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3312796937
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 11,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    774252441
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 12,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    662124363
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 13,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    3340206418
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 14,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    }
+   ],
+   "words": [
+    2207369835
+   ]
+  },
+  {
+   "source": 1,
+   "scene": "grass_path",
+   "position": [
+    12,
+    3,
+    0
+   ],
+   "seed": 15,
+   "calls": [
+    {
+     "kind": "brightness",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": 4
+    },
+    {
+     "kind": "block",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "kind": "grass_path",
+      "solid": false
+     }
+    },
+    {
+     "kind": "material",
+     "position": [
+      12,
+      4,
+      0
+     ],
+     "value": {
+      "liquid": false,
+      "translucency": 0.0
+     }
+    },
+    {
+     "kind": "set_block",
+     "position": [
+      12,
+      3,
+      0
+     ],
+     "value": "dirt",
+     "flags": 3
+    }
+   ],
+   "words": [
+    3645644232
+   ]
+  }
+ ]
+}
