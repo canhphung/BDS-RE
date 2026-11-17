@@ -171,13 +171,25 @@ void show(const char *what, const Seen &a, const Seen &b) {
 }
 } // namespace
 
+void modifiers(const nlohmann::json &ref);
+void instant(const nlohmann::json &ref);
+
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        std::cerr << "usage: combat_tests combat_bds_1.6.0.15.json\n";
+    if (argc != 3) {
+        std::cerr << "usage: combat_tests combat_bds_1.6.0.15.json effect_modifiers_bds_1.6.0.15.json\n";
         return 2;
     }
     std::ifstream file(argv[1]);
     const auto ref = nlohmann::json::parse(file)["steps"];
+    std::ifstream second(argv[2]);
+    try {
+        const auto steps = nlohmann::json::parse(second)["steps"];
+        modifiers(steps);
+        instant(steps);
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << '\n';
+        return 1;
+    }
     try {
         World w;
         w.configure_terrain({1, 123});
@@ -226,8 +238,25 @@ int main(int argc, char **argv) {
         run(40);
 
         // A falls 10 blocks: 7 damage.
+        const float up[3] = {pa[0], pa[1] + 10.0f, pa[2]};
+        GamePacket rise = stand(A, up);
+        rise.body[rise.body.size() - 2] = 0; // not on ground
+        server.handle(A, rise, 0);
+        run(6);
+        server.handle(A, stand(A, pa), 0);
         server.handle(A, fall(A, 10.0f), 0);
-        run(30);
+        Seen fell = relevant(server.drain(A));
+        run(1, &fell);
+        // The block-fall sound carries the block's runtime id: air is 3757 in
+        // the captured session's palette and 834 in BDS-RE's.
+        auto fell_want = reference(ref, "a_fall", "a");
+        for (auto &[id, body] : fell_want)
+            if (id == 0x18 && body.rfind("09", 0) == 0)
+                body.replace(body.find("da3a"), 4, "840d");
+        if (fell != fell_want)
+            show("fall", fell, fell_want);
+        check(fell == fell_want, "fall sounds, hurt event and health");
+        run(29);
         check(a.health == 13.0f, "fall leaves A at 13 health");
 
         // A eats a golden apple: start (flag USINGITEM), consume after 33 ticks.
@@ -388,4 +417,132 @@ int main(int argc, char **argv) {
         return 1;
     std::cout << "eating, effects, absorption, armor, combat and dropping match the original\n";
     return 0;
+}
+
+// Speed, strength, health boost and weakness given by the effect command, two
+// punches, then clearing (tests/reference/effect_modifiers_bds_1.6.0.15.json).
+void modifiers(const nlohmann::json &ref) {
+    World w;
+    w.configure_terrain({1, 123});
+    for (int cx = -1; cx <= 0; ++cx)
+        for (int cz = -1; cz <= 0; ++cz)
+            w.ensure_chunk(cx, cz);
+    Properties properties;
+    properties.difficulty = 2;
+    AccessLists access(".");
+    Server server(w, properties, access);
+    for (int i = 0; i < 10; ++i)
+        server.allocate_entity_id();
+    const std::uint64_t A = 1, B = 7;
+    const float pa[3] = {0.5f, 5.62f, 0.5f}, pb[3] = {2.5f, 5.62f, 0.5f};
+    for (auto n : {A, B}) {
+        StartGame g;
+        g.runtime_id = n;
+        g.unique_id = static_cast<std::int64_t>(n);
+        g.x = pa[0];
+        g.y = pa[1];
+        g.z = pa[2];
+        g.settings.spawn = {0, 4, 0};
+        server.prepare(identity(static_cast<unsigned>(n)), g);
+        server.handle(n, packet(PacketId::SetLocalPlayerAsInitialized, {static_cast<std::uint8_t>(n)}), 0);
+    }
+    server.handle(A, stand(A, pa), 0);
+    server.handle(B, stand(B, pb), 0);
+    const auto step = [&](const char *name, auto act, std::size_t keep_a, std::size_t keep_b) {
+        act();
+        Seen ga = relevant(server.drain(A)), gb = relevant(server.drain(B));
+        for (int t = 0; t < 2; ++t) {
+            server.tick();
+            auto ra = relevant(server.drain(A)), rb = relevant(server.drain(B));
+            ga.insert(ga.end(), ra.begin(), ra.end());
+            gb.insert(gb.end(), rb.begin(), rb.end());
+        }
+        auto wa = reference(ref, name, "a"), wb = reference(ref, name, "b");
+        wa.resize(std::min(wa.size(), keep_a));
+        wb.resize(std::min(wb.size(), keep_b));
+        // Players tick in the order of their actor addresses in the
+        // original: packets of both players in one tick are compared as a set.
+        for (auto *v : {&ga, &gb, &wa, &wb})
+            std::sort(v->begin(), v->end());
+        if (ga != wa || gb != wb) {
+            show((std::string(name) + " (A)").c_str(), ga, wa);
+            show((std::string(name) + " (B)").c_str(), gb, wb);
+        }
+        check(ga == wa && gb == wb, std::string("effect modifiers: ") + name);
+        for (int t = 0; t < 18; ++t) { // the oracle's steps are about a second apart
+            server.tick();
+            server.drain(A);
+            server.drain(B);
+        }
+    };
+    for (int t = 0; t < 40; ++t) {
+        server.tick();
+        server.drain(A);
+        server.drain(B);
+    }
+    step("effects", [&] {
+        server.give_effect(A, 1, 30, 1);
+        server.give_effect(A, 5, 30, 0);
+        server.give_effect(A, 21, 30, 0);
+    }, 5, 5);
+    step("strong_punch", [&] { server.handle(A, attack(B, 0, {}, pa, {}), 0); }, 6, 7);
+    step("weakness", [&] { server.give_effect(A, 18, 30, 0); }, 2, 2);
+    step("weak_punch", [&] { server.handle(A, attack(B, 0, {}, pa, {}), 0); }, 6, 7);
+    step("clear", [&] { server.clear_effects(A); }, 7, 7);
+}
+
+// Instant health then instant damage II (effect command, 1 second): a per-tick
+// temporal buff; the repeated harm is refused by the hurt cooldown until it
+// kills ~6 ticks later.
+void instant(const nlohmann::json &ref) {
+    World w;
+    w.configure_terrain({1, 123});
+    Properties properties;
+    properties.difficulty = 2;
+    AccessLists access(".");
+    Server server(w, properties, access);
+    for (int i = 0; i < 10; ++i)
+        server.allocate_entity_id();
+    StartGame g;
+    g.runtime_id = 1;
+    g.unique_id = 1;
+    g.x = 0.5f;
+    g.y = 5.62f;
+    g.z = 0.5f;
+    g.settings.spawn = {0, 4, 0};
+    server.prepare(identity(1), g);
+    server.handle(1, packet(PacketId::SetLocalPlayerAsInitialized, {1}), 0);
+    for (int t = 0; t < 40; ++t) {
+        server.tick();
+        server.drain(1);
+    }
+    server.handle(1, fall(1, 10.0f), 0);
+    for (int t = 0; t < 20; ++t) {
+        server.tick();
+        server.drain(1);
+    }
+    const auto watch = [&](const char *name, int ticks, bool as_set = false) {
+        Seen got = relevant(server.drain(1));
+        for (int t = 0; t < ticks; ++t) {
+            server.tick();
+            auto r = relevant(server.drain(1));
+            got.insert(got.end(), r.begin(), r.end());
+        }
+        std::erase_if(got, [](const auto &p) { return p.first == 0x18 || p.first == 0x41 || p.first == 0x09 || p.first == 0x2d; });
+        auto want = reference(ref, name, "a");
+        if (as_set) {
+            std::sort(got.begin(), got.end());
+            std::sort(want.begin(), want.end());
+        }
+        if (got != want)
+            show(name, got, want);
+        check(got == want, std::string("effect: ") + name);
+    };
+    server.give_effect(1, 6, 1, 0);
+    // The capture has the colour data before the second UpdateAttributes,
+    // although a gdb trace puts both in one tick and _sendDirtyActorData
+    // (0x21bd970) sends attributes first; compared as a set.
+    watch("instant_heal", 30, true);
+    server.give_effect(1, 7, 1, 1);
+    watch("instant_harm", 40);
 }

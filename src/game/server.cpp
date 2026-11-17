@@ -101,7 +101,9 @@ std::uint64_t Server::Session::flags() const {
     // 34, 46, 47), plus SNEAKING (1) and SPRINTING (3).
     // Bit 14 is added once the client has initialized (join capture packet 247);
     // a dead player loses it and gains INVISIBLE (bit 5).
-    if (dead)
+    // Mob::tickDeath (0x22b2970) makes the body invisible at death time 20;
+    // the dead flags go out then (instant damage capture).
+    if (dead && death_time >= 20)
         return 0xc00400080020ULL;
     std::uint64_t f = active ? 0xc00400084000ULL : 0xc00400080000ULL;
     if (sneaking)
@@ -419,7 +421,12 @@ void Server::tick_player(std::uint64_t id, Session &s) {
     // every player that knows it.
     if (s.hurt_time > 0)
         --s.hurt_time;
+    if (s.dead && ++s.death_time == 20) // Mob::tickDeath
+        s.flags_dirty = true;
     tick_attributes(id, s);
+    // Only syncable attributes go out (attack damage, knockback resistance
+    // and follow range never appear in the original's UpdateAttributes).
+    std::erase_if(s.attributes.dirty, [](int a) { return a == kAttackDamage || a == kKnockbackResistance || a == kFollowRange; });
     if (!s.attributes.dirty.empty()) {
         send_for_entity(id, packet(PacketId::UpdateAttributes,
                                    update_attributes(id, s.attributes, s.attributes.dirty)));
@@ -429,9 +436,10 @@ void Server::tick_player(std::uint64_t id, Session &s) {
         send_for_entity(id, packet(PacketId::SetActorData, actor_bounding_box(id, 0.2f, 0.2f)));
     if (s.flags_dirty)
         send_for_entity(id, packet(PacketId::SetActorData, actor_flags(id, s.flags())));
-    if (s.effect_data_dirty)
-        send_for_entity(id, packet(PacketId::SetActorData, effect_data(id, s.effect_color, false)));
-    s.flags_dirty = s.death_data_dirty = s.effect_data_dirty = false;
+    if (s.effect_keys)
+        send_for_entity(id, packet(PacketId::SetActorData, effect_data(id, s.effect_color, false, s.effect_keys)));
+    s.flags_dirty = s.death_data_dirty = false;
+    s.effect_keys = 0;
     // Mob::tickEffects (0x22b2050) after the dirty data went out.
     tick_effects(id, s);
     const float before[3] = {p.x, p.y, p.z};
@@ -713,12 +721,18 @@ void Server::actually_hurt(std::uint64_t id, Session &s, int cause, int damage) 
         // armor item (ItemInstance::hurtAndBreak), then HurtArmorPacket with
         // the full damage to the player itself (ServerPlayer::hurtArmor 0x25fb150).
         const int wear = std::max(1, damage / 4);
+        bool broke = false;
         for (auto &piece : p.armor)
             if (piece.block && item_info(piece.block).max_damage > 0) {
                 piece.aux = static_cast<std::int16_t>(piece.aux + wear);
-                if (piece.aux > item_info(piece.block).max_damage)
+                if (piece.aux > item_info(piece.block).max_damage) {
                     piece = {};
+                    broke = true;
+                }
             }
+        // Mob::sendArmor (0x22bdcd0) through the level's packet sender.
+        if (broke)
+            broadcast(packet(PacketId::MobArmorEquipment, armor_equipment(id, p)));
         enqueue(id, packet(PacketId::HurtArmor, hurt_armor(damage)));
         int armor = 0; // Mob::getArmorValue (0x22bd000)
         for (const auto &piece : p.armor)
@@ -810,8 +824,24 @@ void Server::cause_fall_damage(std::uint64_t id, Session &s, float distance) {
     // Mob::causeFallDamage (0x22b5190): ceil(distance * fall_damage - 3 - jump boost).
     const float scaled = s.attributes[kFallDamage] * distance - 3.0f - 0.0f;
     const float damage = static_cast<float>(std::ceil(static_cast<double>(scaled)));
-    if (damage > 0.0f)
+    if (damage > 0.0f) {
+        // Actor::playSynchronizedSound at getAttachPos(0) (the feet): FALL_BIG
+        // (24) above 4 damage, else FALL_SMALL (25), extra -1; then the hurt;
+        // then the block-fall sound (9) with the runtime id of the block 0.2
+        // below the feet (Level::broadcastSoundEvent reaches every client).
+        const auto &p = world_.players().at(s.key);
+        constexpr float height_offset = std::bit_cast<float>(0x3fcf5c7du);
+        const Vec3 feet{p.x, p.y - height_offset, p.z};
+        broadcast(packet(PacketId::LevelSoundEvent, level_sound(damage <= 4.0f ? 25 : 24, feet, -1, 319)));
         hurt(id, s, 5, static_cast<int>(damage)); // ActorDamageCause FALL
+        const World::Position under{static_cast<int>(std::floor(p.x)),
+                                    static_cast<int>(std::floor(p.y + -0.2f - height_offset)),
+                                    static_cast<int>(std::floor(p.z))};
+        const int y = std::get<1>(under);
+        const BlockId block = y >= 0 && y < 256 ? world_.block(under) : 0;
+        broadcast(packet(PacketId::LevelSoundEvent,
+                         level_sound(9, feet, static_cast<int>(block_runtime_id(block)), 319)));
+    }
 }
 void Server::die(std::uint64_t id, Session &s, int cause) {
     // ServerPlayer::die -> Player::die (0x22ec9b0) -> Mob::die (0x22b4a00), as
@@ -862,7 +892,7 @@ void Server::die(std::uint64_t id, Session &s, int cause) {
                        respawn_position(static_cast<float>(spawn.x) + 0.5f, static_cast<float>(spawn.y) + kSpawnEyeOffset,
                                         static_cast<float>(spawn.z) + 0.5f)));
     s.death_data_dirty = true;
-    s.flags_dirty = true;
+    s.death_time = 0;
 }
 void Server::respawn(std::uint64_t id, Session &s) {
     // PlayerAction 7 for a dead player (0x182d4b3): ActorEvent RESPAWN,
@@ -875,9 +905,7 @@ void Server::respawn(std::uint64_t id, Session &s) {
     // Player::resetPos (0x22eba90): motion cleared, Mob::removeAllEffects
     // (REMOVE packets) before the respawn event, fall distance 0.
     s.motion[0] = s.motion[1] = s.motion[2] = 0.0f;
-    for (std::size_t e = 1; e < s.effects.size(); ++e)
-        if (s.effects[e].id)
-            remove_effect(id, s, static_cast<int>(e));
+    remove_all_effects(id, s);
     s.fall_distance = 0.0f;
     s.using_item = {}; // INFERRED: the item in use is dropped with everything else
     send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 18, 0)));
@@ -978,6 +1006,28 @@ void Server::tick() {
         if (s.active)
             tick_player(id, s);
     std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
+    // Level::tick (0x1c86000) then shuffles its active-player list with the
+    // level Random (std::shuffle with libstdc++'s classic Fisher-Yates and
+    // uniform_int_distribution over Random::operator() = _genRandInt32). The
+    // list orders chunk ticking around players, which BDS-RE does not have,
+    // but the draws advance the level Random. (Players themselves tick in
+    // the order of their Actor addresses, Level::tickEntities' SmallSet.)
+    std::erase_if(player_order_, [&](std::uint64_t id) {
+        const auto found = sessions_.find(id);
+        return found == sessions_.end() || !found->second.active;
+    });
+    for (auto &[id, s] : sessions_)
+        if (s.active && std::find(player_order_.begin(), player_order_.end(), id) == player_order_.end())
+            player_order_.push_back(id);
+    for (std::size_t i = 1; i < player_order_.size(); ++i) {
+        const std::uint64_t range = 0xffffffffULL, buckets = i + 1, scaling = range / buckets,
+                            past = buckets * scaling;
+        std::uint64_t r;
+        do
+            r = level_random_.next_uint();
+        while (r >= past);
+        std::swap(player_order_[i], player_order_[r / scaling]);
+    }
     for (auto &[id, s] : sessions_)
         if (s.active)
             update_nearby(id, s);
@@ -1239,11 +1289,7 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             case 10: // StopSprint
                 // Status flag 3 and the +30% minecraft:movement modifier
                 // (0.1 -> 0.13); both go out as dirty data at the next tick.
-                if (s.sprinting != (action == 9)) {
-                    s.sprinting = action == 9;
-                    s.flags_dirty = true;
-                    s.attributes.set(kMovement, s.sprinting ? 0.13f : 0.1f);
-                }
+                set_sprinting(s, action == 9);
                 break;
             case 11: // StartSneak: Mob::setSneaking -> status flag 1; not relayed
             case 12: // StopSneak

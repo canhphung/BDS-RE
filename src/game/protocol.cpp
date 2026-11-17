@@ -486,18 +486,22 @@ Bytes animate(int action, std::uint64_t runtime) {
     out.varint64(runtime);
     return out.take();
 }
-Bytes effect_data(std::uint64_t runtime, std::int32_t color, bool ambient) {
-    // Mob::updateInvisibilityStatus marks keys 8 (potion colour, int) and
-    // 9 (potion ambient, byte) dirty.
+Bytes effect_data(std::uint64_t runtime, std::int32_t color, bool ambient, unsigned keys) {
+    // Mob::updateInvisibilityStatus / removeEffectParticles: keys 8 (potion
+    // colour, int) and 9 (potion ambient, byte), whichever are dirty.
     ByteWriter out;
     out.varint64(runtime);
-    out.varint(2);
-    out.varint(8);
-    out.varint(2);
-    out.signed_varint(color);
-    out.varint(9);
-    out.varint(0);
-    out.byte(ambient ? 1 : 0);
+    out.varint((keys & 1) + (keys >> 1 & 1));
+    if (keys & 1) {
+        out.varint(8);
+        out.varint(2);
+        out.signed_varint(color);
+    }
+    if (keys & 2) {
+        out.varint(9);
+        out.varint(0);
+        out.byte(ambient ? 1 : 0);
+    }
     return out.take();
 }
 Bytes item_actor_data(std::uint64_t runtime) {

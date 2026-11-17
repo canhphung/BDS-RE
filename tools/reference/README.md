@@ -150,3 +150,9 @@ change), B wears an iron helmet, A hits B with a diamond sword, B sprint-hits A,
 B gets poison, A drops a spider eye. tests/reference/combat_bds_1.6.0.15.json is
 the original's result (packets of other actors and chunk traffic removed); the
 `combat_reference` test replays the scenario on BDS-RE.
+
+`effect_modifier_oracle.py` (two clients: speed, strength, health boost,
+weakness, punches, clear) and `instant_effect_oracle.py` (one client: instant
+health, instant damage II) use the same console FIFO setup; their results are in
+tests/reference/effect_modifiers_bds_1.6.0.15.json, also replayed by
+`combat_reference`.

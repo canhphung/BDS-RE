@@ -10,6 +10,8 @@ struct EffectBuff {
     int interval = 0;        // ShiftedDurationAmplifier base: applied every max(1, interval >> amp) ticks; 0: none
     float multiply = 0;      // MultiplyValueAmplifier: amount = multiply * (amp + 1); 0: none
     bool instant = false;    // InstantaneousAttributeBuff (absorption)
+    int shifted = 0;         // ShiftedValueAmplifier base (instant health/harm); 0: none
+    float shifted_scale = 0; // ShiftedValueAmplifier scale
 };
 struct EffectInfo {
     int id;

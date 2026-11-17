@@ -102,7 +102,7 @@ Bytes level_sound(int sound, Vec3 pos, int extra, int entity_type, bool baby = f
 Bytes set_last_hurt_by(int actor_type);
 Bytes hurt_armor(int damage);
 Bytes animate(int action, std::uint64_t runtime);
-Bytes effect_data(std::uint64_t runtime, std::int32_t color, bool ambient); // SetActorData keys 8, 9
+Bytes effect_data(std::uint64_t runtime, std::int32_t color, bool ambient, unsigned keys = 3); // SetActorData keys 8 (bit 0), 9 (bit 1)
 // Per-tick replication of an added item (MoveActorDelta, SetActorMotion).
 std::vector<GamePacket> replicate(ItemActor &a);
 } // namespace bds::game

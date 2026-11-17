@@ -8,16 +8,15 @@ namespace {
 // (+0xb8, MultiplyValueAmplifier scale) and duration amplifier (+0xc8,
 // ShiftedDurationAmplifier base). Attribute modifiers (speed, slowness,
 // strength, weakness, health boost) and the instantaneous effects are not
-// modelled; the original's ShiftedValueAmplifier buffs of instant health and
-// harm are left out.
+// modelled; instant health and harm use ShiftedValueAmplifier (base << amplifier).
 const EffectInfo table[] = {
     {1, {std::bit_cast<float>(0x3ef8f8f9u), std::bit_cast<float>(0x3f2fafb0u), std::bit_cast<float>(0x3f46c6c7u), std::bit_cast<float>(0x3f800000u)}, false, {}}, // MobEffect 1
     {2, {std::bit_cast<float>(0x3eb4b4b5u), std::bit_cast<float>(0x3ed8d8d9u), std::bit_cast<float>(0x3f018182u), std::bit_cast<float>(0x3f800000u)}, true, {}}, // MobEffect 2
     {3, {std::bit_cast<float>(0x3f59d9dau), std::bit_cast<float>(0x3f40c0c1u), std::bit_cast<float>(0x3e868687u), std::bit_cast<float>(0x3f800000u)}, false, {}}, // MobEffect 3
     {4, {std::bit_cast<float>(0x3e949495u), std::bit_cast<float>(0x3e848485u), std::bit_cast<float>(0x3db8b8b9u), std::bit_cast<float>(0x3f800000u)}, true, {}}, // MobEffect 4
     {5, {std::bit_cast<float>(0x3f139394u), std::bit_cast<float>(0x3e109091u), std::bit_cast<float>(0x3e0c8c8du), std::bit_cast<float>(0x3f800000u)}, false, {}}, // AttackDamageMobEffect 5
-    {6, {std::bit_cast<float>(0x3f78f8f9u), std::bit_cast<float>(0x3e109091u), std::bit_cast<float>(0x3e0c8c8du), std::bit_cast<float>(0x3f800000u)}, false, {}}, // InstantaneousMobEffect 6
-    {7, {std::bit_cast<float>(0x3e868687u), std::bit_cast<float>(0x3d20a0a1u), std::bit_cast<float>(0x3d109091u), std::bit_cast<float>(0x3f800000u)}, true, {}}, // InstantaneousMobEffect 7
+    {6, {std::bit_cast<float>(0x3f78f8f9u), std::bit_cast<float>(0x3e109091u), std::bit_cast<float>(0x3e0c8c8du), std::bit_cast<float>(0x3f800000u)}, false, {kHealth, 10.0f, 3, 0, 0.0f, false, 4, 1.0f}}, // InstantaneousMobEffect 6
+    {7, {std::bit_cast<float>(0x3e868687u), std::bit_cast<float>(0x3d20a0a1u), std::bit_cast<float>(0x3d109091u), std::bit_cast<float>(0x3f800000u)}, true, {kHealth, -10.0f, 4, 0, 0.0f, false, 6, -1.0f}}, // InstantaneousMobEffect 7
     {8, {std::bit_cast<float>(0x3e088889u), std::bit_cast<float>(0x3f800000u), std::bit_cast<float>(0x3e989899u), std::bit_cast<float>(0x3f800000u)}, false, {}}, // MobEffect 8
     {9, {std::bit_cast<float>(0x3eaaaaabu), std::bit_cast<float>(0x3de8e8e9u), std::bit_cast<float>(0x3e949495u), std::bit_cast<float>(0x3f800000u)}, true, {}}, // MobEffect 9
     {10, {std::bit_cast<float>(0x3f4dcdceu), std::bit_cast<float>(0x3eb8b8b9u), std::bit_cast<float>(0x3f2babacu), std::bit_cast<float>(0x3f800000u)}, false, {kHealth, 1.0f, 3, 50, 0.0f, false}}, // MobEffect 10

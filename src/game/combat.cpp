@@ -61,19 +61,49 @@ void Server::set_sprinting(Session &s, bool sprinting) {
         return;
     s.sprinting = sprinting;
     s.flags_dirty = true;
-    s.attributes.set(kMovement, sprinting ? 0.13f : 0.1f);
+    // The SPRINT_SPEED_BOOST modifier: +30% total on minecraft:movement.
+    if (sprinting)
+        s.attributes.add_modifier(kMovement, {kSprintModifier, 0.3f, 2, 2});
+    else
+        s.attributes.remove_modifier(kMovement, kSprintModifier);
 }
 
 // --- Effects ---------------------------------------------------------------
 
+namespace {
+// The attribute modifier of an effect (MobEffect +0xf0, dumped under gdb):
+// attribute, base amount, operation, operand. The amount applied is
+// MobEffect::getAttributeModifierValue = base * (amplifier + 1);
+// AttackDamageMobEffect (0x1b180d0) uses 1.3 (strength) or -0.5 (weakness)
+// instead of the stored base.
+struct EffectModifier {
+    int effect, attribute;
+    float base;
+    int operation, operand;
+};
+constexpr EffectModifier kEffectModifiers[] = {
+    {1, kMovement, 0.2f, 2, 2},       // speed
+    {2, kMovement, -0.15f, 2, 2},     // slowness
+    {5, kAttackDamage, 1.3f, 2, 2},   // strength
+    {18, kAttackDamage, -0.5f, 0, 2}, // weakness
+    {21, kHealth, 4.0f, 0, 1},        // health boost: the maximum
+};
+} // namespace
+
 void Server::apply_effect(std::uint64_t id, Session &s, const Session::Effect &e) {
-    // MobEffect::applyEffects (0x1b0fb90); AbsorptionMobEffect::applyEffects
-    // (0x1b183f0) first resets absorption to its default.
+    // MobEffect::applyEffects (0x1b0fb90): buffs, then modifiers;
+    // AbsorptionMobEffect::applyEffects (0x1b183f0) first resets absorption.
     if (s.dead)
         return;
+    const auto modifiers = [&] {
+        for (const auto &m : kEffectModifiers)
+            if (m.effect == e.id)
+                s.attributes.add_modifier(m.attribute,
+                                          {e.id, m.base * static_cast<float>(e.amplifier + 1), m.operation, m.operand});
+    };
     const auto *info = effect_info(e.id);
     if (!info || info->buff.attribute < 0)
-        return;
+        return modifiers();
     const auto &b = info->buff;
     if (e.id == kAbsorptionEffect) {
         auto &v = s.attributes.values[kAbsorption];
@@ -84,7 +114,7 @@ void Server::apply_effect(std::uint64_t id, Session &s, const Session::Effect &e
         // _createInstantBuff: amount from the value amplifier (scale 1).
         const float amount = b.multiply != 0.0f ? b.multiply * static_cast<float>(e.amplifier + 1) : b.base;
         add_buff(id, s, b.attribute, amount, b.type);
-        return;
+        return modifiers();
     }
     // _createTemporalBuff (0x1b0ff70): TemporalAttributeBuff(base, duration),
     // amount base / duration, or base once a duration amplifier is set.
@@ -96,7 +126,10 @@ void Server::apply_effect(std::uint64_t id, Session &s, const Session::Effect &e
     t.amplification = e.amplifier;
     t.interval = b.interval;
     t.multiply = b.multiply;
+    t.shifted = b.shifted;
+    t.shifted_scale = b.shifted_scale;
     s.attributes.temporal[static_cast<std::size_t>(b.attribute)].push_back(t); // addBuff: push_back
+    modifiers();
 }
 
 void Server::remove_effect_buffs(std::uint64_t, Session &s, int effect) {
@@ -104,6 +137,9 @@ void Server::remove_effect_buffs(std::uint64_t, Session &s, int effect) {
     // AbsorptionMobEffect::removeEffects (0x1b18390) resets absorption.
     for (auto &list : s.attributes.temporal)
         std::erase_if(list, [&](const TemporalBuff &b) { return b.effect == effect; });
+    for (const auto &m : kEffectModifiers)
+        if (m.effect == effect)
+            s.attributes.remove_modifier(m.attribute, effect);
     if (effect == kAbsorptionEffect) {
         auto &v = s.attributes.values[kAbsorption];
         v.value = v.fallback;
@@ -151,6 +187,34 @@ void Server::remove_effect(std::uint64_t id, Session &s, int effect) {
     broadcast(packet(PacketId::MobEffect, mob_effect(id, 3, effect, 0, false, 0)));
 }
 
+bool Server::give_effect(std::uint64_t runtime, int effect, int seconds, int amplifier) {
+    const auto found = sessions_.find(runtime);
+    if (found == sessions_.end() || !found->second.active)
+        return false;
+    add_effect(runtime, found->second, effect, seconds * 20, amplifier);
+    return true;
+}
+bool Server::clear_effects(std::uint64_t runtime) {
+    const auto found = sessions_.find(runtime);
+    if (found == sessions_.end() || !found->second.active)
+        return false;
+    remove_all_effects(runtime, found->second);
+    return true;
+}
+
+void Server::remove_all_effects(std::uint64_t id, Session &s) {
+    // Mob::removeAllEffects (0x22b1580): removeEffectParticles (data 8 and 9
+    // to 0, dirty only where they change; 9 is never set here), every effect
+    // removed in id order, removeEffectParticles again.
+    if (s.effect_color != 0) {
+        s.effect_color = 0;
+        s.effect_keys |= 1;
+    }
+    for (std::size_t e = 1; e < s.effects.size(); ++e)
+        if (s.effects[e].id)
+            remove_effect(id, s, static_cast<int>(e));
+}
+
 void Server::tick_effects(std::uint64_t id, Session &s) {
     // Mob::tickEffects (0x22b2050): MobEffectInstance::tick counts the
     // duration down and the effect is removed when it reaches 0.
@@ -188,7 +252,7 @@ void Server::tick_effects(std::uint64_t id, Session &s) {
                                          (static_cast<std::uint32_t>(ch[1]) << 8) + static_cast<std::uint32_t>(ch[2]));
     }
     s.effect_color = argb;
-    s.effect_data_dirty = true;
+    s.effect_keys = 3; // set, then markDirty(9) and markDirty(8)
     s.effects_dirty = false;
 }
 

@@ -17,6 +17,12 @@ class Server {
     std::vector<GamePacket> handle(std::uint64_t runtime, const GamePacket &packet,
                                    std::uint64_t now);
     std::vector<GamePacket> drain(std::uint64_t runtime);
+    // What the `effect <player> <effect> <seconds> <amplifier>` and
+    // `effect <player> clear` commands do to a player (EffectCommand:
+    // Mob::addEffect with seconds * 20 ticks, Mob::removeAllEffects).
+    // Returns false for an unknown runtime id.
+    bool give_effect(std::uint64_t runtime, int effect, int seconds, int amplifier);
+    bool clear_effects(std::uint64_t runtime);
     std::optional<std::pair<int, int>> center(std::uint64_t runtime) const;
     void leave(std::uint64_t runtime);
     // One level tick: item entities (ItemActor::normalTick, replication) and
@@ -48,6 +54,7 @@ class Server {
         Attributes attributes;
         int hurt_time = 0, last_hurt = 0;
         bool dead = false, death_data_dirty = false;
+        int death_time = 0; // Mob +0x11d8
         float motion[3] = {0, 0, 0}; // Actor +0xa0, set by MovePlayer to the move delta
         int feature_timer = 0;                    // ServerPlayer +0x1b5c
         // Mob +0x1248 effects indexed by id (id 0: none), +0x1359 dirty.
@@ -56,7 +63,8 @@ class Server {
             bool ambient = false, visible = true;
         };
         std::array<Effect, 28> effects{};
-        bool effects_dirty = false, effect_data_dirty = false;
+        bool effects_dirty = false;
+        unsigned effect_keys = 0; // dirty synched data: bit 0 key 8 (colour), bit 1 key 9 (ambient)
         std::int32_t effect_color = 0; // synched data 8
         // Player +0x1808 item in use and +0x1878 its duration (status flag 4).
         ItemStack using_item;
@@ -99,6 +107,7 @@ class Server {
     // Effects (Mob::addEffect 0x22b0630, tickEffects 0x22b2050).
     void add_effect(std::uint64_t id, Session &s, int effect, int duration, int amplifier);
     void remove_effect(std::uint64_t id, Session &s, int effect);
+    void remove_all_effects(std::uint64_t id, Session &s);
     void apply_effect(std::uint64_t id, Session &s, const Session::Effect &e);
     void remove_effect_buffs(std::uint64_t id, Session &s, int effect);
     void tick_effects(std::uint64_t id, Session &s);
@@ -119,6 +128,7 @@ class Server {
     void update_nearby(std::uint64_t id, Session &s);
     std::vector<std::pair<int, int>> ticking_offsets() const;
     std::set<std::uint64_t> fresh_items_; // added to the level this tick
+    std::vector<std::uint64_t> player_order_; // Level +0x50 active players, shuffled every tick
     void broadcast(GamePacket packet, std::uint64_t exclude = 0);
     bool collides(const PlayerData &p) const;
     bool reach(const PlayerData &p, World::Position block) const;

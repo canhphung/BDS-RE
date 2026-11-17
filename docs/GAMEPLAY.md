@@ -200,12 +200,16 @@ Translated from the original and checked byte for byte against
   the food level, saturation + nutrition * modifier * 2, one item less, the
   burp sound, and a bowl for stews.
 - Effects: MobEffect ADD/MODIFY/REMOVE go to every client; the durations count
-  down per tick. Regeneration, poison (never below 1 health), wither, hunger and
-  saturation are timed attribute buffs (AttributeInstance::tick), absorption
-  resets and adds 4 per level, resistance reduces damage by 20% per level. The
-  particle colour (actor data 8/9) is the original's average. Speed, slowness,
-  strength/weakness modifiers, health boost and the instant effects are not
-  modelled (no food grants them).
+  down per tick. Regeneration, poison (never below 1 health), wither, hunger,
+  saturation and instant health/damage are timed attribute buffs
+  (AttributeInstance::tick; instant damage repeats are refused by the hurt
+  cooldown), absorption resets and adds 4 per level, resistance reduces damage
+  by 20% per level. Speed, slowness, strength, weakness and health boost are
+  attribute modifiers (recomputed from the defaults: additions, base and total
+  multipliers); sprinting uses the same mechanism. The particle colour (actor
+  data 8/9) is the original's average; removing all effects first clears it
+  (two SetActorData packets, as the original). `Server::give_effect` /
+  `clear_effects` do what the `effect` command does (no command parser yet).
 - Armor: worn by using it or through the armor container (window 120); the
   armor value reduces damage (Mob::getDamageAfterArmorAbsorb with the 1/25
   remainders), every hit wears each piece by max(1, damage / 4) and the victim
@@ -218,12 +222,21 @@ Translated from the original and checked byte for byte against
   hurt. Transactions whose predicted inventory changes differ from the server's
   get the inventories resent, as in the original.
 - Dropping (Q) throws the item forward (Player::drop) with pickup delay 40.
-- Deviations: the server does not simulate player physics, so the motion a
-  knockback starts from is the last tick's movement (the original's differs by
-  a few thousandths) and the collision move after a sprint push is not applied;
-  the throw of dropped items and the knockback resistance roll use the shared
-  thread-local Random instead of each player's own; sounds other than the
-  attack and burp sounds (hurt, fall, equip, break) are not sent.
+- Motion: a player's motion is the MovePlayer delta until the interpolator
+  steps (then zero); knockback uses mce::Math's fastInvSqrt and a sprint push
+  runs Actor::move with the player's box, so the SetActorMotion packets match
+  the original byte for byte. Each player has its own Random (drop throws,
+  knockback roll), seeded like the original's from std::random_device.
+- Sounds: fall damage sends FALL_BIG/FALL_SMALL and the block-fall sound,
+  attacks ATTACK_STRONG/NODAMAGE, eating the burp; equip, armor and tool break
+  sounds are Level::playSound in the original, which reaches only level
+  listeners and sends nothing on a dedicated server. A broken armor piece
+  re-broadcasts MobArmorEquipment.
+- Death: the dead flags go out when the death animation ends (death time 20);
+  respawning (Player::resetPos) removes all effects first.
+- Order: the original ticks players in the order of their actor addresses
+  (not reproducible) and shuffles its player list with the level Random every
+  tick; BDS-RE ticks by runtime id and performs the same shuffle draws.
 
 ## Persistence
 
