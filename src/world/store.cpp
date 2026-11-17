@@ -43,7 +43,7 @@ std::uint32_t crc32(std::span<const std::uint8_t> bytes) {
 } // namespace
 
 std::vector<std::uint8_t> WorldStore::encode(const World &world) {
-    const bool extended = world.terrain_.kind != 0 || !world.players_.empty();
+    const bool extended = world.terrain_.kind != 0 || !world.players_.empty() || !world.water_ticks_.empty();
     std::vector<std::uint8_t> records;
     std::size_t count = 0, sections = 0;
     const auto record = [&](World::Position position, BlockId block) {
@@ -87,6 +87,17 @@ std::vector<std::uint8_t> WorldStore::encode(const World &world) {
             const auto [x, y, z] = position;
             metadata["edits"].push_back({x, y, z, id});
         }
+        metadata["water_ticks"] = Json::array();
+        metadata["water_clocks"] = Json::array();
+        for (const auto &[chunk, queue] : world.water_ticks_) {
+            metadata["water_clocks"].push_back({chunk.first, chunk.second, queue.clock});
+            // Preserve heap layout, including duplicate positions.
+            for (const auto &tick : queue.heap) {
+                const auto [x, y, z] = tick.position;
+                metadata["water_ticks"].push_back({x, y, z, tick.due, tick.serial});
+            }
+        }
+        metadata["water_sequence"] = world.water_sequence_;
         require(world.players_.size() <= 1024, "player limit exceeded");
         for (const auto &[key, p] : world.players_) {
             // [item, count] or [item, count, damage] for a damaged item.
@@ -153,7 +164,8 @@ World WorldStore::decode(std::span<const std::uint8_t> bytes, Limits limits) {
         auto column = world.columns_.find(key);
         const auto before =
             column == world.columns_.end() ? 0 : column->second.allocated_sections();
-        world.set_block(position, block);
+        world.set_block(position, block,
+                        0); // restoring must not wake adjacent still water
         sections += world.columns_.at(key).allocated_sections() - before;
         require(sections <= limits.max_sections, "world snapshot section limit exceeded");
     }
@@ -261,6 +273,49 @@ World WorldStore::decode(std::span<const std::uint8_t> bytes, Limits limits) {
                 p.exhaustion = ranged(a[3], 4);
             }
             world.players_.emplace(it.key(), p);
+        }
+        // Optional host queue metadata keeps older snapshots readable.
+        if (metadata.contains("water_ticks")) {
+            const auto &ticks = metadata.at("water_ticks");
+            require(ticks.is_array() && ticks.size() <= 1'000'000, "invalid water tick queue");
+            require(metadata.at("water_sequence").is_number_unsigned(), "invalid water sequence");
+            world.water_sequence_ = metadata.at("water_sequence").get<std::uint64_t>();
+            world.water_ticks_.clear();
+            std::set<std::uint64_t> orders;
+            const auto &clocks = metadata.at("water_clocks");
+            require(clocks.is_array() && clocks.size() <= 1'000'000, "invalid water clocks");
+            for (const auto &clock : clocks) {
+                require(clock.is_array() && clock.size() == 3 && clock[0].is_number_integer() &&
+                            clock[1].is_number_integer() && clock[2].is_number_unsigned(),
+                        "invalid water clock");
+                const int x = static_cast<int>(integer(clock[0], INT32_MIN / 16, INT32_MAX / 16));
+                const int z = static_cast<int>(integer(clock[1], INT32_MIN / 16, INT32_MAX / 16));
+                require(clock[2].get<std::uint64_t>() <= world.age_,
+                        "water clock exceeds world age");
+                require(world.water_ticks_
+                            .emplace(std::pair{x, z},
+                                     World::WaterQueue{clock[2].get<std::uint64_t>(), {}})
+                            .second,
+                        "duplicate water clock");
+            }
+            for (const auto &tick : ticks) {
+                require(tick.is_array() && tick.size() == 5, "invalid water tick");
+                const int x = static_cast<int>(integer(tick[0], INT32_MIN, INT32_MAX));
+                const int y = static_cast<int>(integer(tick[1], 0, 255));
+                const int z = static_cast<int>(integer(tick[2], INT32_MIN, INT32_MAX));
+                require(tick[3].is_number_unsigned() && tick[4].is_number_unsigned(),
+                        "invalid water deadline/order");
+                const auto due = tick[3].get<std::uint64_t>(), order = tick[4].get<std::uint64_t>();
+                require(order < world.water_sequence_ && orders.insert(order).second,
+                        "duplicate water tick order");
+                const auto queue =
+                    world.water_ticks_.find({chunk_coordinate(x), chunk_coordinate(z)});
+                require(queue != world.water_ticks_.end(), "missing water clock");
+                auto &heap = queue->second.heap;
+                heap.push_back(World::WaterTick{{x, y, z}, due, order});
+                require(heap.size() == 1 || heap[(heap.size() - 2) / 2].due <= due,
+                        "invalid water heap");
+            }
         }
     }
     return world; // Caller replaces live state only after complete validation.

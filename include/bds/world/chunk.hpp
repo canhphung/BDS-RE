@@ -12,9 +12,22 @@ namespace bds {
 using BlockId = std::uint16_t;
 // Stable internal block indices; item indices have a separate registry.
 constexpr BlockId kStillWater = 5, kStillLava = 6;
-constexpr bool block_has_collision(BlockId id) { return id != 0 && id != kStillWater && id != kStillLava; }
+constexpr bool is_flowing_water(BlockId id) { return id >= 7 && id <= 22; }
+constexpr bool is_water(BlockId id) { return id == kStillWater || (id >= 7 && id <= 37); }
+constexpr int water_depth(BlockId id) {
+    return id == kStillWater      ? 0
+           : is_flowing_water(id) ? id - 7
+           : id >= 23 && id <= 37 ? id - 22
+                                  : -1;
+}
+constexpr BlockId water_block(unsigned depth, bool flowing = true) {
+    if (depth > 15)
+        throw std::out_of_range("invalid liquid depth");
+    return static_cast<BlockId>(flowing ? 7 + depth : depth ? 22 + depth : kStillWater);
+}
+constexpr bool block_has_collision(BlockId id) { return id != 0 && !is_water(id) && id != kStillLava; }
 constexpr unsigned block_opacity(BlockId id) {
-    return id == 0 ? 0 : id == kStillWater ? 2 : id == kStillLava ? 14 : 15;
+    return id == 0 ? 0 : is_water(id) ? 2 : id == kStillLava ? 14 : 15;
 }
 
 // C++ division truncates toward zero; chunk coordinates need floor division.
@@ -60,7 +73,7 @@ public:
             // Direct-sky writes cover the half-open interval between old and
             // new heights (0x1de1f46..0x1de2037). Consequently removing y=255
             // does not reseed that cell as direct sky; lateral light is 14.
-            // This palette's non-air blocks all have opacity 15.
+            // All supported non-air blocks have nonzero opacity.
             const auto column=z*16+x;
             const unsigned old_height=heightmap_[column];
             unsigned next=old_height;
@@ -117,4 +130,4 @@ private:
     std::array<std::uint16_t,256> heightmap_{};
     std::array<std::bitset<256>,256> direct_sky_;
 };
-}
+} // namespace bds

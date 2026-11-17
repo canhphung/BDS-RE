@@ -364,7 +364,9 @@ std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
         // Block::playerDestroy (0x1e558a0) runs only when Player::canDestroy
         // holds (stone by hand drops nothing) and calls spawnResources: grass
         // and dirt drop one dirt item entity.
-        spawn_item(b, {3, 1});
+        // LiquidBlock::getResourceCount (0x1e8f2c0) returns zero. Internal
+        // liquid indices must never be treated as item/block drop indices.
+        if (!is_water(id) && id != kStillLava) spawn_item(b, {3, 1});
         // Block::playerDestroy ends with Player::causeFoodExhaustion(EXHAUSTION_MINE).
         cause_food_exhaustion(s.game.runtime_id, s, 0.025f);
     }
@@ -386,6 +388,7 @@ void Server::add_item(ItemActor actor) {
     items_.push_back(std::move(actor));
 }
 void Server::tick_item(ItemActor &a) {
+    update_water_current(a, world_); // Actor::updateWaterState, before normalTick
     normal_tick(a, world_, [this](ItemActor &self) {
         // ItemActor::_mergeWithNeighbours (0x23feee0): items whose box meets
         // the box grown by 0.5 on every axis; Level::broadcastEntityEvent
@@ -1373,8 +1376,8 @@ class Server::Senses final : public MobSenses {
     void float_jump() override {
         mob_.jump_control.jump();
         const auto p = mob_.pos;
-        if (mob_.rider && s_.world_.block({int(std::floor(p.x)), int(std::floor(p.y + mob_.height * 0.85f)),
-                                           int(std::floor(p.z))}) == kStillWater)
+        if (mob_.rider && is_water(s_.world_.block({int(std::floor(p.x)), int(std::floor(p.y + mob_.height * 0.85f)),
+                                           int(std::floor(p.z))})))
             s_.dismount(*mob_.rider);
     }
     bool navigation_done() const override { return mob_.navigation.done(); }
@@ -1412,6 +1415,7 @@ class Server::Senses final : public MobSenses {
     MobActor &mob_;
 };
 void Server::tick_mob(MobActor &mob) {
+    update_water_current(mob, world_);
     // Actor::tick -> Mob::normalTick (0x22b2c60): Actor::normalTick runs the
     // components (SpawnActorComponent::tick, the egg timer), then aiStep ->
     // Mob::newServerAiStep (GoalSelector::tick, LookControl::tick), then the
@@ -1650,6 +1654,7 @@ void Server::tick() {
                              [this](World::Position at,BlockId id,int) {
                                  broadcast(packet(PacketId::UpdateBlock,block_update(at,id)));
                              });
+            world_.tick_water_chunk(chunk.first, chunk.second);
             // LevelChunk::tick snapshots its actor pointers before iterating.
             // Block consumer call site: 0x1de452d.
             const auto actors = chunk_actors_.members(chunk);
@@ -1689,6 +1694,8 @@ void Server::tick() {
             }
         }
     });
+    for (const auto &update : world_.take_water_updates())
+        broadcast(packet(PacketId::UpdateBlock, block_update(update.position, update.block, update.flags)));
     for (const auto &actor : items_)
         if (actor.removed)
             chunk_actors_.erase(actor.owner_chunk, actor.runtime_id);
@@ -1721,7 +1728,7 @@ std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
         std::vector<GamePacket> out{packet(PacketId::InventoryContent, inventory(p)),
                                     packet(PacketId::InventoryContent, cursor_inventory(p))};
         const auto block = world_.block(target);
-        if (std::get<1>(target) >= 0 && std::get<1>(target) < 256 && block < 5)
+        if (std::get<1>(target) >= 0 && std::get<1>(target) < 256 && block < protocol::internal_block_palette().size())
             out.push_back(packet(PacketId::UpdateBlock, block_update(target, block)));
         return out;
     };

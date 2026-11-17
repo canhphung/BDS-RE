@@ -11,6 +11,9 @@ struct TravelOptions {
     bool slow_falling = false, sprinting = false;
 };
 TravelMedium travel_medium(const ActorMotion &, const World &);
+// Level::checkAndHandleMaterial 0x1c84fe0, primary-layer water branch.
+bool apply_water_current(ActorMotion &, const World &, AABB water_box);
+void update_water_current(ActorMotion &, const World &);
 // Mob::travel 0x22b5ad0. Inputs are post-aiStep damping.
 void travel_mob(ActorMotion &actor, const World &world, Vec3 input, float yaw, float ground_speed,
                 float air_speed = 0.02f, float friction_modifier = 1.0f, bool gravity = true,

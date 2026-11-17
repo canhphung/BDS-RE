@@ -1,4 +1,5 @@
 #include "bds/game/item_actor.hpp"
+#include "bds/game/mob_motion.hpp"
 #include "bds/game/items.hpp"
 #include <algorithm>
 #include <bit>
@@ -77,7 +78,7 @@ bool is_free(const ActorMotion &a, const World &world, Vec3 delta) {
         for (int y = floor_int(box.min.y); y < int(std::floor(box.max.y + 1.0f)); ++y)
             for (int z = floor_int(box.min.z); z < int(std::floor(box.max.z + 1.0f)); ++z) {
                 const auto id = block_at(world, x, y, z);
-                if (id == kStillWater || id == kStillLava)
+                if (is_water(id) || id == kStillLava)
                     return false;
             }
     return true;
@@ -341,8 +342,9 @@ void push_out_of_blocks(ItemActor &a, const World &world, Vec3 p) {
 
 void normal_tick_before_merge(ItemActor &a) {
     // Actor::normalTick 0x21ac2a0 -> Actor::baseTick 0x21ad110:
-    // setPreviousPosRot, then outOfWorld (remove) below y = 0. Fire, lava,
-    // water and bubble columns cannot occur with the internal palette.
+    // setPreviousPosRot, then outOfWorld (remove) below y = 0. Water currents
+    // are applied in Server's preceding Actor phase; fire/lava effects remain
+    // outside this translated item path.
     a.pos_prev = a.pos;
     if (0.0f > a.pos.y) {
         a.removed = true;
@@ -357,7 +359,7 @@ void normal_tick_before_merge(ItemActor &a) {
 void normal_tick_after_merge(ItemActor &a, const World &world) {
     push_out_of_blocks(a, world, {a.pos.x, a.pos.y - a.height_offset, a.pos.z});
     const float speed2 = a.motion.x * a.motion.x + a.motion.y * a.motion.y + a.motion.z * a.motion.z;
-    bool moved = !a.on_ground || speed2 > 0.01f; // isInWater() is always false here
+    bool moved = !a.on_ground || speed2 > 0.01f || travel_medium(a,world)==TravelMedium::Water;
     if (!moved && a.age % 4 == 0)
         moved = true;
     if (moved) {

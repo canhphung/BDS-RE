@@ -20,7 +20,18 @@ public:
     using Block = BlockId;
 
     Block block(Position position) const;
-    void set_block(Position position, Block value);
+    // Native update flags: 1 notify neighbors, 2 send to clients, 4 no redraw.
+    void set_block(Position position, Block value, int flags = 3);
+    std::array<bool, 4> water_spread(Position position) const;
+    std::array<float, 3> water_flow(Position position) const;
+    void tick_water(Position position);
+    void tick_water_chunk(int x, int z);
+    struct WaterUpdate {
+        Position position;
+        BlockId block;
+        int flags;
+    };
+    std::vector<WaterUpdate> take_water_updates() { return std::exchange(water_updates_, {}); }
     void configure_terrain(TerrainConfig config);
     void ensure_chunk(int x, int z);
     int surface(int x, int z) const;
@@ -73,6 +84,26 @@ private:
     std::map<Position, BlockId> edits_; // includes air, so removed terrain never regenerates
     std::deque<std::pair<int,int>> terrain_cache_;
     std::map<std::string, PlayerData> players_;
+    struct WaterTick {
+        Position position;
+        std::uint64_t due, serial;
+    };
+    struct WaterQueue {
+        std::uint64_t clock;
+        std::vector<WaterTick> heap;
+    };
+    std::map<std::pair<int, int>, WaterQueue> water_ticks_;
+    std::uint64_t water_sequence_ = 0;
+    std::vector<WaterUpdate> water_updates_;
+    void schedule_water(Position position, unsigned delay = 5);
+    static void push_water(std::vector<WaterTick> &, WaterTick);
+    static WaterTick pop_water(std::vector<WaterTick> &);
+    void water_changed(Position position, Block before, Block after, int flags);
+    void wake_water_neighbors(Position position);
+    bool water_blocking(Position position) const;
+    Block water_cell(Position position) const;
+    bool water_can_spread(Position position) const;
+    int water_slope_distance(Position position, int distance, int previous) const;
     Block generated_block(Position position) const;
 };
-}
+} // namespace bds

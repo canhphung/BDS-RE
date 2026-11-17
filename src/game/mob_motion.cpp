@@ -3,6 +3,57 @@
 #include <bit>
 #include <cmath>
 namespace bds::game {
+bool apply_water_current(ActorMotion &a, const World &world, AABB box) {
+    const int x0 = int(std::floor(box.min.x)), y0 = int(std::floor(box.min.y)),
+              z0 = int(std::floor(box.min.z));
+    const int x1 = int(std::floor(box.max.x + 1)), y1 = int(std::floor(box.max.y + 1)),
+              z1 = int(std::floor(box.max.z + 1));
+    for (int x = chunk_coordinate(x0); x <= chunk_coordinate(x1 - 1); ++x)
+        for (int z = chunk_coordinate(z0); z <= chunk_coordinate(z1 - 1); ++z)
+            if (!world.chunk(x, z))
+                return false;
+    Vec3 flow;
+    bool found = false;
+    for (int x = x0; x < x1; ++x)
+        for (int y = y0; y < y1; ++y)
+            for (int z = z0; z < z1; ++z)
+                if (is_water(world.block({x, y, z}))) {
+                    found = true;
+                    const auto current = world.water_flow({x, y, z});
+                    // LiquidBlock::handleEntityInside 0x1e8d830 scales by .5
+                    // before summing. The level normalizes the total again.
+                    flow.x += 0.5f * current[0];
+                    flow.y += 0.5f * current[1];
+                    flow.z += 0.5f * current[2];
+                }
+    const float length = static_cast<float>(
+        std::sqrt(static_cast<double>(flow.x * flow.x + flow.y * flow.y + flow.z * flow.z)));
+    if (length > 0) {
+        if (length < 1.0e-4f)
+            flow = {};
+        else {
+            flow.x /= length;
+            flow.y /= length;
+            flow.z /= length;
+        }
+        const float speed = std::bit_cast<float>(0x3c656042u);
+        a.motion.x += speed * flow.x;
+        a.motion.y += speed * flow.y;
+        a.motion.z += speed * flow.z;
+    }
+    return found;
+}
+void update_water_current(ActorMotion &a, const World &world) {
+    // Actor::getHandleWaterAABB: AABB shrink normalizes inverted bounds
+    // (notably small item boxes shrunk by .401 vertically).
+    const auto &b = a.bb;
+    const AABB box{
+        {std::min(b.min.x + .001f, b.max.x - .001f), std::min(b.min.y + .401f, b.max.y - .401f),
+         std::min(b.min.z + .001f, b.max.z - .001f)},
+        {std::max(b.min.x + .001f, b.max.x - .001f), std::max(b.min.y + .401f, b.max.y - .401f),
+         std::max(b.min.z + .001f, b.max.z - .001f)}};
+    apply_water_current(a, world, box);
+}
 TravelMedium travel_medium(const ActorMotion &a, const World &w) {
     // Actor::getHandleWaterAABB (0x21bd440) and isInLava (0x21a6810).
     for (const auto medium : {TravelMedium::Water, TravelMedium::Lava}) {
@@ -15,7 +66,8 @@ TravelMedium travel_medium(const ActorMotion &a, const World &w) {
         for (int x = int(std::floor(p.x)); x < int(std::floor(q.x + 1)); ++x)
             for (int z = int(std::floor(p.z)); z < int(std::floor(q.z + 1)); ++z)
                 for (int yy = int(std::floor(p.y)); yy < int(std::floor(q.y + 1)); ++yy)
-                    if (w.block({x, yy, z}) == (medium == TravelMedium::Water ? kStillWater : kStillLava))
+                    if ((medium == TravelMedium::Water ? is_water(w.block({x, yy, z}))
+                                                       : w.block({x, yy, z}) == kStillLava))
                         return medium;
     }
     return TravelMedium::Land;

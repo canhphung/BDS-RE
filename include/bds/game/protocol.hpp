@@ -38,7 +38,7 @@ Bytes cursor_inventory(const PlayerData &p);
 Bytes creative_inventory();
 Bytes armor_inventory(const PlayerData &p); // InventoryContent window 120
 Bytes armor_equipment(std::uint64_t runtime, const PlayerData &p); // MobArmorEquipment
-Bytes block_update(World::Position p, BlockId id);
+Bytes block_update(World::Position p, BlockId id, unsigned flags = 3);
 Bytes equipment(std::uint64_t runtime, const PlayerData &p);
 // AddPlayerPacket with the original's full player metadata and device id.
 Bytes add_player(const auth::Identity &identity, const protocol::StartGame &game,

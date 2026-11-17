@@ -189,13 +189,13 @@ void write_item_metadata(ByteWriter &out) {
     }
 }
 } // namespace
-Bytes block_update(World::Position p, BlockId id) {
+Bytes block_update(World::Position p, BlockId id, unsigned flags) {
     const auto &palette = protocol::internal_block_palette();
     require(id < palette.size());
     ByteWriter out;
     position(out, p);
     out.varint(protocol::runtime_id(palette[id].name, palette[id].data).value());
-    out.varint(3);
+    out.varint(flags);
     out.varint(0);
     return out.take();
 }

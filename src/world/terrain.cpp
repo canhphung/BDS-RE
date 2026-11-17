@@ -99,6 +99,17 @@ void World::ensure_chunk(int x, int z) {
     count_ += chunk.stored_blocks();
     columns_.emplace(std::pair{x, z}, std::move(chunk));
     columns_.at({x,z}).set_light_revision(++light_revision_);
+    std::set<Position> scheduled_water;
+    if (const auto queue=water_ticks_.find({x,z});queue!=water_ticks_.end())
+        for (const auto &tick : queue->second.heap) scheduled_water.insert(tick.position);
+    columns_.at({x,z}).for_each_block([&](unsigned bx, unsigned y, unsigned bz, BlockId id) {
+        if (is_flowing_water(id)) {
+            const Position at{static_cast<int>(std::int64_t(x)*16+bx), static_cast<int>(y),
+                              static_cast<int>(std::int64_t(z)*16+bz)};
+            if (!scheduled_water.contains(at))
+                schedule_water(at);
+        }
+    });
     terrain_cache_.push_back({x, z});
     while (terrain_cache_.size() > 256) {
         const auto old = terrain_cache_.front();
@@ -110,7 +121,7 @@ void World::ensure_chunk(int x, int z) {
         }
     }
 }
-void World::set_block(Position p, Block value) {
+void World::set_block(Position p, Block value, int flags) {
     const auto [x, y, z] = p;
     if (y < 0 || y >= 256)
         throw std::out_of_range("block outside world height");
@@ -138,5 +149,6 @@ void World::set_block(Position p, Block value) {
     count_ = count_ - before + i->second.stored_blocks();
     if (!i->second.stored_blocks() && (!terrain_.kind || legacy_columns_.contains(key)))
         columns_.erase(i);
+    if (old != value) water_changed(p, old, value, flags);
 }
 } // namespace bds
