@@ -9,14 +9,25 @@
 namespace bds::game {
 // Level client ticking offsets (Level::Level 0x1c814e9) for a tick range.
 std::vector<std::pair<int, int>> client_ticking_offsets(int range);
+// The level seed (LevelSettings::getSeed) as sent in StartGame: the terrain
+// seed of generated worlds, else a purely numeric level-seed (0 otherwise).
+std::int32_t level_seed(const World &world, const Properties &properties);
 class Server {
   public:
-    Server(World &world, const Properties &properties, AccessLists &access)
-        : world_(world), properties_(properties), access_(access) {}
+    // Level::Level seeds Level::getRandom() with the level seed (0x1c8038f);
+    // the first draws shuffle the block palette (ServerLevel::ServerLevel ->
+    // BlockPalette::initFromBlockDefinitions), so runtime ids match the original.
+    Server(World &world, const Properties &properties, AccessLists &access);
     std::vector<GamePacket> prepare(const auth::Identity &identity, protocol::StartGame &game);
     std::vector<GamePacket> handle(std::uint64_t runtime, const GamePacket &packet,
                                    std::uint64_t now);
     std::vector<GamePacket> drain(std::uint64_t runtime);
+    // What the `effect <player> <effect> <seconds> <amplifier>` and
+    // `effect <player> clear` commands do to a player (EffectCommand:
+    // Mob::addEffect with seconds * 20 ticks, Mob::removeAllEffects).
+    // Returns false for an unknown runtime id.
+    bool give_effect(std::uint64_t runtime, int effect, int seconds, int amplifier);
+    bool clear_effects(std::uint64_t runtime);
     std::optional<std::pair<int, int>> center(std::uint64_t runtime) const;
     void leave(std::uint64_t runtime);
     // One level tick: item entities (ItemActor::normalTick, replication) and
@@ -48,8 +59,26 @@ class Server {
         Attributes attributes;
         int hurt_time = 0, last_hurt = 0;
         bool dead = false, death_data_dirty = false;
+        int death_time = 0; // Mob +0x11d8
         float motion[3] = {0, 0, 0}; // Actor +0xa0, set by MovePlayer to the move delta
         int feature_timer = 0;                    // ServerPlayer +0x1b5c
+        // Mob +0x1248 effects indexed by id (id 0: none), +0x1359 dirty.
+        struct Effect {
+            int id = 0, duration = 0, amplifier = 0;
+            bool ambient = false, visible = true;
+        };
+        std::array<Effect, 28> effects{};
+        bool effects_dirty = false;
+        unsigned effect_keys = 0; // dirty synched data: bit 0 key 8 (colour), bit 1 key 9 (ambient)
+        std::int32_t effect_color = 0; // synched data 8
+        // Player +0x1808 item in use and +0x1878 its duration (status flag 4).
+        ItemStack using_item;
+        int use_duration = 0;
+        float fall_distance = 0;                  // Actor +0x138
+        // Actor +0x2b0: the actor's own Random, Random::Random() (seeded from
+        // std::random_device, never reseeded): drop throws, knockback roll.
+        Random random{std::random_device{}()};
+        int damage_remainder = 0, absorb_remainder = 0; // Mob +0x12c4, +0x12c8
         std::uint64_t flags() const;
     };
     World &world_;
@@ -58,9 +87,10 @@ class Server {
     std::map<std::uint64_t, Session> sessions_;
     std::vector<ItemActor> items_;
     std::int64_t next_entity_id_ = 1;
-    // Level::getRandom and the thread-local Random of the original are both
-    // seeded from std::random_device (Random::Random() 0x187d430).
-    Random level_random_{std::random_device{}()};
+    // Level::getRandom (Level +0x568): seeded with the level seed in the
+    // constructor. The thread-local Random is seeded from std::random_device
+    // (Random::Random() 0x187d430).
+    Random level_random_{0};
     Random actor_random_{std::random_device{}()};
     void spawn_item(World::Position block, ItemStack item);
     void tick_item(ItemActor &a);
@@ -75,14 +105,38 @@ class Server {
     bool health_change(std::uint64_t id, Session &s, float old_value, float new_value, int type);
     void cause_food_exhaustion(std::uint64_t id, Session &s, float amount);
     void tick_attributes(std::uint64_t id, Session &s);
-    bool hurt(std::uint64_t id, Session &s, int cause, int damage);
-    bool hurt_effects(std::uint64_t id, Session &s, int cause, int damage);
+    // attacker: runtime id of the player behind an ActorDamageByActorSource, 0 for none.
+    bool hurt(std::uint64_t id, Session &s, int cause, int damage, std::uint64_t attacker = 0, bool knock = true);
+    bool hurt_effects(std::uint64_t id, Session &s, int cause, int damage, std::uint64_t attacker = 0, bool knock = true);
+    void actually_hurt(std::uint64_t id, Session &s, int cause, int damage);
+    void knockback(std::uint64_t id, Session &s, float xd, float zd);
+    // Effects (Mob::addEffect 0x22b0630, tickEffects 0x22b2050).
+    void add_effect(std::uint64_t id, Session &s, int effect, int duration, int amplifier);
+    void remove_effect(std::uint64_t id, Session &s, int effect);
+    void remove_all_effects(std::uint64_t id, Session &s);
+    void apply_effect(std::uint64_t id, Session &s, const Session::Effect &e);
+    void remove_effect_buffs(std::uint64_t id, Session &s, int effect);
+    void tick_effects(std::uint64_t id, Session &s);
+    // Items: ItemUse click air (GameMode::useItem), ItemRelease consume,
+    // ItemUseOnActor attack, and Player::drop.
+    std::vector<GamePacket> use_item(std::uint64_t id, Session &s, const Transaction &t);
+    std::vector<GamePacket> release_item(std::uint64_t id, Session &s, const Transaction &t);
+    std::vector<GamePacket> use_on_actor(std::uint64_t id, Session &s, const Transaction &t);
+    void attack(std::uint64_t id, Session &s, std::uint64_t target);
+    void eat(std::uint64_t id, Session &s, const ItemStack &item);
+    void drop(std::uint64_t id, Session &s, ItemStack item, bool randomly);
+    void set_sprinting(Session &s, bool sprinting);
+    void player_move(Session &s, PlayerData &p);
+    std::vector<GamePacket> inventory_resend(const Session &s) const;
     void cause_fall_damage(std::uint64_t id, Session &s, float distance);
     void die(std::uint64_t id, Session &s, int cause);
     void respawn(std::uint64_t id, Session &s);
     void update_nearby(std::uint64_t id, Session &s);
     std::vector<std::pair<int, int>> ticking_offsets() const;
     std::set<std::uint64_t> fresh_items_; // added to the level this tick
+    std::vector<std::uint64_t> player_order_; // Level +0x50: players in join order, shuffled every 20 ticks
+    std::vector<std::pair<int, int>> chunk_offsets_; // Level +0x8
+    std::uint64_t level_tick_ = 0;              // Level::getCurrentTick
     void broadcast(GamePacket packet, std::uint64_t exclude = 0);
     bool collides(const PlayerData &p) const;
     bool reach(const PlayerData &p, World::Position block) const;

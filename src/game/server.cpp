@@ -1,6 +1,9 @@
 #include "bds/game/server.hpp"
+#include "bds/game/effects.hpp"
+#include "bds/game/mce_math.hpp"
 #include "bds/network/spawn.hpp"
 #include <algorithm>
+#include <charconv>
 #include <bit>
 #include <cmath>
 #include <limits>
@@ -8,6 +11,9 @@
 #include <set>
 namespace bds::game {
 namespace {
+std::uint8_t max_stack(const ItemStack &s) { return item_info(s.block).max_stack; }
+// ItemInstance::isStackable: same item and aux value.
+bool stacks_with(const ItemStack &a, const ItemStack &b) { return a.block == b.block && a.aux == b.aux; }
 // The eye offset Player::recheckSpawnPosition (0x22f28fb) adds to the spawn
 // point before setTeleportDestination / RespawnPacket: 0x3fcf5c7e (1.62001014),
 // not the 1.62001002 heightOffset.
@@ -91,18 +97,36 @@ void Server::enqueue(std::uint64_t id, GamePacket packet) {
     }
     s.queue.push_back(std::move(packet));
 }
+std::int32_t level_seed(const World &world, const Properties &p) {
+    // A purely numeric level-seed is used as-is, anything else as 0 (policy).
+    std::int32_t seed = 0;
+    const auto *begin = p.seed.data();
+    if (!p.seed.empty() && std::from_chars(begin, begin + p.seed.size(), seed).ptr != begin + p.seed.size())
+        seed = 0;
+    return world.terrain().kind ? static_cast<std::int32_t>(world.terrain().seed) : seed;
+}
+Server::Server(World &world, const Properties &properties, AccessLists &access)
+    : world_(world), properties_(properties), access_(access) {
+    level_random_.set_seed(static_cast<std::uint32_t>(level_seed(world, properties)));
+    level_tick_ = world.age(); // Level::getCurrentTick
+    protocol::shuffle_block_palette(level_random_);
+}
 std::uint64_t Server::Session::flags() const {
     // Actor flags of a standing survival player in the original (bits 14, 19,
     // 34, 46, 47), plus SNEAKING (1) and SPRINTING (3).
     // Bit 14 is added once the client has initialized (join capture packet 247);
     // a dead player loses it and gains INVISIBLE (bit 5).
-    if (dead)
+    // Mob::tickDeath (0x22b2970) makes the body invisible at death time 20;
+    // the dead flags go out then (instant damage capture).
+    if (dead && death_time >= 20)
         return 0xc00400080020ULL;
     std::uint64_t f = active ? 0xc00400084000ULL : 0xc00400080000ULL;
     if (sneaking)
         f |= 1ULL << 1;
     if (sprinting)
         f |= 1ULL << 3;
+    if (using_item.block)
+        f |= 1ULL << 4; // USINGITEM (Player::startUsingItem)
     return f;
 }
 void Server::send_for_entity(std::uint64_t entity, const GamePacket &packet, std::uint64_t except) {
@@ -206,8 +230,7 @@ std::vector<GamePacket> Server::reject_item_use(const Session &s, const Transact
     auto out = resend_blocks(t);
     const auto &p = world_.players().at(s.key);
     out.push_back(packet(PacketId::InventoryContent, inventory(p)));
-    // Only block items are currently supported; armor and offhand stay empty.
-    out.push_back(packet(PacketId::InventoryContent, protocol::empty_inventory_body(120, 4)));
+    out.push_back(packet(PacketId::InventoryContent, armor_inventory(p))); // the offhand stays empty
     out.push_back(packet(PacketId::InventoryContent, cursor_inventory(p)));
     out.push_back(packet(PacketId::InventoryContent, protocol::empty_inventory_body(119, 1)));
     ByteWriter hotbar;
@@ -251,6 +274,7 @@ std::vector<GamePacket> Server::prepare(const auth::Identity &identity, protocol
     s.attributes.last_food = p.hunger;
     const auto spawn_attributes_body = spawn_attributes(g.runtime_id, s.attributes);
     sessions_.emplace(g.runtime_id, std::move(s));
+    player_order_.push_back(g.runtime_id); // Level::addPlayer: emplace_back
     ByteWriter hotbar;
     hotbar.varint(p.selected);
     hotbar.byte(0);
@@ -278,6 +302,7 @@ void Server::leave(std::uint64_t runtime) {
     if (i->second.active)
         broadcast(packet(PacketId::PlayerList, remove_player_list(i->second.identity)), runtime);
     sessions_.erase(i);
+    std::erase(player_order_, runtime); // Level::_cleanupDisconnectedPlayers: vector::erase
 }
 std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
     // Break branch of ItemUseInventoryTransaction::handle ($_2, 0x1ae6d20):
@@ -368,7 +393,7 @@ void Server::touch(Session &s, ItemActor &a) {
         return;
     auto &p = world_.players().at(s.key);
     const auto fits = [&](const ItemStack &stack) {
-        return (stack.block == a.item.block && stack.count < 64) || !stack.block;
+        return (stacks_with(stack, a.item) && stack.count < max_stack(stack)) || !stack.block;
     };
     if (std::none_of(p.inventory.begin(), p.inventory.end(), fits))
         return;
@@ -380,7 +405,7 @@ void Server::touch(Session &s, ItemActor &a) {
     while (left.count) {
         int slot = -1;
         for (int i = 0; i < 36 && slot < 0; ++i)
-            if (p.inventory[i].block == left.block && p.inventory[i].count < 64)
+            if (stacks_with(p.inventory[i], left) && p.inventory[i].count < max_stack(left))
                 slot = i;
         for (int i = 0; i < 36 && slot < 0; ++i)
             if (!p.inventory[i].block)
@@ -389,8 +414,8 @@ void Server::touch(Session &s, ItemActor &a) {
             break;
         auto &target = p.inventory[static_cast<unsigned>(slot)];
         const auto before = target;
-        const auto add = std::min<int>(left.count, 64 - target.count);
-        target = {left.block, static_cast<std::uint8_t>(target.count + add)};
+        const auto add = std::min<int>(left.count, max_stack(left) - target.count);
+        target = {left.block, static_cast<std::uint8_t>(target.count + add), left.aux};
         left.count = static_cast<std::uint8_t>(left.count - add);
         changes.push_back({static_cast<unsigned>(slot), before, target});
     }
@@ -413,21 +438,37 @@ void Server::tick_player(std::uint64_t id, Session &s) {
     // every player that knows it.
     if (s.hurt_time > 0)
         --s.hurt_time;
+    if (s.dead && ++s.death_time == 20) // Mob::tickDeath
+        s.flags_dirty = true;
     tick_attributes(id, s);
+    // Only syncable attributes go out (attack damage, knockback resistance
+    // and follow range never appear in the original's UpdateAttributes).
+    std::erase_if(s.attributes.dirty, [](int a) { return a == kAttackDamage || a == kKnockbackResistance || a == kFollowRange; });
     if (!s.attributes.dirty.empty()) {
         send_for_entity(id, packet(PacketId::UpdateAttributes,
                                    update_attributes(id, s.attributes, s.attributes.dirty)));
         s.attributes.dirty.clear();
     }
-    if (s.death_data_dirty)
-        send_for_entity(id, packet(PacketId::SetActorData, actor_bounding_box(id, 0.2f, 0.2f)));
-    if (s.flags_dirty)
-        send_for_entity(id, packet(PacketId::SetActorData, actor_flags(id, s.flags())));
-    s.flags_dirty = s.death_data_dirty = false;
+    const auto send_dirty_data = [&] {
+        if (s.death_data_dirty)
+            send_for_entity(id, packet(PacketId::SetActorData, actor_bounding_box(id, 0.2f, 0.2f)));
+        if (s.flags_dirty)
+            send_for_entity(id, packet(PacketId::SetActorData, actor_flags(id, s.flags())));
+        if (s.effect_keys)
+            send_for_entity(id, packet(PacketId::SetActorData, effect_data(id, s.effect_color, false, s.effect_keys)));
+        s.flags_dirty = s.death_data_dirty = false;
+        s.effect_keys = 0;
+    };
+    send_dirty_data();
+    // Mob::tickEffects (0x22b2050) after the dirty data went out.
+    tick_effects(id, s);
     const float before[3] = {p.x, p.y, p.z};
     // Mob::normalTick -> MovementInterpolator::tick (0x23cf280): move a
     // 1/steps share towards the MovePlayer target, the last step exactly.
     if (s.lerp.steps > 0) {
+        // The interpolator clears the motion (+0xa0, the MovePlayer delta)
+        // whenever it steps (traced under gdb).
+        s.motion[0] = s.motion[1] = s.motion[2] = 0.0f;
         if (s.lerp.steps == 1) {
             p.x = s.lerp.x;
             p.y = s.lerp.y;
@@ -453,6 +494,17 @@ void Server::tick_player(std::uint64_t id, Session &s) {
         }
         --s.lerp.steps;
     }
+    // The end of Mob::normalTick (0x22b356a): synched data dirtied since
+    // _sendDirtyActorData (the effect colour of tickEffects) goes out in the
+    // same tick (traced under gdb: instant health capture).
+    send_dirty_data();
+    // Actor::checkFallDamage with this tick's movement: falling adds the drop,
+    // landing resets (ServerPlayer::checkFallDamage deals no damage; the
+    // client reports falls with ActorFallPacket).
+    if (p.on_ground)
+        s.fall_distance = 0.0f;
+    else if (p.y < before[1])
+        s.fall_distance -= p.y - before[1];
     // Player::aiStep (0x22ebd40): living players touch every entity whose box
     // meets their box grown by (1, 0.5, 1).
     if (s.attributes[kHealth] > 0.0f) {
@@ -524,6 +576,15 @@ bool Server::health_change(std::uint64_t id, Session &s, float old_value, float 
         } else if (-diff < 0)
             hurt_effects(id, s, -1, diff);
         return true;
+    case 4: // harm, 5 and 6 (wither): cause MAGIC / WITHER
+    case 5:
+    case 6:
+    case 8: // fatal poison
+        return hurt_effects(id, s, type == 6 ? 15 : 14, diff);
+    case 7: // poison never kills: the change is refused below one health
+        if (new_value >= 1.0f)
+            return hurt_effects(id, s, 14, diff);
+        return false;
     default: // types 1, 2 and 10 (Mob::actuallyHurt) are accepted as they are
         return true;
     }
@@ -545,6 +606,41 @@ void Server::tick_attributes(std::uint64_t id, Session &s) {
     const auto health = [&] { return static_cast<int>(a[kHealth]); };
     for (int attribute = 0; attribute < kAttributeCount; ++attribute) {
         const float old = a[attribute];
+        // Temporal buffs first (AttributeInstance::tick 0x24a7950): tick the
+        // life timer, apply the buff when due (_calculateValue through the
+        // delegate's getBuffValue and change), erase it once complete.
+        auto &buffs = a.temporal[static_cast<std::size_t>(attribute)];
+        for (std::size_t i = 0; i < buffs.size();) {
+            auto &b = buffs[i];
+            ++b.life;
+            if (b.should_buff()) {
+                float amount = b.value();
+                // HealthAttributeDelegate::getBuffValue (0x24a3980): harm and
+                // poison types pass Mob::getDamageAfterMagicAbsorb (resistance).
+                if (attribute == kHealth && (b.type == 4 || b.type == 5 || b.type == 7 || b.type == 8) &&
+                    s.effects[kResistance].id) {
+                    const int amp = s.effects[kResistance].amplifier;
+                    if (amp >= 5)
+                        amount = 0.0f;
+                    else {
+                        const int t = (25 * static_cast<int>(amount) + s.absorb_remainder) *
+                                      std::clamp(25 - (amp + 1) * 5, 5, 25) / 25;
+                        s.absorb_remainder = t % 25;
+                        amount = static_cast<float>(t / 25);
+                    }
+                }
+                const int type = b.type;
+                auto &v = a.values[static_cast<std::size_t>(attribute)];
+                const float before = v.value;
+                v.value = Attributes::apply(v, amount);
+                if (attribute == kHealth && !health_change(id, s, before, v.value, type))
+                    v.value = before;
+                ++i;
+            } else if (b.complete())
+                buffs.erase(buffs.begin() + static_cast<std::ptrdiff_t>(i));
+            else
+                ++i;
+        }
         if (attribute == kHealth) {
             // HealthAttributeDelegate::tick (0x24a31e0): peaceful regeneration.
             ++a.health_ticks;
@@ -593,12 +689,20 @@ void Server::tick_attributes(std::uint64_t id, Session &s) {
             a.mark(attribute);
     }
 }
-bool Server::hurt(std::uint64_t id, Session &s, int cause, int damage) {
+bool Server::hurt(std::uint64_t id, Session &s, int cause, int damage, std::uint64_t attacker, bool knock) {
     // Actor::hurt -> Player::_hurt (0x22f0ec0) -> Mob::_hurt (0x22b37f0).
     if (s.attributes[kHealth] <= 0.0f || s.dead)
         return false;
-    // INFERRED: creative players (invulnerable ability) only take void damage.
+    // Player::isInvulnerableTo (0x22f6540): the INVULNERABLE ability of
+    // creative players. INFERRED: void damage still applies.
     if (s.game.player_game_type == 1 && cause != 12)
+        return false;
+    // Player::_hurt for an entity source: Player::setLastHurtBy(ActorType)
+    // (0x22f1330) sends SetLastHurtByPacket through the packet sender, which
+    // reaches every client; the attacker is always a player (type 319).
+    if (attacker)
+        broadcast(packet(PacketId::SetLastHurtBy, set_last_hurt_by(319)));
+    if (damage == 0)
         return false;
     if (cause == 13)
         s.last_hurt = 0;
@@ -609,15 +713,80 @@ bool Server::hurt(std::uint64_t id, Session &s, int cause, int damage) {
         return false;
     else
         s.last_hurt = 0;
-    // Mob::actuallyHurt (0x22b44c0): no armor, enchantments, resistance or
-    // absorption here, so health takes the remaining damage (buff type 10).
-    const int dealt = damage - s.last_hurt;
-    if (dealt != 0)
-        add_buff(id, s, kHealth, static_cast<float>(-dealt), kBuffDamage);
-    return hurt_effects(id, s, cause, damage);
+    actually_hurt(id, s, cause, damage - s.last_hurt);
+    return hurt_effects(id, s, cause, damage, attacker, knock);
 }
-bool Server::hurt_effects(std::uint64_t id, Session &s, int cause, int damage) {
-    // Mob::hurtEffects (0x22b3b60) for a damage source without an entity.
+void Server::actually_hurt(std::uint64_t id, Session &s, int cause, int damage) {
+    // Mob::actuallyHurt (0x22b44c0) with bypassArmor false (Mob::_hurt).
+    // +0x12c8 carries the 1/25 remainders of the absorb steps, +0x12c4 the
+    // remainder of hits below one point.
+    auto &a = s.attributes;
+    s.absorb_remainder = 0;
+    const auto absorb = [&](int d, int factor) { // Mob::_getDamageAfterAbsorb (0x22bcba0)
+        const int t = (25 * d + s.absorb_remainder) * factor / 25;
+        s.absorb_remainder = t % 25;
+        return t / 25;
+    };
+    // Mob::getDamageAfterEnchantReduction (0x22bcb30): EnchantUtils::getDamageReduction
+    // draws Random::nextFloat(0.5, 1) from the thread-local Random even
+    // without protection; with none the factor is exactly 1.
+    actor_random_.next_float(0.5f, 1.0f);
+    {
+        const int t = static_cast<int>(static_cast<float>(25 * damage + s.absorb_remainder) * 1.0f);
+        damage = t / 25;
+        s.absorb_remainder = t % 25;
+    }
+    // Mob::getDamageAfterArmorAbsorb (0x22bcbf0): not for causes 0, 4, 5, 7,
+    // 9, 12, 13, 14; ServerPlayer::hurtArmor first, then the armor value.
+    if (cause != 0 && cause != 14 && cause != 13 && cause != 12 && cause != 9 && cause != 7 && cause != 5 &&
+        cause != 4) {
+        auto &p = world_.players().at(s.key);
+        // Mob::hurtArmor (0x22bd700): max(1, d / 4) to every damageable
+        // armor item (ItemInstance::hurtAndBreak), then HurtArmorPacket with
+        // the full damage to the player itself (ServerPlayer::hurtArmor 0x25fb150).
+        const int wear = std::max(1, damage / 4);
+        bool broke = false;
+        for (auto &piece : p.armor)
+            if (piece.block && item_info(piece.block).max_damage > 0) {
+                piece.aux = static_cast<std::int16_t>(piece.aux + wear);
+                if (piece.aux > item_info(piece.block).max_damage) {
+                    piece = {};
+                    broke = true;
+                }
+            }
+        // Mob::sendArmor (0x22bdcd0) through the level's packet sender.
+        if (broke)
+            broadcast(packet(PacketId::MobArmorEquipment, armor_equipment(id, p)));
+        enqueue(id, packet(PacketId::HurtArmor, hurt_armor(damage)));
+        int armor = 0; // Mob::getArmorValue (0x22bd000)
+        for (const auto &piece : p.armor)
+            if (item_info(piece.block).kind == ItemKind::Armor)
+                armor += item_info(piece.block).defense;
+        damage = absorb(damage, std::clamp(25 - armor, 5, 25)); // ABSORPTION_FACTOR_MIN/MAX
+    }
+    // Mob::getDamageAfterMagicAbsorb (0x22bcd20): resistance.
+    if (s.effects[kResistance].id && cause != 0 && cause != 12 && cause != 13) {
+        const int amp = s.effects[kResistance].amplifier;
+        damage = amp >= 5 ? 0 : absorb(damage, std::clamp(25 - (amp + 1) * 5, 5, 25));
+    }
+    if (damage < 1) {
+        const int t = 25 * damage + s.damage_remainder + s.absorb_remainder;
+        damage = t / 25;
+        s.damage_remainder = t % 25;
+    } else
+        s.damage_remainder = 0;
+    s.absorb_remainder = 0;
+    // Absorption takes what it can (buff type 9), health the rest (type 10).
+    const int before = damage;
+    damage = static_cast<int>(std::max(static_cast<float>(damage) - a[kAbsorption], 0.0f));
+    add_buff(id, s, kAbsorption, static_cast<float>(-(before - damage)), kBuffNone);
+    if (damage != 0)
+        add_buff(id, s, kHealth, static_cast<float>(-damage), kBuffDamage);
+}
+bool Server::hurt_effects(std::uint64_t id, Session &s, int cause, int damage, std::uint64_t attacker, bool knock) {
+    // Mob::hurtEffects (0x22b3b60).
+    if (s.game.player_game_type == 1 && cause != 12)
+        return false;
     bool animate = false;
     if (cause == 13 || s.hurt_time <= 5) {
         animate = true;
@@ -628,20 +797,75 @@ bool Server::hurt_effects(std::uint64_t id, Session &s, int cause, int damage) {
             return false;
         s.last_hurt = damage;
     }
-    // Level::broadcastEntityEvent(HURT, cause), only while still alive (or
-    // saved by a totem, which does not exist here).
-    if (animate && s.attributes[kHealth] > 0.0f)
-        send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 2, cause)));
-    if (s.attributes[kHealth] <= 0.0f) // no totem of undying exists here
+    if (s.effects[kInstantHealth].id)
+        return false;
+    if (animate) {
+        // Level::broadcastEntityEvent(HURT, cause), only while still alive (or
+        // saved by a totem, which does not exist here).
+        if (s.attributes[kHealth] > 0.0f)
+            send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 2, cause)));
+        const auto other = sessions_.find(attacker);
+        if (attacker && other != sessions_.end()) {
+            const auto &me = world_.players().at(s.key);
+            const auto &by = world_.players().at(other->second.key);
+            float dx = by.x - me.x, dz = by.z - me.z;
+            if (knock) {
+                while (static_cast<double>(dx * dx + dz * dz) < 0.0001) {
+                    dx = (actor_random_.next_float() - actor_random_.next_float()) * 0.01f;
+                    dz = (actor_random_.next_float() - actor_random_.next_float()) * 0.01f;
+                }
+                knockback(id, s, dx, dz);
+            }
+        } else
+            actor_random_.next_float(); // hurt direction: (int)(nextFloat() * 2) * 180
+    }
+    if (s.attributes[kHealth] <= 0.0f) { // no totem of undying exists here
         die(id, s, cause);
-    return true;
+        return true;
+    }
+    return damage > 0 && animate;
+}
+void Server::knockback(std::uint64_t id, Session &s, float xd, float zd) {
+    // ServerPlayer::knockback (0x25f89f0) -> Mob::knockback (0x22b4880) with
+    // power 1, height 0.4, cap 0.4 (Mob::hurtEffects): the player's own
+    // Random decides against the knockback resistance (0 for players). Then
+    // SetActorMotion to every player that knows this one, itself included.
+    // ServerPlayer::knockback sends the motion even when Mob::knockback returns early.
+    if (!(s.attributes[kKnockbackResistance] > s.random.next_float())) {
+        const float inv = mce_inv_sqrt(xd * xd + zd * zd); // mce::Math::invSqrt
+        const float power = 0.4f * 1.0f;
+        for (auto &m : s.motion)
+            m = 0.5f * m;
+        s.motion[0] = s.motion[0] - xd * inv * power;
+        s.motion[1] = 0.4f + s.motion[1];
+        s.motion[2] = s.motion[2] - zd * inv * power;
+        if (s.motion[1] > 0.4f)
+            s.motion[1] = 0.4f;
+    }
+    send_for_entity(id, packet(PacketId::SetActorMotion, set_actor_motion(id, {s.motion[0], s.motion[1], s.motion[2]})));
 }
 void Server::cause_fall_damage(std::uint64_t id, Session &s, float distance) {
     // Mob::causeFallDamage (0x22b5190): ceil(distance * fall_damage - 3 - jump boost).
     const float scaled = s.attributes[kFallDamage] * distance - 3.0f - 0.0f;
     const float damage = static_cast<float>(std::ceil(static_cast<double>(scaled)));
-    if (damage > 0.0f)
+    if (damage > 0.0f) {
+        // Actor::playSynchronizedSound at getAttachPos(0) (the feet): FALL_BIG
+        // (24) above 4 damage, else FALL_SMALL (25), extra -1; then the hurt;
+        // then the block-fall sound (9) with the runtime id of the block 0.2
+        // below the feet (Level::broadcastSoundEvent reaches every client).
+        const auto &p = world_.players().at(s.key);
+        constexpr float height_offset = std::bit_cast<float>(0x3fcf5c7du);
+        const Vec3 feet{p.x, p.y - height_offset, p.z};
+        broadcast(packet(PacketId::LevelSoundEvent, level_sound(damage <= 4.0f ? 25 : 24, feet, -1, 319)));
         hurt(id, s, 5, static_cast<int>(damage)); // ActorDamageCause FALL
+        const World::Position under{static_cast<int>(std::floor(p.x)),
+                                    static_cast<int>(std::floor(p.y + -0.2f - height_offset)),
+                                    static_cast<int>(std::floor(p.z))};
+        const int y = std::get<1>(under);
+        const BlockId block = y >= 0 && y < 256 ? world_.block(under) : 0;
+        broadcast(packet(PacketId::LevelSoundEvent,
+                         level_sound(9, feet, static_cast<int>(block_runtime_id(block)), 319)));
+    }
 }
 void Server::die(std::uint64_t id, Session &s, int cause) {
     // ServerPlayer::die -> Player::die (0x22ec9b0) -> Mob::die (0x22b4a00), as
@@ -659,24 +883,14 @@ void Server::die(std::uint64_t id, Session &s, int cause) {
     for (const auto &stack : p.inventory)
         if (stack.block)
             drops.push_back(stack);
-    for (const auto &stack : drops) {
-        // Actor::drop (0x21bfbc0): at getAttachPos(4) (0.3 below the eyes, 0.15
-        // ahead, measured under gdb) plus the motion, pickup delay 40, throw
-        // time 10, speed nextFloat * 0.5 in a random direction, 0.2 upwards.
-        const float yaw = p.yaw * std::numbers::pi_v<float> / 180.0f;
-        const Vec3 at{p.x - std::sin(yaw) * 0.15f + s.motion[0], p.y - 0.3f + s.motion[1],
-                      p.z + std::cos(yaw) * 0.15f + s.motion[2]};
-        auto a = drop_item(at, stack, actor_random_);
-        const float speed = actor_random_.next_float() * 0.5f;
-        const float angle = actor_random_.next_float() * std::numbers::pi_v<float> * 2.0f;
-        a.motion = {-std::sin(angle) * speed, 0.2f, std::cos(angle) * speed};
-        const auto entity = allocate_entity_id();
-        a.runtime_id = static_cast<std::uint64_t>(entity);
-        a.unique_id = entity;
-        items_.push_back(a);
-    }
+    for (const auto &stack : p.armor) // Player::dropEquipment: the armor too
+        if (stack.block)
+            drops.push_back(stack);
+    for (const auto &stack : drops)
+        drop(id, s, stack, true);
     p.cursor = {};
     p.inventory.fill({});
+    p.armor.fill({});
     ByteWriter hotbar;
     hotbar.varint(p.selected);
     hotbar.byte(0);
@@ -684,7 +898,7 @@ void Server::die(std::uint64_t id, Session &s, int cause) {
     const auto hotbar_body = hotbar.take();
     for (int i = 0; i < 3; ++i) {
         enqueue(id, packet(PacketId::InventoryContent, inventory(p)));
-        enqueue(id, packet(PacketId::InventoryContent, protocol::empty_inventory_body(120, 4)));
+        enqueue(id, packet(PacketId::InventoryContent, armor_inventory(p)));
         enqueue(id, packet(PacketId::InventoryContent, cursor_inventory(p)));
         enqueue(id, packet(PacketId::InventoryContent, protocol::empty_inventory_body(119, 1)));
         enqueue(id, packet(PacketId::PlayerHotbar, hotbar_body));
@@ -702,7 +916,7 @@ void Server::die(std::uint64_t id, Session &s, int cause) {
                        respawn_position(static_cast<float>(spawn.x) + 0.5f, static_cast<float>(spawn.y) + kSpawnEyeOffset,
                                         static_cast<float>(spawn.z) + 0.5f)));
     s.death_data_dirty = true;
-    s.flags_dirty = true;
+    s.death_time = 0;
 }
 void Server::respawn(std::uint64_t id, Session &s) {
     // PlayerAction 7 for a dead player (0x182d4b3): ActorEvent RESPAWN,
@@ -712,12 +926,19 @@ void Server::respawn(std::uint64_t id, Session &s) {
         return;
     s.dead = false;
     s.hurt_time = s.last_hurt = 0;
+    // Player::resetPos (0x22eba90): motion cleared, Mob::removeAllEffects
+    // (REMOVE packets) before the respawn event, fall distance 0.
+    s.motion[0] = s.motion[1] = s.motion[2] = 0.0f;
+    remove_all_effects(id, s);
+    s.fall_distance = 0.0f;
+    s.using_item = {}; // INFERRED: the item in use is dropped with everything else
     send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 18, 0)));
     enqueue(id, packet(PacketId::SetHealth, set_health(20)));
     auto &a = s.attributes;
     for (int attribute : {kHealth, kHunger, kExhaustion, kSaturation, kLevel, kExperience}) {
         auto &v = a.values[static_cast<std::size_t>(attribute)];
-        v.value = attribute == kExhaustion || attribute == kLevel || attribute == kExperience ? 0.0f : v.max;
+        // resetPos: health resetToMaxValue, the others resetToDefaultValue (no clamp).
+        v.value = attribute == kHealth ? v.max : v.fallback;
     }
     enqueue(id, packet(PacketId::UpdateAttributes,
                        update_attributes(id, a, {kHealth, kHunger, kExhaustion, kSaturation, kLevel, kExperience})));
@@ -760,18 +981,14 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
             continue;
         s.known.insert(entity);
         if (auto other = sessions_.find(entity); other != sessions_.end()) {
-            // tryCreateAddActorPacket, then for mobs MobArmorEquipment (four
-            // armor slots, always empty in BDS-RE) and, when the carried item is
+            // tryCreateAddActorPacket, then for mobs MobArmorEquipment (the four
+            // armor slots) and, when the carried item is
             // not empty, MobEquipment (slot 0, selected 0, container 0). The
             // offhand is always empty and players here are alive.
             const auto &o = world_.players().at(other->second.key);
             enqueue(id, packet(PacketId::AddPlayer,
                                add_player(other->second.identity, other->second.game, o, other->second.flags())));
-            ByteWriter armor;
-            armor.varint64(entity);
-            for (int slot = 0; slot < 4; ++slot)
-                item(armor, {});
-            enqueue(id, packet(PacketId::MobArmorEquipment, armor.take()));
+            enqueue(id, packet(PacketId::MobArmorEquipment, armor_equipment(entity, o)));
             if (o.inventory[o.selected].block) {
                 ByteWriter held;
                 held.varint64(entity);
@@ -809,9 +1026,36 @@ void Server::tick() {
     for (std::size_t i = 0; i < items_.size(); ++i)
         if (!items_[i].removed)
             tick_item(items_[i]);
-    for (auto &[id, s] : sessions_)
-        if (s.active)
-            tick_player(id, s);
+    // Level::tick (0x1c86000): when the current tick is a multiple of 20 it
+    // std::shuffles, with the level Random, the two chunk-offset lists
+    // (Level +0x8, and +0x20 refreshed from gMasterClientTickingChunksOffsetList;
+    // both hold the client ticking offsets) and then the player list
+    // (Level +0x50, Level::addPlayer appends, removal keeps the order). The
+    // players then tick in that list's order (Level::forEachPlayer ->
+    // ServerPlayer::tickWorld). The original's level Random is also drawn by
+    // random block ticks, mob spawning and mob AI, which BDS-RE does not have.
+    if (level_tick_ % 20 == 0) {
+        const auto shuffle = [&](auto &list) {
+            for (std::size_t i = 1; i < list.size(); ++i) {
+                const std::uint64_t buckets = i + 1, scaling = 0xffffffffULL / buckets, past = buckets * scaling;
+                std::uint64_t r;
+                do
+                    r = level_random_.next_uint();
+                while (r >= past);
+                std::swap(list[i], list[r / scaling]);
+            }
+        };
+        if (chunk_offsets_.empty())
+            chunk_offsets_ = ticking_offsets();
+        auto client_offsets = ticking_offsets();
+        shuffle(chunk_offsets_);
+        shuffle(client_offsets);
+        shuffle(player_order_);
+    }
+    ++level_tick_;
+    for (const auto id : std::vector<std::uint64_t>(player_order_))
+        if (auto found = sessions_.find(id); found != sessions_.end() && found->second.active)
+            tick_player(id, found->second);
     std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
     for (auto &[id, s] : sessions_)
         if (s.active)
@@ -831,7 +1075,7 @@ std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
     if (t.action == 2)
         return destroy(s, t);
     if (t.action == 1)
-        return {};
+        return use_item(s.game.runtime_id, s, t);
     auto [x, y, z] = t.block;
     const auto held = p.inventory[p.selected];
     require(t.face >= 0 && t.face < 6);
@@ -847,7 +1091,7 @@ std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
         return out;
     };
     if (s.game.player_game_type == 2 || s.game.settings.default_player_permission == 0 ||
-        !held.block || held != t.held || !world_.block(t.block) ||
+        item_info(held.block).kind != ItemKind::Block || held != t.held || !world_.block(t.block) ||
         world_.block(target) || std::get<1>(target) < 0 || std::get<1>(target) >= 256)
         return restore();
     // The click-block branch of ItemUseInventoryTransaction::handle ($_2,
@@ -995,8 +1239,8 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             if ((window == 0 || window == 124) && p.cursor.block) {
                 auto remaining = p.cursor;
                 for (auto &stack : p.inventory)
-                    if (stack.block == remaining.block && stack.count < 64) {
-                        const auto count = std::min<unsigned>(64 - stack.count, remaining.count);
+                    if (stack.block && stacks_with(stack, remaining) && stack.count < max_stack(stack)) {
+                        const auto count = std::min<unsigned>(max_stack(stack) - stack.count, remaining.count);
                         stack.count = static_cast<std::uint8_t>(stack.count + count);
                         remaining.count = static_cast<std::uint8_t>(remaining.count - count);
                     }
@@ -1074,11 +1318,7 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             case 10: // StopSprint
                 // Status flag 3 and the +30% minecraft:movement modifier
                 // (0.1 -> 0.13); both go out as dirty data at the next tick.
-                if (s.sprinting != (action == 9)) {
-                    s.sprinting = action == 9;
-                    s.flags_dirty = true;
-                    s.attributes.set(kMovement, s.sprinting ? 0.13f : 0.1f);
-                }
+                set_sprinting(s, action == 9);
                 break;
             case 11: // StartSneak: Mob::setSneaking -> status flag 1; not relayed
             case 12: // StopSneak
@@ -1119,11 +1359,20 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
             const auto t = transaction(packet_in.body);
             if (t.type == 2)
                 return use(s, t);
+            if (t.type == 3)
+                return use_on_actor(id, s, t);
+            if (t.type == 4)
+                return release_item(id, s, t);
             require(t.type == 0);
             auto next = p.inventory;
+            auto armor = p.armor;
             auto cursor = p.cursor;
-            std::array<int, 5> balance{};
+            // Items entering and leaving the containers must balance, except
+            // through the creative inventory (source 3) or the world (source
+            // 2, flags 0: dropped, Player::drop).
+            std::map<std::pair<std::uint16_t, std::int16_t>, int> balance;
             std::set<std::pair<int, unsigned>> touched;
+            std::vector<ItemStack> dropped;
             bool creative = false;
             for (const auto &a : t.changes) {
                 if (a.source == 3) {
@@ -1132,19 +1381,39 @@ std::vector<GamePacket> Server::handle(std::uint64_t id, const GamePacket &packe
                     creative = true;
                     continue;
                 }
+                if (a.source == 2) {
+                    require(a.window == 0 && !a.before.block && a.after.block);
+                    balance[{a.after.block, a.after.aux}] += a.after.count;
+                    dropped.push_back(a.after);
+                    continue;
+                }
                 require(a.source == 0 &&
-                        ((a.window == 0 && a.slot < 36) || (a.window == 124 && a.slot == 0)) &&
+                        ((a.window == 0 && a.slot < 36) || (a.window == 124 && a.slot == 0) ||
+                         (a.window == 120 && a.slot < 4)) &&
                         touched.insert({a.window, a.slot}).second);
-                auto &slot = a.window == 0 ? next[a.slot] : cursor;
+                auto &slot = a.window == 0 ? next[a.slot] : a.window == 120 ? armor[a.slot] : cursor;
                 require(slot == a.before);
-                balance[a.before.block] -= a.before.count;
-                balance[a.after.block] += a.after.count;
+                // ArmorContainer: only armor of the slot's kind.
+                require(a.window != 120 || !a.after.block ||
+                        (item_info(a.after.block).kind == ItemKind::Armor &&
+                         item_info(a.after.block).armor_slot == static_cast<int>(a.slot)));
+                if (a.before.block)
+                    balance[{a.before.block, a.before.aux}] -= a.before.count;
+                if (a.after.block)
+                    balance[{a.after.block, a.after.aux}] += a.after.count;
                 slot = a.after;
             }
-            require(creative ||
-                    std::all_of(balance.begin() + 1, balance.end(), [](int n) { return n == 0; }));
+            require(creative || std::all_of(balance.begin(), balance.end(), [](const auto &b) { return b.second == 0; }));
+            const bool armor_changed = armor != p.armor;
             p.inventory = next;
+            p.armor = armor;
             p.cursor = cursor;
+            for (const auto &item : dropped)
+                drop(id, s, item, false); // Player::drop(item, false)
+            if (armor_changed)
+                send_for_entity(id, packet(PacketId::MobArmorEquipment, armor_equipment(id, p)));
+            if (!dropped.empty() && t.changes.size() == dropped.size() + 1)
+                return {}; // a drop from one slot: nothing to correct (original capture)
             send_for_entity(id, packet(PacketId::MobEquipment, equipment(id, p)), id);
             return {packet(PacketId::InventoryContent, inventory(p)),
                     packet(PacketId::InventoryContent, cursor_inventory(p))};

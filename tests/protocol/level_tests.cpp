@@ -1,5 +1,6 @@
 // Level packet encoders against golden bytes from an independent Python
 // encoder (tests/protocol/make_level_fixtures.py).
+#include "bds/world/random.hpp"
 #include "bds/network/level_packets.hpp"
 #include <fstream>
 #include <iostream>
@@ -32,9 +33,10 @@ std::string hex_of(const Bytes &bytes) {
 
 int main(int argc, char **argv) {
     try {
-        if (argc != 2)
-            throw std::runtime_error("usage: level_tests <reference StartGame>");
+        if (argc != 3)
+            throw std::runtime_error("usage: level_tests <reference StartGame> <palette order>");
         const char *reference = argv[1];
+        const char *palette_order = argc > 2 ? argv[2] : "";
         ByteWriter w;
         w.signed_varint(-1);
         w.signed_varint(1);
@@ -124,7 +126,17 @@ int main(int argc, char **argv) {
             ref.level_name = "Reference";
             ref.current_tick = 4173;
             ref.enchantment_seed = 399804244;
-            ref.palette = vanilla_block_palette();
+            // That capture is of a reused world: the LevelSettings seed that
+            // shuffled its palette is not in it, so its order is listed.
+            {
+                std::ifstream order_file(palette_order);
+                check(static_cast<bool>(order_file), "open palette order");
+                const auto registry = vanilla_block_palette(); // not shuffled yet: registry order
+                std::string line;
+                while (std::getline(order_file, line))
+                    if (!line.empty() && line[0] != '#')
+                        ref.palette.push_back(registry.at(std::stoul(line)));
+            }
             ref.multiplayer_correlation_id = "02322db7-0cad-4f4b-b8ff-ee61473aa4f3";
             const auto ours = start_game_body(ref);
             std::size_t first_difference = 0;
@@ -136,6 +148,16 @@ int main(int argc, char **argv) {
                       vanilla_block_palette()[*runtime_id("minecraft:stone", 0)].name == "minecraft:stone" &&
                       !runtime_id("minecraft:not_a_block", 0),
                   "palette lookup");
+            // BlockPalette::initFromBlockDefinitions for a new world with seed
+            // 123 (captured from the original): air is runtime id 3757 and the
+            // table starts with element_84:3, wool:14, acacia_stairs:4.
+            bds::Random level(123);
+            shuffle_block_palette(level);
+            const auto &shuffled = vanilla_block_palette();
+            check(runtime_id("minecraft:air", 0) == 3757u && shuffled[0].name == "minecraft:element_84" &&
+                      shuffled[0].data == 3 && shuffled[1].name == "minecraft:wool" && shuffled[1].data == 14 &&
+                      shuffled[2].name == "minecraft:acacia_stairs" && shuffled[2].data == 4,
+                  "palette shuffled like the original's for seed 123");
         }
 
         // clamp(requested, 5, view distance)

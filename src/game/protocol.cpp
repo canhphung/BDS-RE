@@ -1,6 +1,7 @@
 #include <nlohmann/json.hpp>
 #include <limits>
 #include "bds/game/protocol.hpp"
+#include "bds/game/items.hpp"
 #include "bds/network/spawn.hpp"
 #include <algorithm>
 #include <bit>
@@ -11,7 +12,6 @@ void require(bool ok) {
     if (!ok)
         throw protocol::ProtocolError("unsupported or malformed gameplay packet");
 }
-constexpr std::uint16_t legacy[]{0, 1, 2, 3, 7};
 } // namespace
 GamePacket packet(PacketId id, Bytes body) {
     return {{static_cast<std::uint16_t>(id), 0, 0}, std::move(body)};
@@ -43,11 +43,14 @@ void position(ByteWriter &out, World::Position p) {
     out.signed_varint(z);
 }
 void item(ByteWriter &out, ItemStack stack) {
-    require(stack.block < 5 && stack.count <= 64 && (stack.block == 0) == (stack.count == 0));
-    out.signed_varint(legacy[stack.block]);
+    const auto &info = item_info(stack.block);
+    require(stack.block < item_count() && stack.count <= info.max_stack && (stack.block == 0) == (stack.count == 0) &&
+            stack.aux >= 0 && stack.aux <= info.max_damage);
+    out.signed_varint(info.legacy);
     if (!stack.block)
         return;
-    out.signed_varint(stack.count);
+    // ItemInstance aux value: data << 8 | count.
+    out.signed_varint(static_cast<std::int32_t>(stack.aux) * 256 + stack.count);
     out.little_endian(0, 2);
     out.signed_varint(0);
     out.signed_varint(0);
@@ -57,7 +60,12 @@ ItemStack item(ByteReader &in) {
     if (id == 0 || id == -1)
         return {};
     const auto aux = in.signed_varint();
-    require(aux > 0 && aux <= 64); // zero damage and bounded count
+    const auto index = item_from_legacy(id);
+    if (!index)
+        throw protocol::ProtocolError("unsupported item");
+    const auto &info = item_info(index);
+    const int count = aux & 0xff, data = aux >> 8; // ItemInstance aux value: data << 8 | count
+    require(count > 0 && count <= info.max_stack && data >= 0 && data <= info.max_damage);
     const auto nbt = fixed(in, 2);
     require(nbt == 0); // supported blocks have no NBT
     for (unsigned list = 0; list < 2; ++list) {
@@ -66,10 +74,7 @@ ItemStack item(ByteReader &in) {
         for (int i = 0; i < count; ++i)
             in.string(256);
     }
-    for (unsigned i = 1; i < 5; ++i)
-        if (id == legacy[i])
-            return {static_cast<std::uint16_t>(i), static_cast<std::uint8_t>(aux)};
-    throw protocol::ProtocolError("unsupported item");
+    return {index, static_cast<std::uint8_t>(count), static_cast<std::int16_t>(data)};
 }
 Motion motion(std::span<const std::uint8_t> bytes) {
     ByteReader in(bytes);
@@ -129,9 +134,25 @@ Bytes cursor_inventory(const PlayerData &p) {
 Bytes creative_inventory() {
     ByteWriter out;
     out.varint(121);
+    out.varint(item_count() - 1u);
+    for (std::uint16_t i = 1; i < item_count(); ++i)
+        item(out, {i, 1});
+    return out.take();
+}
+Bytes armor_equipment(std::uint64_t runtime, const PlayerData &p) {
+    // MobArmorEquipmentPacket: runtime id, then head, chest, legs, feet.
+    ByteWriter out;
+    out.varint64(runtime);
+    for (auto s : p.armor)
+        item(out, s);
+    return out.take();
+}
+Bytes armor_inventory(const PlayerData &p) {
+    ByteWriter out;
+    out.varint(120);
     out.varint(4);
-    for (unsigned i = 1; i < 5; ++i)
-        item(out, {static_cast<std::uint16_t>(i), 1});
+    for (auto s : p.armor)
+        item(out, s);
     return out.take();
 }
 namespace {
@@ -375,7 +396,7 @@ Transaction transaction(std::span<const std::uint8_t> bytes) {
     ByteReader in(bytes);
     Transaction t;
     t.type = in.varint();
-    require(t.type <= 2);
+    require(t.type <= 4);
     const auto count = in.varint();
     require(count <= 128);
     for (unsigned i = 0; i < count; ++i) {
@@ -384,7 +405,7 @@ Transaction transaction(std::span<const std::uint8_t> bytes) {
         if (a.source == 0 || a.source == 99999)
             a.window = in.signed_varint();
         else if (a.source == 2)
-            in.varint();
+            a.window = static_cast<int>(in.varint()); // InventorySource flags
         else
             require(a.source == 3);
         a.slot = in.varint();
@@ -403,9 +424,85 @@ Transaction transaction(std::span<const std::uint8_t> bytes) {
             v = number(in);
         for (auto &v : t.click)
             v = number(in);
+    } else if (t.type == 3) {
+        // ItemUseOnActorInventoryTransaction::read (0x1aea410)
+        t.target = in.varint64();
+        t.action = in.varint();
+        require(t.action <= 2);
+        t.slot = in.signed_varint();
+        t.held = item(in);
+        for (auto &v : t.from)
+            v = number(in);
+        for (auto &v : t.click)
+            v = number(in);
+    } else if (t.type == 4) {
+        // ItemReleaseInventoryTransaction::read (0x1ae9410): action, slot, item, head position
+        t.action = in.varint();
+        require(t.action <= 1);
+        t.slot = in.signed_varint();
+        t.held = item(in);
+        for (auto &v : t.from)
+            v = number(in);
     }
     in.finish();
     return t;
+}
+Bytes mob_effect(std::uint64_t runtime, int event, int effect, int amplifier, bool particles, int duration) {
+    ByteWriter out;
+    out.varint64(runtime);
+    out.byte(static_cast<std::uint8_t>(event));
+    out.signed_varint(effect);
+    out.signed_varint(amplifier);
+    out.boolean(particles);
+    out.signed_varint(duration);
+    return out.take();
+}
+Bytes level_sound(int sound, Vec3 pos, int extra, int entity_type, bool baby, bool global) {
+    // LevelSoundEventPacketV1: sound byte, position, extra data, entity type, baby, global.
+    ByteWriter out;
+    out.byte(static_cast<std::uint8_t>(sound));
+    out.float32(pos.x);
+    out.float32(pos.y);
+    out.float32(pos.z);
+    out.signed_varint(extra);
+    out.signed_varint(entity_type);
+    out.boolean(baby);
+    out.boolean(global);
+    return out.take();
+}
+Bytes set_last_hurt_by(int actor_type) {
+    ByteWriter out;
+    out.signed_varint(actor_type);
+    return out.take();
+}
+Bytes hurt_armor(int damage) {
+    ByteWriter out;
+    out.signed_varint(damage);
+    return out.take();
+}
+Bytes animate(int action, std::uint64_t runtime) {
+    ByteWriter out;
+    out.signed_varint(action);
+    out.varint64(runtime);
+    return out.take();
+}
+Bytes effect_data(std::uint64_t runtime, std::int32_t color, bool ambient, unsigned keys) {
+    // Mob::updateInvisibilityStatus / removeEffectParticles: keys 8 (potion
+    // colour, int) and 9 (potion ambient, byte), whichever are dirty.
+    ByteWriter out;
+    out.varint64(runtime);
+    out.varint((keys & 1) + (keys >> 1 & 1));
+    if (keys & 1) {
+        out.varint(8);
+        out.varint(2);
+        out.signed_varint(color);
+    }
+    if (keys & 2) {
+        out.varint(9);
+        out.varint(0);
+        out.byte(ambient ? 1 : 0);
+    }
+    return out.take();
 }
 Bytes item_actor_data(std::uint64_t runtime) {
     ByteWriter out;

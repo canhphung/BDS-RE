@@ -42,9 +42,14 @@ In Creative, the creative inventory contains stone, grass, dirt and bedrock.
 Select one, place it, break it, and check the changes from a second client.
 In Survival, break grass/dirt: a dirt item entity drops, falls, and is picked up
 when you walk over it; place it; placement consumes one item. Bare-hand stone breaking yields no item. Tools,
-normal item drops/entities, ores, liquids, biomes, trees/caves, recipes/crafting,
-chests, armor, combat and mobs are not implemented. Hunger, regeneration, fall
-and void damage, starvation, death and respawn work as described below.
+normal block drops, ores, liquids, biomes, trees/caves, recipes/crafting,
+chests and mobs are not implemented. Hunger, regeneration, fall and void damage,
+starvation, death and respawn, eating, effects, absorption, armor and fighting
+between players work as described below. Besides the four blocks the item table
+holds the original's swords, armor, bowl and every food item (ids, stack sizes,
+durability, damage, defense and food values dumped from the original's item
+registry); creative players find them in the creative inventory and can hand
+them to survival players by dropping them (Q).
 
 ## Block breaking
 
@@ -182,7 +187,66 @@ Translated from the original (AttributeInstance::addBuff 0x24a7760 and tick
 - PlayerAction 7 respawns: ActorEvent RESPAWN, SetHealth 20, health, food,
   saturation, exhaustion, level and experience reset, the living box restored.
 - Health, food, saturation and exhaustion are persisted with the player.
-- Not modelled: combat, effects, armor, absorption and food items.
+
+## Eating, effects, armor and combat
+
+Translated from the original and checked byte for byte against
+`tests/reference/combat_bds_1.6.0.15.json` (test `combat_reference`):
+
+- Eating: using food in the air starts eating (FoodItemComponent::use: hungry,
+  or a golden apple; not in creative) and sets actor flag 4 (using item); the
+  client's consume (ItemRelease) completes it: the food's effects (chance
+  rolled on the level Random), food + nutrition, saturation's maximum becomes
+  the food level, saturation + nutrition * modifier * 2, one item less, the
+  burp sound, and a bowl for stews.
+- Effects: MobEffect ADD/MODIFY/REMOVE go to every client; the durations count
+  down per tick. Regeneration, poison (never below 1 health), wither, hunger,
+  saturation and instant health/damage are timed attribute buffs
+  (AttributeInstance::tick; instant damage repeats are refused by the hurt
+  cooldown), absorption resets and adds 4 per level, resistance reduces damage
+  by 20% per level. Speed, slowness, strength, weakness and health boost are
+  attribute modifiers (recomputed from the defaults: additions, base and total
+  multipliers); sprinting uses the same mechanism. The particle colour (actor
+  data 8/9) is the original's average; removing all effects first clears it
+  (two SetActorData packets, as the original). `Server::give_effect` /
+  `clear_effects` do what the `effect` command does (no command parser yet).
+- Armor: worn by using it or through the armor container (window 120); the
+  armor value reduces damage (Mob::getDamageAfterArmorAbsorb with the 1/25
+  remainders), every hit wears each piece by max(1, damage / 4) and the victim
+  gets HurtArmor. Absorption takes damage before health.
+- Combat: ItemUseOnActor attack (from at most 6 blocks off the server position,
+  target within 12): damage = attack attribute + weapon (1 becomes 2), critical
+  x1.5 while falling (AnimatePacket to everyone), the attack sound, SetLastHurtBy,
+  the hurt event, knockback (SetActorMotion), attack exhaustion 0.3, sword wear.
+  Sprinting adds a push and stops the attacker's sprint. Creative players are not
+  hurt. Transactions whose predicted inventory changes differ from the server's
+  get the inventories resent, as in the original.
+- Dropping (Q) throws the item forward (Player::drop) with pickup delay 40.
+- Motion: a player's motion is the MovePlayer delta until the interpolator
+  steps (then zero); knockback uses mce::Math's fastInvSqrt and a sprint push
+  runs Actor::move with the player's box, so the SetActorMotion packets match
+  the original byte for byte. Each player has its own Random (drop throws,
+  knockback roll), seeded like the original's from std::random_device.
+- Sounds: fall damage sends FALL_BIG/FALL_SMALL and the block-fall sound,
+  attacks ATTACK_STRONG/NODAMAGE, eating the burp; equip, armor and tool break
+  sounds are Level::playSound in the original, which reaches only level
+  listeners and sends nothing on a dedicated server. A broken armor piece
+  re-broadcasts MobArmorEquipment.
+- Death: the dead flags go out when the death animation ends (death time 20);
+  respawning (Player::resetPos) removes all effects first.
+- Block runtime ids: the palette order is the original's for the same level
+  seed (BlockPalette shuffle with the level Random, which is seeded with the
+  level seed as in Level::Level), so ids in sounds, particles and chunks match.
+- Order: Level::tick ticks the players in its player list (join order,
+  order-preserving removal). Every 20 ticks it first shuffles two chunk-offset
+  lists and then that list with the level Random; BDS-RE does the same with the
+  same draw counts (checked under gdb). The resulting order equals the
+  original's only as far as the level Random's state does: the original also
+  draws it for random block ticks, mob spawning/despawning, mob AI and season
+  ticks, which BDS-RE does not simulate, so tests compare one tick's packets of
+  two players as a set.
+- Synched data dirtied after _sendDirtyActorData (the effect colour from
+  tickEffects) goes out at the end of Mob::normalTick in the same tick.
 
 ## Persistence
 

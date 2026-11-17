@@ -488,7 +488,9 @@ int main() {
             // ActorFallPacket 19.8: Mob::causeFallDamage ceil(19.8 - 3) = 17.
             hs.handle(1, fall(19.8f), 0);
             auto hurt = hs.drain(1);
-            check(hurt.size() == 1 && hurt[0].header.id == 0x1b && hex(hurt[0].body) == "01020a",
+            // LevelSoundEvent FALL_BIG, the hurt event, the block-fall sound.
+            check(hurt.size() == 3 && hurt[0].header.id == 0x18 && hurt[1].header.id == 0x1b &&
+                      hex(hurt[1].body) == "01020a" && hurt[2].header.id == 0x18,
                   "fall hurt ActorEvent (cause FALL)");
             std::vector<std::string> attributes;
             for (int t = 0; t < 200 && attributes.size() < 3; ++t) {

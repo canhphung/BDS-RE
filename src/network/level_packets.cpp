@@ -1,4 +1,5 @@
 #include "bds/network/level_packets.hpp"
+#include "bds/world/random.hpp"
 #include <algorithm>
 #include <map>
 #include <utility>
@@ -147,25 +148,60 @@ namespace {
 #include "block_palette_282.inc"
 }
 
-const std::vector<PaletteEntry> &vanilla_block_palette() {
-    static const std::vector<PaletteEntry> palette = [] {
-        std::vector<PaletteEntry> out;
-        out.reserve(std::size(palette_entries));
-        for (const auto &entry : palette_entries)
-            out.push_back({std::string(palette_names[entry.name]), entry.data});
-        return out;
+namespace {
+// The network palette and its lookup: the registry order until
+// shuffle_block_palette() runs (BlockPalette::initFromBlockDefinitions).
+struct Palette {
+    std::vector<PaletteEntry> entries;
+    std::map<std::pair<std::string, std::int16_t>, std::uint32_t> index;
+    void reindex() {
+        index.clear();
+        for (std::uint32_t i = 0; i < entries.size(); ++i)
+            index.emplace(std::pair{entries[i].name, entries[i].data}, i);
+    }
+};
+std::vector<PaletteEntry> registry_order() {
+    std::vector<PaletteEntry> out;
+    out.reserve(std::size(palette_entries));
+    for (const auto &entry : palette_entries)
+        out.push_back({std::string(palette_names[entry.name]), entry.data});
+    return out;
+}
+Palette &palette_state() {
+    static Palette palette = [] {
+        Palette p{registry_order(), {}};
+        p.reindex();
+        return p;
     }();
     return palette;
 }
+} // namespace
+
+const std::vector<PaletteEntry> &vanilla_block_palette() {
+    return palette_state().entries;
+}
+
+void shuffle_block_palette(Random &level_random) {
+    // BlockPalette::initFromBlockDefinitions (0x1d3c0a0): the block states in
+    // registry order, std::shuffle with Level::getRandom() (libstdc++'s
+    // classic Fisher-Yates over uniform_int_distribution<unsigned long> with
+    // Random::operator() = _genRandInt32 in [0, 2^32 - 1]), then
+    // assignBlockRuntimeIds: runtime id = index.
+    auto &p = palette_state();
+    p.entries = registry_order();
+    for (std::size_t i = 1; i < p.entries.size(); ++i) {
+        const std::uint64_t buckets = i + 1, scaling = 0xffffffffULL / buckets, past = buckets * scaling;
+        std::uint64_t x;
+        do
+            x = level_random.next_uint();
+        while (x >= past);
+        std::swap(p.entries[i], p.entries[x / scaling]);
+    }
+    p.reindex();
+}
 
 std::optional<std::uint32_t> runtime_id(std::string_view name, std::int16_t data) {
-    static const auto index = [] {
-        std::map<std::pair<std::string, std::int16_t>, std::uint32_t> map;
-        const auto &palette = vanilla_block_palette();
-        for (std::uint32_t i = 0; i < palette.size(); ++i)
-            map.emplace(std::pair{palette[i].name, palette[i].data}, i);
-        return map;
-    }();
+    const auto &index = palette_state().index;
     const auto found = index.find({std::string(name), data});
     if (found == index.end())
         return std::nullopt;

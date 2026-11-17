@@ -35,6 +35,51 @@ void Attributes::set(int id, float value) {
     }
 }
 
+namespace {
+// _calculateValue: [min, max, value] from the defaults; additions, then base
+// multipliers (+= base * amount), then total multipliers (*= 1 + amount);
+// the value is sanitized (clamped).
+void recalculate(AttributeValue &a) {
+    float base[3] = {a.default_min, a.default_max, a.fallback};
+    for (const auto &m : a.modifiers)
+        if (m.operation == 0)
+            base[m.operand] = m.amount + base[m.operand];
+    float out[3] = {base[0], base[1], base[2]};
+    for (const auto &m : a.modifiers)
+        if (m.operation == 1)
+            out[m.operand] = base[m.operand] * m.amount + out[m.operand];
+    for (const auto &m : a.modifiers)
+        if (m.operation == 2)
+            out[m.operand] = (1.0f + m.amount) * out[m.operand];
+    a.min = out[0];
+    a.max = out[1];
+    a.value = out[2] > a.max ? a.max : out[2] > a.min ? out[2] : a.min;
+}
+} // namespace
+
+void Attributes::add_modifier(int id, const Modifier &m) {
+    auto &a = values[static_cast<std::size_t>(id)];
+    if (std::none_of(a.modifiers.begin(), a.modifiers.end(), [&](const Modifier &o) { return o.id == m.id; }))
+        a.modifiers.push_back(m);
+    recalculate(a);
+    mark(id);
+}
+void Attributes::remove_modifier(int id, int modifier) {
+    auto &a = values[static_cast<std::size_t>(id)];
+    const auto before = a.modifiers.size();
+    std::erase_if(a.modifiers, [&](const Modifier &o) { return o.id == modifier; });
+    if (a.modifiers.size() == before)
+        return;
+    recalculate(a);
+    mark(id);
+}
+void Attributes::set_max(int id, float max) {
+    auto &a = values[static_cast<std::size_t>(id)];
+    a.max = a.default_max = max;
+    a.value = a.value > a.max ? a.max : a.value > a.min ? a.value : a.min;
+    mark(id);
+}
+
 const std::vector<int> &spawn_attribute_order() {
     static const std::vector<int> order{
         kHealth,     kAbsorption, kMovement,   kUnderwaterMovement, kLuck,       kFallDamage,

@@ -1,4 +1,5 @@
 #include "bds/game/item_actor.hpp"
+#include "bds/game/items.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -136,11 +137,11 @@ Vec3 AABB::clip_collide(const AABB &other, Vec3 delta, bool keep_overlap, float 
 
 ItemActor *merge(ItemActor &a, ItemActor &b) {
     if (&a == &b || a.removed || b.removed || a.throw_time == 0xffff || b.throw_time == 0xffff ||
-        a.item.block != b.item.block) // matchesItem; block items are not stacked by data
+        a.item.block != b.item.block || a.item.aux != b.item.aux) // matchesItem: id and aux value
         return nullptr;
     if (a.item.count < b.item.count)
         return merge(b, a);
-    if (a.item.count + b.item.count > 64) // getMaxStackSize
+    if (a.item.count + b.item.count > item_info(b.item.block).max_stack) // getMaxStackSize
         return nullptr;
     b.item.count = static_cast<std::uint8_t>(b.item.count + a.item.count);
     b.throw_time = std::max(b.throw_time, a.throw_time);
