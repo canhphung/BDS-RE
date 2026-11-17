@@ -250,3 +250,14 @@ Grass-only oracle uses a different scene setup. Export with
 Full commands, addresses, scope and the Y=255 removal finding are documented in
 `reverse/reports/BLOCK_LIGHTING.md`. These are function/integration references,
 not a claim that the complete later level RNG sequence matches.
+
+## Mob motion and random destinations
+
+Use `capture_level_random.py --gdb-script tools/re/gdb_mob_motion_oracle.py`
+for natural travel/move and pair push. The new `--gdb-post-script` option runs
+a native function oracle in the final paused world;
+`gdb_mob_move_cases.py` executes step/fall inputs and `gdb_random_pos_cases.py`
+then executes seeded native own-RNG destination calls. Source those in that
+order. `make_mob_motion_reference.py NATURAL_RUN MATRIX_RUN MOTION_OUT RANDOM_OUT`
+checks provenance and exports the bounded fixtures. Full scene commands and
+known boundaries are in `reverse/reports/MOB_MOTION.md`.

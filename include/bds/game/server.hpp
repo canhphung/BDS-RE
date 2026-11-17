@@ -2,6 +2,7 @@
 #include "bds/game/protocol.hpp"
 #include "bds/game/spawner.hpp"
 #include "bds/game/mob_ai.hpp"
+#include "bds/game/mob_motion.hpp"
 #include "bds/game/world_tick.hpp"
 #include "bds/world/chunk_ticks.hpp"
 #include "bds/server/access.hpp"
@@ -44,21 +45,20 @@ class Server {
     std::int64_t allocate_entity_id() { return next_entity_id_++; }
     const std::vector<ItemActor> &items() const { return items_; }
     // Mobs spawned by the natural spawner (Spawner::spawnMob).
-    struct MobActor {
+    struct MobActor : ActorMotion {
+        MobActor() { height_offset=0.0f; max_step=0.5625f; }
         std::uint64_t runtime_id = 0;
         std::int64_t unique_id = 0;
         const MobSpawnerData *data = nullptr;
-        Vec3 pos;                    // StateVectorComponent position (feet)
         bool surface = false;        // Mob::setSurfaceMob
         int variant = 0, mark_variant = 0;
         // Behavior-pack definition state chosen at minecraft:entity_spawned.
         bool baby = false;
         std::uint8_t color = 0;
         float scale = 1.0f, health = 0, max_health = 0, movement = 0, fall_damage = 1.0f;
-        Vec3 motion;
         MobBrain brain;
         // SpatialActorNetworkData last sent values (rotation as packet bytes).
-        bool on_ground = true, sent_on_ground = true;
+        bool sent_on_ground = true;
         Vec3 sent_pos;
         std::int8_t sent_rotation[3]{}; // pitch, yaw, head yaw
         std::pair<int, int> owner_chunk{};
@@ -119,7 +119,7 @@ class Server {
     std::map<std::uint64_t, Session> sessions_;
     std::vector<ItemActor> items_;
     ChunkActorIndex chunk_actors_;
-    std::vector<std::uint64_t> pending_item_moves_;
+    std::vector<std::uint64_t> pending_actor_moves_;
     std::int64_t next_entity_id_ = 1;
     // Level::getRandom (Level +0x568): seeded with the level seed in the
     // constructor. The thread-local Random is seeded from std::random_device
@@ -159,6 +159,7 @@ class Server {
     // returns false when the rest of LevelChunk::tick is skipped.
     bool tick_chunk_state(int chunk_x, int chunk_z);
     void tick_mob(MobActor &mob);
+    void push_mob_entities(MobActor &mob);
     class Senses;
     class Region;
     friend class Region;

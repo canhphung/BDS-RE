@@ -1,3 +1,9 @@
+Mob motion checkpoint (2026-11-17): ordinary land/air physics and non-riding
+mob push are now integrated; 647 native travel/move/push cases and 96 RandomPos
+calls (2,880 own-RNG words) have exact reference tests. Navigation/control and
+RandomStroll activation remain unfinished. See
+[scope and evidence](../reverse/reports/MOB_MOTION.md).
+
 # Progress — 2026-11-16
 
 2026-11-17 random-tick/mob handoff: **IN PROGRESS** on
