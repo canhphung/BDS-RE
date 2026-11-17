@@ -36,6 +36,8 @@ def main():
     parser.add_argument("--block-samples", action="store_true")
     parser.add_argument("--command", action="append", default=[],
                         help="Original console command to execute after every client has spawned")
+    parser.add_argument("--grass-oracle", action="store_true",
+                        help="After tracing, execute the original GrassBlock::tick oracle in the paused world")
     args = parser.parse_args()
     names = args.players.split(",")
     if not 1 <= args.ticks <= 10000 or not 1 <= len(names) <= 10:
@@ -58,6 +60,7 @@ def main():
     env.update(TRACE_OUT=str(output / "draws.jsonl"), TRACE_TICKS=str(args.ticks),
                TRACE_PLAYERS=str(len(names)), TRACE_GENERATOR=args.generator)
     env["TRACE_BLOCK_SAMPLES"] = str(int(args.block_samples))
+    env["GRASS_ORACLE_OUT"] = str(output / "grass_ticks.json")
     command = [args.gdb, "-nx", "-q", "-batch", "-ex", "set pagination off", "-ex", "set confirm off",
                "-ex", "set debuginfod enabled off", "-ex", "handle SIGPIPE nostop noprint pass",
                "-ex", f"set environment LD_LIBRARY_PATH={args.library_path.resolve()}:."]
@@ -65,7 +68,10 @@ def main():
         command += ["-ex", f"set environment LD_PRELOAD={args.preload.resolve()}"]
     command += ["-ex", "break main", "-ex", "run", "-ex",
                 "source " + str(Path(__file__).with_name("gdb_level_random_sequence.py")),
-                "-ex", "continue", "-ex", "kill", "--args", "./bedrock_server"]
+                "-ex", "continue"]
+    if args.grass_oracle:
+        command += ["-ex", "source " + str(Path(__file__).with_name("gdb_grass_ticks.py"))]
+    command += ["-ex", "kill", "--args", "./bedrock_server"]
     process = subprocess.Popen(command, cwd=run, env=env, stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                start_new_session=True)
@@ -119,12 +125,22 @@ def main():
         records = [json.loads(line) for line in (output / "draws.jsonl").read_text().splitlines()]
         if not records or records[-1]["event"] != "complete" or process.returncode:
             raise RuntimeError("incomplete trace: " + "\n".join(lines[-15:]))
+        if args.grass_oracle:
+            oracle = output / "grass_ticks.json"
+            if not oracle.exists() or len(json.loads(oracle.read_text())["cases"]) != 80:
+                raise RuntimeError("grass oracle failed: " + "\n".join(lines[-20:]))
         metadata = {"binary_sha256": ORIGINAL_SHA256, "properties": properties,
                     "generator_override": args.generator, "players": names,
                     "commands": args.command,
                     "trace_sha256": hashlib.sha256((output / "draws.jsonl").read_bytes()).hexdigest(),
                     "completion": records[-1]}
         (output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+        if args.grass_oracle:
+            fixture = json.loads(oracle.read_text())
+            fixture.update(scene_setup_commands=args.command,
+                           generator_override=args.generator,
+                           source_trace_sha256=metadata["trace_sha256"])
+            oracle.write_text(json.dumps(fixture, indent=1) + "\n")
         print(json.dumps(metadata["completion"]))
     finally:
         stopping.set()

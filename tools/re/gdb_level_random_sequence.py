@@ -11,7 +11,8 @@ import struct
 import gdb
 
 out = open(os.environ["TRACE_OUT"], "w", buffering=1)
-state = {"level": None, "tick": 0, "draw": 0, "joined_tick": None, "initialized": 0}
+state = {"level": None, "tick": 0, "draw": 0, "joined_tick": None, "initialized": 0,
+         "recording": True, "oracle_random": None, "oracle_words": None}
 limit = int(os.environ.get("TRACE_TICKS", "200"))
 players = int(os.environ.get("TRACE_PLAYERS", "1"))
 
@@ -49,7 +50,7 @@ class Level(gdb.Breakpoint):
 class Seed(gdb.Breakpoint):
     def stop(self):
         # GDB invokes Python stop() before testing Breakpoint.condition.
-        if reg("rdi") != state["level"] + 0x568:
+        if not state["recording"] or reg("rdi") != state["level"] + 0x568:
             return False
         record("seed", tick=state["tick"], seed=reg("esi") & 0xffffffff)
         return False
@@ -66,7 +67,10 @@ class Draw(gdb.Breakpoint):
     def stop(self):
         # _genRandInt32 +0x2a4, after mov eax,[rbp-0xc], before its epilogue.
         this = struct.unpack("<Q", memory(reg("rbp") - 8, 8))[0]
-        if this != state["level"] + 0x568:
+        if state["oracle_words"] is not None and this == state["oracle_random"]:
+            state["oracle_words"].append(reg("eax") & 0xffffffff)
+            return False
+        if not state["recording"] or this != state["level"] + 0x568:
             return False
         frame = gdb.newest_frame().older()
         callers = []
@@ -83,6 +87,8 @@ class Draw(gdb.Breakpoint):
 
 class Tick(gdb.Breakpoint):
     def stop(self):
+        if not state["recording"]:
+            return False
         level = reg("rdi")
         begin, end = struct.unpack("<QQ", memory(level + 0x50, 16))
         count = (end - begin) // 8
@@ -91,6 +97,7 @@ class Tick(gdb.Breakpoint):
         if state["joined_tick"] is not None and state["tick"] - state["joined_tick"] >= limit:
             record("complete", ticks=state["tick"], draws=state["draw"],
                    joined_tick=state["joined_tick"])
+            state["recording"] = False
             out.close()
             return True
         state["tick"] += 1
@@ -108,6 +115,8 @@ class BlockSamples(gdb.Breakpoint):
         self.event = event
 
     def stop(self):
+        if not state["recording"]:
+            return False
         frame = reg("rbp")
         chunk = struct.unpack("<Q", memory(frame - 0x2a0, 8))[0]
         cx, cz = struct.unpack("<ii", memory(chunk + 0x28, 8))
@@ -128,6 +137,8 @@ class BlockSamples(gdb.Breakpoint):
 
 class BlockEntry(gdb.Breakpoint):
     def stop(self):
+        if not state["recording"]:
+            return False
         cx, cz = struct.unpack("<ii", memory(reg("rdi") + 0x28, 8))
         record("block_tick_begin", tick=state["tick"], chunk=[cx, cz],
                lcg=struct.unpack("<I", memory(0x32d753c, 4))[0])

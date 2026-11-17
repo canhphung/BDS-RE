@@ -1,9 +1,10 @@
 # Level Random and random block sampling — 2026-11-17
 
-This is the first implementation checkpoint for
+This report tracks implementation checkpoints for
 `docs/handoff/random_ticks_and_mobs.md`. It does **not** complete that handoff.
 Random block selection is translated and reference-tested, but has not yet been
-wired into the per-player chunk scheduler. Grass behavior, spawn/despawn, mob AI,
+wired into the per-player chunk scheduler. Grass behavior now has a separate
+function-level checkpoint below, while its host integration, spawn/despawn, mob AI,
 season processing and the save scheduler still need translation/integration.
 The existing combat comparison remains unchanged; packet-order sorting has not
 been removed.
@@ -111,7 +112,8 @@ are unchanged. No native CI result is claimed for this checkpoint here.
   weather values at 0x283c870/0x283c874 are 100000.0f/3000.0f. No fixed skip
   count should substitute for the lightning/rain branches.
 - GrassBlock::tick at 0x1e716a0 checks brightness/material above the grass. A
-  dark/opaque cover can consume one `nextInt(4)` to turn it into dirt; bright
+  dark/opaque cover (material translucency below the float 0.2 at 0x2828638)
+  can consume one `nextInt(4)` to turn it into dirt; bright
   spread draws Z (`nextInt(3)-1`), Y (`nextInt(2)`), X (`nextInt(3)-1`) in that
   order. It can descend through up to five air blocks and checks the target's
   dirt variant, cover, brightness, solidity and liquid material before mutation.
@@ -125,3 +127,48 @@ are unchanged. No native CI result is claimed for this checkpoint here.
 - Save scheduling attempts up to 30 chunks (0x1c86ca0), draws a dimension and
   then a chunk, and depends on dirty/save state. The 5,409 observed attempts
   over 200 ticks are not a constant budget.
+
+## GrassBlock function checkpoint
+
+`src/world/grass_ticks.cpp` now translates the server-side GrassBlock::tick
+algorithm at 0x1e716a0, with a `GrassTickSource` interface for the original's
+BlockSource/light/material queries. It is not yet called by Server::tick.
+This avoids replacing the missing host lighting backend with an invented rule.
+
+`gdb_grass_ticks.py`, run with `capture_level_random.py --grass-oracle`, invokes
+the original function in the paused, fully loaded flat world. For each case it
+restores the soil/grass patch through the original BlockSource::setBlock and
+seeds a separate original Random object. Breakpoints at the original function's
+query return sites record the actual dependency values and request coordinates:
+
+| Site | Captured observation |
+|---|---|
+| 0x1e71706 / 0x1e71a35 | Original raw brightness at source/target cover |
+| 0x1e7172e / 0x1e71895 / 0x1e7192d / 0x1e719b2 | Original block kind/solidity and read coordinates |
+| 0x1e71762 / 0x1e719e7 | Material translucency and liquid flag |
+| 0x1e71977 | Original dirt mapped-type value |
+| 0x1c59b20, called directly from GrassBlock::tick | Mutation position, dirt/grass target and flags 3 |
+| 0x187e704, filtered to the case's original Random | Every raw RNG return word |
+
+Lighting, material values, branch results and RNG outputs are not overridden.
+`GrassBlock::MIN_BRIGHTNESS` and `Brightness::MAX` were read as 4/15. The cover
+translucency comparison uses the original float **0.2** (`0x3e4ccccd`), not 0.5.
+
+`tests/reference/grass_ticks_bds_1.6.0.15.json` combines two independent oracle
+invocations: daylight and `time set 18000`. Each uses seeds 0..15 in five scenes:
+bright soil, opaque cover, a spread target reached through descending air,
+coarse-dirt rejection, and a grass-path cover. All 160 cases retain every
+dependency call, mutation request and raw RNG word. The test checks call order
+and arguments as well as results. It includes 48 zero-draw cases, 64 one-draw
+cases, 48 three-draw cases and 38 mutation requests.
+
+This verifies the function with recorded real dependency inputs. It does not
+verify BDS-RE lighting, global tick scheduling, BlockSource mutation side effects,
+weather, mob behavior or the complete level RNG trace. Liquid covers and the
+client-side early-return path are statically translated but not exercised by
+this corpus. The original clone-Random oracle is separate from the earlier
+global level-Random acceptance trace.
+
+Grass checkpoint validation: GCC 14.2 Debug, ASan+UBSan, GCC Release and
+Clang 19.1 Release each passed **29/29 CTest** locally, including the new
+160-case function comparison and all earlier item/combat/network references.
