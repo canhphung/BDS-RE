@@ -290,6 +290,27 @@ void Server::eat(std::uint64_t id, Session &s, const ItemStack &item) {
 
 // --- Combat ----------------------------------------------------------------
 
+void Server::player_move(Session &s, PlayerData &p) {
+    // Player::move (0x22eb210) -> Actor::move (0x21a6b50) by the motion, with
+    // the player's 0.6 x 1.8 box resting on its feet (pos.y - heightOffset):
+    // the same collision code as items (a box a hair inside the ground is
+    // pushed out, which clears an upward motion, as traced in the original).
+    ItemActor body;
+    const float feet = p.y - kHeightOffset;
+    body.pos = {p.x, p.y, p.z};
+    body.bb = {{p.x - 0.3f, feet, p.z - 0.3f}, {p.x + 0.3f, feet + 1.8f, p.z + 0.3f}};
+    body.height_offset = kHeightOffset;
+    body.on_ground = p.on_ground;
+    body.motion = {s.motion[0], s.motion[1], s.motion[2]};
+    move(body, world_, body.motion);
+    p.x = body.pos.x;
+    p.y = body.pos.y;
+    p.z = body.pos.z;
+    s.motion[0] = body.motion.x;
+    s.motion[1] = body.motion.y;
+    s.motion[2] = body.motion.z;
+}
+
 std::vector<GamePacket> Server::use_on_actor(std::uint64_t id, Session &s, const Transaction &t) {
     // ItemUseOnActorInventoryTransaction::handle (0x1ae9560).
     auto &p = world_.players().at(s.key);
@@ -373,6 +394,7 @@ void Server::attack(std::uint64_t id, Session &s, std::uint64_t target) {
         ts.motion[0] += dx * static_cast<float>(knockback_bonus) * 0.5f;
         ts.motion[1] += 0.1f;
         ts.motion[2] += dz * static_cast<float>(knockback_bonus) * 0.5f;
+        player_move(ts, tp);
         send_for_entity(target, packet(PacketId::SetActorMotion,
                                        set_actor_motion(target, {ts.motion[0], ts.motion[1], ts.motion[2]})));
         s.motion[0] *= 0.6f;
@@ -397,8 +419,8 @@ void Server::attack(std::uint64_t id, Session &s, std::uint64_t target) {
 void Server::drop(std::uint64_t, Session &s, ItemStack stack, bool randomly) {
     // Actor::drop (0x21bfbc0) through Spawner::spawnItem at getAttachPos(4)
     // (0.3 below the eyes, 0.15 ahead, measured under gdb) plus the motion;
-    // pickup delay 40, throw time 10. The throw draws from the player's own
-    // Random (+0x2b0), which BDS-RE replaces with the thread-local one.
+    // pickup delay 40, throw time 10. The ItemActor constructor draws from
+    // the thread-local Random, the throw from the player's own (+0x2b0).
     const auto &p = world_.players().at(s.key);
     const float degrad = std::numbers::pi_v<float> / 180.0f; // mce::Math::DEGRAD
     const float yaw = p.yaw * degrad;
@@ -407,8 +429,8 @@ void Server::drop(std::uint64_t, Session &s, ItemStack stack, bool randomly) {
     auto a = drop_item(at, stack, actor_random_);
     const float pi = std::numbers::pi_v<float>;
     if (randomly) {
-        const float speed = actor_random_.next_float() * 0.5f;
-        const float angle = actor_random_.next_float() * pi * 2.0f;
+        const float speed = s.random.next_float() * 0.5f;
+        const float angle = s.random.next_float() * pi * 2.0f;
         a.motion = {-mce_sin(angle) * speed, 0.2f, mce_cos(angle) * speed};
     } else {
         // Thrown forward: 0.3 along the view, then a random 0.02 spread.
@@ -418,8 +440,8 @@ void Server::drop(std::uint64_t, Session &s, ItemStack stack, bool randomly) {
         a.motion.z = mce_cos(yaw) * mce_cos(pitch) * f;
         a.motion.y = -mce_sin(pitch) * f;
         f = 0.02f;
-        const float angle = actor_random_.next_float() * pi * 2.0f;
-        f = actor_random_.next_float() * f;
+        const float angle = s.random.next_float() * pi * 2.0f;
+        f = s.random.next_float() * f;
         a.motion.x = mce_cos(angle) * f + a.motion.x;
         a.motion.z = mce_sin(angle) * f + a.motion.z;
     }

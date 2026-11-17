@@ -181,6 +181,9 @@ int main(int argc, char **argv) {
     try {
         World w;
         w.configure_terrain({1, 123});
+        for (int cx = -1; cx <= 0; ++cx)
+            for (int cz = -1; cz <= 0; ++cz)
+                w.ensure_chunk(cx, cz);
         Properties properties;
         properties.difficulty = 2; // normal, as the capture
         AccessLists access(".");
@@ -262,17 +265,9 @@ int main(int argc, char **argv) {
         server.handle(A, attack(B, 1, stack("diamond_sword"), pa, {{0, 1, stack("diamond_sword"), stack("diamond_sword", 1, 1)}}), 0);
         Seen ha = relevant(server.drain(A)), hb = relevant(server.drain(B));
         run(1, &ha, &hb);
-        for (auto *who : {&ha, &hb}) // knockback: the original's player motion is not simulated
-            for (auto &[id, body] : *who)
-                if (id == 0x28)
-                    body = "motion";
         auto want_a = reference(ref, "a_hit", "a"), want_b = reference(ref, "a_hit", "b");
         want_a.resize(5);
         want_b.resize(6);
-        for (auto *who : {&want_a, &want_b})
-            for (auto &[id, body] : *who)
-                if (id == 0x28)
-                    body = "motion";
         // A's exhaustion entry joins A's packets at the same tick.
         want_a.push_back(reference(ref, "a_hit", "a")[5]);
         want_b.push_back(reference(ref, "a_hit", "b")[6]);
@@ -303,8 +298,6 @@ int main(int argc, char **argv) {
         Seen sa = relevant(server.drain(A)), sb = relevant(server.drain(B));
         run(1, &sa, &sb);
         auto ws = reference(ref, "b_sprint", "a");
-        for (auto *who : {&sa, &ws})
-            std::erase_if(*who, [](const auto &p) { return p.first == 0x28; });
         // B's exhaustion: 0.32 (two walked blocks + 0.3 for the attack) in the
         // capture; here B's natural regeneration fell in between (+3).
         for (auto &[id, body] : sa)
@@ -313,7 +306,7 @@ int main(int argc, char **argv) {
         check(std::abs(b.exhaustion - 3.32f) < 1e-5f || std::abs(b.exhaustion - 0.32f) < 1e-5f, "B exhaustion");
         if (sa != ws)
             show("B sprint-hits A", sa, ws);
-        check(sa == ws, "sprint hit: absorption, armor packet, attacker stops sprinting");
+        check(sa == ws, "sprint hit: absorption, armor packet, knockback, push, attacker stops sprinting");
 
         // A drops one spider eye.
         server.handle(A, packet(PacketId::InventoryTransaction, [&] {

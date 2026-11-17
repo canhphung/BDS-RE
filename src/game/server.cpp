@@ -1,5 +1,6 @@
 #include "bds/game/server.hpp"
 #include "bds/game/effects.hpp"
+#include "bds/game/mce_math.hpp"
 #include "bds/network/spawn.hpp"
 #include <algorithm>
 #include <bit>
@@ -437,6 +438,9 @@ void Server::tick_player(std::uint64_t id, Session &s) {
     // Mob::normalTick -> MovementInterpolator::tick (0x23cf280): move a
     // 1/steps share towards the MovePlayer target, the last step exactly.
     if (s.lerp.steps > 0) {
+        // The interpolator clears the motion (+0xa0, the MovePlayer delta)
+        // whenever it steps (traced under gdb).
+        s.motion[0] = s.motion[1] = s.motion[2] = 0.0f;
         if (s.lerp.steps == 1) {
             p.x = s.lerp.x;
             p.y = s.lerp.y;
@@ -469,12 +473,6 @@ void Server::tick_player(std::uint64_t id, Session &s) {
         s.fall_distance = 0.0f;
     else if (p.y < before[1])
         s.fall_distance -= p.y - before[1];
-    // INFERRED: the server-side motion (+0xa0) of a player that stopped
-    // moving decays to nothing in the original (knockback capture); BDS-RE
-    // does not simulate player physics and clears it once the interpolation
-    // has arrived.
-    if (s.lerp.steps == 0 && p.x == before[0] && p.y == before[1] && p.z == before[2])
-        s.motion[0] = s.motion[1] = s.motion[2] = 0.0f;
     // Player::aiStep (0x22ebd40): living players touch every entity whose box
     // meets their box grown by (1, 0.5, 1).
     if (s.attributes[kHealth] > 0.0f) {
@@ -791,19 +789,21 @@ bool Server::hurt_effects(std::uint64_t id, Session &s, int cause, int damage, s
 }
 void Server::knockback(std::uint64_t id, Session &s, float xd, float zd) {
     // ServerPlayer::knockback (0x25f89f0) -> Mob::knockback (0x22b4880) with
-    // power 1, height 0.4, cap 0.4 (Mob::hurtEffects). The knockback
-    // resistance test draws from the player's own Random; players have none
-    // (0), so it never blocks and the draw is not modelled. Then
+    // power 1, height 0.4, cap 0.4 (Mob::hurtEffects): the player's own
+    // Random decides against the knockback resistance (0 for players). Then
     // SetActorMotion to every player that knows this one, itself included.
-    const float inv = 1.0f / std::sqrt(xd * xd + zd * zd); // mce::Math::invSqrt
-    const float power = 0.4f * 1.0f;
-    for (auto &m : s.motion)
-        m = 0.5f * m;
-    s.motion[0] = s.motion[0] - xd * inv * power;
-    s.motion[1] = 0.4f + s.motion[1];
-    s.motion[2] = s.motion[2] - zd * inv * power;
-    if (s.motion[1] > 0.4f)
-        s.motion[1] = 0.4f;
+    // ServerPlayer::knockback sends the motion even when Mob::knockback returns early.
+    if (!(s.attributes[kKnockbackResistance] > s.random.next_float())) {
+        const float inv = mce_inv_sqrt(xd * xd + zd * zd); // mce::Math::invSqrt
+        const float power = 0.4f * 1.0f;
+        for (auto &m : s.motion)
+            m = 0.5f * m;
+        s.motion[0] = s.motion[0] - xd * inv * power;
+        s.motion[1] = 0.4f + s.motion[1];
+        s.motion[2] = s.motion[2] - zd * inv * power;
+        if (s.motion[1] > 0.4f)
+            s.motion[1] = 0.4f;
+    }
     send_for_entity(id, packet(PacketId::SetActorMotion, set_actor_motion(id, {s.motion[0], s.motion[1], s.motion[2]})));
 }
 void Server::cause_fall_damage(std::uint64_t id, Session &s, float distance) {
@@ -872,18 +872,21 @@ void Server::respawn(std::uint64_t id, Session &s) {
         return;
     s.dead = false;
     s.hurt_time = s.last_hurt = 0;
-    // INFERRED: effects, their buffs and the item in use do not survive death.
+    // Player::resetPos (0x22eba90): motion cleared, Mob::removeAllEffects
+    // (REMOVE packets) before the respawn event, fall distance 0.
+    s.motion[0] = s.motion[1] = s.motion[2] = 0.0f;
     for (std::size_t e = 1; e < s.effects.size(); ++e)
         if (s.effects[e].id)
             remove_effect(id, s, static_cast<int>(e));
-    s.using_item = {};
-    s.attributes.values[kSaturation].max = 20.0f;
+    s.fall_distance = 0.0f;
+    s.using_item = {}; // INFERRED: the item in use is dropped with everything else
     send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 18, 0)));
     enqueue(id, packet(PacketId::SetHealth, set_health(20)));
     auto &a = s.attributes;
     for (int attribute : {kHealth, kHunger, kExhaustion, kSaturation, kLevel, kExperience}) {
         auto &v = a.values[static_cast<std::size_t>(attribute)];
-        v.value = attribute == kExhaustion || attribute == kLevel || attribute == kExperience ? 0.0f : v.max;
+        // resetPos: health resetToMaxValue, the others resetToDefaultValue (no clamp).
+        v.value = attribute == kHealth ? v.max : v.fallback;
     }
     enqueue(id, packet(PacketId::UpdateAttributes,
                        update_attributes(id, a, {kHealth, kHunger, kExhaustion, kSaturation, kLevel, kExperience})));

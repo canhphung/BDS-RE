@@ -62,6 +62,9 @@ class Server {
         ItemStack using_item;
         int use_duration = 0;
         float fall_distance = 0;                  // Actor +0x138
+        // Actor +0x2b0: the actor's own Random, Random::Random() (seeded from
+        // std::random_device, never reseeded): drop throws, knockback roll.
+        Random random{std::random_device{}()};
         int damage_remainder = 0, absorb_remainder = 0; // Mob +0x12c4, +0x12c8
         std::uint64_t flags() const;
     };
@@ -108,6 +111,7 @@ class Server {
     void eat(std::uint64_t id, Session &s, const ItemStack &item);
     void drop(std::uint64_t id, Session &s, ItemStack item, bool randomly);
     void set_sprinting(Session &s, bool sprinting);
+    void player_move(Session &s, PlayerData &p);
     std::vector<GamePacket> inventory_resend(const Session &s) const;
     void cause_fall_damage(std::uint64_t id, Session &s, float distance);
     void die(std::uint64_t id, Session &s, int cause);
