@@ -41,6 +41,8 @@ def main():
     parser.add_argument("--lighting-oracle", action="store_true")
     parser.add_argument("--lighting-cases", type=int, default=128)
     parser.add_argument("--tick-order", action="store_true")
+    parser.add_argument("--gdb-script", action="append", default=[], type=Path,
+                        help="Extra gdb Python oracle sourced after the sequence probe (may use `state`)")
     parser.add_argument("--packet-log", action="store_true",
                         help="Write every packet each client received to packets_<name>.json")
     parser.add_argument("--spawn-oracle", action="store_true",
@@ -87,6 +89,9 @@ def main():
                 "source " + str(Path(__file__).with_name("gdb_level_random_sequence.py"))]
     if args.spawn_oracle:
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_spawn_oracle.py"))]
+    for script in args.gdb_script:
+        command += ["-ex", "source " + str(script.resolve())]
+    env["ORACLE_OUT_DIR"] = str(output)
     command += ["-ex", "continue"]
     if args.grass_oracle:
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_grass_ticks.py"))]

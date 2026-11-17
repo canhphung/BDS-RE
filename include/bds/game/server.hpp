@@ -1,6 +1,7 @@
 #pragma once
 #include "bds/game/protocol.hpp"
 #include "bds/game/spawner.hpp"
+#include "bds/game/mob_ai.hpp"
 #include "bds/game/world_tick.hpp"
 #include "bds/world/chunk_ticks.hpp"
 #include "bds/server/access.hpp"
@@ -55,6 +56,11 @@ class Server {
         std::uint8_t color = 0;
         float scale = 1.0f, health = 0, max_health = 0, movement = 0, fall_damage = 1.0f;
         Vec3 motion;
+        MobBrain brain;
+        // SpatialActorNetworkData last sent values (rotation as packet bytes).
+        bool on_ground = true, sent_on_ground = true;
+        Vec3 sent_pos;
+        std::int8_t sent_rotation[3]{}; // pitch, yaw, head yaw
         std::pair<int, int> owner_chunk{};
         bool removed = false;
     };
@@ -152,6 +158,8 @@ class Server {
     // LevelChunk::tick's state +0x1054 (0 new, 1 to post-process, 2 done);
     // returns false when the rest of LevelChunk::tick is skipped.
     bool tick_chunk_state(int chunk_x, int chunk_z);
+    void tick_mob(MobActor &mob);
+    class Senses;
     class Region;
     friend class Region;
     Spawner spawner_;                    // Level::getSpawner
