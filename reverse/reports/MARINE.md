@@ -109,10 +109,34 @@ directly:
 - The column walk and the placement use the **candidate's** x/z, not the
   anchor's.
 
-The pass currently replays through `#51` and diverges at `#52`: the placement
-must write one block and then let the candidate loop continue, with the next
-`is_empty_water` starting at `y+1`. The implementation is still uncommitted and
-`kelp_reference` is unregistered.
+### Correction to phases 2..5
+
+Writing the pass against the corpus corrected the phase map above:
+
+- `#19..#21` are NOT a separate candidate: they are `is_empty_water(candidate)`
+  followed by **two** `get_block(candidate)` — the accept path's two
+  `getLegacyBlock` compares.
+- `#22..#24` test the cell **below** the candidate (`is_empty_water(y-1)`) and
+  read both cells; this is part of the accept path, not the walk.
+- `#25` restarts at the candidate's **own Y**, and `#26` reads it; the walk then
+  climbs one layer per `(is_empty_water, get_block)` pair. The failed layer at
+  `#39` also reads the cell above it at `#40`.
+- `#41` is one more `get_block` on the candidate's own Y before the height draw.
+
+The pass now replays through `#40` and diverges at `#41`, where it reads the
+wrong Y. The remaining error is a single indexed read in the height/placement
+transition.
+
+### Anchor stage, settled
+
+The descent reads, per step, `is_solid_blocking(below)`, `get_block(below)` and
+`get_block(anchor)`; a false solid test descends and a true one repeats the
+`is_solid_blocking`+`get_block` pair once and stops, with **no** `get_block` on
+the anchor in that final step. The earlier attempt read the anchor
+unconditionally, which is what desynchronised `#17`.
+
+The implementation is still uncommitted and `kelp_reference` is unregistered:
+`#41` onward does not replay yet.
 
 ## Next
 
