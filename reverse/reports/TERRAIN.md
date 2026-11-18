@@ -61,8 +61,31 @@ BiomeSource::fillRawBiomeData 0x1dbba10) and 28,928 chunk-biome bytes (113
 FullChunkData packets, fillBiomeData 0x1dbb8c0 through VoronoiZoom) with the
 original: all match.
 
+## Height field and surfaces (src/world/overworld.cpp)
+
+| Original | BDS-RE |
+|---|---|
+| OverworldGenerator ctor 0x1b36090: one Random(seed) for minLimit(16), maxLimit(16), main(8), surface simplex(4), scale(10), depth(16), forest(8); biome weights 10 / sqrt(dx² + dz² + 0.2) | `OverworldGenerator` |
+| getHeights 0x1b373d0: 5 x 17 x 5 density from depth (200), main (8.555, 4.278, 8.555), min (684.412, 855.515, 684.412) / 256 and max (684.412) / 512 noises | `OverworldGenerator::heights` |
+| prepareHeights 0x1b36ac0: raw biomes at (x * 4 - 2, z * 4 - 2), trilinear interpolation into stone / water below 63 / air | `prepare_heights` |
+| loadChunk 0x1b38610: Random seeded with x * 0x14609048 + z * 0x7ebe2d5 | `generate` |
+| buildSurfaces 0x1b37f80: surface noise at scale 0.125 (freq 1, amp 0.5), Biome::buildSurfaceAt per column (x outer) | `build_surfaces` |
+| OverworldBiome::buildSurfaceAt 0x1db5c10, _placeBedrock 0x1db5b00; Taiga 0x1da0ea0, ExtremeHills 0x1d8edc0, Savanna 0x1dc5490, Swamp 0x1da20b0, Mutated 0x1dba960 | `default_surface` and the class cases |
+
+Findings: the biome blend of getHeights is 3 x 3 (`range_incl(-1, 1)`) with the
+inner weights of the 5 x 5 table; the min-limit noise is divided by 256 and
+uses a y scale of 855.515; bedrock fills y 0 up to *and including*
+`nextInt(1, 5)`; the swamp builder (decorator noise `PerlinSimplexNoise(2345,
+1)`) stops at the first block whose material is air, so with air above the
+surface it never places its water. The subclasses write the biome's top and
+filler before the default builder reads them.
+
+`terrain_reference` regenerates 24 chunks and compares the BlockVolume after
+prepareHeights and after buildSurfaces with the original's: all 2 x 786,432
+cells match.
+
 ## Not yet translated
 
-prepareHeights / getHeights are read (see the comments in the code once
-added), buildSurfaces, bedrock, carvers, postProcess and structures are not
-yet in BDS-RE; the server still uses the old independent terrain.
+MesaBiome / OceanFrozenBiome surfaces (the default builder is used for them),
+the carvers, postProcess and structures; the server still uses the old
+independent terrain.

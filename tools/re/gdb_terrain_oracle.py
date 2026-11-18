@@ -90,6 +90,13 @@ VANILLA = os.environ.get("TERRAIN_VANILLA_BIOMES")
 dumped = []
 
 
+def safe_block(block):
+    try:
+        return block_name(block) if block else None
+    except (gdb.MemoryError, OverflowError, UnicodeDecodeError):
+        return None
+
+
 def dump_biomes():
     begin, end = struct.unpack("<QQ", mem(0x348b670, 16))
     globals_ = {}
@@ -109,7 +116,13 @@ def dump_biomes():
         entry = {"id": struct.unpack("<i", mem(biome + 0x88, 4))[0], "name": string(biome + 8),
                  "global": globals_.get(biome), "temperature": temperature, "downfall": downfall,
                  "depth": depth, "scale": scale, "type": hex(q(biome + 0x80)), "vtable": hex(vtable),
-                 "raw": mem(biome, 0xd0).hex()}
+                 "raw": mem(biome, 0xd0).hex(),
+                 # OverworldBiome::buildSurfaceAt 0x1db5c10: top (+0xe0), filler
+                 # (+0xe8), underwater floor (+0xf0) blocks and floor depth (+0xf8).
+                 "surface": [safe_block(q(biome + o)) for o in (0xe0, 0xe8, 0xf0)],
+                 "floor_depth": struct.unpack("<i", mem(biome + 0xf8, 4))[0],
+                 # Taiga/ExtremeHills/Savanna subtype (+0x1b0), read by their buildSurfaceAt.
+                 "subtype": struct.unpack("<i", mem(biome + 0x1b0, 4))[0]}
         if vtable == 0x31e8590 + 0x10:
             entry["parent"] = struct.unpack("<i", mem(q(biome + 0xc0) + 0x88, 4))[0]
         out.append(entry)
@@ -132,3 +145,52 @@ class RawBiomes(gdb.Breakpoint):
 
 
 RawBiomes("*0x1b36b47", internal=True)
+
+
+height_args = {}
+
+
+class HeightsEntry(gdb.Breakpoint):
+    # getHeights entry 0x1b373d0: ecx/r8d/r9d = x, y, z (the function reuses
+    # their stack slots as loop counters).
+    def stop(self):
+        height_args[gdb.selected_thread().num] = tuple(
+            struct.unpack("<i", struct.pack("<I", r(n) & 0xffffffff))[0] for n in ("ecx", "r8", "r9"))
+        return False
+
+
+HeightsEntry("*0x1b373d0", internal=True)
+
+
+class Heights(gdb.Breakpoint):
+    # getHeights 0x1b37f33 (before the epilogue): the output grid (-0x10
+    # pointer, 425 floats), the depth noise (-0x1a0, 25), main (-0x860), min
+    # (-0xf20) and max (-0x15e0) noise buffers (425).
+    def stop(self):
+        frame = r("rbp")
+        x, y, z = height_args.get(gdb.selected_thread().num, (None, None, None))
+        floats = lambda address, n: list(struct.unpack("<%df" % n, mem(address, 4 * n)))
+        record = {"stage": "density", "x": x, "y": y, "z": z, "out": floats(q(frame - 0x10), 425),
+                  "depth": floats(frame - 0x1a0, 25), "main": floats(frame - 0x860, 425),
+                  "min": floats(frame - 0xf20, 425), "max": floats(frame - 0x15e0, 425)}
+        with open(OUT, "a") as f:
+            f.write(json.dumps(record) + "\n")
+        return False
+
+
+Heights("*0x1b37f33", internal=True)
+
+
+class SwampNoise(gdb.Breakpoint):
+    # SwampBiome::buildSurfaceAt 0x1da212f: xmm0 = the decorator noise value at
+    # (pos.x * 0.25, pos.z * 0.25); -0x20 = BlockPos*.
+    def stop(self):
+        frame = r("rbp")
+        x, y, z = struct.unpack("<3i", mem(q(frame - 0x20), 12))
+        value = struct.unpack("<f", struct.pack("<I", int(gdb.parse_and_eval("$xmm0.v4_int32[0]")) & 0xffffffff))[0]
+        with open(OUT, "a") as f:
+            f.write(json.dumps({"stage": "swamp", "x": x, "y": y, "z": z, "value": value}) + "\n")
+        return False
+
+
+SwampNoise("*0x1da212f", internal=True)

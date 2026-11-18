@@ -24,6 +24,11 @@ struct BiomeData {
     int type;                                   // BiomeType object (+0x80), compared by identity
     BiomeClass kind;                            // from the vtable
     int parent;                                 // MutatedBiome +0xc0 (id), -1 otherwise
+    // OverworldBiome surface: top +0xe0, filler +0xe8, underwater floor +0xf0
+    // ("name:data", nullptr where the class has none), floor depth +0xf8.
+    const char *top, *filler, *floor;
+    int floor_depth;
+    int subtype; // +0x1b0: TaigaBiome / ExtremeHillsBiome / SavannaBiome kind (other data elsewhere)
 };
 const std::vector<BiomeData> &biome_registry();
 // Biome::getBiome(int) 0x1dc0690: nullptr outside the registry vector or for
