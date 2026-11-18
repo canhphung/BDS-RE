@@ -435,7 +435,31 @@ from the kelp oracle.
    fan-out of `get_block` over `y-1`, `y`, `y-1`, `y+1`, `y-1`, ... which is the
    placement's neighbour reads.
 
-The translation has not started: the body is 0xaa2 bytes with six
+### Translation attempt: the first gate does not line up
+
+A first pass was written and removed without being committed. Two facts it
+established:
+
+- `0x1b6d149` and `0x1b6d377` both run `nextInt(0x14)` and require **zero**;
+  `0x1b6d38e` then builds `Range<int,1>(0x8)`, i.e. **eight** candidates.
+- The corpus's first candidate pair for case 0 is at `y-1` and then `y`
+  (`#16..#18` false, `#19..#21` true), so a candidate tests the cell below
+  FIRST and only then its own cell.
+
+The blocker is the gate: replaying `nextInt(0x14)` from case 0's seed
+(3163345183) gives **2**, not 0, so the translated path returns false
+immediately while the native run places five blocks. Something consumes Random
+before that gate — most plausibly `_isNotIce` `0x1b6db40` (called three times in
+`place`) or a draw inside the descent, neither of which the corpus currently
+records as a Random word.
+
+So the next step is to extend the seagrass oracle to record the raw generator
+words positionally (the kelp oracle already does this by breaking at
+`0x187e704`), which will show exactly which call consumes the words before the
+gate. Until then the translation stays out of the tree.
+
+The body is 0xaa2 bytes with six `nextGaussianInt` draws, four
+`SeaGrass::Type` constructions and `_isNotIce`. The body is 0xaa2 bytes with six
 `nextGaussianInt` draws, four `SeaGrass::Type` constructions and `_isNotIce`, so
 it needs its own pass rather than a quick copy of the kelp shape.
 
