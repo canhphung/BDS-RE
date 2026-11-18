@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
             ++cases;
             leaves += observed.size();
         }
-        std::cout << cases << " native TreeFeature::places match: " << leaves << " leaf cells\n";
+        std::cout << cases << " native TreeFeature::place cases match: " << leaves << " placements\n";
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

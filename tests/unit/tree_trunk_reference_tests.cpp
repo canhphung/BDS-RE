@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
             words += observed_words.size();
             queries += recorded.size();
         }
-        std::cout << cases << " native ClayFeature cases match: " << writes << " placements, "
+        std::cout << cases << " native TreeFeature::_placeTrunk cases match: " << writes << " placements, "
                   << words << " Random words, " << queries << " dependency answers\n";
         return 0;
     } catch (const std::exception &error) {

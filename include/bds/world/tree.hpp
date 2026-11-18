@@ -81,6 +81,9 @@ bool tree_place(DecorationRegion &, DecorationRegion::Position origin, int heigh
 // place. MegaTreeFeature::place 0x1b55c70: height = nextInt(3) + 5. Both are
 // 0x65-byte wrappers; the constructor only sets the leaf/trunk type ids.
 int jungle_tree_height(Random &);
+// Translated from 0x1b55c9b..0x1b55ca0 (nextInt(3) + 5) but NOT wired into a
+// test: MegaTreeFeature's constructor 0x1b55bf0 takes four type ids that map to
+// block pairs this project has not assembled, so there is no corpus for it.
 int mega_tree_height(Random &);
 bool jungle_tree_place(DecorationRegion &, DecorationRegion::Position, Random &,
                        const TreeEnvironment &, bool manually_placed = false,
