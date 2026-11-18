@@ -436,6 +436,34 @@ have small `column` values, which is why the constant-7 reading fit them.
 The real remaining bug is therefore NOT the formula; it is the read-count
 bookkeeping inside the candidate body (the divergence at #265 in case 0).
 
+### The full draw schedule, validated end to end
+
+Replaying the whole schedule for case 0 — `OK = {accept, reject, accept, accept,
+accept, accept, reject, accept, accept, accept}` — reproduces all ten candidate
+cells AND, with the height bound CONSTANT at `nextInt(3, 7)`, all eight placed
+column heights:
+
+```
+cand0 (-8,-6)   h=6 want 6  OK
+cand1 (-15,-8)  reject
+cand2 (-6,-5)   h=4 want 4  OK
+cand3 (-6,-10)  h=3 want 3  OK
+cand4 (-9,-14)  h=4 want 4  OK
+cand5 (-11,-7)  h=3 want 3  OK
+cand6 (-15,-10) reject
+cand7 (-4,-10)  h=6 want 6  OK
+cand8 (-6,-8)   h=3 want 3  OK
+cand9 (-5,-10)  h=3 want 3  OK
+```
+
+So for case 0 the height bound is genuinely `nextInt(3, 7)`, i.e.
+`column = 5`, and every one of the eight heights matches. Case 1 still needs a
+larger bound to produce its seven-block column, so the bound is a property of
+the feature/anchor rather than the walk. That is the one thing left to read.
+
+This is the closest the feature has come: the candidate cells, the accept map,
+the height words and the height values all line up for case 0.
+
 ### Superseded: the constant-7 reading
 
 Testing the height words directly settles it. For case 0 the eight placed
