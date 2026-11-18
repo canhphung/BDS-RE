@@ -158,7 +158,7 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
             x = struct.unpack('<i', mem(rbp - 0x84, 4))[0]
             y = struct.unpack('<i', mem(rbp - 0x54, 4))[0]
             z = struct.unpack('<i', mem(rbp - 0xac, 4))[0]
-            gates.append({'cell': [x, y, z], 'placed': False})
+            gates.append({'cell': [x, y, z], 'called': False, 'wrote': None})
             return False
 
     class GateDraw(gdb.Breakpoint):
@@ -178,7 +178,22 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
 
         def stop(self):
             if leaf_gates_active[0] and gates:
-                gates[-1]['placed'] = True
+                gates[-1]['called'] = True
+            return False
+
+    class LeafReturn(gdb.Breakpoint):
+        """Read _placeLeaf's result at 0x1b5a551, right after the call.
+
+        %al still holds it there, which tells "the write changed a cell" apart
+        from "the call happened but the cell already held leaves".
+        """
+
+        def __init__(self):
+            super().__init__('*0x1b5a551', internal=True)
+
+        def stop(self):
+            if leaf_gates_active[0] and gates:
+                gates[-1]['wrote'] = int(gdb.parse_and_eval('$al')) & 1
             return False
 
     leaf_gates_active = [False]
@@ -232,7 +247,8 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
     leaf_gate = LeafGate('*0x1b5a4f2', internal=True)
     leaf_place = LeafPlacement()
     gate_draw = GateDraw()
-    observers = [draw, write, leaf_gate, leaf_place, gate_draw] + query_breakpoints
+    leaf_return = LeafReturn()
+    observers = [draw, write, leaf_gate, leaf_place, leaf_return, gate_draw] + query_breakpoints
     for bp in observers:
         bp.enabled = False
 

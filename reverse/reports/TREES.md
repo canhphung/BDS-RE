@@ -370,49 +370,59 @@ per-cell draw assignment is exactly what is missing.
 
 ### The gate decision data is now recorded
 
-Implementing that plan works: the oracle now logs, for every `nextInt(2)` at
-`0x1b5a4f2`, the candidate cell from the `BlockPos` locals
-(`-0x84` x, `-0x54` y, `-0xac` z — the registers `0x1b5a51a`, `0x1b5a520` and
-`0x1b5a523` load them into `esi`/`edx`/`ecx` for the `BlockPos` constructor),
-the draw value read at `0x1b5a4f7` (`cmp $0,%eax`), and whether `_placeLeaf` at
-`0x1b5a54c` followed.
+The oracle logs, for every `nextInt(2)` at `0x1b5a4f2`: the candidate cell from
+the `BlockPos` locals (`-0x84` x, `-0x54` y, `-0xac` z, loaded into
+`esi`/`edx`/`ecx` at `0x1b5a51a/520/523`), the draw at `0x1b5a4f7`, whether
+`_placeLeaf` at `0x1b5a54c` was **called**, and its **return value** read at
+`0x1b5a551`.
 
 `tests/reference/tree_leaf_gates_bds_1.6.0.15.json` holds **128 gates across
-the 16 cases** and is 7 KB.
+16 cases** (8 KB).
 
-### What the data shows, and why the rule is still open
+### Half-width formula, corrected
 
-The draw does **not** decide the placement: across the 128 gates all four
-combinations occur —
+The formula recorded earlier in this file was wrong. Measuring the native leaf
+extent per layer gives `2, 2, 1, 1` for heights 5, 6 **and** 7:
 
-| draw | placed | count |
-|---:|---|---:|
-| 1 | true | 68 |
-| 0 | true | 41 |
-| 0 | false | 16 |
-| 1 | false | 3 |
+| height | rel-Y band | half-widths |
+|---:|---|---|
+| 5 | 2..5 | 2, 2, 1, 1 |
+| 6 | 3..6 | 2, 2, 1, 1 |
+| 7 | 4..7 | 2, 2, 1, 1 |
 
-Attempts to model it purely algebraically all fail:
+So the band always starts at `height - 3` and the half-width is
 
-- "place iff `draw != 0`" — 44 mismatches.
-- "edge unconditional, interior iff `draw != 0`" — 31 mismatches.
-- "corner always skipped, else `draw != 0`" — 71 mismatches.
+```
+half = 2 - trunc((relY - (height - 3)) / 2)
+```
 
-The counter-examples are revealing. `(rel-Y 4, half 2, |dx| 1, |dz| 1, draw 0)`
-places, while `(rel-Y 5, half 1, |dx| 1, |dz| 1, draw 0)` skips, and
-`(rel-Y 6, half 1, |dx| 1, |dz| 1, draw 1)` also skips. The same geometry
-therefore behaves differently depending on the layer, and the three
-`draw 1 / placed false` rows mean the decision depends on state the gate does
-not read at that instruction — most plausibly `_placeLeaf` itself returning
-false because an earlier cell on the same pass already wrote leaves there, so
-`placed` in this corpus means "_placeLeaf was called", not "a leaf cell
-appeared".
+with **truncating** division, which reproduces all three rows. The earlier
+`1 - (y - (origin.y + height)) / 2` was an arithmetic coincidence for the first
+layer only.
 
-That distinction is the missing piece: the corpus should record the `_placeLeaf`
-**return value** at `0x1b5a551` (or the leaf write count) alongside the call,
-so "called but wrote nothing" can be told apart from "not called". With that,
-the gate reduces to the draw test the disassembly shows and the geometry
-already measured. The 128-gate fixture is the input for that step.
+### Why the gate rule is still open
+
+With the corrected half-width, all 128 recorded gates turn out to be cells on
+the **corner** or edge of the offered square, and the simple rules still do not
+fit:
+
+| hypothesis | mismatches |
+|---|---:|
+| `called == (draw != 0)` | 44 |
+| corners always skipped, else `draw != 0` | 109 |
+| edge unconditional, interior `draw != 0` | 31 |
+
+The four `(called, wrote, draw)` combinations that actually occur are
+`(true,1,1) 68`, `(true,1,0) 41`, `(false,-,0) 16` and `(false,1,1) 3`. The
+`(false, 1, 1)` rows are the important ones: `wrote` is stale on those entries
+because the return breakpoint did not fire for a call that was not made, so the
+corpus needs the field set to `null` there rather than left over.
+
+The remaining confusion is bookkeeping, not semantics: the gate opens exactly
+on a nonzero draw (`0x1b5a4fa` jumps past the placement on zero), and the
+`-0x58` test at `0x1b5a500` additionally skips the top layer. With the corrected
+half-width and a clean per-gate record, the pass is a straight replay; the
+fixture above is the input.
 
 ## Plan for the session that translates it
 
