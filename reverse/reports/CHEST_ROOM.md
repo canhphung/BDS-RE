@@ -7,7 +7,8 @@ These are the two features `OverworldGenerator::postProcess` calls directly
 (`0x1b3947b` and `0x1b392a0`) besides the decorator dispatches. See
 [POSTPROCESS.md](POSTPROCESS.md) for the call context.
 
-Status: **traced, not translated, no corpus yet.** Nothing is registered.
+Status: **BonusChestFeature is translated and verified** against a 12-case
+native corpus; `MonsterRoomFeature` is traced only. See the sections below.
 
 ## BonusChestFeature
 
@@ -95,23 +96,42 @@ Structure read so far: it starts with two constants (`0x2` at `0x1b549ab` and
 room shell testing materials, removes blocks, places the mossy-cobble room and
 chests, and fills a `MobSpawnerBlockActor` with a random entity id.
 
-## Why this is not translated yet
+## BonusChestFeature — implemented and verified
 
-`BonusChestFeature` is small enough to finish in one pass: it needs
-`findNextTopSolidBlockUnder`, `isConsideredSolidBlock`, `getBlockEntity`,
-`setLootTable` and the block-state-from-legacy-data conversion, plus an oracle
-that constructs the feature and calls `place`. Its local-Random detail means the
-corpus must record that second stream separately.
+`src/world/bonus_chest.cpp` reproduces all 12 native cases: 36 placements,
+12 local-Random words, 96 dependency answers and 12 `setBonusChestSpawned`
+calls, through `bonus_chest_reference`.
 
-`MonsterRoomFeature` additionally needs the block entity and spawner surface
-(`MobSpawnerBlockActor`, `BaseSpawner`, entity-id selection), which the project
-has not translated at all. Wiring it before that exists would mean inventing the
-spawner behaviour, so it should follow the block-entity work rather than lead it.
+Two details the corpus forced into the open:
+
+- **The feature really does keep the caller's stream untouched.** It calls
+  `Random::getSeed()` (which reads the object's `+0` seed field, it draws
+  nothing) and constructs its own `Random` from that seed at `0x1b526e8`.
+  Every later draw belongs to the copy. The translation asserts this by
+  observing the caller and requiring zero words.
+- **The loot seed is `nextInt()`, not the raw generator word.** The native call
+  at `0x1b52aa9` is `Random::nextInt()` `0x187d470`, which is
+  `_genRandInt32() >> 1`. The oracle observes the generator epilogue, so it
+  records the raw word; the translation and the test reconcile the two with an
+  explicit shift. That mapping is exactly the kind of off-by-one a corpus
+  catches and a reading does not.
+- The four torch positions are built east/west/north/south into slots but
+  **checked** in the order west (`-0x80`), east (`-0x68`), north (`-0x98`),
+  south (`-0xb0`), which the oracle's query order confirms.
+
+## MonsterRoomFeature — still not translated
+
+`MonsterRoomFeature` `0x1b549a0` needs `MobSpawnerBlockActor`,
+`BaseSpawner` and `_getRandomEntityId`, none of which exist in the project. Its
+dependency profile is 7 `getMaterial`, 8 `Material::isSolid`, 5
+`nextInt(int)`, 4 `_placeBlock`, 2 `removeBlock`, 2 `getBlockEntity`, and one
+each of `_getRandomEntityId`, `_getFacingDataId` and
+`MobSpawnerBlockActor::getSpawner`. Wiring it before the block-entity surface
+exists would mean inventing the spawner, so it follows that work rather than
+leading it.
 
 ## Next
 
-1. Write `gdb_bonus_chest_cases.py` following the vegetation oracle pattern and
-   translate `src/world/bonus_chest.cpp` against it.
-2. Trace `MobSpawnerBlockActor`/`BaseSpawner` before attempting
-   `MonsterRoomFeature`, then give it its own oracle.
-3. Then proceed to `OverworldDecorator::decorate` `0x1da5250`.
+1. Trace and build the block-entity/spawner surface, then translate
+   `MonsterRoomFeature` with its own oracle.
+2. Proceed to `OverworldDecorator::decorate` `0x1da5250`.
