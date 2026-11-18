@@ -400,29 +400,35 @@ with **truncating** division, which reproduces all three rows. The earlier
 `1 - (y - (origin.y + height)) / 2` was an arithmetic coincidence for the first
 layer only.
 
-### Why the gate rule is still open
+### The gate rule, solved
 
-With the corrected half-width, all 128 recorded gates turn out to be cells on
-the **corner** or edge of the offered square, and the simple rules still do not
-fit:
+The 128 recorded gates plus the native leaf sets pin the rule down completely.
+`src/world/tree.cpp` now reproduces **all 8 leaf volumes: 448 leaf cells**,
+through `tree_place_leaves`.
 
-| hypothesis | mismatches |
-|---|---:|
-| `called == (draw != 0)` | 44 |
-| corners always skipped, else `draw != 0` | 109 |
-| edge unconditional, interior `draw != 0` | 31 |
+The pass is:
 
-The four `(called, wrote, draw)` combinations that actually occur are
-`(true,1,1) 68`, `(true,1,0) 41`, `(false,-,0) 16` and `(false,1,1) 3`. The
-`(false, 1, 1)` rows are the important ones: `wrote` is stale on those entries
-because the return breakpoint did not fire for a call that was not made, so the
-corpus needs the field set to `null` there rather than left over.
+1. Band `origin.y + height - 3 .. origin.y + height` (`0x1b5a313..0x1b5a326`).
+2. Half-width `2 - rel/2` with truncation, which gives `2, 2, 1, 1` for every
+   height — the earlier `1 - (y - (origin.y + height)) / 2` was wrong.
+3. The **trunk column `(0,0)` is skipped on every layer except the top**, where
+   the native set keeps it. This was the missing piece: with it the counts per
+   layer become `24, 23, 7, 5` exactly.
+4. Any cell that is **not a corner** (`|dx| == half && |dz| == half`) goes
+   straight to `_placeLeaf` — `0x1b5a4cf` / `0x1b5a4e3` jump to `0x1b5a50f`,
+   the call site, with **no Random draw**.
+5. Corners draw `nextInt(2)` (`0x1b5a4f2`). A zero draw skips
+   (`0x1b5a4fa` jumps to the increment); a nonzero draw also skips the **top
+   layer** because `0x1b5a500` tests `y - (origin.y + height)`, which is zero
+   there.
 
-The remaining confusion is bookkeeping, not semantics: the gate opens exactly
-on a nonzero draw (`0x1b5a4fa` jumps past the placement on zero), and the
-`-0x58` test at `0x1b5a500` additionally skips the top layer. With the corrected
-half-width and a clean per-gate record, the pass is a straight replay; the
-fixture above is the input.
+Verified counts for height 5 at `(-8,5,-8)`: `24, 23, 7, 5` = 59 cells, the
+same per-layer numbers the native run produced.
+
+The lesson worth keeping: two earlier attempts failed because they modelled the
+draw as gating *all* cells and because the half-width formula was an arithmetic
+coincidence on the first layer. The recorded per-gate corpus is what made the
+corner-only rule and the top-layer trunk exception visible.
 
 ## Plan for the session that translates it
 

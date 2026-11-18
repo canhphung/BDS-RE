@@ -96,6 +96,53 @@ bool tree_place_leaf(DecorationRegion &region, DecorationRegion::Position at,
     return false;
 }
 
+void tree_place_leaves(DecorationRegion &region, DecorationRegion::Position origin, int height,
+                       Random &random, const TreeEnvironment &environment, TreeBlock leaves) {
+    (void)region;
+    const int ox = std::get<0>(origin), oy = std::get<1>(origin), oz = std::get<2>(origin);
+    // 0x1b5a313..0x1b5a326 builds range_incl(origin.y - 3 + height,
+    // origin.y + height): the band is rel-Y 0..3 from height-3 up to height.
+    const int top = oy + height;
+    for (int y = oy - 3 + height; y <= top; ++y) {
+        const int rel = y - (oy - 3 + height);
+        // Measured from the native leaf sets: the half-width is 2, 2, 1, 1 for
+        // every height. In rel terms that is 2 - trunc(rel / 2).
+        const int half = 2 - rel / 2;
+        for (int x = ox - half; x <= ox + half; ++x) {
+            for (int z = oz - half; z <= oz + half; ++z) {
+                // The trunk column is never a leaf, EXCEPT on the top layer,
+                // where the native set keeps (0,0). The corpus fixes both halves
+                // of that: rel-Y 2,3,4 omit it and rel-Y h keeps it.
+                // The trunk column is never a leaf except on the top layer,
+                // where the native set keeps (0,0). The corpus fixes both: rel-Y
+                // 2,3,4 omit it and rel-Y h keeps it.
+                const bool corner = std::abs(x - ox) == half && std::abs(z - oz) == half;
+                if (x == ox && z == oz) {
+                    // (0,0) is never a corner unless half == 0, which cannot
+                    // happen for these heights, so it is a plain non-corner cell
+                    // and only the top layer keeps it.
+                    if (y == top)
+                        tree_place_leaf(region, {x, y, z}, environment, leaves);
+                    continue;
+                }
+                // 0x1b5a4cf / 0x1b5a4e3: a cell that is not a corner jumps
+                // straight to 0x1b5a50f, which is the _placeLeaf call.
+                if (!corner) {
+                    tree_place_leaf(region, {x, y, z}, environment, leaves);
+                    continue;
+                }
+                // 0x1b5a4e9..0x1b5a50f: corners draw nextInt(2). Zero skips
+                // (0x1b5a4fa jumps to the loop increment); a nonzero draw skips
+                // only the top layer, where y - (origin.y + height) is zero.
+                const int draw = random.next_int(2);
+                if (draw == 0 || y == top)
+                    continue;
+                tree_place_leaf(region, {x, y, z}, environment, leaves);
+            }
+        }
+    }
+}
+
 float tree_trunk_height_scale(bool fallen, bool type_flags, Random &random) {
     // 0x1b5acb1..0x1b5ad27 selects one of three rodata floats:
     //   fallen                 -> 0x2828668 = 0.75

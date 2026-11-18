@@ -61,6 +61,12 @@ bool tree_place_trunk(DecorationRegion &, DecorationRegion::Position, int height
                       const TreeEnvironment &, bool manually_placed, bool type_flags,
                       TreeBlock trunk = {"log", 0}, TreeBlock leaves = {"leaves", 0});
 
+// The leaf-volume pass of place(...,int) 0x1b5a313..0x1b5a55d. `height` is the
+// same value the trunk stage received. Verified against
+// tests/reference/tree_place_bds_1.6.0.15.json.
+void tree_place_leaves(DecorationRegion &, DecorationRegion::Position origin, int height,
+                       Random &, const TreeEnvironment &, TreeBlock leaves = {"leaves", 0});
+
 // TreeFeature::_placeLeaf 0x1b59d60. Places leaves at `at` when the cell's
 // material is type 9, 0 or 7 (the native order); otherwise it does nothing.
 bool tree_place_leaf(DecorationRegion &, DecorationRegion::Position at,
