@@ -89,6 +89,36 @@ dispatch, `MonsterRoomFeature` or `BonusChestFeature`. The translated ore, clay
 and vegetation features therefore still have no caller. `post_process` reports
 the region's mutations so a later wiring can apply them.
 
+## Decoration actually reaches the world
+
+`src/world/decoration_stage.cpp` adds `decorate_generated_chunk`: it builds a
+`DecorationRegion` from the generated `TerrainVolume` (plus empty neighbours, so
+a cross-column write is reported and the owning chunk regenerates it
+deterministically) and runs the features that are **verified and need no
+missing infrastructure**:
+
+| Native | Translation |
+|---|---|
+| `OverworldDecorator::decorateOres` `0x1da6de0` | `decorate_ores` (100 attempts) |
+| `ClayFeature::place` `0x1b55840` | `place_clay` |
+| `TallGrassFeature` `0x1b66570`, `FlowerFeature` `0x1b5ef70`, `ReedsFeature` `0x1b5d070` | the corresponding `place_*` |
+
+`ensure_chunk` applies the reported mutations that fall inside the chunk. The
+host palette grew by the decoration blocks (`gravel`, the six ores, `clay`,
+`sand`, and stone variants 1/3/5) appended so every existing internal id keeps
+its meaning, and `internal_id` maps them.
+
+Measured on chunk (0,0) with seed 123: **153 gravel, 69 coal ore, 9 iron ore,
+3 redstone ore**, plus the stone variants. So translated decoration finally
+appears in a generated world.
+
+**This is not the native order.** The real sequence is the
+`OverworldDecorator::decorate` body (`0x1da5250`), which the project has not
+translated because it dispatches into trees, plants, marine and snow features
+that are missing ([DECORATE.md](DECORATE.md)). The stage groups the verified
+features and says so in the file; it must be replaced by the real dispatcher,
+not extended.
+
 ## Still pending in step 5
 
 - `postProcess` and the decoration stages are **not** called from the runtime.

@@ -68,7 +68,31 @@ int main() {
         world.ensure_chunk(0, 0); // already present: no regeneration
         check(world.block(edited) == 1, "edit kept in the generated chunk");
 
-        std::cout << "OverworldGenerator runtime integration: chunk fill, determinism and edits pass\n";
+        // Decoration must actually appear: the translated ore decorator places
+        // gravel, coal, iron and redstone into the generated chunk, mapped onto
+        // the internal ids the palette appended for them.
+        {
+            World decorated;
+            decorated.configure_terrain({3, 123});
+            decorated.ensure_chunk(0, 0);
+            const auto *generated = decorated.chunk(0, 0);
+            std::size_t gravel = 0, coal = 0, iron = 0, decorations = 0;
+            for (unsigned bx = 0; bx < 16; ++bx)
+                for (unsigned bz = 0; bz < 16; ++bz)
+                    for (unsigned y = 0; y < 128; ++y) {
+                        const auto id = generated->block(bx, y, bz);
+                        if (id == 39) ++gravel;
+                        if (id == 40) ++coal;
+                        if (id == 41) ++iron;
+                        if (id >= 39) ++decorations;
+                    }
+            check(decorations > 0, "the ore decorator placed decoration blocks");
+            check(gravel > 0 && coal > 0, "gravel and coal appear in the generated chunk");
+            std::cout << "  decoration: " << gravel << " gravel, " << coal << " coal, " << iron
+                      << " iron in chunk (0,0)\n";
+        }
+
+        std::cout << "OverworldGenerator runtime integration: chunk fill, determinism, edits and decoration pass\n";
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

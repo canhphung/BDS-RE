@@ -2,6 +2,7 @@
 #include "bds/world/overworld.hpp"
 #include "bds/world/random.hpp"
 #include "bds/world/post_process.hpp"
+#include "bds/world/decoration_stage.hpp"
 #include <cstring>
 #include <map>
 #include <memory>
@@ -30,6 +31,18 @@ BlockId internal_id(const TerrainBlock &block) {
     if (std::strcmp(n, "bedrock") == 0) return 4;
     if (std::strcmp(n, "water") == 0) return block.data == 0 ? kStillWater : water_block(block.data);
     if (std::strcmp(n, "lava") == 0) return kStillLava;
+    // Decoration blocks, in the same order as internal_block_palette appends
+    // them (ids 39..47 for the names, 48..50 for the stone variants).
+    if (std::strcmp(n, "gravel") == 0) return 39;
+    if (std::strcmp(n, "coal_ore") == 0) return 40;
+    if (std::strcmp(n, "iron_ore") == 0) return 41;
+    if (std::strcmp(n, "gold_ore") == 0) return 42;
+    if (std::strcmp(n, "redstone_ore") == 0) return 43;
+    if (std::strcmp(n, "diamond_ore") == 0) return 44;
+    if (std::strcmp(n, "lapis_ore") == 0) return 45;
+    if (std::strcmp(n, "clay") == 0) return 46;
+    if (std::strcmp(n, "sand") == 0) return 47;
+    if (std::strcmp(n, "stone") == 0) return block.data == 1 ? 48 : block.data == 3 ? 49 : block.data == 5 ? 50 : 1;
     return 0;
 }
 } // namespace
@@ -129,6 +142,20 @@ void World::ensure_chunk(int x, int z) {
             PostProcessSettings settings;
             settings.level_seed = static_cast<std::uint32_t>(terrain_.seed);
             (void)post_process_chunk(region, {x * 16, 64, z * 16}, scratch, settings);
+        }
+        // Decoration: the verified ore/clay/vegetation features over the
+        // generated column. Only cells inside this chunk are applied; a
+        // cross-column write is reported but the owning chunk regenerates it
+        // deterministically, so nothing is lost.
+        DecorationStageSettings decoration_settings;
+        decoration_settings.seed = static_cast<std::uint32_t>(terrain_.seed);
+        const auto decoration = decorate_generated_chunk(volume, x, z, decoration_settings);
+        for (const auto &mutation : decoration.mutations) {
+            const auto [mx, my, mz] = mutation.position;
+            if (chunk_coordinate(mx) != x || chunk_coordinate(mz) != z || my < 0 || my >= 256)
+                continue;
+            volume.at(static_cast<int>(local_coordinate(mx)), my,
+                      static_cast<int>(local_coordinate(mz))) = mutation.block;
         }
         for (unsigned bx = 0; bx < 16; ++bx)
             for (unsigned bz = 0; bz < 16; ++bz)
