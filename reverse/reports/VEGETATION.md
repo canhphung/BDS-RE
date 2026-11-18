@@ -120,9 +120,40 @@ Read from the disassembly and corroborated by the word counts above:
   `isEmptyBlock` and vine `mayPlace(...,face)`, then sets the direction bit from
   `OPPOSITE_FACING`/`FACING_DIRECTION`.
 
+## First translation attempt and what the corpus caught
+
+`src/world/vegetation.cpp` was written against this corpus and then **removed
+again** because the corpus rejected it. Three concrete defects it exposed, all
+of which reading the disassembly alone had missed:
+
+1. **Tall grass does not call `BlockSource::isEmptyBlock`.** At
+   `0x1b664d5..0x1b664f8` it calls `BlockSource::getBlock`, then compares the
+   result's `getLegacyBlock()` with `BedrockBlockTypes::mAir` inline. The corpus
+   ordered `can_survive` first, so the mismatch surfaced immediately as a
+   predicate-order failure.
+2. **Tall grass offsets from the descended position, not the anchor.** The loop
+   mutates the `BlockPos` copy at `-0x38(%rbp)` and `BlockPos::offset` at
+   `0x1b664cc` is called on `-0x18(%rbp)` (the original argument) with the
+   mutated Y from `-0x34(%rbp)`. The first attempt used the anchor for X/Z and
+   the descended Y inconsistently, so the first placement position was wrong.
+3. **The predicate vocabulary is per-feature, not uniform.** `pumpkin` uses
+   `isEmptyBlock` + `mayPlace`; `cactus` interleaves `is_empty` with
+   `can_survive` per column block; `vine` calls `mayPlace` once per face with a
+   `signed char` direction; `reed` never calls a survival predicate at all and
+   instead samples four neighbour materials. A single shared environment is
+   still the right shape, but each function must issue exactly the native calls
+   in the native order.
+
+Because the corpus already recorded the answers, these are correctness bugs
+rather than missing evidence: the next attempt can iterate until all 70 cases
+replay. The half-finished translation was deleted rather than committed, and no
+test was registered, so the tree stays green and nothing claims unverified
+behaviour.
+
 ## Next
 
-Write `src/world/vegetation.cpp` against this corpus (including the real facing
-tables), register `vegetation_reference`, and keep the general
-`OverworldGenerator::postProcess` orchestration unregistered until its remaining
-features exist — see [POSTPROCESS.md](POSTPROCESS.md).
+Rewrite `src/world/vegetation.cpp` against this corpus (including the real
+facing tables) until all 70 cases — 184 placements, 15,304 words and 5,085
+dependency answers — replay exactly, then register `vegetation_reference`. Keep
+the general `OverworldGenerator::postProcess` orchestration unregistered until
+its remaining features exist — see [POSTPROCESS.md](POSTPROCESS.md).
