@@ -360,7 +360,50 @@ So the Random accounting is right and the translation's remaining divergence at
 model bug. That narrows the search a lot for whoever picks this up: the cells
 prove the words are consumed correctly up to `#265`.
 
-## KelpFeature: stopped
+## KelpFeature: the draw model is CONFIRMED exactly
+
+Replaying "two `next_gaussian_int(8)` per candidate (4 raw words) plus ONE
+`nextInt(3, column+2)` per PLACED column" from case 0's seed reproduces **all
+ten candidate cells of the corpus exactly**, including the two the native run
+rejects:
+
+```
+cand0 want(-8,-6)   got(-8,-6)   off 0
+cand1 want(-15,-8)  got(-15,-8)  off 5
+cand2 want(-6,-5)   got(-6,-5)   off 9
+cand3 want(-6,-10)  got(-6,-10)  off 14
+cand4 want(-9,-14)  got(-9,-14)  off 19
+cand5 want(-11,-7)  got(-11,-7)  off 24
+cand6 want(-15,-10) got(-15,-10) off 29
+cand7 want(-4,-10)  got(-4,-10)  off 33
+cand8 want(-6,-8)   got(-6,-8)   off 38
+cand9 want(-5,-10)  got(-5,-10)  off 43
+```
+
+That settles the Random accounting completely: 4 words per candidate, 1 word per
+placed column, and no other consumer. It also means the height word is the one
+immediately after the candidate's gaussians — for cand0 it is `w[4]`, and
+`nextInt(3,11)` = `3 + w[4] % 8` = 6, which is exactly the six blocks that
+column holds.
+
+## Where the translation still diverges
+
+With the model above the pass now replays `#0..#51` (descent, first candidate,
+walk, height, `may_place` and the nine-read fan-out) and then diverges at
+`#265`. The candidate there is the corpus's cand8 at word offset 38, but the
+translation reaches it with a Y of 21 instead of the anchor's 15 — i.e. it is
+still inside the place loop of the previous column because its `height` came out
+too large.
+
+For cand7 (`-4,-10`) the corpus's walk runs y 15..22 (8 iterations, the last
+false), so `column = 9` and `height = nextInt(3, 11)`. That column holds six
+blocks (y 15..20), so the correct draw is 6; the translation gets something
+larger, which means its height draw reads a different word than the model
+predicts. The next step is to record, for each placed column, which word the
+native `nextInt(3, column+2)` consumed — the corpus already has the words, so
+this is a bookkeeping check rather than a new oracle run.
+
+## KelpFeature: stopped (superseded by the confirmation above)
 
 Ten rounds went into this feature. What is solid:
 
