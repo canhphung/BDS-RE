@@ -248,10 +248,39 @@ leaf block with `Block::setBlockState<int>` and writes it. Those three
 `isType` answers are what decide whether a leaf cell is replaceable, and they
 are the next thing the oracle must record.
 
-The translation of `tree_place` is **not** written: the leaf pass and the
-`_addJungleFeatures`/`_addCocoaPlants` stage need their dependency answers in
-the corpus first, and writing them from the disassembly alone is what the
-earlier attempts showed goes wrong.
+`_placeLeaf` `0x1b59d60` reads the cell's block, calls `Block::getMaterial`
+once and then asks `Material::isType(9)`, `isType(0)` and `isType(7)` in that
+order; any true answer builds the leaf block through
+`Block::setBlockState<int>` with `VanillaBlocks::mLeaves` and writes it,
+otherwise the cell is skipped. Those three answers are what decide a leaf
+cell, and they are what the corpus needs to record.
+
+### Oracle limitation: nested breakpoints stop the inferior
+
+Recording those three answers by breaking at `0x1b59db4`, `0x1b59dc7` and
+`0x1b59ddd` (the `test $1,%al` sites) works when `_placeLeaf` is called on its
+own, but breaks the full `place(...,int)` run: GDB reports
+`The program being debugged stopped while in a function called from GDB`.
+Stopping inside a function that is itself being invoked from GDB's
+`parse_and_eval` frame is not supported, and `place` calls `_placeLeaf` deep in
+its own call tree.
+
+So the dependency stream for the leaf pass cannot be captured the way
+`_prepareSpawn` and `_placeTrunk` were. Two workable alternatives for the next
+session:
+
+1. **Call `_placeLeaf` per cell from GDB** with a real `BlockSource` and record
+   the three answers there, then have `tree_place` replay them. This is a
+   function oracle rather than an integration oracle, and it matches how the
+   GrassBlock work was done.
+2. **Drive the whole tree through the real server** (join a client, let
+   `postProcess` run the feature) and record the writes, deriving the leaf rule
+   from which cells changed. That needs the postProcess integration first, so
+   option 1 is the practical one.
+
+The translation of `tree_place` is therefore **not** written. The corpus
+`tree_place_bds_1.6.0.15.json` is complete and stays valid (16 cases, 511
+placements, 144 Random words); only the leaf dependency stream is missing.
 
 ## Plan for the session that translates it
 
