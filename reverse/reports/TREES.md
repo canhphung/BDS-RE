@@ -97,9 +97,30 @@ its own. Results:
 | `trunk` (`_placeTrunk` only) | **faults** with the same GDB stop |
 | `place` (the four-argument body) | faults, because it reaches `_placeTrunk` |
 
-So `_prepareSpawn` `0x1b59e30` is callable from a paused world and can be
-translated and verified immediately; the abort comes from `_placeTrunk`
-`0x1b5ac20`. Inside `_placeTrunk` the first suspicious call is
+So `_prepareSpawn` `0x1b59e30` is callable from a paused world; the abort comes
+from `_placeTrunk` `0x1b5ac20`. Its corpus is exported as
+`tests/reference/tree_prepare_bds_1.6.0.15.json` (16 cases, 12 distinct arenas,
+903 `get_block`, 16 `may_place_on`, 8 placements) so the translation can be
+written and checked without re-running the oracle.
+
+Reading its prologue precisely:
+
+- `0x1b59e56`: if `origin.y < 1`, return false immediately.
+- `0x1b59e6b..0x1b59e8e`: if `origin.y + height + 1 > getMaxHeight()`, return
+  false.
+- `0x1b59ec4..0x1b59ee2`: `mayPlaceOn` on `origin.below()`; false returns false.
+- `0x1b59f07..0x1b5a028`: a `Range` walk over the volume the tree would occupy
+  (the three coordinate comparisons at `0x1b59f64`, `0x1b59f87` and `0x1b59fb2`
+  bound it), testing `_isFree` per cell.
+- `0x1b5a03b..0x1b5a073`: `getMaxHeight` again, then a `BlockPos` for the cell
+  being tested.
+- `0x1b5a094..0x1b5a0aa`: `_getBlock` then `_isFree`; a non-free cell aborts.
+- `0x1b5a146..0x1b5a16a`: on success, `_placeBlock` on `below()` with dirt.
+
+The translation is **not** written yet. It was started and then removed rather
+than committed half-verified: the exact `Range` bounds and the role of the
+`-0x5c`/`-0x64` locals need one more careful read, and the corpus is the tool
+that will confirm them. Nothing is registered. Inside `_placeTrunk` the first suspicious call is
 `_placeFallenTrunk` `0x1b5a8a0`, reached at `0x1b5ad4d` right after
 `Feature::_getManuallyPlaced` (`0x1b5ac50`, which only reads `+0x8` and cannot
 fault) and two `nextInt` draws. `_placeFallenTrunk` uses a static `mask` table
