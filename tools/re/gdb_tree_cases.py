@@ -229,7 +229,12 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
         call(0x1b59cf0, 'void(*)(void*,void*,int,int,int)',
              f'{feature},0,{leaf_type},{trunk_type},0')
         mode = os.environ.get('TREE_ORACLE_MODE', 'place')
-        if mode == 'trunk':
+        if mode == 'fallen':
+            # _placeFallenTrunk(this, BlockSource&, BlockPos const&, Random&, int):
+            # same register shape as _placeTrunk.
+            result = bool(int(call(0x1b5a8a0, 'unsigned char(*)(void*,void*,void*,void*,int)',
+                                   f'{feature},{region},{pos},{rng},{tree_height}')) & 1)
+        elif mode == 'trunk':
             # _placeTrunk(this, BlockSource&, BlockPos const&, Random&, int):
             # rdi=this, rsi=region, rdx=pos, rcx=rng, r8d=height.
             result = bool(int(call(0x1b5ac20, 'unsigned char(*)(void*,void*,void*,void*,int)',

@@ -94,8 +94,32 @@ its own. Results:
 | Mode | Result |
 |---|---|
 | `prepare` (`_prepareSpawn` only) | **works**: 16/16 cases, 105–123 dependency answers each |
+| `fallen` (`_placeFallenTrunk` only) | **works**: 16/16 cases, 32 Random words, 0 placements |
 | `trunk` (`_placeTrunk` only) | **faults** with the same GDB stop |
 | `place` (the four-argument body) | faults, because it reaches `_placeTrunk` |
+
+So the suspect is not `_placeFallenTrunk`: it runs cleanly in isolation and
+simply returns false on this arena. Reading `_placeTrunk`'s prologue narrows
+the fault further:
+
+- `0x1b5ac50`: `_getManuallyPlaced()` reads `this+0x8`, which the
+  `Feature::Feature(Actor*)` base sets from its argument; the oracle passes a
+  null `Actor*`, so this is false.
+- `0x1b5ac6a..0x1b5ac7b`: with that false, the native code draws
+  `nextInt(0x50)` and only takes the fallen-trunk branch on zero. Those are the
+  first Random draws `_placeTrunk` consumes.
+- `0x1b5ae13..0x1b5ae2e`: the placement path builds
+  `VanillaBlocks::mLog` with `BlockState::MappedType`, reading the trunk type
+  from `this+0x18` — the constructor's second int. That path calls
+  `Block::setBlockState<int>` `0x1b4c580` and then `_placeBlock`.
+
+The most likely remaining cause is the block-state lookup: `setBlockState`
+resolves a `BlockStateInstance` for the mapped type and the oracle's
+`TreeFeature` was constructed with `trunkType` taken from
+`VanillaBlocks::mLog`'s pointer rather than from a valid `BlockState` variant
+id, so the lookup can return something the caller dereferences. That is the
+next thing to check: construct with the real trunk/leaf type ids the tree
+registry uses instead of raw block pointers.
 
 So `_prepareSpawn` `0x1b59e30` is callable from a paused world; the abort comes
 from `_placeTrunk` `0x1b5ac20`. Its corpus is exported as
