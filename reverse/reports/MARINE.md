@@ -78,6 +78,42 @@ not in the tree and `kelp_reference` is not registered, so nothing claims
 unverified behaviour. The corpus (14 cases, 583 placements, 683 words) and the
 structure notes above are what the next attempt starts from.
 
+## Exact query stream and where it stands
+
+The corpus fixes the whole call order. For case 0 (anchor `(-8,20,-8)`, seed
+recorded) the phases are:
+
+1. Descent `#0..#18`: per step `is_solid_blocking(below)`, `get_block(below)`,
+   `get_block(anchor)`; five steps here, then a solid `below` stops it, with
+   the `is_solid_blocking`+`get_block` pair repeated at `#15..#18`.
+2. Candidate 1 `#19..#21`: `is_empty_water(candidate)` true, then
+   `get_block(candidate)` twice.
+3. Candidate 2 `#22..#24`: `is_empty_water` false, `get_block(candidate)`,
+   `get_block(candidate above)`.
+4. Candidate 3 `#25`: `is_empty_water` true again.
+5. Column walk `#26..#40`: per layer `is_empty_water(y+1)` then
+   `get_block(y+1)`.
+6. Height `#41`, `height = nextInt(3, column+2)`.
+7. Placement `#42..#51`: `may_place(y)`, then `get_block(y-1)`,
+   `get_block(y)`, `get_block(y+1)`, `get_block(y-1)` again, then the four
+   neighbours in the order `-z, +z, +x, -x`, then `get_block(y)`.
+8. The candidate loop RESUMES at `#52` with the next `is_empty_water`.
+
+Two facts that took several iterations to pin down, and that the corpus states
+directly:
+
+- `BlockPos::offset` takes the **first** gaussian as x and the **second** as z
+  (`0x1b53fd6` loads `-0x94` into `edx`, `0x1b53fdc` loads `-0x90` into `r8d`,
+  and `xor ecx,ecx` pins y). Writing it the other way round puts every
+  candidate on the wrong axis.
+- The column walk and the placement use the **candidate's** x/z, not the
+  anchor's.
+
+The pass currently replays through `#51` and diverges at `#52`: the placement
+must write one block and then let the candidate loop continue, with the next
+`is_empty_water` starting at `y+1`. The implementation is still uncommitted and
+`kelp_reference` is unregistered.
+
 ## Next
 
 Read the loop bounds and the column-growth branch (`0x1b54030..0x1b54432`) and
