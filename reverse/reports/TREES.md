@@ -113,13 +113,25 @@ the fault further:
   from `this+0x18` — the constructor's second int. That path calls
   `Block::setBlockState<int>` `0x1b4c580` and then `_placeBlock`.
 
-The most likely remaining cause is the block-state lookup: `setBlockState`
-resolves a `BlockStateInstance` for the mapped type and the oracle's
-`TreeFeature` was constructed with `trunkType` taken from
-`VanillaBlocks::mLog`'s pointer rather than from a valid `BlockState` variant
-id, so the lookup can return something the caller dereferences. That is the
-next thing to check: construct with the real trunk/leaf type ids the tree
-registry uses instead of raw block pointers.
+### The abort was the oracle's fault, not the binary's
+
+That guess was right. The `TreeFeature` constructor is
+`TreeFeature(Actor*, int leafType, int trunkType, bool)` and the two ints are
+**type ids**, not `Block*` pointers. The oracle was passing
+`VanillaBlocks::mLog` / `mLeaves` object addresses as those ids, and
+`Block::setBlockState<int>` `0x1b4c580` feeds the value straight into
+`BlockLegacy::setBlockState<int>(..., unsigned char)` `0x1b4d010` as a state
+index. A block pointer truncated to a state index is out of range, which is
+what killed the inferior.
+
+Constructing with `leafType = 0`, `trunkType = 0` makes `_placeTrunk` run:
+**16/16 cases, 87 real log placements, 40 Random words, 103 `get_block`
+answers**, and the same now applies to `place(..., int)`. The corpus is
+`tests/reference/tree_place_trunk_bds_1.6.0.15.json`.
+
+This is worth recording as a general lesson for this binary: fields like
+`+0x18` / `+0x1c` on feature objects are registry type ids, and passing a
+`Block*` where an id belongs produces a crash far from the actual mistake.
 
 So `_prepareSpawn` `0x1b59e30` is callable from a paused world; the abort comes
 from `_placeTrunk` `0x1b5ac20`. Its corpus is exported as

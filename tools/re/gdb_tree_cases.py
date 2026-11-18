@@ -219,8 +219,14 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
         call(0x187e350, 'void(*)(void*,unsigned)', f'{rng},{seed}')
         inf.write_memory(pos, struct.pack('<iii', *at))
         tree_height = 5 + (n % 3)
-        leaf_type = int(pointers['leaves:0'])
-        trunk_type = int(pointers['log:0'])
+        # The constructor takes TYPE ids (0x18 leaf, 0x1c trunk), which the
+        # trunk/leaf placement paths feed to Block::setBlockState<int> as the
+        # MappedType value. Passing a Block* there (the earlier attempt)
+        # produces an out-of-range state index.
+        leaves_block = pointers['leaves:0']
+        log_block = pointers['log:0']
+        leaf_type = 0
+        trunk_type = 0
         words.clear()
         writes.clear()
         queries.clear()
