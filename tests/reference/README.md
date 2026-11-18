@@ -21,6 +21,9 @@ registers one test per fixture; the exceptions are listed below.
   still shift the stream at query 265. Kept because the draw model is confirmed
   against it (all ten candidate cells reproduce from the seed). See
   `reverse/reports/MARINE.md`.
+- `seagrass_bds_1.6.0.15.json` — `SeagrassFeature::place` `0x1b6d090`, 14
+  cases, 111 placements, 575 Random words. The oracle works and the corpus is
+  complete; the translation has not started. See `reverse/reports/MARINE.md`.
 - `tree_leaf_gates_bds_1.6.0.15.json` — 128 recorded `nextInt(2)` gates with
   their candidate cell, draw and call decision, used to derive the leaf-volume
   rule. The rule is now verified end to end by `tree_place_leaves` (448 leaf

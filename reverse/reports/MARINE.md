@@ -409,9 +409,35 @@ The head reads:
 - `0x1b6d377..0x1b6d393`: a second `nextInt(0x14)` and a `Range<int,1>`
   construction — so two 1-in-20 gates run in sequence on the success path.
 
-A corpus run is in flight (`tools/re/gdb_seagrass_cases.py`, derived from the
-kelp oracle with the constructor/place/symbol addresses swapped). The
-translation has not started.
+### Corpus captured
+
+`tools/re/gdb_seagrass_cases.py` + `export_seagrass_reference.py` produce
+`tests/reference/seagrass_bds_1.6.0.15.json`: **14 cases, 111 placements,
+575 Random words**, with three dependency kinds only — `is_solid_blocking`
+(121), `get_block` (2040) and `is_empty_water` (511). The placed blocks are
+`seagrass:0` here; the palette also carries data 1 and 2, which the other cases
+use.
+
+Two oracle gotchas worth recording: the block symbol is `mSeaGrass` with a
+capital G, and the case record has `depth`, not `height`, because it was derived
+from the kelp oracle.
+
+### Query structure of case 0 (anchor (-8,20,-8), depth 20, 5 placements)
+
+1. `#0..#15` — descent: per step `is_solid_blocking(y)`, `get_block(y)`,
+   walking down from the anchor; when a solid cell is found the pair repeats
+   once (`#12..#15`) exactly like the kelp anchor.
+2. `#16..#18` — the first candidate at `(-6,14,-8)`: `is_empty_water` FALSE,
+   then two `get_block` on that cell.
+3. `#19..#21` — the next candidate at `(-6,15,-8)`: `is_empty_water` TRUE, then
+   two `get_block`.
+4. `#22..#29` — the cell is re-tested (`is_empty_water` again, TRUE) and then a
+   fan-out of `get_block` over `y-1`, `y`, `y-1`, `y+1`, `y-1`, ... which is the
+   placement's neighbour reads.
+
+The translation has not started: the body is 0xaa2 bytes with six
+`nextGaussianInt` draws, four `SeaGrass::Type` constructions and `_isNotIce`, so
+it needs its own pass rather than a quick copy of the kelp shape.
 
 ## Next
 
