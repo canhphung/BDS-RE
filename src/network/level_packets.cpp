@@ -233,6 +233,11 @@ const std::vector<PaletteEntry> &internal_block_palette() {
         result.push_back({"minecraft:log", 0});
         result.push_back({"minecraft:leaves", 0});
         result.push_back({"minecraft:sapling", 0});
+        // Cold-biome blocks (ids 54..56): the generator emits these where a
+        // cold biome's surface is covered, and IcebergFeature places them.
+        result.push_back({"minecraft:snow", 0});
+        result.push_back({"minecraft:ice", 0});
+        result.push_back({"minecraft:packed_ice", 0});
         return result;
     }();
     return palette;

@@ -47,6 +47,9 @@ BlockId internal_id(const TerrainBlock &block) {
     if (std::strcmp(n, "log") == 0) return 51;
     if (std::strcmp(n, "leaves") == 0) return 52;
     if (std::strcmp(n, "sapling") == 0) return 53;
+    if (std::strcmp(n, "snow") == 0) return 54;
+    if (std::strcmp(n, "ice") == 0) return 55;
+    if (std::strcmp(n, "packed_ice") == 0) return 56;
     return 0;
 }
 } // namespace

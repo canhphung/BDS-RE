@@ -141,6 +141,27 @@ The tree SITES are not the native ones: the real placement comes from
 chooses four deterministic offsets so the runtime has trees at all; a later
 dispatcher replaces the choice, not the feature.
 
+## Cold-biome blocks
+
+The palette now maps `snow`, `ice` and `packed_ice` (ids 54..56) and
+`internal_id` resolves them, so the generator's cold paths reach the client
+instead of becoming air.
+
+What the translated generator actually emits in a cold biome, measured:
+
+- `ice_plains` (`id 12`, `BiomeClass::Ice`, sea-level temperature 0.0) has
+  `grass:0` as its surface block in `biome_data.cpp`, and
+  `OverworldGenerator::build_surface_at` has **no `BiomeClass::Ice` case**, so a
+  cold chunk gets the plain surface. That is consistent with the binary: surface
+  snow is `TopSnowBlock`/`AddSnowLayer` work, not generation.
+- The iceberg path in `overworld.cpp` (`build_surface_at`'s `packed_ice`/`snow`
+  loop) does emit ice; seed 42 chunk `(-10,9)` contains **1 ice** cell, which
+  `world_generator` asserts.
+
+So surface snow/ice covering remains decorator work, and the only feature with
+a real `place` in that area is `BlueIceFeature::place 0x1b4d150` and
+`IcebergFeature::place 0x1b63830`; neither is translated.
+
 ## Still pending in step 5
 
 - `postProcess` and the decoration stages are **not** called from the runtime.

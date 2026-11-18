@@ -112,7 +112,28 @@ int main() {
             std::cout << "  trees: " << logs << " logs, " << leaves << " leaves in chunk (-3,-3)\n";
         }
 
-        std::cout << "OverworldGenerator runtime integration: chunk fill, determinism, edits, decoration and trees pass\n";
+        // Cold-biome blocks: the generator's ice paths emit ice/packed_ice and
+        // the palette maps them, so a cold chunk must carry those ids.
+        {
+            World cold;
+            cold.configure_terrain({3, 42});
+            cold.ensure_chunk(-10, 9);
+            const auto *chunk = cold.chunk(-10, 9);
+            std::size_t snow = 0, ice = 0, packed = 0;
+            for (unsigned bx = 0; bx < 16; ++bx)
+                for (unsigned bz = 0; bz < 16; ++bz)
+                    for (unsigned y = 0; y < 128; ++y) {
+                        const auto id = chunk->block(bx, y, bz);
+                        if (id == 54) ++snow;
+                        if (id == 55) ++ice;
+                        if (id == 56) ++packed;
+                    }
+            check(snow + ice + packed > 0, "cold-biome blocks appear in a cold chunk");
+            std::cout << "  cold: " << snow << " snow, " << ice << " ice, " << packed
+                      << " packed ice in chunk (-10,9) of seed 42\n";
+        }
+
+        std::cout << "OverworldGenerator runtime integration: chunk fill, determinism, edits, decoration, trees and cold blocks pass\n";
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
