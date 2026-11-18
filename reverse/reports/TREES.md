@@ -86,6 +86,32 @@ walks a `Range` of cells testing `_isFree`.
 The four `nextFloat` draws and the fallen-trunk branch are the parts a corpus
 must pin down; a reading cannot tell which draw feeds which axis.
 
+## Oracle status: blocked by a native abort, first attempt
+
+`tools/re/gdb_tree_cases.py` is written but does **not** complete. Calling
+`place(...,int)` `0x1b5a290` from GDB stops the inferior:
+
+```
+gdb.error: The program being debugged stopped while in a function called from GDB.
+```
+
+That is not a GDB defect: the tree body reaches a path that faults or aborts
+when invoked out-of-band. Two candidate causes, both testable:
+
+1. `_prepareSpawn` reads `BlockSource::getMaxHeight` and then walks a `Range`
+   derived from the constructor's fields; if the arena in the oracle does not
+   satisfy a precondition the native code assumes (for example a chunk that is
+   actually loaded at the queried column), it dereferences something invalid.
+2. `place(...,int)` may construct or use `ChunkPos`/`BlockVolume` state that
+   only exists during real chunk generation, which a paused world does not
+   have.
+
+The vegetation, lake, ore, clay and bonus-chest oracles all call their
+features successfully in the same harness, so the fault is specific to the
+tree path rather than the setup. The next session should narrow it by calling
+the sub-methods individually (`_prepareSpawn` alone, then `_placeTrunk` alone)
+and watching which one faults, instead of calling `place` as a unit.
+
 ## Plan for the session that translates it
 
 1. `gdb_tree_cases.py` following the vegetation/clay oracle shape: construct a
