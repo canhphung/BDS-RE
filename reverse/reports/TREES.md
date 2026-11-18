@@ -133,6 +133,30 @@ This is worth recording as a general lesson for this binary: fields like
 `+0x18` / `+0x1c` on feature objects are registry type ids, and passing a
 `Block*` where an id belongs produces a crash far from the actual mistake.
 
+### `_placeTrunk` translated and verified
+
+`src/world/tree.cpp` now reproduces all 16 native cases: **87 placements,
+40 Random words, 103 dependency answers**, through `tree_trunk_reference`.
+Four details the corpus fixed:
+
+- **A non-replaceable cell SKIPS the placement; it does not end the loop.**
+  Case 3 reads five cells but places only at the last one. An earlier version
+  used `break` and stopped after one cell.
+- **There is a vine pass after every log.** `0x1b5ae50..0x1b5af02` offers the
+  four horizontal neighbours a vine in the order west, east, north, south, and
+  each direction draws `nextFloat()` **first**, only testing the cell when the
+  roll is below the trunk-height scale. The data values the corpus records are
+  west 8, east 2, north 1, south 4.
+- **The trunk-height scale gates the whole vine pass.** `0x1b5ae5a` compares it
+  against 0.0f and jumps past every vine when equal, so the `nextFloat` draws
+  only happen for a nonzero scale.
+- **A block-name interning bug in the first corpus.** The exporter collected
+  names from `initial` rows and `writes[3]`, but the compact form stores name
+  *indices* in `initial`, so the fixture's `block_names` grew junk entries
+  (`':'`, `'d'`, `'e'`). The test then resolved every cell to `air` and the loop
+  placed nothing. Fixed by taking names from the raw oracle for `initial` and
+  from `final` (a flat name list) instead of the encoded columns.
+
 So `_prepareSpawn` `0x1b59e30` is callable from a paused world; the abort comes
 from `_placeTrunk` `0x1b5ac20`. Its corpus is exported as
 `tests/reference/tree_prepare_bds_1.6.0.15.json` (16 cases, 12 distinct arenas,

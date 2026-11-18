@@ -55,8 +55,11 @@ for case in cases:
 
 
 # Intern every block name once.
+# `initial` rows are [x, y, z, name] and `writes` rows are
+# [x, y, z, name, flags]; `final` is a flat name list. Only `initial`/`final`
+# and `writes[3]` are names -- never an integer column.
 names = sorted({cell[3] for case in cases for cell in case["initial"]} |
-               {cell[3] for case in cases for cell in case["final"]} |
+               {name for case in cases for name in case["final"]} |
                {write[3] for case in cases for write in case["writes"]})
 index_of = {name: i for i, name in enumerate(names)}
 

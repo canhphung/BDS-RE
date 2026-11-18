@@ -1,5 +1,6 @@
 #pragma once
 #include "bds/world/decoration.hpp"
+#include "bds/world/random.hpp"
 #include "bds/world/overworld.hpp"
 #include <cstdint>
 #include <cstring>
@@ -39,10 +40,23 @@ struct TreeEnvironment {
     std::function<bool(TreeBlock)> is_free;
     // Feature::_placeBlock 0x1b6ebd0.
     std::function<void(DecorationRegion::Position, TreeBlock)> place_block;
+    // Feature::_isEmptyBlock 0x1b6ece0, used by the vine pass.
+    std::function<bool(DecorationRegion::Position)> is_empty;
 };
 
 // TreeFeature::_prepareSpawn 0x1b59e30. `height` is the tree height the
 // four-argument `place` receives. A false return aborts the whole placement.
 bool tree_prepare_spawn(DecorationRegion &, DecorationRegion::Position, int height,
                         const TreeEnvironment &, TreeBlock dirt = {"dirt", 0});
+
+// TreeFeature::_placeTrunk 0x1b5ac20. `manually_placed` is Feature::+0x8
+// (0x1b6eb90); `type_flags` is the TreeFeature constructor's bool at +0x20.
+// `trunk` / `leaves` are the blocks the mapped-type lookups produce.
+bool tree_place_trunk(DecorationRegion &, DecorationRegion::Position, int height, Random &,
+                      const TreeEnvironment &, bool manually_placed, bool type_flags,
+                      TreeBlock trunk = {"log", 0}, TreeBlock leaves = {"leaves", 0});
+
+// The three trunk-height scale constants the native code selects between, from
+// rodata 0x2828668 (0.75), 0x28338cc (1/3) and 0x281c5c8 (1.0).
+float tree_trunk_height_scale(bool fallen, bool type_flags, Random &);
 } // namespace bds
