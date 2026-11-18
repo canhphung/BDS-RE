@@ -1,6 +1,6 @@
 # Unresolved
 
-- Windows ZIP exceeds attachment transfer limit (32 MiB); matching EXE/PDB GUID+Age not inspected. A split archive or smaller individual artifacts would unblock inspection.
+- ~~Windows ZIP exceeds attachment transfer limit (32 MiB); matching EXE/PDB GUID+Age not inspected.~~ Resolved 2026-11-18: the 42,216,524-byte `BDS-windows.zip` was supplied and unpacked. EXE RSDS GUID `093aad07-19a7-2d45-afa7-9fe3abd628fe`/Age 1 equals the PDB MSF info-stream GUID/Age, and the PDB public for `SharedConstants::NetworkProtocolVersion` resolves to EXE bytes `1a01` = 282. See [INPUT.md](../../docs/INPUT.md) and `reverse/evidence/windows_pdb_match.json`. PDB *type* layouts are still not used as ground truth: only public symbol records and compiland file lists have been read.
 - Native Windows Debug/Release build and CTest now pass in CI run 43835644043 at ce383cd. Local Windows execution remains unavailable; real-client Windows verification is still pending.
 - Clang and Ghidra absent locally; GCC and binutils available. Linux Clang Debug/Release build and CTest now pass in CI run 43835644043; local Clang tests remain unrun.
 - Complete bootstrap and timer time-synchronization semantics; update-to-level dispatch is now traced through GameSession and ServerLevel primary vtable.
@@ -17,7 +17,7 @@ RakNet follow-up: open/connected handshake and a bounded reliability implementat
 
 Native CI run 43843720476 at 4cdd95e verifies the RakNet foundation with all seven jobs passed, including 13/13 tests on both Windows configurations. It remains an independent implementation/synthetic-client result, not Minecraft client or differential verification.
 
-Windows artifacts: a BDS-windows.rar (31,278,032 bytes, SHA256 968d889368e40369afe188b34013bcf5d36bd43ecd667856acb115bc4083f420) was supplied, but this environment has no RAR extractor (package install failed), so EXE/PDB GUID+Age remain uninspected. A ZIP or 7z re-pack would unblock it.
+Windows artifacts: a BDS-windows.rar (31,278,032 bytes, SHA256 968d889368e40369afe188b34013bcf5d36bd43ecd667856acb115bc4083f420) was supplied first and could not be unpacked here. The later `BDS-windows.zip` (42,216,524 bytes, SHA256 182902f542756389fb7c849c7d1768680cf3c5d9824dc09d3976acdfa95eeb1e) was unpacked; the EXE/PDB GUID+Age match is verified and recorded in `reverse/evidence/windows_pdb_match.json`. Still open: Windows-side class layouts/vtable layouts are not validated, no Windows execution happened, and no Linux↔Windows function identity is claimed beyond demangled public names.
 
 Address-family fallback: RakPeerHelper::peerStartup handling of result 5 (port in use) and the meaning of IPSupportInterface slots +0x10/+0x18 are not reconstructed; the independent server treats a port conflict as fatal.
 

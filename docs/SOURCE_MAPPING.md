@@ -2,17 +2,19 @@
 
 The user supplied a PDB source-path extractor, a module-to-primary-source CSV and a reconstructed source tree. These are navigation metadata, not recovered source contents. The original inputs and full generated correlations are retained under ignored input/windows/source_mapping/ and reverse/evidence/local/, preserving the project's earlier restriction against publishing raw PDB-derived databases.
 
-The CSV contains 2,500 module rows: 1,942 marked UNIQUE_BASENAME_MATCH, 1 AMBIGUOUS_BASENAME_MATCH and 557 NOT_MAPPED. These labels describe basename heuristics, not proof of the translation unit that implements every symbol. The independent local correlator finds 1,429 candidate class-prefix/module correlations against the Linux symbol index, retaining up to eight samples per candidate. They remain INFERRED. Free functions, differently named classes and platform differences can prevent a match; absence of a correlation does not prove absence of a subsystem.
+As of 2026-11-18 the Windows EXE/PDB pair is available in `input/windows/bds/` (see [INPUT.md](INPUT.md)); its GUID+Age match is independently verified, so the metadata below is regenerated from the PDB itself rather than taken from the supplied extractor.
+
+The regenerated CSV contains 2,500 module rows: 1,867 UNIQUE_BASENAME_MATCH, 0 AMBIGUOUS_BASENAME_MATCH and 633 NOT_MAPPED. These labels describe basename heuristics, not proof of the translation unit that implements every symbol. The earlier user-supplied CSV carried a different split (1,942 / 1 / 557) under an unknown classification rule; its files were not present here. The independent local correlator finds 1,430 candidate class-prefix/module correlations against the Linux symbol index, retaining up to eight samples per candidate. They remain INFERRED. Free functions, differently named classes and platform differences can prevent a match; absence of a correlation does not prove absence of a subsystem.
 
 Input SHA256 values:
 
-- MODULE_TO_PRIMARY_SOURCE.csv: b545244a4bf5ea44548d5acf764328dc6db34a363ef6bf80d0e3c9e8c1a7d2ab
-- ORIGINAL_SOURCE_TREE.txt: 1ace3941c3143c50f4c49af3d4ad75f0dba3f7701b42aff80b7a03623bbe0545
-- pdb_extract_source_paths.py: 6e1546101247f4d172fa61835065ddc78481730abdb20331e7b513827f374852
+- MODULE_TO_PRIMARY_SOURCE.csv: `0c204d95e25a4f83da7654425481366bd4be83426a0004baf8e0af3f72bda805` (regenerated from the PDB)
+- ORIGINAL_SOURCE_TREE.txt: `4806e1c92605647ab0d288a72afe5f7046212deecd91ce62fd6f59eb269f1a21` (regenerated from the PDB)
+- pdb_extract_source_paths.py (previously supplied, not present here): 6e1546101247f4d172fa61835065ddc78481730abdb20331e7b513827f374852
 
-The supplied extractor was read, not executed. It includes a GUID/Age comparison, but the Windows EXE/PDB pair is not available for independent verification in this environment. No class layouts or signatures are classified as PDB_DERIVED on the strength of these CSV/tree files. Linux ELF evidence remains the basis for wire constants and inspected control flow.
+The supplied extractor was read, not executed. Windows-side *type* layouts are still not classified as PDB_DERIVED: only public symbol records (S_PUB32) and compiland file lists have been read, and no Linux↔Windows function identity is claimed from matching names alone. Linux ELF evidence remains the basis for wire constants and inspected control flow.
 
-To regenerate local navigation hints after placing the supplied CSV under input/:
+To regenerate the metadata and local navigation hints (needs `llvm-pdbutil` from Ubuntu `llvm-14`):
 
 ```sh
 python3 reverse/scripts/correlate_sources.py input/windows/source_mapping/MODULE_TO_PRIMARY_SOURCE.csv
