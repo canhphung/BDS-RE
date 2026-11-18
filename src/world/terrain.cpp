@@ -1,4 +1,10 @@
 #include "bds/world/world.hpp"
+#include "bds/world/overworld.hpp"
+#include "bds/world/random.hpp"
+#include <cstring>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <algorithm>
 #include <cmath>
 namespace bds {
@@ -10,6 +16,21 @@ std::uint64_t mix(std::uint64_t n) {
     return n ^ (n >> 31);
 }
 int divide(int n) { return n / 32 - (n % 32 < 0); }
+// Map a generator TerrainBlock onto this server's internal block id. The
+// generator names come from the original's BlockLegacy identities, so the
+// mapping is by name and data. Anything unknown falls back to air rather than
+// inventing an id.
+BlockId internal_id(const TerrainBlock &block) {
+    const char *n = block.name;
+    if (std::strcmp(n, "air") == 0) return 0;
+    if (std::strcmp(n, "stone") == 0) return 1;
+    if (std::strcmp(n, "grass") == 0) return 2;
+    if (std::strcmp(n, "dirt") == 0) return 3;
+    if (std::strcmp(n, "bedrock") == 0) return 4;
+    if (std::strcmp(n, "water") == 0) return block.data == 0 ? kStillWater : water_block(block.data);
+    if (std::strcmp(n, "lava") == 0) return kStillLava;
+    return 0;
+}
 } // namespace
 int World::surface(int x, int z) const {
     if (terrain_.kind == 1)
@@ -64,7 +85,7 @@ World::Block World::block(Position p) const {
                                       local_coordinate(z));
 }
 void World::configure_terrain(TerrainConfig config) {
-    if (config.kind > 2)
+    if (config.kind > 3)
         throw std::invalid_argument("invalid terrain generator");
     if (terrain_.kind)
         return; // persisted generation settings win on restart
@@ -79,17 +100,42 @@ void World::ensure_chunk(int x, int z) {
         z < std::numeric_limits<int>::min() / 16 || z > std::numeric_limits<int>::max() / 16)
         throw std::out_of_range("terrain outside block coordinates");
     Chunk chunk;
-    for (unsigned bx = 0; bx < 16; ++bx)
-        for (unsigned bz = 0; bz < 16; ++bz) {
-            const int px = x * 16 + static_cast<int>(bx), pz = z * 16 + static_cast<int>(bz),
-                      height = surface(px, pz);
-            for (int y = 0; y <= height; ++y)
-                chunk.set_block(bx, static_cast<unsigned>(y), bz,
-                                y == 0            ? 4
-                                : y == height     ? 2
-                                : y >= height - 3 ? 3
-                                                  : 1);
+    if (terrain_.kind == 3) {
+        // OverworldGenerator, translated from loadChunk 0x1b38610: the same
+        // Random seeding, prepareHeights, buildSurfaces and the four carvers
+        // (src/world/overworld.cpp). The generator's 128-high volume is copied
+        // into the host chunk verbatim; nothing above Y=127 exists yet because
+        // postProcess and the decoration stages are not wired.
+        static std::mutex cache_mutex;
+        static std::map<std::uint32_t, std::shared_ptr<OverworldGenerator>> cache;
+        std::shared_ptr<OverworldGenerator> generator;
+        {
+            std::lock_guard<std::mutex> lock(cache_mutex);
+            auto &slot = cache[static_cast<std::uint32_t>(terrain_.seed)];
+            if (!slot)
+                slot = std::make_shared<OverworldGenerator>(static_cast<std::uint32_t>(terrain_.seed));
+            generator = slot;
         }
+        const TerrainVolume volume = generator->generate(x, z);
+        for (unsigned bx = 0; bx < 16; ++bx)
+            for (unsigned bz = 0; bz < 16; ++bz)
+                for (int y = 0; y < TerrainVolume::height; ++y)
+                    chunk.set_block(bx, static_cast<unsigned>(y), bz,
+                                    internal_id(volume.at(static_cast<int>(bx), y,
+                                                          static_cast<int>(bz))));
+    } else {
+        for (unsigned bx = 0; bx < 16; ++bx)
+            for (unsigned bz = 0; bz < 16; ++bz) {
+                const int px = x * 16 + static_cast<int>(bx), pz = z * 16 + static_cast<int>(bz),
+                          height = surface(px, pz);
+                for (int y = 0; y <= height; ++y)
+                    chunk.set_block(bx, static_cast<unsigned>(y), bz,
+                                    y == 0            ? 4
+                                    : y == height     ? 2
+                                    : y >= height - 3 ? 3
+                                                      : 1);
+            }
+    }
     for (const auto &[position, value] : edits_) {
         const auto [px, y, pz] = position;
         if (chunk_coordinate(px) == x && chunk_coordinate(pz) == z)

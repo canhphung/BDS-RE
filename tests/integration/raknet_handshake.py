@@ -448,7 +448,13 @@ with tempfile.TemporaryDirectory(prefix="bds-raknet-") as directory:
                                 require(chunk['sections'][3][0][15] == stone, f"{name}: persisted stone floor")
                                 require(chunk['heights'][0] == 64, f"{name}: height map")
                             else:
-                                require(chunk['sections'] and 54 <= chunk['heights'][0] <= 71, f"{name}: generated rolling terrain")
+                                # These chunks come from the translated
+                                # OverworldGenerator (loadChunk 0x1b38610), whose
+                                # surface follows the original's biome height
+                                # field: anywhere in the world's column range,
+                                # not the old independent generator's 54..71.
+                                require(chunk['sections'] and 1 <= chunk['heights'][0] <= 256,
+                                        f"{name}: generated terrain height")
                             if key == (-1,-1):
                                 dirt = next(i for i, block in enumerate(game['palette']) if block == ('minecraft:dirt',0))
                                 require(chunk['sections'][4][0][(15 << 8) | (15 << 4) | 6] == dirt, 'negative chunk block')

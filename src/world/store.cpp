@@ -182,7 +182,7 @@ World WorldStore::decode(std::span<const std::uint8_t> bytes, Limits limits) {
             require(value >= low && value <= high, "world integer out of range");
             return value;
         };
-        world.terrain_.kind = static_cast<unsigned>(integer(metadata.at("kind"), 0, 2));
+        world.terrain_.kind = static_cast<unsigned>(integer(metadata.at("kind"), 0, 3));
         require(metadata.at("seed").is_number_unsigned(), "invalid terrain seed");
         world.terrain_.seed = metadata.at("seed").get<std::uint64_t>();
         const auto &legacy = metadata.at("legacy"), &edits = metadata.at("edits"),

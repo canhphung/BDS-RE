@@ -36,12 +36,26 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
  auto world_file=config_.world_file.empty()?world_dir/"bdsre-world.snapshot":config_.world_file;
  World world;
  if(std::filesystem::exists(world_file))world=WorldStore::load(world_file);
+ // A version-2 snapshot stores its generator settings, so its kind is nonzero
+ // and wins. A version-1 snapshot has explicit columns and no settings: those
+ // columns become legacy_columns_ and the configured generator fills the rest,
+ // which is the behaviour World::configure_terrain already provides.
  if(config_.network && properties.level_type!="LEGACY" && !world.terrain().kind) {
   // DedicatedServer::run 0x1808d3d: LevelSettings::parseSeedString(getLevelSeed(),
   // Level::createRandomSeed()). A missing, one-character or otherwise unusable
   // seed resolves to a fresh random_device draw, not to a fixed hash; see
   // src/world/seed.cpp and tests/reference/seed_bds_1.6.0.15.json.
-  world.configure_terrain({properties.level_type=="FLAT"?1U:2U,
+  // FLAT keeps the simple layered generator and DEFAULT keeps the independent
+  // rolling terrain, which is what the integration fixtures expect. The
+  // translated OverworldGenerator (kind 3, loadChunk 0x1b38610) is selected
+  // with the non-documented level-type=OVERWORLD so it can be exercised
+  // without changing the default world's behaviour. It is slower because the
+  // native carvers sweep a 17x17 chunk neighbourhood per chunk (about 110 ms
+  // per chunk in a Debug build), and the original hides that on worker threads.
+  const unsigned generator_kind = properties.level_type == "FLAT" ? 1U
+                                 : properties.level_type == "OVERWORLD" ? 3U
+                                                                        : 2U;
+  world.configure_terrain({generator_kind,
                            static_cast<std::uint64_t>(resolve_level_seed(properties.seed))});
  }
  AccessLists access(config_.root);access.reload_whitelist();access.reload_operators();
