@@ -306,6 +306,30 @@ missing (#73 is a `get_block`, #74 the next `is_empty_water`), so the read count
 on re-entry differs between the two columns. That single-read difference is what
 still shifts the stream before `#265`.
 
+## Two real observations from this round
+
+1. **The place loop is confirmed correct.** After the first write the original
+   walks upward with `is_empty_water(y+k)` / `get_block(y+k)` per cell
+   (`#255..#264` for a height-6 column starting at y=15) and only then moves to
+   the next candidate (`#265`). The translation reproduces exactly that.
+
+2. **`0x1b541f6..0x1b54203` has a `column < 3` guard**: `cmpl $0x3,-0xc4` then
+   `jge`, so a column shorter than three cells abandons the candidate BEFORE the
+   height draw and the Random stream does not advance there. Adding it changed
+   nothing on case 0 (its columns are all >= 3) but it must stay for the cases
+   where a candidate sits in shallow water.
+
+Neither closed the `#265` gap. The remaining difference is in how many gaussian
+pairs the accepted columns consume: replaying "two gaussians + one height draw
+per placed column" from the seed produces `(-8,15,-6)`, `(-15,15,-8)`,
+`(-6,15,-11)`, `(-8,15,-8)`, ... while the corpus's next candidate at `#265` is
+`(-6,15,-8)` — so at least one column consumes a different number of draws than
+that model assumes.
+
+That is a Random-accounting question, and the corpus answers it directly: each
+column's write count and the seed fix how many draws it used. Fitting the
+consumption per column is the next concrete step.
+
 ## Old notes
 
 For case 0's first accepted candidate the column holds **6** blocks and the
