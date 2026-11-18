@@ -313,7 +313,10 @@ Two details that reading alone got wrong:
 `tests/reference/tree_leaf_bds_1.6.0.15.json` is 3 KB, and
 `tree_leaf_reference` checks all 30 cases.
 
-## Leaf volume: shape measured, gate not yet pinned
+## Leaf volume: shape measured, then solved
+
+Superseded by "The gate rule, solved" below, which gives the final rule; the
+measurements here are the evidence that led to it.
 
 The full `place(...,int)` corpus gives the leaf volume exactly. For height 5 at
 origin `(-8,5,-8)` the 59 leaf cells are, relative to the origin:
