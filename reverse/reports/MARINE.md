@@ -225,6 +225,29 @@ The check that settles it: for case 0 the accepted candidates are at `#19`,
 THIRD pair — meaning the corpus skipped the second one, i.e. a rejected
 candidate does not re-draw.
 
+## Status: #265 of 337, one rejected-branch detail left
+
+The column rule is right and the pass now replays from `#0` to `#265` when the
+rejected candidate is given **two** `get_block` reads. The single remaining
+mismatch is the number of reads a REJECTED candidate performs: the corpus shows
+
+- `#22..#24` — `is_empty_water` false, then **two** `get_block`;
+- `#62..#65` — `is_empty_water` false, then **three** `get_block`.
+
+Both are rejections at the same stage, so the third read depends on state the
+earlier one did not have (most plausibly the preceding acceptance: at `#62` a
+column has already been placed, at `#22` none has). Giving every rejection three
+reads advances to `#65` before diverging; giving every rejection two advances to
+`#265`. The exact condition is the last thing to pin.
+
+### Candidate cells from the seed (case 0)
+
+The gaussian pairs the seed produces are
+`(gz+2,gx+0) -> (-8,15,-6)`, `(gz+0,gx-7) -> (-15,15,-8)`,
+`(gz+3,gx+2) -> (-6,15,-5)`, ... which match the corpus's candidates at `#19`,
+`#62` and `#66` exactly. So the Random stream and the gaussian-to-axis mapping
+are confirmed: the translation was consuming the right words before this detail.
+
 ## Old notes
 
 For case 0's first accepted candidate the column holds **6** blocks and the

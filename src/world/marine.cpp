@@ -43,24 +43,19 @@ bool place_kelp(DecorationRegion &region, DecorationRegion::Position at, Random 
         const DecorationRegion::Position candidate{ox + gx, y, oz + gz};
         const int cx = std::get<0>(candidate), cz = std::get<2>(candidate);
         if (!environment.is_empty_water(candidate)) {
-            // Rejected candidate: three reads of the candidate.
-            (void)environment.block(candidate);
+            // Rejected candidate: two reads of the candidate.
             (void)environment.block(candidate);
             (void)environment.block(candidate);
             continue;
         }
-        // Accepted: two reads of the candidate, then below() is tested and both
-        // cells are read.
+        // Accepted: two reads of the candidate, then the cell below is tested
+        // and both cells are read (#19..#24 for the first candidate).
         (void)environment.block(candidate);
         (void)environment.block(candidate);
         (void)environment.is_empty_water({cx, y - 1, cz});
         (void)environment.block({cx, y - 1, cz});
         (void)environment.block({cx, y, cz});
-        // 0x1b54167..0x1b541f6: the water run is counted by CLIMBING from the
-        // candidate's own Y until a non-water cell, with no cap; the count the
-        // native code uses is the number of test iterations plus one (the
-        // corpus: 8 iterations at y 15..22 for the first candidate, and
-        // nextInt(3, column+2) then yields the 6 blocks that column holds).
+        // Walk: climb from the candidate's own Y, no cap.
         int iterations = 0;
         while (true) {
             const bool water = environment.is_empty_water({cx, y + iterations, cz});
