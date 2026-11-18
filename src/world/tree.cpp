@@ -146,6 +146,28 @@ void tree_place_leaves(DecorationRegion &region, DecorationRegion::Position orig
     }
 }
 
+int jungle_tree_height(Random &random) {
+    // 0x1b65ddb..0x1b65de0: nextInt(7) then + 4.
+    return random.next_int(0x7) + 4;
+}
+
+int mega_tree_height(Random &random) {
+    // 0x1b55c9b..0x1b55ca0: nextInt(3) then + 5.
+    return random.next_int(0x3) + 5;
+}
+
+bool jungle_tree_place(DecorationRegion &region, DecorationRegion::Position origin,
+                       Random &random, const TreeEnvironment &environment, bool manually_placed,
+                       bool type_flags, TreeBlock trunk, TreeBlock leaves, TreeBlock dirt) {
+    // 0x1b65db0: draw the height from the feature's own Random, then delegate to
+    // the base place 0x1b5a290. The constructor 0x1b65d60 sets leafType 3 and
+    // trunkType 1, which the base class only uses for its block identity, so no
+    // extra state is needed here.
+    const int height = jungle_tree_height(random);
+    return tree_place(region, origin, height, random, environment, manually_placed, type_flags,
+                      trunk, leaves, dirt);
+}
+
 bool tree_place(DecorationRegion &region, DecorationRegion::Position origin, int height,
                 Random &random, const TreeEnvironment &environment, bool manually_placed,
                 bool type_flags, TreeBlock trunk, TreeBlock leaves, TreeBlock dirt) {

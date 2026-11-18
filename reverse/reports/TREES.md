@@ -450,7 +450,57 @@ The orchestration, read from `0x1b5a2c2..0x1b5a884`:
    corpus records that cell **twice**; the duplicate is deliberate, and it was
    the one write the earlier 65/66 attempt missed.
 
-## Plan for the session that translates it## Plan for the session that translates it
+## Tree subclasses: the two thin wrappers
+
+Two of the eight subclasses are 0x65-byte wrappers that only choose a height and
+delegate to the base `place`:
+
+| Subclass | `place` | Height | Constructor |
+|---|---|---|---|
+| `JungleTreeFeature` | `0x1b65db0` | `nextInt(7) + 4` (`0x1b65ddb..0x1b65de0`) | `0x1b65d60`, leafType 3 / trunkType 1 |
+| `MegaTreeFeature` | `0x1b55c70` | `nextInt(3) + 5` (`0x1b55c9b..0x1b55ca0`) | `0x1b55bf0`, four ints |
+
+`JungleTreeFeature` is translated and verified: `jungle_tree_place` draws the
+height and calls the verified base, and `jungle_tree` replays the native corpus
+captured THROUGH the subclass — **16 cases, 523 placements, 160 Random words**.
+That also re-verifies the whole base path on a second independent corpus.
+
+`MegaTreeFeature`'s height wrapper is translated (`mega_tree_height`) but its
+constructor takes four type ids that map to block pairs this project has not
+assembled, so it is not wired into a test.
+
+The other six (`FancyTreeFeature` `0x1b4aff0`, `SwampTreeFeature` `0x1b6bcb0`,
+`SavannaTreeFeature` `0x1b511c0`, `MegaPineTreeFeature` `0x1b4d740`,
+`MegaJungleTreeFeature` `0x1b533e0`, `RoofTreeFeature` `0x1b5b7e0`) have real
+bodies (0x4c3 to 0xea4 bytes) with their own leaf/trunk placement and are still
+untranslated.
+
+## Plan for the session that translates it## Tree subclasses: the two thin wrappers
+
+Two of the eight subclasses are 0x65-byte wrappers that only choose a height and
+delegate to the base `place`:
+
+| Subclass | `place` | Height | Constructor |
+|---|---|---|---|
+| `JungleTreeFeature` | `0x1b65db0` | `nextInt(7) + 4` (`0x1b65ddb..0x1b65de0`) | `0x1b65d60`, leafType 3 / trunkType 1 |
+| `MegaTreeFeature` | `0x1b55c70` | `nextInt(3) + 5` (`0x1b55c9b..0x1b55ca0`) | `0x1b55bf0`, four ints |
+
+`JungleTreeFeature` is translated and verified: `jungle_tree_place` draws the
+height and calls the verified base, and `jungle_tree` replays the native corpus
+captured THROUGH the subclass — **16 cases, 523 placements, 160 Random words**.
+That also re-verifies the whole base path on a second independent corpus.
+
+`MegaTreeFeature`'s height wrapper is translated (`mega_tree_height`) but its
+constructor takes four type ids that map to block pairs this project has not
+assembled, so it is not wired into a test.
+
+The other six (`FancyTreeFeature` `0x1b4aff0`, `SwampTreeFeature` `0x1b6bcb0`,
+`SavannaTreeFeature` `0x1b511c0`, `MegaPineTreeFeature` `0x1b4d740`,
+`MegaJungleTreeFeature` `0x1b533e0`, `RoofTreeFeature` `0x1b5b7e0`) have real
+bodies (0x4c3 to 0xea4 bytes) with their own leaf/trunk placement and are still
+untranslated.
+
+## Plan for the session that translates it
 
 1. `gdb_tree_cases.py` following the vegetation/clay oracle shape: construct a
    `TreeFeature` with its real constructor `0x1b59cf0` and call

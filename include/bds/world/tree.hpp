@@ -76,6 +76,17 @@ bool tree_place(DecorationRegion &, DecorationRegion::Position origin, int heigh
                 TreeBlock trunk = {"log", 0}, TreeBlock leaves = {"leaves", 0},
                 TreeBlock dirt = {"dirt", 0});
 
+// Tree subclasses that only pick a height and delegate to TreeFeature::place.
+// JungleTreeFeature::place 0x1b65db0: height = nextInt(7) + 4, then the base
+// place. MegaTreeFeature::place 0x1b55c70: height = nextInt(3) + 5. Both are
+// 0x65-byte wrappers; the constructor only sets the leaf/trunk type ids.
+int jungle_tree_height(Random &);
+int mega_tree_height(Random &);
+bool jungle_tree_place(DecorationRegion &, DecorationRegion::Position, Random &,
+                       const TreeEnvironment &, bool manually_placed = false,
+                       bool type_flags = false, TreeBlock trunk = {"log", 0},
+                       TreeBlock leaves = {"leaves", 0}, TreeBlock dirt = {"dirt", 0});
+
 // TreeFeature::_placeLeaf 0x1b59d60. Places leaves at `at` when the cell's
 // material is type 9, 0 or 7 (the native order); otherwise it does nothing.
 bool tree_place_leaf(DecorationRegion &, DecorationRegion::Position at,
