@@ -403,7 +403,40 @@ predicts. The next step is to record, for each placed column, which word the
 native `nextInt(3, column+2)` consumed — the corpus already has the words, so
 this is a bookkeeping check rather than a new oracle run.
 
-### The height draw: column is NOT iterations+1
+### CORRECTION: `column = iterations + 1` WAS right
+
+The previous note in this file wrongly concluded the height bound is a constant
+7. That fit came from case 0 alone and is a coincidence.
+
+Case 1 disproves it and confirms the original formula. Its candidate order is
+`(-1,-5) REJECT, (-11,-9), (-5,-7), (-6,-3), (-5,-7) REJECT, (-7,-4),
+(-9,-11), (-5,-10), (-4,-10), (-9,-8)` — ten candidates for eight placed
+columns, because two candidates are rejected and consume no height word.
+Replaying "4 words per candidate + 1 height word per PLACED column" from case
+1's seed reproduces **all ten candidate cells exactly**:
+
+```
+want(-1,-5)   got(-1,-5)    reject
+want(-11,-9)  got(-11,-9)
+want(-5,-7)   got(-5,-7)
+want(-6,-3)   got(-6,-3)
+want(-5,-7)   got(-5,-7)    reject
+want(-7,-4)   got(-7,-4)
+want(-9,-11)  got(-9,-11)
+want(-5,-10)  got(-5,-10)
+want(-4,-10)  got(-4,-10)
+want(-9,-8)   got(-9,-8)
+```
+
+So the draw model is confirmed on TWO independent cases, and case 1's
+seven-block column is simply a column whose `iterations + 1` is larger — which
+`nextInt(3, column+2)` can then produce. Case 0's eight columns all happened to
+have small `column` values, which is why the constant-7 reading fit them.
+
+The real remaining bug is therefore NOT the formula; it is the read-count
+bookkeeping inside the candidate body (the divergence at #265 in case 0).
+
+### Superseded: the constant-7 reading
 
 Testing the height words directly settles it. For case 0 the eight placed
 columns have sizes `6, 4, 3, 4, 3, 6, 3, 3` and their height words are
