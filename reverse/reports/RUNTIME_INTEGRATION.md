@@ -130,5 +130,9 @@ not extended.
   The generated terrain currently only produces air, stone, grass, dirt,
   bedrock, water and lava, so the palette gap does not surface yet, but
   decoration will need sand, gravel, clay, logs, leaves and the ores.
-- Biome bytes in `FullChunkData` are still the host's flat table; the
-  generator's biome data is not sent.
+- Biome bytes in `FullChunkData` **are now the original's** for a kind-3
+  world: `network_chunk` calls `chunk_biomes` (`BiomeSource::fillBiomeData`
+  `0x1dbb8c0` through the VoronoiZoom layer) instead of a constant Plains, and
+  `chunk_biome_bytes` checks **all 113 captured chunk biome arrays** from
+  `terrain_bds_1.6.0.15.json`, 24 of which contain more than one biome.
+  Explicit and independent worlds still send Plains, which is what they are.

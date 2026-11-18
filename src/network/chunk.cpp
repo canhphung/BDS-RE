@@ -1,4 +1,5 @@
 #include "bds/network/chunk.hpp"
+#include "bds/world/biome.hpp"
 #include "bds/network/level_packets.hpp"
 #include <algorithm>
 #include <limits>
@@ -149,7 +150,19 @@ NetworkChunk network_chunk(const World &world, std::int32_t x, std::int32_t z) {
     NetworkChunk out;
     out.x = x;
     out.z = z;
-    out.biomes.fill(1); // Plains, independent World has no biome simulation.
+    // BiomeSource::fillBiomeData 0x1dbb8c0 through the VoronoiZoom layer: the
+    // original sends these 256 bytes in FullChunkData (LevelChunk::serialize2DMaps
+    // 0x1de6280 writes 512 height bytes then 256 biome bytes). The generator
+    // has the translated layer stack, so the runtime can send the real biome ids
+    // for a generated world instead of a constant Plains.
+    if (world.terrain().kind == 3) {
+        const auto layers = overworld_layers(static_cast<std::uint32_t>(world.terrain().seed));
+        const auto ids256 = chunk_biomes(layers, x, z);
+        for (std::size_t i = 0; i < ids256.size(); ++i)
+            out.biomes[i] = static_cast<std::uint8_t>(ids256[i] & 0xFF);
+    } else {
+        out.biomes.fill(1); // Plains: the explicit/independent worlds have no biome data.
+    }
     const auto *column = world.chunk(x, z);
     if (!column)
         return out;
