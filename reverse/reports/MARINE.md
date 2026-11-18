@@ -58,6 +58,26 @@ This is enough to write the pass, but the exact block identities each
 `operator==` compares against, and the growth length bound, still need one more
 read of `0x1b54150..0x1b54432`.
 
+## Anchor handling: what the corpus fixed
+
+Writing the pass against the corpus corrected the anchor stage twice:
+
+1. `isSolidBlockingBlock` is tested on `below()` **before** the anchor's own
+   block, and when it is FALSE the anchor **descends** — it does not fail. The
+   corpus shows `is_solid_blocking` plus `get_block(below)` per step, so the
+   two calls belong to the same step.
+2. After the descent stops (a solid `below()`), the native code repeats the
+   `isSolidBlockingBlock` + `getBlock` pair once more, and then reads the
+   anchor's own block with `getBlock` — but it does **not** call
+   `isEmptyWaterBlock` on the anchor. An implementation that added that call
+   desynchronised the stream at query 19.
+
+The pass is not yet correct: it still diverges shortly after the anchor stage.
+**The partial translation is not committed**; `marine.cpp` and `marine.hpp` are
+not in the tree and `kelp_reference` is not registered, so nothing claims
+unverified behaviour. The corpus (14 cases, 583 placements, 683 words) and the
+structure notes above are what the next attempt starts from.
+
 ## Next
 
 Read the loop bounds and the column-growth branch (`0x1b54030..0x1b54432`) and
