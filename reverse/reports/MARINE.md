@@ -330,6 +330,52 @@ That is a Random-accounting question, and the corpus answers it directly: each
 column's write count and the seed fix how many draws it used. Fitting the
 consumption per column is the next concrete step.
 
+## The draw model is CONFIRMED; the remaining bug is ordering, not Random
+
+A direct replay from the seed with the model "two gaussians (4 raw words) per
+candidate, plus one `nextInt(3, column+2)` per PLACED column" reproduces **all
+ten candidate cells of case 0 exactly**:
+
+```
+expect(-8,-6)   got(-8,-6)
+expect(-15,-8)  got(-15,-8)
+expect(-6,-5)   got(-6,-5)
+expect(-6,-10)  got(-6,-10)
+expect(-9,-14)  got(-9,-14)
+expect(-11,-7)  got(-11,-7)
+expect(-15,-10) got(-15,-10)
+expect(-4,-10)  got(-4,-10)
+expect(-6,-8)   got(-6,-8)
+expect(-5,-10)  got(-5,-10)
+```
+
+(The printed heights in that run used a constant bound, so they are not the
+real check; only the cells are.)
+
+The accepted cells also match the write order of the corpus, and the rejected
+ones (`-15,-8` and `-15,-10`) are exactly the two the corpus rejects.
+
+So the Random accounting is right and the translation's remaining divergence at
+`#265` is an ORDERING/read-count bug inside the candidate body, not a draw
+model bug. That narrows the search a lot for whoever picks this up: the cells
+prove the words are consumed correctly up to `#265`.
+
+## KelpFeature: stopped
+
+Ten rounds went into this feature. What is solid:
+
+- `column = iterations + 1` (the walk's iteration count plus one);
+- `next_gaussian_int(8)` twice per candidate, first gaussian is z, second is x;
+- the candidate cells reproduce exactly from the seed;
+- the place loop walks upward with `(is_empty_water, get_block)` per cell;
+- `column < 3` abandons the candidate before the height draw;
+- a placed column is entered TWICE at the same cell (first entry aborts on the
+  below-test, second walks and places).
+
+What is not: the read counts inside the candidate body still shift the
+dependency stream before `#265`. The pass and the corpus are preserved; the code
+is not in the tree and `kelp_reference` is unregistered.
+
 ## Old notes
 
 For case 0's first accepted candidate the column holds **6** blocks and the
