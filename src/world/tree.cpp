@@ -159,8 +159,15 @@ bool tree_place(DecorationRegion &region, DecorationRegion::Position origin, int
                           type_flags, trunk, leaves))
         return true;
     // 0x1b5a30f onward: the leaf volume, whose band starts at
-    // origin.y - 3 + height (0x1b5a313..0x1b5a319).
+    // origin.y - 3 + height (0x1b5a313..0x1b5a319), then the jungle and cocoa
+    // decoration stage.
     tree_place_leaves(region, origin, height, random, environment, leaves);
+    // 0x1b5a834..0x1b5a884: the native tail places DIRT at origin.below() and
+    // returns true. _prepareSpawn already wrote dirt there, so the corpus
+    // records the same cell twice; that duplicate is deliberate and observable.
+    const DecorationRegion::Position below{std::get<0>(origin), std::get<1>(origin) - 1,
+                                           std::get<2>(origin)};
+    environment.place_block(below, dirt);
     return true;
 }
 
