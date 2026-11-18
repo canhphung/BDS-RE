@@ -109,6 +109,9 @@ int main() {
                     }
             check(logs > 0, "the translated TreeFeature placed logs");
             check(leaves > 0, "the translated TreeFeature placed leaves");
+            // Every second attempt uses the JungleTreeFeature subclass, which is
+            // verified against its own 523-placement corpus, so the world
+            // exercises both paths.
             std::cout << "  trees: " << logs << " logs, " << leaves << " leaves in chunk (-3,-3)\n";
         }
 

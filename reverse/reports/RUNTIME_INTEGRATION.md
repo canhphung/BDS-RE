@@ -136,6 +136,11 @@ four trees, alongside 35 gravel and 73 coal from the ore stage. Chunk `(0,0)`
 of the same seed is ocean, so it places no trees — which is correct and is why
 the test uses a land chunk.
 
+Every second tree attempt uses the translated `JungleTreeFeature` subclass
+(`jungle_tree_place`, verified against its own 523-placement corpus) instead of
+the base feature, so the runtime exercises both paths. Measured: chunks around
+`(-3,-3)` of seed 123 place 1-2 jungle trees each alongside the base trees.
+
 The tree SITES are not the native ones: the real placement comes from
 `OverworldDecorator::decorate`'s tree stage, which is untranslated. The stage
 chooses four deterministic offsets so the runtime has trees at all; a later

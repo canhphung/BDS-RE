@@ -155,10 +155,24 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
         }
         if (surface_y == 0)
             continue;
-        if (bds::tree_place(region, {tx, surface_y, tz}, 5, ore_random, tree_environment,
-                            /*manually_placed=*/false, /*type_flags=*/false,
-                            TreeBlock{"log", 0}, TreeBlock{"leaves", 0}, TreeBlock{"dirt", 0}))
+        // Alternate the verified base feature and the translated Jungle subclass
+        // so the generated world contains both. The real choice comes from the
+        // untranslated decorator dispatch; using both here is what exercises the
+        // subclass end to end in the runtime.
+        const bool jungle = (i % 2) == 1;
+        const bool placed =
+            jungle ? bds::jungle_tree_place(region, {tx, surface_y, tz}, ore_random,
+                                            tree_environment, /*manually_placed=*/false,
+                                            /*type_flags=*/false, TreeBlock{"log", 0},
+                                            TreeBlock{"leaves", 0}, TreeBlock{"dirt", 0})
+                   : bds::tree_place(region, {tx, surface_y, tz}, 5, ore_random, tree_environment,
+                                     /*manually_placed=*/false, /*type_flags=*/false,
+                                     TreeBlock{"log", 0}, TreeBlock{"leaves", 0},
+                                     TreeBlock{"dirt", 0});
+        if (placed)
             ++result.trees_placed;
+        if (jungle && placed)
+            ++result.jungle_trees;
     }
 
     result.mutations = region.take_mutations();
