@@ -468,12 +468,41 @@ the word the gate would consume, and the SECOND candidate does not follow at
 word[4] — so one extra word appears between candidates rather than before the
 first one.
 
-That is the state to hand over: the gate's word and the first gaussian's words
-overlap in the only alignment that fits, which means either the gate uses a
-different random source (a `nextFloat`-based test would still consume a word)
-or the corpus's word list starts AFTER the gate. Deciding that needs a
-positional breakpoint on the generator inside `place` itself, recording which
-call produced each word.
+### The candidate structure, fully mapped
+
+Case 0 has exactly **eight** candidates and the corpus shows their shapes
+clearly. Reading every `is_empty_water` in order, with coordinates relative to
+the descent-terminated anchor `(-8,14,-8)`:
+
+| Candidate | reject at y-1 | accept at y | re-test | walk y+2, y+1 |
+|---|---|---|---|---|
+| 1 | (2, 0) | (2, +1) | yes | yes |
+| 2 | (3, 0, -7) | — | — | — |
+| 3 | (1, 0, 2) | (1, +1) | yes | yes |
+| 4 | (0, 0, 2) | (0, +1) | yes | yes |
+| 5 | (-6, 0, -1) | (-6, +1) | yes | yes |
+| 6 | (-1, 0, -3) | (-1, +1) | yes | yes |
+| 7 | (-2, 0, -7) | — | — | — |
+| 8 | (7, 0, 4) | — | — | — |
+
+So a candidate tests `y-1` first; if that is water it tests `y`, then re-tests
+`y`, then walks `y+2` and `y+1` before placing. Three candidates abort at the
+`y-1` test and five place. The per-candidate draw count differs because the
+aborting ones do not draw the walk.
+
+That explains why a fixed "4 words per candidate" alignment fails: the corpus's
+candidate offsets are
+`(2,0) (3,-7) (1,2) (0,2) (-6,-1) (-1,-3) (-2,-7) (7,4)`, and only the first
+one lines up at word[0]. With the accept/reject map above the draw schedule is
+now derivable: an aborting candidate consumes its gaussians only, an accepting
+one also consumes the walk draws.
+
+### Remaining question
+
+Only the gate's word is still ambiguous: the first candidate fits at word[0],
+which is also the word `nextInt(0x14)` would read. The next pass should treat
+the gate as consuming word[0] and verify candidate 1 starts at word[1]; if that
+fails, the gate reads a different source.
 
 ### Translation attempt 1 (superseded)
 
