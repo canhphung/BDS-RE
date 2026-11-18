@@ -232,3 +232,7 @@ add_executable(tree_trunk_reference_tests tests/unit/tree_trunk_reference_tests.
 target_link_libraries(tree_trunk_reference_tests PRIVATE bds_core bds_zlib)
 target_include_directories(tree_trunk_reference_tests SYSTEM PRIVATE third_party)
 add_test(NAME tree_trunk_reference COMMAND tree_trunk_reference_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference/tree_place_trunk_bds_1.6.0.15.json)
+add_executable(tree_leaf_reference_tests tests/unit/tree_leaf_reference_tests.cpp)
+target_link_libraries(tree_leaf_reference_tests PRIVATE bds_core)
+target_include_directories(tree_leaf_reference_tests SYSTEM PRIVATE third_party)
+add_test(NAME tree_leaf_reference COMMAND tree_leaf_reference_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference/tree_leaf_bds_1.6.0.15.json)

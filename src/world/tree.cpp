@@ -73,6 +73,29 @@ bool tree_prepare_spawn(DecorationRegion &region, DecorationRegion::Position at,
     return true;
 }
 
+bool tree_place_leaf(DecorationRegion &region, DecorationRegion::Position at,
+                     const TreeEnvironment &environment, TreeBlock leaves) {
+    (void)region;
+    // 0x1b59d60: _getBlock, then getMaterial once, then three isType tests in
+    // the native order 9, 0, 7. The first true answer places the leaf; all
+    // false leaves the cell untouched. The corpus records which of the three
+    // calls the original actually reached, so the short circuit is observable.
+    (void)environment.block(at);
+    // The corpus records the return value: false when no isType matched, so the
+    // caller can tell "nothing to do" from "placed".
+    // Short circuit exactly as the original: test 9, then 0, then 7, and place
+    // on the first true answer. The corpus stores the reachable answers with -1
+    // for calls the original never made, so the order is observable.
+    // 0x1b59e1e..0x1b59e26: the return value of _placeLeaf is exactly what
+    // _placeBlock returned, so placing leaves on leaves reports false even
+    // though the attempt happened.
+    for (const int type : {9, 0, 7}) {
+        if (environment.material_is(at, type))
+            return environment.place_block(at, leaves);
+    }
+    return false;
+}
+
 float tree_trunk_height_scale(bool fallen, bool type_flags, Random &random) {
     // 0x1b5acb1..0x1b5ad27 selects one of three rodata floats:
     //   fallen                 -> 0x2828668 = 0.75

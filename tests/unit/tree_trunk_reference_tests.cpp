@@ -165,6 +165,7 @@ int main(int argc, char **argv) {
             environment.place_block = [&](Position p, bds::TreeBlock block) {
                 observed.push_back(Json::array({std::get<0>(p), std::get<1>(p), std::get<2>(p),
                                                 std::string(block.name), block.data}));
+                return true;
             };
 
 

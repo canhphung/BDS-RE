@@ -38,10 +38,15 @@ struct TreeEnvironment {
     std::function<TreeBlock(DecorationRegion::Position)> block;
     // TreeFeature::_isFree(Block const&) 0x1b5a190.
     std::function<bool(TreeBlock)> is_free;
-    // Feature::_placeBlock 0x1b6ebd0.
-    std::function<void(DecorationRegion::Position, TreeBlock)> place_block;
+    // Feature::_placeBlock 0x1b6ebd0. Returns the native bool: false when the
+    // write did not change the cell (for example placing leaves on leaves).
+    std::function<bool(DecorationRegion::Position, TreeBlock)> place_block;
     // Feature::_isEmptyBlock 0x1b6ece0, used by the vine pass.
     std::function<bool(DecorationRegion::Position)> is_empty;
+    // Block::getMaterial 0x1e68cf0 through Material::isType 0x1c56be0, as
+    // _placeLeaf 0x1b59d60 asks it: the feature calls isType(9), isType(0) and
+    // isType(7) in that order and stops at the first true answer.
+    std::function<bool(DecorationRegion::Position, int material_type)> material_is;
 };
 
 // TreeFeature::_prepareSpawn 0x1b59e30. `height` is the tree height the
@@ -55,6 +60,11 @@ bool tree_prepare_spawn(DecorationRegion &, DecorationRegion::Position, int heig
 bool tree_place_trunk(DecorationRegion &, DecorationRegion::Position, int height, Random &,
                       const TreeEnvironment &, bool manually_placed, bool type_flags,
                       TreeBlock trunk = {"log", 0}, TreeBlock leaves = {"leaves", 0});
+
+// TreeFeature::_placeLeaf 0x1b59d60. Places leaves at `at` when the cell's
+// material is type 9, 0 or 7 (the native order); otherwise it does nothing.
+bool tree_place_leaf(DecorationRegion &, DecorationRegion::Position at,
+                     const TreeEnvironment &, TreeBlock leaves = {"leaves", 0});
 
 // The three trunk-height scale constants the native code selects between, from
 // rodata 0x2828668 (0.75), 0x28338cc (1/3) and 0x281c5c8 (1.0).

@@ -278,9 +278,42 @@ session:
    from which cells changed. That needs the postProcess integration first, so
    option 1 is the practical one.
 
-The translation of `tree_place` is therefore **not** written. The corpus
-`tree_place_bds_1.6.0.15.json` is complete and stays valid (16 cases, 511
-placements, 144 Random words); only the leaf dependency stream is missing.
+### `_placeLeaf` solved with a standalone function oracle
+
+Option 1 above works: `tools/re/gdb_leaf_cases.py` calls `_placeLeaf`
+`0x1b59d60` directly per cell with a real `BlockSource`, so GDB owns the whole
+frame and the three `test $1,%al` sites at `0x1b59db4`, `0x1b59dc7` and
+`0x1b59ddd` can be observed without the nested-call abort.
+
+Result: **30 cases, 9 placements, 81 `Material::isType` answers**, one case per
+block type in the palette (air, stone, dirt, grass, sand, water, leaves, log,
+gravel, vine) at three offsets. The decision table the corpus yields:
+
+| Cell block | isType(9) | isType(0) | isType(7) | result | placed |
+|---|---|---|---|---|---|
+| air | 0 | 1 | not asked | true | yes |
+| vine | 1 | not asked | not asked | true | yes |
+| leaves | 0 | 0 | 1 | **false** | yes |
+| stone, dirt, grass, sand, water, log, gravel | 0 | 0 | 0 | false | no |
+
+So `_placeLeaf` places when the cell's material is type 9 (plant), 0 (air) or 7
+(leaves), testing in that order and stopping at the first true answer.
+
+Two details that reading alone got wrong:
+
+- **The return value is `_placeBlock`'s bool, not "did it place".**
+  `0x1b59e1e..0x1b59e26` returns `%al` from the write. Placing leaves on an
+  existing leaves cell therefore reports **false** even though the attempt ran,
+  which the `leaves:0` row records. Returning `true` unconditionally failed
+  exactly that case.
+- **The trio short-circuits**, so the corpus stores `-1` for calls the original
+  never reached. A replay that evaluates all three unconditionally desynchronises
+  the answer stream.
+
+`tests/reference/tree_leaf_bds_1.6.0.15.json` is 3 KB, and
+`tree_leaf_reference` checks all 30 cases. The general `tree_place` translation
+still needs the leaf *volume* (which cells get offered) from the full corpus,
+which is the next step; the per-cell rule is now verified.
 
 ## Plan for the session that translates it
 
