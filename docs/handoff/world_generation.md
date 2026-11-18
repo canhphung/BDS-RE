@@ -41,6 +41,16 @@ dispatch order, MonsterRoomFeature, BonusChestFeature and the final pending-tick
 pass. See `reverse/reports/POSTPROCESS.md`. Nothing is registered yet: the three
 missing feature translations would silently change the Random stream.
 
+Vegetation: seven small features are translated and verified against a 70-case
+native corpus (184 placements, 15304 words, 16387 dependency answers); see
+`reverse/reports/VEGETATION.md`. The reed column walk `0x1b5d205..0x1b5d326`
+remains, because no corpus case reaches it.
+
+BonusChestFeature `0x1b526b0` and MonsterRoomFeature `0x1b549a0` are traced but
+not translated; `reverse/reports/CHEST_ROOM.md` records their structure,
+including BonusChest's own local Random copy and MonsterRoom's spawner/block
+entity dependency, which the project has not built yet.
+
 Next in Phase 3: the remaining
 `OverworldDecorator::decorate` 0x1da5250 features and biome-specific overrides.
 Keep `OverworldGenerator::postProcess` 0x1b38950 as the orchestration reference.
