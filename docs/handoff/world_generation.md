@@ -32,6 +32,15 @@ waterlogging, pending ticks and lighting jobs are not implemented by that
 component. The native fixture has an empty extra layer and uses the native
 BlockSource event-suppression mode, not Ready-chunk gameplay events.
 
+`OverworldGenerator::postProcess` orchestration was traced to its full control
+flow on 2026-11-18: chunk lock, `BlockSource(...,false,true)` + `Tick(1)` queue,
+the ThreadData-`+0x41810` decoration origin, two seed derivations that each burn
+two `nextInt()` draws, the Desert/DesertHills water-lake skip, both lake draw
+sequences with their Y/generator/`nextInt(10)` gates, the decorator virtual
+dispatch order, MonsterRoomFeature, BonusChestFeature and the final pending-tick
+pass. See `reverse/reports/POSTPROCESS.md`. Nothing is registered yet: the three
+missing feature translations would silently change the Random stream.
+
 Next in Phase 3: the remaining
 `OverworldDecorator::decorate` 0x1da5250 features and biome-specific overrides.
 Keep `OverworldGenerator::postProcess` 0x1b38950 as the orchestration reference.
