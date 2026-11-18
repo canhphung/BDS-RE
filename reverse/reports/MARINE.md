@@ -38,6 +38,26 @@ Corpus `tests/reference/kelp_bds_1.6.0.15.json`: **14 cases over 10 arenas,
 - `0x1b53ff3..0x1b5401d`: each candidate is checked with
   `BlockSource::isEmptyWaterBlock`, then `getBlock` for the block identity.
 
+## Loop structure read (second pass)
+
+- `0x1b53f44`: the candidate loop is `Range<int,1>(0xa)`, i.e. **10 candidates**.
+- `0x1b53f9b..0x1b53fce`: two `nextGaussianInt(8)` draws and **Y pinned to
+  zero** (`xor %ecx,%ecx` before `BlockPos::offset`), so a candidate is always
+  on the origin's own Y layer.
+- `0x1b53ff3`: each candidate is tested with `BlockSource::isEmptyWaterBlock`.
+- `0x1b5404d..0x1b54055`: a successful candidate enters the growth branch, which
+  walks upward (`BlockPos::above` at `0x1b5406e`) and, per step, compares the
+  block identity twice and re-tests `isEmptyWaterBlock` on `below()` before the
+  next step. Three `BlockLegacy::operator==` comparisons bound the growth: the
+  cell's own block, the block below, and the step target.
+- `0x1b540bb..0x1b540d1`, `0x1b54103..0x1b5410a`, `0x1b54139..0x1b5414f`: the
+  three gates. A failure at any of them ends the column at
+  `0x1b54162`.
+
+This is enough to write the pass, but the exact block identities each
+`operator==` compares against, and the growth length bound, still need one more
+read of `0x1b54150..0x1b54432`.
+
 ## Next
 
 Read the loop bounds and the column-growth branch (`0x1b54030..0x1b54432`) and
