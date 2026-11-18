@@ -17,7 +17,9 @@ bool place_kelp(DecorationRegion &region, DecorationRegion::Position at, Random 
     if (environment.is_client_side && environment.is_client_side())
         return true;
 
-    // Descent 0x1b53e2d..0x1b53f35.
+    // Descent 0x1b53e2d..0x1b53f35: per step is_solid_blocking(below),
+    // get_block(below); a false test descends and also reads the new anchor,
+    // a true one repeats the pair once and stops.
     int y = std::get<1>(at);
     while (true) {
         const bool solid = environment.is_solid_blocking({ox, y - 1, oz});
@@ -35,37 +37,44 @@ bool place_kelp(DecorationRegion &region, DecorationRegion::Position at, Random 
 
     // Ten candidates 0x1b53f44..
     for (int attempt = 0; attempt < 0xa; ++attempt) {
-        // 0x1b53f9b..0x1b53fe3: first gaussian is z, second is x, y pinned.
+        // 0x1b53f9b..0x1b53fe3: gz is the first gaussian, gx the second, y pinned.
         const int gz = next_gaussian_int(random, 8);
         const int gx = next_gaussian_int(random, 8);
         const DecorationRegion::Position candidate{ox + gx, y, oz + gz};
         const int cx = std::get<0>(candidate), cz = std::get<2>(candidate);
         if (!environment.is_empty_water(candidate)) {
+            // Rejected candidate: three reads of the candidate.
+            (void)environment.block(candidate);
             (void)environment.block(candidate);
             (void)environment.block(candidate);
             continue;
         }
-        // Accepted: two reads of the candidate, then the cell below.
+        // Accepted: two reads of the candidate, then below() is tested and both
+        // cells are read.
         (void)environment.block(candidate);
         (void)environment.block(candidate);
         (void)environment.is_empty_water({cx, y - 1, cz});
         (void)environment.block({cx, y - 1, cz});
         (void)environment.block({cx, y, cz});
-        // 0x1b54167..0x1b541f6: the first column pass starts at the candidate's
-        // own Y and stops at the first non-water cell (no 16 cap: the corpus
-        // walks to y=22 for a 6-block column).
-        int column = 0;
+        // 0x1b54167..0x1b541f6: the water run is counted by CLIMBING from the
+        // candidate's own Y until a non-water cell, with no cap; the count the
+        // native code uses is the number of test iterations plus one (the
+        // corpus: 8 iterations at y 15..22 for the first candidate, and
+        // nextInt(3, column+2) then yields the 6 blocks that column holds).
+        int iterations = 0;
         while (true) {
-            const bool water = environment.is_empty_water({cx, y + column, cz});
-            (void)environment.block({cx, y + column, cz});
+            const bool water = environment.is_empty_water({cx, y + iterations, cz});
+            (void)environment.block({cx, y + iterations, cz});
+            ++iterations;
             if (!water)
                 break;
-            ++column;
         }
-        // Height, then the cell below the candidate.
+        const int column = iterations + 1;
         const int height = random.next_int(3, column + 2);
+        // 0x1b54208: one read of the cell below the candidate.
         (void)environment.block({cx, y - 1, cz});
-        // First block: mayPlace, then the nine-read fan-out, then the write.
+        // 0x1b5424c..0x1b54330: a single mayPlace, the nine-read fan-out, then
+        // the first write.
         if (!environment.may_place(candidate, kelp))
             continue;
         (void)environment.block({cx, y - 1, cz});
@@ -78,8 +87,8 @@ bool place_kelp(DecorationRegion &region, DecorationRegion::Position at, Random 
         (void)environment.block({cx - 1, y, cz});
         (void)environment.block({cx, y, cz});
         environment.place_block(candidate, kelp);
-        // 0x1b54330..: the second column pass starts one above the first and
-        // stops at the first non-water cell, placing while it goes.
+        // 0x1b54330..: each remaining block is a (is_empty_water, get_block)
+        // pair followed by a write, climbing one cell at a time.
         for (int k = 1; k < height; ++k) {
             const DecorationRegion::Position p{cx, y + k, cz};
             const bool water = environment.is_empty_water(p);

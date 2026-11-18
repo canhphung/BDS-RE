@@ -194,7 +194,38 @@ That means:
 So the placement writes all `height` blocks in one go after a single
 `may_place`; the earlier model of "walk then place one at a time" was wrong.
 
-## The column count, unresolved
+## The column count, SOLVED (from corpus)
+
+`column = iterations + 1`, where `iterations` is the number of
+`is_empty_water`-then-`get_block` pairs the accepted walk performs before the
+first non-water answer. For case 0's first accepted candidate the walk performs
+**8** iterations (y 15..22, the last false), so `column = 9` and
+`nextInt(3, 11) = 6`, which is exactly the number of kelp blocks that column
+holds.
+
+The second pass the corpus shows (five `is_empty_water` TRUE at y 16..20) is
+the **place loop** for the remaining five blocks, matching `height - 1 = 5`.
+
+With that, the pass advances from query `#58` to `#265` — a much larger slice
+of the corpus than any earlier attempt.
+
+## Remaining divergence: candidate 2's rejected reads
+
+The pass now diverges at `#265`, where the original starts a candidate at
+`(-6,15,-8)` but the translation offers `(-4,21,-10)`. That is a Random
+position problem: the rejected candidate at `#62..#65` consumes **three**
+`get_block` reads in the corpus, and the translation does the same, so the
+difference must be in whether a rejected candidate re-draws its gaussians at
+all, or in the `height`-draw position for the SECOND accepted candidate.
+
+The check that settles it: for case 0 the accepted candidates are at `#19`,
+`#25..#37` (a walk) and `#52..#60`, and the candidate at `#265` is
+`(-6,15,-8)`. The gaussian pairs the translation produces from the seed are
+`(gz=2,gx=0)`, `(gz=0,gx=-7)`, `(gz=-3,gx=2)`, ... so `(-6,15,-8)` is the
+THIRD pair — meaning the corpus skipped the second one, i.e. a rejected
+candidate does not re-draw.
+
+## Old notes
 
 For case 0's first accepted candidate the column holds **6** blocks and the
 height draw is `nextInt(3, column+2)`, which equals 6 only for
