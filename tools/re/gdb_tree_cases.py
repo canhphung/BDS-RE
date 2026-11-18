@@ -228,8 +228,20 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
             bp.enabled = True
         call(0x1b59cf0, 'void(*)(void*,void*,int,int,int)',
              f'{feature},0,{leaf_type},{trunk_type},0')
-        result = bool(int(call(0x1b5a290, 'unsigned char(*)(void*,void*,void*,void*,int)',
-                               f'{feature},{region},{pos},{rng},{tree_height}')) & 1)
+        mode = os.environ.get('TREE_ORACLE_MODE', 'place')
+        if mode == 'trunk':
+            # _placeTrunk(this, BlockSource&, BlockPos const&, Random&, int):
+            # rdi=this, rsi=region, rdx=pos, rcx=rng, r8d=height.
+            result = bool(int(call(0x1b5ac20, 'unsigned char(*)(void*,void*,void*,void*,int)',
+                                   f'{feature},{region},{pos},{rng},{tree_height}')) & 1)
+        elif mode == 'prepare':
+            # _prepareSpawn(this, BlockSource&, BlockPos const&, int):
+            # rdi=this, rsi=region, rdx=pos, ecx=height.
+            result = bool(int(call(0x1b59e30, 'unsigned char(*)(void*,void*,void*,int)',
+                                   f'{feature},{region},{pos},{tree_height}')) & 1)
+        else:
+            result = bool(int(call(0x1b5a290, 'unsigned char(*)(void*,void*,void*,void*,int)',
+                                   f'{feature},{region},{pos},{rng},{tree_height}')) & 1)
         for bp in observers:
             bp.enabled = False
         for bp in one_shot:

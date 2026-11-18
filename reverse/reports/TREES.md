@@ -86,7 +86,27 @@ walks a `Range` of cells testing `_isFree`.
 The four `nextFloat` draws and the fallen-trunk branch are the parts a corpus
 must pin down; a reading cannot tell which draw feeds which axis.
 
-## Oracle status: blocked by a native abort, first attempt
+## Oracle status: narrowed to `_placeTrunk`
+
+The oracle now has a `TREE_ORACLE_MODE` switch so each stage can be called on
+its own. Results:
+
+| Mode | Result |
+|---|---|
+| `prepare` (`_prepareSpawn` only) | **works**: 16/16 cases, 105–123 dependency answers each |
+| `trunk` (`_placeTrunk` only) | **faults** with the same GDB stop |
+| `place` (the four-argument body) | faults, because it reaches `_placeTrunk` |
+
+So `_prepareSpawn` `0x1b59e30` is callable from a paused world and can be
+translated and verified immediately; the abort comes from `_placeTrunk`
+`0x1b5ac20`. Inside `_placeTrunk` the first suspicious call is
+`_placeFallenTrunk` `0x1b5a8a0`, reached at `0x1b5ad4d` right after
+`Feature::_getManuallyPlaced` (`0x1b5ac50`, which only reads `+0x8` and cannot
+fault) and two `nextInt` draws. `_placeFallenTrunk` uses a static `mask` table
+at `0x28338d0` and its own `Range` walk, so it is the next thing to test in
+isolation.
+
+## Original first attempt (kept for the reasoning)
 
 `tools/re/gdb_tree_cases.py` is written but does **not** complete. Calling
 `place(...,int)` `0x1b5a290` from GDB stops the inferior:
