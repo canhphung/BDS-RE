@@ -26,7 +26,7 @@ set_target_properties(bds_mbedtls PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if(WIN32)
  target_link_libraries(bds_mbedtls PRIVATE bcrypt)
 endif()
-add_library(bds_core src/core/runtime.cpp src/core/config.cpp src/core/atomic_file.cpp src/world/store.cpp src/world/water.cpp src/world/terrain.cpp src/world/noise.cpp src/world/biome_layers.cpp src/world/biome_data.cpp src/world/overworld.cpp src/world/decoration.cpp
+add_library(bds_core src/core/runtime.cpp src/core/config.cpp src/core/atomic_file.cpp src/world/store.cpp src/world/water.cpp src/world/terrain.cpp src/world/noise.cpp src/world/biome_layers.cpp src/world/biome_data.cpp src/world/overworld.cpp src/world/decoration.cpp src/world/seed.cpp
     src/world/caves.cpp src/world/random.cpp src/world/block_ticks.cpp src/world/lighting.cpp src/world/chunk_ticks.cpp src/world/grass_ticks.cpp src/core/console.cpp
  src/server/properties.cpp src/server/access.cpp src/server/backup.cpp src/server/control.cpp src/network/discovery.cpp src/network/login.cpp src/network/raknet.cpp
  src/network/binary.cpp src/network/batch.cpp src/network/connection.cpp src/network/crypto.cpp src/network/auth.cpp src/network/encryption.cpp src/network/level_packets.cpp src/network/chunk.cpp src/network/spawn.cpp src/game/protocol.cpp src/game/server.cpp src/game/item_actor.cpp src/game/world_tick.cpp src/game/attributes.cpp src/game/items.cpp src/game/effects.cpp src/game/combat.cpp src/game/spawner.cpp src/game/mob_ai.cpp src/game/mob_combat.cpp src/game/loot.cpp src/game/experience_orb.cpp src/game/experience_orb_server.cpp src/game/mob_motion.cpp src/game/random_pos.cpp src/game/navigation.cpp src/game/riding.cpp src/game/riding_server.cpp)
@@ -208,3 +208,7 @@ add_executable(lake_tests tests/unit/lake_tests.cpp)
 target_link_libraries(lake_tests PRIVATE bds_core)
 target_include_directories(lake_tests SYSTEM PRIVATE third_party)
 add_test(NAME lake_reference COMMAND lake_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference/decoration_lake_bds_1.6.0.15.json)
+add_executable(seed_reference_tests tests/unit/seed_reference_tests.cpp)
+target_link_libraries(seed_reference_tests PRIVATE bds_core)
+target_include_directories(seed_reference_tests SYSTEM PRIVATE third_party)
+add_test(NAME seed_reference COMMAND seed_reference_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference/seed_bds_1.6.0.15.json)

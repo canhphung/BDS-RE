@@ -15,8 +15,15 @@ Completed in this continuation:
   78 original-server cases match all placements, final cells and Random streams.
 - Default and Mesa ore-decorator sequences. 64 isolated features and 16 whole
   batches match, including rare gravel and high-altitude Mesa gold.
+- `LevelSettings::parseSeedString` 0x1c69910, `Util::hashCode`,
+  `Util::isIntegral`, `Util::stringTrim` and `Level::createRandomSeed`, with 49
+  native cases and runtime integration. A one- or two-character unusable seed
+  falls back to a random draw, so `level-seed=1` does **not** mean a fixed
+  world; the old "-1997048360" note in TERRAIN.md was one random sample. See
+  `reverse/reports/SEED.md`.
 
-Validation: 48/48 tests pass in Debug, Release, ASan+UBSan and Clang.
+Validation: 50/50 tests pass in GCC Debug (the 48 earlier ones plus
+`seed_reference` and the seed integration).
 
 LakeFeature is now implemented explicitly as `place_lake`; see
 `reverse/reports/LAKES.md` for API dependencies and native source-context details.
@@ -32,6 +39,9 @@ It creates a temporary BlockSource/tick queue, selects the biome at the chunk's
 maximum corner and reseeds its ThreadData Random again after lakes. Implement
 each real feature and validate it before advertising the whole post-process
 stage. Trees, marine features and snow/ice are still pending.
+
+Seed resolution is done: use `bds::resolve_level_seed` (`src/world/seed.cpp`)
+instead of hashing text yourself.
 
 Use `build_surface_at` for controlled native surface tests; production
 `build_surfaces` calls the same dispatcher. Use `place_lake` and

@@ -177,9 +177,15 @@ original's volume after the carvers. The fixtures hold 24 chunks of seed 123
 (21 of them carved, 17,318 changed cells) and 25 ocean chunks with
 underwater carving (`terrain_ocean_bds_1.6.0.15.json`); every chunk of the
 six captures (2,514 chunks: five runs of seed 123 and one of server
-`level-seed=1`) matches after the carvers. Note: the original hashed
-`level-seed=1` into RandomSeed -1997048360 (level.dat), which
-`make_terrain_reference.py` now reads instead of server.properties.
+`level-seed=1`) matches after the carvers.
+
+Correction (2026-11-18): the earlier note that the original "hashed
+`level-seed=1` into RandomSeed -1997048360" was wrong. A one-character seed is
+shorter than the native minimum, so `LevelSettings::parseSeedString` falls back
+to `Level::createRandomSeed()` and **every fresh world gets a different seed**.
+-1997048360 was one such random draw. `make_terrain_reference.py` reads the
+actual seed from `level.dat`, which is still the right thing to do. See
+[SEED.md](SEED.md).
 
 ## Phase 3 decoration
 

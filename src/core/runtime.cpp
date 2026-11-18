@@ -2,10 +2,10 @@
 #include <stdexcept>
 #include "bds/world/world.hpp"
 #include "bds/world/store.hpp"
+#include "bds/world/seed.hpp"
 #include "bds/core/logger.hpp"
 #include <string>
 #include <thread>
-#include <charconv>
 #include "bds/core/console.hpp"
 #include "bds/server/control.hpp"
 #include "bds/network/discovery.hpp"
@@ -37,13 +37,12 @@ std::uint64_t ServerRuntime::run(const std::function<bool()>& stop) {
  World world;
  if(std::filesystem::exists(world_file))world=WorldStore::load(world_file);
  if(config_.network && properties.level_type!="LEGACY" && !world.terrain().kind) {
-  std::uint64_t seed=14695981039346656037ULL;
-  for(unsigned char c:properties.seed)seed=(seed^c)*1099511628211ULL;
-  if(!properties.seed.empty()) {
-   std::uint64_t numeric=0;auto r=std::from_chars(properties.seed.data(),properties.seed.data()+properties.seed.size(),numeric);
-   if(r.ec==std::errc{} && r.ptr==properties.seed.data()+properties.seed.size())seed=numeric;
-  }
-  world.configure_terrain({properties.level_type=="FLAT"?1U:2U,seed});
+  // DedicatedServer::run 0x1808d3d: LevelSettings::parseSeedString(getLevelSeed(),
+  // Level::createRandomSeed()). A missing, one-character or otherwise unusable
+  // seed resolves to a fresh random_device draw, not to a fixed hash; see
+  // src/world/seed.cpp and tests/reference/seed_bds_1.6.0.15.json.
+  world.configure_terrain({properties.level_type=="FLAT"?1U:2U,
+                           static_cast<std::uint64_t>(resolve_level_seed(properties.seed))});
  }
  AccessLists access(config_.root);access.reload_whitelist();access.reload_operators();
  Backup backup(world_dir);ServerControl control(properties,access,backup);ConsoleInput console;

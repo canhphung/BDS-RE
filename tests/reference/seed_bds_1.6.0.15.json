@@ -1,0 +1,354 @@
+{
+ "binary_sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
+ "function": "LevelSettings::parseSeedString(std::string const&, unsigned int)",
+ "address": "0x1c69910",
+ "generator": "tools/re/gdb_seed_parse.py + tools/re/export_seed_reference.py",
+ "method": "the original function is called in the paused server with a std::string built by the oracle; results are native observations",
+ "helper": "Util::hashCode 0x1949300 (h = 31*h + (signed char)c), Util::isIntegral 0x194a340, Util::stringTrim 0x270fa50 (' \\t\\n\\r')",
+ "oracle_sha256": "05ab63ba227e9cd7efe3cc5dd4717061078ae598aafe5d72cc94307df056691b",
+ "cases": [
+  {
+   "input": "",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "empty string returns the default"
+  },
+  {
+   "input": "",
+   "default": 12345,
+   "signed": 12345,
+   "unsigned": 12345,
+   "note": "empty string returns the non-zero default"
+  },
+  {
+   "input": "-",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "single dash is shorter than 2: default"
+  },
+  {
+   "input": "-",
+   "default": 7,
+   "signed": 7,
+   "unsigned": 7,
+   "note": "single dash returns the default"
+  },
+  {
+   "input": "12",
+   "default": 0,
+   "signed": 12,
+   "unsigned": 12,
+   "note": "two-digit integral"
+  },
+  {
+   "input": "123",
+   "default": 0,
+   "signed": 123,
+   "unsigned": 123,
+   "note": "three-digit integral"
+  },
+  {
+   "input": "0",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "single zero is shorter than 2: default"
+  },
+  {
+   "input": "00",
+   "default": 0,
+   "signed": 1536,
+   "unsigned": 1536,
+   "note": "leading zero is not integral: hashed"
+  },
+  {
+   "input": "01",
+   "default": 0,
+   "signed": 1537,
+   "unsigned": 1537,
+   "note": "leading zero is not integral: hashed"
+  },
+  {
+   "input": "-0",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "minus zero hashed (length 2, isIntegral true, but value == -1 check)"
+  },
+  {
+   "input": "-5",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "negative integral"
+  },
+  {
+   "input": "-123456",
+   "default": 0,
+   "signed": 4294843840,
+   "unsigned": 4294843840,
+   "note": "larger negative integral"
+  },
+  {
+   "input": "1",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "single digit returns the default (length < 2)"
+  },
+  {
+   "input": "9",
+   "default": 5,
+   "signed": 5,
+   "unsigned": 5,
+   "note": "single digit returns the non-zero default"
+  },
+  {
+   "input": " 123",
+   "default": 0,
+   "signed": 123,
+   "unsigned": 123,
+   "note": "leading space is trimmed before the checks"
+  },
+  {
+   "input": "123 ",
+   "default": 0,
+   "signed": 123,
+   "unsigned": 123,
+   "note": "trailing space is trimmed"
+  },
+  {
+   "input": "  -42  ",
+   "default": 0,
+   "signed": 4294967254,
+   "unsigned": 4294967254,
+   "note": "both sides trimmed"
+  },
+  {
+   "input": "\t7\n",
+   "default": 3,
+   "signed": 7,
+   "unsigned": 7,
+   "note": "tabs and newlines are trimmed"
+  },
+  {
+   "input": "abc",
+   "default": 0,
+   "signed": 96354,
+   "unsigned": 96354,
+   "note": "non-integral text is hashed"
+  },
+  {
+   "input": "1",
+   "default": 99,
+   "signed": 99,
+   "unsigned": 99,
+   "note": "seed \"1\" with a non-zero default"
+  },
+  {
+   "input": "-1",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "\"-1\" is the sentinel: hashed instead of parsed"
+  },
+  {
+   "input": "-1",
+   "default": 77,
+   "signed": 77,
+   "unsigned": 77,
+   "note": "\"-1\" hashed even with a non-zero default"
+  },
+  {
+   "input": "2147483647",
+   "default": 0,
+   "signed": 2147483647,
+   "unsigned": 2147483647,
+   "note": "int max"
+  },
+  {
+   "input": "-2147483648",
+   "default": 0,
+   "signed": 2147483648,
+   "unsigned": 2147483648,
+   "note": "int min"
+  },
+  {
+   "input": "2147483648",
+   "default": 0,
+   "signed": 2147483648,
+   "unsigned": 2147483648,
+   "note": "overflowing decimal is integral but out of range"
+  },
+  {
+   "input": "99999999999999999999",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "huge decimal"
+  },
+  {
+   "input": "0x10",
+   "default": 0,
+   "signed": 1546855,
+   "unsigned": 1546855,
+   "note": "hex text is not integral (leading 0) so hashed"
+  },
+  {
+   "input": "12a",
+   "default": 0,
+   "signed": 48736,
+   "unsigned": 48736,
+   "note": "mixed text is hashed"
+  },
+  {
+   "input": "1.5",
+   "default": 0,
+   "signed": 48568,
+   "unsigned": 48568,
+   "note": "decimal point text is hashed"
+  },
+  {
+   "input": "bedrock",
+   "default": 0,
+   "signed": 4063417190,
+   "unsigned": 4063417190,
+   "note": "ordinary word"
+  },
+  {
+   "input": "Bedrock level",
+   "default": 0,
+   "signed": 1201671722,
+   "unsigned": 1201671722,
+   "note": "text with a space inside"
+  },
+  {
+   "input": "hello world",
+   "default": 0,
+   "signed": 1794106052,
+   "unsigned": 1794106052,
+   "note": "two words"
+  },
+  {
+   "input": "\u65e5\u672c\u8a9e",
+   "default": 0,
+   "signed": 1439989690,
+   "unsigned": 1439989690,
+   "note": "multi-byte UTF-8 is hashed by byte"
+  },
+  {
+   "input": "-9",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "any two-character string starting with '-' returns the default"
+  },
+  {
+   "input": "-9",
+   "default": 55,
+   "signed": 55,
+   "unsigned": 55,
+   "note": "two-character dash string returns the non-zero default"
+  },
+  {
+   "input": "-ab",
+   "default": 0,
+   "signed": 46350,
+   "unsigned": 46350,
+   "note": "dash plus letter, length 3, not integral: hashed"
+  },
+  {
+   "input": "  -1",
+   "default": 0,
+   "signed": 4294967295,
+   "unsigned": 4294967295,
+   "note": "leading spaces then -1 trims to -1 and is accepted"
+  },
+  {
+   "input": "  -1",
+   "default": 33,
+   "signed": 4294967295,
+   "unsigned": 4294967295,
+   "note": "leading spaces then -1 with a non-zero default"
+  },
+  {
+   "input": " -1 ",
+   "default": 0,
+   "signed": 4294967295,
+   "unsigned": 4294967295,
+   "note": "padded -1"
+  },
+  {
+   "input": "-01",
+   "default": 0,
+   "signed": 44782,
+   "unsigned": 44782,
+   "note": "dash then leading zero: hashed"
+  },
+  {
+   "input": "-0",
+   "default": 44,
+   "signed": 44,
+   "unsigned": 44,
+   "note": "two-character -0 returns the default"
+  },
+  {
+   "input": "07",
+   "default": 0,
+   "signed": 1543,
+   "unsigned": 1543,
+   "note": "two-digit leading zero: hashed"
+  },
+  {
+   "input": "1 ",
+   "default": 0,
+   "signed": 1,
+   "unsigned": 1,
+   "note": "digit plus trailing space trims to one character"
+  },
+  {
+   "input": "x",
+   "default": 8,
+   "signed": 8,
+   "unsigned": 8,
+   "note": "single non-digit returns the default"
+  },
+  {
+   "input": "-",
+   "default": 9,
+   "signed": 9,
+   "unsigned": 9,
+   "note": "single dash returns the default"
+  },
+  {
+   "input": "2147483648",
+   "default": 0,
+   "signed": 2147483648,
+   "unsigned": 2147483648,
+   "note": "glibc sscanf wraps to INT_MIN"
+  },
+  {
+   "input": "-2147483649",
+   "default": 0,
+   "signed": 2147483647,
+   "unsigned": 2147483647,
+   "note": "glibc sscanf wraps to INT_MAX"
+  },
+  {
+   "input": "99999999999999999999",
+   "default": 0,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "glibc sscanf wraps to -1 then is rejected"
+  },
+  {
+   "input": "-99999999999999999999",
+   "default": 11,
+   "signed": 0,
+   "unsigned": 0,
+   "note": "glibc sscanf wraps to 0 then is accepted"
+  }
+ ]
+}

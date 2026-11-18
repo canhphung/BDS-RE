@@ -3,6 +3,7 @@
 #include "bds/game/mce_math.hpp"
 #include "bds/game/random_pos.hpp"
 #include "bds/network/spawn.hpp"
+#include "bds/world/seed.hpp"
 #include <algorithm>
 #include <bit>
 #include <charconv>
@@ -103,12 +104,17 @@ void Server::enqueue(std::uint64_t id, GamePacket packet) {
     s.queue.push_back(std::move(packet));
 }
 std::int32_t level_seed(const World &world, const Properties &p) {
-    // A purely numeric level-seed is used as-is, anything else as 0 (policy).
-    std::int32_t seed = 0;
-    const auto *begin = p.seed.data();
-    if (!p.seed.empty() && std::from_chars(begin, begin + p.seed.size(), seed).ptr != begin + p.seed.size())
-        seed = 0;
-    return world.terrain().kind ? static_cast<std::int32_t>(world.terrain().seed) : seed;
+    // The world's stored seed is what LevelSettings received
+    // (DedicatedServer::run 0x1808d3d resolves server.properties' level-seed
+    // through LevelSettings::parseSeedString, src/world/seed.cpp), and
+    // LevelSettings::getSeed is what StartGame reports. A world without
+    // generation settings has no seed to report; an explicit column world uses
+    // 0, matching the earlier behaviour.
+    if (world.terrain().kind)
+        return static_cast<std::int32_t>(world.terrain().seed);
+    // No stored terrain settings: resolve the property the same way the
+    // generator would, so the reported seed is at least self-consistent.
+    return static_cast<std::int32_t>(resolve_level_seed(p.seed));
 }
 Server::Server(World &world, const Properties &properties, AccessLists &access,
                Random::DrawObserver random_observer)
