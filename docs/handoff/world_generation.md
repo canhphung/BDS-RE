@@ -51,6 +51,18 @@ not translated; `reverse/reports/CHEST_ROOM.md` records their structure,
 including BonusChest's own local Random copy and MonsterRoom's spawner/block
 entity dependency, which the project has not built yet.
 
+ClayFeature is translated and verified (`reverse/reports/CLAY.md`): 14 native
+cases, 538 placements, 2504 dependency answers. It needed the anchor's
+`isType` answer read at the `test` after the call, the anchor/candidate
+`getBlock` calls kept separate, and the X/Z/Y loop nesting the corpus pins
+down.
+
+The TreeFeature family is fully traced and planned in
+`reverse/reports/TREES.md`: 14 methods, ~0x1300 bytes, with the
+`place(...,int)` body 0x1b5a290 as the hub and the thin overload
+`place(...,Random&)` 0x1b5a230 simply drawing `nextInt(3)+5`. That is the next
+translation.
+
 Next in Phase 3: the remaining
 `OverworldDecorator::decorate` 0x1da5250 features and biome-specific overrides.
 Keep `OverworldGenerator::postProcess` 0x1b38950 as the orchestration reference.
