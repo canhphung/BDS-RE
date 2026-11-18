@@ -344,9 +344,37 @@ under-places (32 cells); "place whenever the draw is nonzero" over-places (37).
 Getting the top-layer branch right needs the recorded per-cell draws, which
 the corpus does not keep: the reverted implementation is not committed.
 
-The shape, band, half-width and trunk-column exclusion above are measured
-facts, and the next session can finish the pass by recording which cell each
-`nextInt(2)` draw belonged to.
+### Branch targets corrected
+
+Reading the jump destinations rather than just the compare clarifies the gate
+considerably, and corrects an earlier note in this file:
+
+- `0x1b5a4cf` and `0x1b5a4e3` jump to **`0x1b5a50f`, which is the `_placeLeaf`
+  call** (confirmed by following it: `0x1b5a50f..0x1b5a54c` builds the
+  `BlockPos` and calls `0x1b59d60`). So a cell on the diamond edge
+  (`|dx| == half` or `|dz| == half`) is placed **unconditionally**, without a
+  Random draw.
+- Only interior cells reach `nextInt(2)` at `0x1b5a4f2`; a zero draw jumps to
+  `0x1b5a551`, which is the loop increment (skip).
+
+Measured against those rules the full pass produces **68 cells** at height 5
+(`25, 25, 9, 9` per layer) where the corpus records **59** (`24, 23, 7, 5`).
+The differences are `-1, -2, -2, -4`: the top layer loses the most, so the
+`-0x58` test at `0x1b5a500` clearly drops cells on the top layer, and one
+further interior cell is dropped on every layer.
+
+Both readings were tried: "skip when the draw is zero" gives 62 cells
+(`23, 23, 8, 8`) and "never skip" gives 68. The corpus cannot separate them
+because it does not record which cell each `nextInt(2)` belonged to, and the
+per-cell draw assignment is exactly what is missing.
+
+### What the next session needs
+
+Extend the tree oracle to record, for each `nextInt(2)` at `0x1b5a4f2`, the
+`BlockPos` locals it is about to test (`-0x54` x, `-0x84` y, `-0xac` z) and
+whether the call at `0x1b5a54c` followed. That turns the gate into a recorded
+decision table and the pass becomes a straight replay. The band, half-width,
+corner cut and edge rule measured above are already correct.
 
 ## Plan for the session that translates it
 
