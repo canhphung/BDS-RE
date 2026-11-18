@@ -169,6 +169,45 @@ Deciding between them needs one more corpus read: the same case records eight
 columns, and their (water-run length, placed height) pairs are enough to fit the
 relation without touching the disassembly.
 
+## The accept/walk/place interleaving, as the corpus actually shows it
+
+The query indices for case 0 resolve the ordering question that three earlier
+attempts got wrong. The accepted candidates are at `#19, #25, #27, #29, #31,
+#33, #35, #37` (a run of `is_empty_water` that are TRUE) and then `#52, #54,
+#56, #58, #60`.
+
+That means:
+
+- `#19..#21` is candidate 1 accepted (`is_empty_water` + two `get_block`);
+- `#22..#24` is candidate 2 REJECTED (`is_empty_water` false + two
+  `get_block`), and `#25..#40` is candidate 3's ACCEPTED walk — eight water
+  cells at y 15..22, `get_block` after each, and the walk has NO 16 cap;
+- `#41` is the one `get_block(y-1)` before the height draw;
+- `#42..#51` is the first placement: `may_place`, then the nine-read fan-out
+  (`y-1, y, y+1, y-1, `-z, +z, +x, -x, y`), then the write;
+- `#52..#61` is NOT a second walk and NOT the place loop: those five
+  `is_empty_water` TRUE at y 16..20 are candidate 4's accepted walk, which
+  continues with `get_block` per cell;
+- `#62..#65` is a rejected candidate (`is_empty_water` false + **three**
+  `get_block`), and `#66` starts the next accept.
+
+So the placement writes all `height` blocks in one go after a single
+`may_place`; the earlier model of "walk then place one at a time" was wrong.
+
+## The column count, unresolved
+
+For case 0's first accepted candidate the column holds **6** blocks and the
+height draw is `nextInt(3, column+2)`, which equals 6 only for
+`column in {5, 9, 12, 17}` at that RNG position. The accepted walk visited
+**eight** water cells. So `column != walk_length`.
+
+`column = walk_length - 3` fits this one point but nothing confirms it. The
+other seven columns of the case hold 3, 4, 6, 3, 3, 4 and 3 blocks, and their
+walk lengths are recoverable from the same corpus, so the relation can be fitted
+from data alone — that is the next step, and it does not need disassembly.
+
+The pass is uncommitted and `kelp_reference` unregistered.
+
 ## Next
 
 Read the loop bounds and the column-growth branch (`0x1b54030..0x1b54432`) and
