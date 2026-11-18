@@ -5,7 +5,14 @@ Reference: unchanged Linux BDS 1.6.0.15, SHA-256
 `OverworldDecorator::decorate(BlockSource*, Random&, Biome*, BlockPos const&,
 bool, float)` `0x1da5250`, size `0x18f2`.
 
-Status: **traced structure only; not translatable yet.** This documents why, so
+Status: **traced structure only; not translatable yet.** Audit re-checked the
+addresses this file cites: the size `0x18f2` is correct, `_getRandomTreePosition`
+is `0x1da50c0`, `TallGrassFeature`'s constructor is `0x1b66370` and its
+`place(...,int,int)` is `0x1b663c0`, and `FlowerFeature::placeFlower` is
+`0x1b5f230` — all resolve exactly as written. The `0x283bc00`/`0x283bc04`
+correction below also stands: those are `OverworldDecorator` constructor
+locals, and the surrounding `0x283bc34..0x283bc5c` rodata belongs to
+`decorateOres` (dirtCount, gravelCount, graniteCount, ...). This documents why, so
 the work is not re-traced next time.
 
 ## Calling convention
