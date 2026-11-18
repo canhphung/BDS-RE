@@ -94,6 +94,83 @@ bool place_ore(DecorationRegion &region, DecorationRegion::Position at, TerrainB
     }
     return true; // native returns true even if no block was replaced
 }
+bool place_lake(DecorationRegion &region, DecorationRegion::Position at, TerrainBlock liquid, Random &random,
+                const LakeEnvironment &environment, TerrainBlock upper) {
+    if (!environment.material || !environment.sky_brightness)
+        throw std::invalid_argument("lake feature requires material and sky brightness readers");
+    auto [ox, oy, oz] = at;
+    ox -= 8;
+    oz -= 8;
+    while (oy > 0 && std::strcmp(region.block({ox, oy, oz}).name, "air") == 0)
+        --oy;
+    oy -= 4; // Native has no low-Y early return before drawing the shape.
+    std::array<bool, 16 * 16 * 8> inside{};
+    const auto cell = [&](int x, int y, int z) -> auto & { return inside[(x * 16 + z) * 8 + y]; };
+    const int count = random.next_int(4) + 4;
+    for (int i = 0; i < count; ++i) {
+        const float dx = random.next_float() * 6.0f + 3.0f;
+        const float dy = random.next_float() * 4.0f + 2.0f;
+        const float dz = random.next_float() * 6.0f + 3.0f;
+        // Translate the Vec3 operations literally. The original multiplies
+        // Random floats by these entire expressions (no later center offset).
+        const float cx = random.next_float() * (((16.0f - dx) - 2.0f) + 1.0f + dx * .5f);
+        const float cy = random.next_float() * (((8.0f - dy) - 4.0f) + 2.0f + dy * .5f);
+        const float cz = random.next_float() * (((16.0f - dz) - 2.0f) + 1.0f + dz * .5f);
+        for (int x = 1; x < 15; ++x)
+            for (int z = 1; z < 15; ++z)
+                for (int y = 1; y < 7; ++y) {
+                    const float nx = (static_cast<float>(x) - cx) / (dx / 2.0f);
+                    const float ny = (static_cast<float>(y) - cy) / (dy / 2.0f);
+                    const float nz = (static_cast<float>(z) - cz) / (dz / 2.0f);
+                    if ((nx * nx + ny * ny) + nz * nz < 1.0f)
+                        cell(x, y, z) = true;
+                }
+    }
+    // LakeFeature::_check 0x1b5e980: outside the mask, adjacent along an axis.
+    const auto boundary = [&](int x, int y, int z) {
+        return !cell(x, y, z) && ((x < 15 && cell(x + 1, y, z)) || (x > 0 && cell(x - 1, y, z)) ||
+                                  (z < 15 && cell(x, y, z + 1)) || (z > 0 && cell(x, y, z - 1)) ||
+                                  (y < 7 && cell(x, y + 1, z)) || (y > 0 && cell(x, y - 1, z)));
+    };
+    const auto position = [&](int x, int y, int z) -> DecorationRegion::Position {
+        return {ox + x, oy + y, oz + z};
+    };
+    for (int x = 0; x < 16; ++x)
+        for (int z = 0; z < 16; ++z)
+            for (int y = 0; y < 8; ++y) {
+                if (!boundary(x, y, z))
+                    continue;
+                const auto b = region.block(position(x, y, z));
+                const auto m = environment.material(b);
+                if ((y >= 4 && m.liquid) || (y < 4 && !m.solid && std::strcmp(b.name, liquid.name) != 0))
+                    return false; // Entire boundary is checked before any write.
+            }
+    const auto place = [&](int x, int y, int z, TerrainBlock b) {
+        const auto p = position(x, y, z);
+        if (environment.placement_observer)
+            environment.placement_observer({p, b, 3});
+        region.set_block(p, b, 3);
+    };
+    for (int x = 0; x < 16; ++x)
+        for (int z = 0; z < 16; ++z)
+            for (int y = 0; y < 8; ++y)
+                if (cell(x, y, z))
+                    place(x, y, z, y < 4 ? liquid : upper);
+    for (int x = 0; x < 16; ++x)
+        for (int z = 0; z < 16; ++z)
+            for (int y = 4; y < 8; ++y)
+                if (cell(x, y, z) && std::strcmp(region.block(position(x, y - 1, z)).name, "dirt") == 0 &&
+                    environment.sky_brightness(position(x, y, z)) > 0)
+                    place(x, y - 1, z, terrain_block::grass);
+    if (environment.material(liquid).lava)
+        for (int x = 0; x < 16; ++x)
+            for (int z = 0; z < 16; ++z)
+                for (int y = 0; y < 8; ++y)
+                    if (boundary(x, y, z) && (y < 4 || random.next_int(2) != 0) &&
+                        environment.material(region.block(position(x, y, z))).solid)
+                        place(x, y, z, terrain_block::stone);
+    return true;
+}
 void decorate_ores(DecorationRegion &region, DecorationRegion::Position origin, Random &random, bool mesa,
                    const OrePlacementObserver &observer) {
     // OverworldDecorator::decorateDepthSpan 0x1da6b50 and

@@ -1,4 +1,4 @@
-# Overworld decoration — first Phase 3 component
+# Overworld decoration — Phase 3 progress
 
 Reference: Linux BDS 1.6.0.15, SHA-256
 `69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad`.
@@ -43,6 +43,10 @@ The default sequence is:
 | Redstone | 8 | 8 | `[0,16)` |
 | Diamond | 8 | 1 | `[0,16)` |
 | Lapis | 7 | 1 | `nextInt(16)+nextInt(16)` |
+
+LakeFeature is also translated and independently verified; see [LAKES.md](LAKES.md).
+Its water/lava carving, boundary checks, sky-light-dependent grass and lava
+stone rims are available through the explicit `place_lake` API.
 
 ## Native verification
 
@@ -89,13 +93,13 @@ exceptions and an empty/incomplete feature corpus. Expected values are copied
 from native observations. `decoration_reference` compares all words, calls,
 writes and continuation outputs exactly; there is no RNG padding.
 
-47/47 CTest tests pass in GCC Debug, GCC Release, GCC ASan+UBSan and Clang.
+48/48 CTest tests pass in GCC Debug, GCC Release, GCC ASan+UBSan and Clang.
 The existing terrain, water, gameplay, mob and protocol corpora remain enabled.
 
 ## Still pending
 
-This is an ore-component milestone, **not full `postProcess`**. The generator's
-own post-processing lock/view ownership, per-stage reseeding, lakes, structure
+The implemented ore and lake components are **not full `postProcess`**. The generator's
+own post-processing lock/view ownership, per-stage reseeding, lake-selection calls, structure
 calls, monster rooms, other biome decorator overrides, trees/plants, marine
 features, snow/ice covering, and the final native pending-tick pass remain.
 The latter can settle gravel after decoration; the fixture deliberately checks
