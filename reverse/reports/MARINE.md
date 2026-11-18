@@ -456,11 +456,26 @@ must be 0 while the translation gets -1. So exactly ONE extra Random word is
 consumed between the gate and the first gaussian — the shape `_isNotIce`
 `0x1b6db40` would produce, since the disassembly calls it three times.
 
-Confirming it needs one more corpus field: record `_isNotIce`'s own draws (or
-add a breakpoint on the generator inside it) so the word count between the gate
-and the first gaussian is known rather than inferred.
+`_isNotIce` `0x1b6db40` does **not** draw Random — it only calls `below()`,
+`getBlock` and `getLegacyBlock`, so it is not the missing consumer. The
+instructions between `Range` and the first gaussian (`0x1b6d3b4..0x1b6d40c`)
+only iterate the range, so no draw happens there either.
 
-### Superseded: first translation attempt
+Aligning the corpus's words instead: for case 0 the FIRST candidate's rel
+offset `(2, 0)` is reproduced by `nextGaussianInt(8)` twice starting at
+**word[0]** (`w[0]%8 - w[1]%8 = 2`, `w[2]%8 - w[3]%8 = 0`). But that is also
+the word the gate would consume, and the SECOND candidate does not follow at
+word[4] — so one extra word appears between candidates rather than before the
+first one.
+
+That is the state to hand over: the gate's word and the first gaussian's words
+overlap in the only alignment that fits, which means either the gate uses a
+different random source (a `nextFloat`-based test would still consume a word)
+or the corpus's word list starts AFTER the gate. Deciding that needs a
+positional breakpoint on the generator inside `place` itself, recording which
+call produced each word.
+
+### Translation attempt 1 (superseded)
 
 A first pass was written and removed without being committed. Two facts it
 established:
