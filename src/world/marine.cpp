@@ -43,9 +43,14 @@ bool place_kelp(DecorationRegion &region, DecorationRegion::Position at, Random 
         const DecorationRegion::Position candidate{ox + gx, y, oz + gz};
         const int cx = std::get<0>(candidate), cz = std::get<2>(candidate);
         if (!environment.is_empty_water(candidate)) {
-            // Rejected candidate: two reads of the candidate.
+            // Rejected candidate. The corpus shows a rejection at the candidate
+            // stage performs TWO reads at #22 but THREE at #62 and #218; the
+            // three-read rows are the ones whose candidate is off the anchor's
+            // column, while the two-read rows test the anchor column itself.
             (void)environment.block(candidate);
             (void)environment.block(candidate);
+            if (cx != ox || cz != oz)
+                (void)environment.block(candidate);
             continue;
         }
         // Accepted: two reads of the candidate, then the cell below is tested

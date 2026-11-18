@@ -248,6 +248,32 @@ The gaussian pairs the seed produces are
 `#62` and `#66` exactly. So the Random stream and the gaussian-to-axis mapping
 are confirmed: the translation was consuming the right words before this detail.
 
+## Candidate starts enumerate the whole structure
+
+Every candidate start in case 0 is an `is_empty_water` at the anchor's Y (15):
+`19, 25, 62, 66, 72, 105, 111, 142, 148, 181, 187, 218, 222, 228, 265, 271,
+302, 308` — eighteen starts for eight placed columns.
+
+Grouping them against the writes (columns in order: `(-8,-6)`, `(-6,-5)`,
+`(-6,-10)`, `(-9,-14)`, `(-11,-7)`, `(-4,-10)`, `(-6,-8)`, `(-5,-10)`) shows the
+structure is a TRIPLE per column, not a single attempt:
+
+| Example | Meaning |
+|---|---|
+| `62` | candidate rejected (off-column, 3 `get_block`) |
+| `66` | candidate accepted (2 reads, then below-test at `69` fails) |
+| `72` | **the same candidate restarts** its walk after the failed below-test |
+
+That restart is what the translation is missing: it treats a failed `below()`
+test as the end of the candidate, while the native code re-enters the walk at
+the same cell. Its absence is why the write order after `#265` shifts by one.
+
+### The two rejection shapes are now explained
+
+`false at 39/86/125/...` are walk layers of the anchor column (2 reads), and
+`false at 62/218` are off-column candidate rejections (3 reads). The three-read
+cases are exactly the candidates whose x/z differ from the anchor's.
+
 ## Old notes
 
 For case 0's first accepted candidate the column holds **6** blocks and the
