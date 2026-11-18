@@ -67,8 +67,21 @@ Those features are exactly the ones **not yet translated**:
   `getTreeFeature` per biome;
 - marine: `KelpFeature` `0x1b53de0`, `SeagrassFeature` `0x1b6d090`,
   `CoralFeature` `0x1b676f0`, `IceSpikeFeature`;
-- snow/ice covering driven by `OverworldDecorator::SNOW_CUTOFF` `0x283bc00`
-  and `SNOW_SCALE` `0x283bc04`;
+- snow/ice covering. **Correction**: the names `SNOW_CUTOFF` and `SNOW_SCALE`
+  that an earlier revision of this file attributed to `0x283bc00`/`0x283bc04`
+  are **not** real symbols. Those addresses are `OverworldDecorator`'s
+  constructor locals (`dirtSize` is at `0x283bc08`, `gravelSize` at
+  `0x283bc0c`, and `0x283bc00`/`0x283bc04` are the floats 0.5 and 0.3 used by
+  that same constructor). There is also **no `SnowFeature`**: `nm` shows
+  `AddSnowLayer::fillArea 0x1d442b0` (a biome LAYER, already translated in
+  `src/world/biome_layers.cpp` and present in the chain at salt 2) and
+  `TopSnowBlock::buildSnowBlock 0x1e5d0d0`, plus `BlueIceFeature::place
+  0x1b4d150` and `IcebergFeature::place 0x1b63830`. So surface snow comes from
+  the biome layer and the cold biome's surface block (`ice_plains` carries
+  `"snow:0"` as its top block in `biome_data.cpp`), not from a decorator
+  feature. Any remaining work is making cold biomes appear and mapping the
+  `snow`/`ice`/`packed_ice` names onto host ids — not translating a snow
+  feature.
 - `ClayFeature` `0x1b557f0`;
 - the remaining biome `Decorator` overrides.
 
@@ -76,6 +89,19 @@ Translating `decorate` first would mean writing calls into features that do not
 exist, or stubbing them — and a stub changes the Random stream, which is the
 exact failure mode every corpus in this project is built to catch. So the order
 has to stay: features first, then the dispatcher.
+
+## Status of the cold-biome path
+
+The translated generator already emits `snow` where a cold biome's surface
+block is `"snow:0"`, but `internal_id` does not map `snow`, `ice` or
+`packed_ice` yet, so those cells currently become air. Seed 123 places no cold
+biome within 8 chunks of the origin (its biome ids are 1,3,4,6,7,18,27,132,134,
+155,156 and none is `BiomeClass::Ice`), which is why a scan finds no snow: that
+is correct behaviour, not a missing feature.
+
+The concrete next step is therefore to map the three cold block names in
+`internal_id` and its palette, and to pick a seed that does contain an ice biome
+so a test can assert snow appears.
 
 ## What can be done next without the blocker
 
