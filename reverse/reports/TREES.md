@@ -311,9 +311,42 @@ Two details that reading alone got wrong:
   the answer stream.
 
 `tests/reference/tree_leaf_bds_1.6.0.15.json` is 3 KB, and
-`tree_leaf_reference` checks all 30 cases. The general `tree_place` translation
-still needs the leaf *volume* (which cells get offered) from the full corpus,
-which is the next step; the per-cell rule is now verified.
+`tree_leaf_reference` checks all 30 cases.
+
+## Leaf volume: shape measured, gate not yet pinned
+
+The full `place(...,int)` corpus gives the leaf volume exactly. For height 5 at
+origin `(-8,5,-8)` the 59 leaf cells are, relative to the origin:
+
+| rel-Y | count | cells |
+|---:|---:|---|
+| 2 | 24 | the full 5x5 **minus the trunk cell (0,0)** |
+| 3 | 23 | 5x5 minus (0,0) and three corners |
+| 4 | 7 | (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1) |
+| 5 | 5 | (-1,0), (0,-1), (0,0), (0,1), (1,0) |
+
+So the band is `origin.y + 2 .. origin.y + height`, the half-width is
+`1 - (y - (origin.y + height)) / 2` with C truncation, the square corners are
+cut, and the trunk column is never a leaf. A pass built from those rules
+produces exactly 59 cells — but `nextInt(2)` still disagrees on 3 of them.
+
+The gate at `0x1b5a4f2..0x1b5a50f` is:
+
+```
+nextInt(2); if (result == 0) jump 0x1b5a551   ; skip the cell
+if (-0x58 == 0) jump 0x1b5a50f                ; place
+jump 0x1b5a551                                ; skip
+```
+
+with `-0x58 = y - (origin.y + height)`, so it is zero only on the top layer.
+Reading it as "place when the draw is nonzero and we are not on the top layer"
+under-places (32 cells); "place whenever the draw is nonzero" over-places (37).
+Getting the top-layer branch right needs the recorded per-cell draws, which
+the corpus does not keep: the reverted implementation is not committed.
+
+The shape, band, half-width and trunk-column exclusion above are measured
+facts, and the next session can finish the pass by recording which cell each
+`nextInt(2)` draw belonged to.
 
 ## Plan for the session that translates it
 
