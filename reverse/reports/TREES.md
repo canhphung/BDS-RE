@@ -430,6 +430,33 @@ draw as gating *all* cells and because the half-width formula was an arithmetic
 coincidence on the first layer. The recorded per-gate corpus is what made the
 corner-only rule and the top-layer trunk exception visible.
 
+## `tree_place` orchestration: close, one write short
+
+`src/world/tree.cpp` now has `tree_place`, which chains the verified
+components exactly as `0x1b5a2c2..0x1b5a30a` does:
+
+1. `_prepareSpawn`; false returns false.
+2. `_placeTrunk`; a **false** return stores 1 and returns **true** at once, so
+   a failed trunk placement makes the feature succeed early.
+3. otherwise the leaf pass.
+
+Replaying the full corpus with it matches **every dependency answer** (the
+`may_place_on` plus nested `get_block` pairs and the whole `get_block` stream
+through query 122 and beyond) and confirms the early-return rule, but the
+placement count is **65 against the native 66**.
+
+The one missing write is a **second `dirt` write at the same cell**
+`(origin.x, origin.y - 1, origin.z)`: the native run records that cell twice
+while the translation writes it once from `_prepareSpawn`. So `_placeTrunk`
+also writes dirt under the origin once its trunk loop finishes, which the
+disassembly tail after `0x1b5b0ff` shows. Finding the exact site and its
+condition is the remaining step; the corpus makes it unambiguous because the
+duplicate is recorded verbatim.
+
+For that reason `tree_place` is **not registered** as a test yet and its test
+file was removed: 65/66 is not a passing state and the project does not commit
+partial matches.
+
 ## Plan for the session that translates it
 
 1. `gdb_tree_cases.py` following the vegetation/clay oracle shape: construct a

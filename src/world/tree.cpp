@@ -118,11 +118,14 @@ void tree_place_leaves(DecorationRegion &region, DecorationRegion::Position orig
                 // 2,3,4 omit it and rel-Y h keeps it.
                 const bool corner = std::abs(x - ox) == half && std::abs(z - oz) == half;
                 if (x == ox && z == oz) {
-                    // (0,0) is never a corner unless half == 0, which cannot
-                    // happen for these heights, so it is a plain non-corner cell
-                    // and only the top layer keeps it.
+                    // (0,0) is never a corner for these heights, so it takes the
+                    // non-corner path: the native code still calls _getBlock and
+                    // then _placeLeaf for it, and _placeLeaf's material test is
+                    // what rejects the log. Only the top layer keeps a leaf here.
                     if (y == top)
                         tree_place_leaf(region, {x, y, z}, environment, leaves);
+                    else
+                        (void)environment.block({x, y, z});
                     continue;
                 }
                 // 0x1b5a4cf / 0x1b5a4e3: a cell that is not a corner jumps
@@ -141,6 +144,24 @@ void tree_place_leaves(DecorationRegion &region, DecorationRegion::Position orig
             }
         }
     }
+}
+
+bool tree_place(DecorationRegion &region, DecorationRegion::Position origin, int height,
+                Random &random, const TreeEnvironment &environment, bool manually_placed,
+                bool type_flags, TreeBlock trunk, TreeBlock leaves, TreeBlock dirt) {
+    // 0x1b5a2cc..0x1b5a2dd: _prepareSpawn first; false returns false.
+    if (!tree_prepare_spawn(region, origin, height, environment, dirt))
+        return false;
+    // 0x1b5a2f9..0x1b5a30a: _placeTrunk next. A FALSE return stores 1 and
+    // returns immediately, so a failed trunk placement makes the feature
+    // SUCCEED early; only a TRUE return reaches the leaf pass.
+    if (!tree_place_trunk(region, origin, height, random, environment, manually_placed,
+                          type_flags, trunk, leaves))
+        return true;
+    // 0x1b5a30f onward: the leaf volume, whose band starts at
+    // origin.y - 3 + height (0x1b5a313..0x1b5a319).
+    tree_place_leaves(region, origin, height, random, environment, leaves);
+    return true;
 }
 
 float tree_trunk_height_scale(bool fallen, bool type_flags, Random &random) {
