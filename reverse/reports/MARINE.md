@@ -497,12 +497,31 @@ one lines up at word[0]. With the accept/reject map above the draw schedule is
 now derivable: an aborting candidate consumes its gaussians only, an accepting
 one also consumes the walk draws.
 
-### Remaining question
+### The word list starts AT the first candidate, so the gate is not in it
 
-Only the gate's word is still ambiguous: the first candidate fits at word[0],
-which is also the word `nextInt(0x14)` would read. The next pass should treat
-the gate as consuming word[0] and verify candidate 1 starts at word[1]; if that
-fails, the gate reads a different source.
+Enumerating every even offset of the word list gives
+
+```
+off  0 -> (2, 0)    off  6 -> (1, 2)    off 16 -> (2, 0)
+off  2 -> (0, 2)    off  8 -> (2, -3)   off 20 -> (5, 1)
+off  4 -> (2, 1)    off 12 -> (2, -2)   off 24 -> (1, -3)
+```
+
+Candidate 0 `(2,0)` is at offset **0**, and candidate 3 `(1,2)` is at offset
+**6**, so four words separate them: candidate 0's own gaussian pair. Candidate
+2's `(1,0,2)` does not appear at all in that region, and `(2,1)` at offset 4 is
+not one of the corpus's candidates — it is candidate 0's WALK cells.
+
+So the corpus's word list begins AT candidate 0's first gaussian. The gate
+`nextInt(0x14)` therefore does not consume a word in this capture: it must read
+a different source, or the oracle's draw breakpoint misses the call (the oracle
+breaks at `0x187e704` and only records when `this` matches, which a call on a
+different Random object would not).
+
+That is the precise open question: confirm which Random object
+`0x1b6d149`'s `nextInt(0x14)` is called on. If it is the feature's own Random,
+the oracle is missing it; if it is another object, the translation must not draw
+from the passed-in Random at all.
 
 ### Translation attempt 1 (superseded)
 
