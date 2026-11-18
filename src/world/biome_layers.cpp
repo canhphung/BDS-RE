@@ -977,4 +977,10 @@ std::array<int, 256> chunk_biomes(const BiomeLayers &layers, int chunk_x, int ch
     std::copy(data.in, data.in + 256, out.begin());
     return out;
 }
+
+int biome_at(const BiomeLayers &layers, int x, int z) {
+    LayerData data;
+    layers.zoomed->fill(data, x, z, 1, 1);
+    return data.in[0];
+}
 } // namespace bds

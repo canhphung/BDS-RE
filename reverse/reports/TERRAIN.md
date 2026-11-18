@@ -3,8 +3,8 @@
 Translation of `OverworldGenerator` and the biome layers, verified against the
 original's own data. Work in progress, in phases:
 
-1. noise, biome layers, height field, surfaces, bedrock (this document);
-2. LargeCaveFeature / CanyonFeature carvers;
+1. noise, biome layers, height field, surfaces, bedrock;
+2. LargeCaveFeature / CanyonFeature carvers and their Underwater subclasses;
 3. `OverworldGenerator::postProcess` decoration;
 4. structures.
 
@@ -82,10 +82,65 @@ filler before the default builder reads them.
 
 `terrain_reference` regenerates 24 chunks and compares the BlockVolume after
 prepareHeights and after buildSurfaces with the original's: all 2 x 786,432
-cells match.
+cells match (`generate_surface`).
+
+## Carvers (src/world/caves.cpp)
+
+loadChunk 0x1b38610 (unless generator +0x48 is set) calls, on the same
+BlockVolume and loadChunk Random, `LargeCaveFeature::apply` for the
+UnderwaterLargeCaveFeature (+0x9c0), `CanyonFeature::apply` for the
+UnderwaterCanyonFeature (+0x9c8), then LargeCaveFeature (+0x9a8) and
+CanyonFeature (+0x9b0). The subclasses only override `carve` (vtable +0x10)
+and `isDiggable`.
+
+| Original | BDS-RE |
+|---|---|
+| LargeCaveFeature::apply 0x1b2e7c0 / CanyonFeature::apply 0x1b497b0: setSeed(level seed), a = nextInt() / 2 * 2 + 1, b likewise, for x, z in chunk ± 8 setSeed((x * a + z * b) ^ seed) | `Carver::apply` |
+| LargeCaveFeature::addFeature 0x1b2e920, addRoom 0x1b2ebd0, addTunnel 0x1b2ecc0 | `cave_add_feature`, `cave_add_room`, `cave_add_tunnel` |
+| CanyonFeature::addFeature 0x1b4aa80 (vtable +0x18), addTunnel 0x1b49ad0 | `canyon_add_feature`, `canyon_add_tunnel` |
+| LargeCaveFeature::carve 0x1b2fbd0, detectWater 0x1b2fa30, isDiggable 0x1b2f850, _thinSand 0x1b2f730 | `cave_carve`, `detect_water`, `diggable`, `thin_sand` |
+| CanyonFeature::carve 0x1b4a560, detectWater 0x1b49930 (same code as the cave's) | `canyon_carve` |
+| UnderwaterLargeCaveFeature::carve 0x1b43550, isDiggable 0x1b43290 | `underwater_cave_carve`, `underwater_diggable` |
+| UnderwaterCanyonFeature::carve 0x1b429f0 | `underwater_canyon_carve` |
+| BiomeSource::getBiome(BlockPos) (vtable +0x38): zoomed layer, 1 x 1 area | `biome_at` |
+
+Findings (all kept as the original does them):
+
+- `Random::nextGaussianFloat` 0x1b30420 is `nextFloat() - nextFloat()`, not a
+  Gaussian.
+- Every tunnel draws from its own `Random(random.nextInt())`, and `carve`
+  receives that local Random (the underwater carvers draw magma/obsidian from
+  it).
+- carve's y loop starts at y1 - 1 while the block index starts at
+  `index(x, y1, z)`: the cell tested and written at y is the block at y + 1,
+  "above" is y + 2, and the grass fix-up writes to y.
+- Land carvers return false at their first diggable block when the origin's
+  biome has the Ocean type (`VanillaBiomeTypes::Ocean`, the type of biome 0);
+  the underwater ones return false when it does not. LargeCave and Canyon
+  carve nothing when water is on the shell of the box (detectWater).
+- The canyon's height adds 15 when `0.2 >= (float)nextInt()`, so only for a
+  draw of 0; its vertical scale is 4 (40 with doubled thickness when
+  CanyonFeature +0x8 is set: true for CanyonFeature, false for the
+  underwater one).
+- The underwater carvers set water by looking at the neighbours of
+  `ChunkBlockPos(unsigned char)` 0x1b3b9d0 built from the low byte of the
+  volume index, which sets x, z and y all to that byte. Only bytes below 16
+  have in-bounds neighbours, so almost every cell becomes still water.
+- Underwater cave: y == 9 gives magma (nextFloat < 0.25) or obsidian, y < 9
+  still lava, y < 62 only. Underwater canyon: y < 10 gives magma (< 0.0625),
+  stone (< 0.25) or obsidian.
+
+`terrain_reference` runs the carvers after buildSurfaces and compares with the
+original's volume after the carvers. The fixtures hold 24 chunks of seed 123
+(21 of them carved, 17,318 changed cells) and 25 ocean chunks with
+underwater carving (`terrain_ocean_bds_1.6.0.15.json`); every chunk of the
+six captures (2,514 chunks: five runs of seed 123 and one of server
+`level-seed=1`) matches after the carvers. Note: the original hashed
+`level-seed=1` into RandomSeed -1997048360 (level.dat), which
+`make_terrain_reference.py` now reads instead of server.properties.
 
 ## Not yet translated
 
 MesaBiome / OceanFrozenBiome surfaces (the default builder is used for them),
-the carvers, postProcess and structures; the server still uses the old
-independent terrain.
+postProcess and structures; the server still uses the old independent
+terrain.

@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     }
     // prepareHeights: the height field (stone / water / air) per chunk.
     const OverworldGenerator generator(reference.at("seed").get<std::uint32_t>());
-    int height_failures = 0, surface_failures = 0, volumes = 0;
+    int height_failures = 0, surface_failures = 0, carve_failures = 0, volumes = 0;
     for (const auto &sample : reference.at("volumes")) {
         const int x = sample.at("x"), z = sample.at("z");
         const auto expected = volume(sample.at("heights"));
@@ -102,18 +102,29 @@ int main(int argc, char **argv) {
                           << " != " << expected[i] << '\n';
         // buildSurfaces with the loadChunk Random.
         const auto surface = volume(sample.at("surface"));
-        const auto generated = generator.generate(x, z);
+        Random random(0);
+        const auto generated = generator.generate_surface(x, z, random);
         for (std::size_t i = 0; i < surface.size(); ++i)
             if (name(generated.blocks[i]) != surface[i] && ++surface_failures < 10)
                 std::cerr << "surface chunk " << x << "," << z << " cell " << i << " (x " << i / 2048 << " z "
                           << i / 128 % 16 << " y " << i % 128 << "): " << name(generated.blocks[i])
                           << " != " << surface[i] << '\n';
+        // The four carvers on the same volume and Random.
+        const auto carved = volume(sample.at("carved"));
+        auto ours_carved = generated;
+        generator.carve(ours_carved, x, z, random);
+        for (std::size_t i = 0; i < carved.size(); ++i)
+            if (name(ours_carved.blocks[i]) != carved[i] && ++carve_failures < 20)
+                std::cerr << "carved chunk " << x << "," << z << " cell " << i << " (x " << i / 2048 << " z "
+                          << i / 128 % 16 << " y " << i % 128 << "): " << name(ours_carved.blocks[i])
+                          << " != " << carved[i] << '\n';
     }
-    if (failures || chunk_failures || height_failures || surface_failures) {
-        std::cerr << height_failures << " height-field and " << surface_failures << " surface mismatches\n";
+    if (failures || chunk_failures || height_failures || surface_failures || carve_failures) {
+        std::cerr << height_failures << " height-field, " << surface_failures << " surface and " << carve_failures
+                  << " carver mismatches\n";
         std::cerr << failures << " raw and " << chunk_failures << " chunk biome mismatches\n";
         return 1;
     }
-    std::cout << cells << " biome cells and " << volumes << " height fields and surfaces match the original\n";
+    std::cout << cells << " biome cells and " << volumes << " height fields, surfaces and carved volumes match the original\n";
     return 0;
 }

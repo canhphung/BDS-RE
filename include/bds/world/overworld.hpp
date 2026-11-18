@@ -21,7 +21,9 @@ struct TerrainBlock {
 namespace terrain_block {
 inline const TerrainBlock air{"air"}, stone{"stone"}, water{"water"}, bedrock{"bedrock"}, grass{"grass"},
     dirt{"dirt"}, coarse_dirt{"dirt", 1}, podzol{"podzol"}, gravel{"gravel"}, sand{"sand"}, sandstone{"sandstone"},
-    ice{"ice"}, waterlily{"waterlily"}, lava{"lava"};
+    ice{"ice"}, waterlily{"waterlily"}, lava{"lava"}, flowing_water{"flowing_water"},
+    flowing_lava{"flowing_lava"}, magma{"magma"}, obsidian{"obsidian"}, red_sandstone{"red_sandstone"},
+    hardened_clay{"hardened_clay"}, stained_hardened_clay{"stained_hardened_clay"}, mycelium{"mycelium"};
 }
 // "name:data" (the biome table's surface blocks) as a TerrainBlock.
 TerrainBlock parse_terrain_block(const char *text);
@@ -46,8 +48,15 @@ class OverworldGenerator {
     // OverworldGenerator::buildSurfaces 0x1b37f80 with the chunk's biomes
     // (fillBiomeData) and the loadChunk Random.
     void build_surfaces(TerrainVolume &volume, int chunk_x, int chunk_z, Random &random) const;
-    // loadChunk 0x1b38610 up to the carvers: Random seeded with
-    // x * 0x14609048 + z * 0x7ebe2d5, prepareHeights, buildSurfaces.
+    // The loadChunk carvers (0x1b387a1..0x1b388c7, skipped when generator
+    // +0x48 is set): UnderwaterLargeCaveFeature, UnderwaterCanyonFeature,
+    // LargeCaveFeature, CanyonFeature, each ::apply on the chunk with the
+    // loadChunk Random (src/world/caves.cpp).
+    void carve(TerrainVolume &volume, int chunk_x, int chunk_z, Random &random) const;
+    // loadChunk 0x1b38610 up to and including buildSurfaces: Random seeded
+    // with x * 0x14609048 + z * 0x7ebe2d5, prepareHeights, buildSurfaces.
+    TerrainVolume generate_surface(int chunk_x, int chunk_z, Random &random) const;
+    // loadChunk up to and including the carvers.
     TerrainVolume generate(int chunk_x, int chunk_z) const;
     const BiomeLayers &layers() const { return layers_; }
 

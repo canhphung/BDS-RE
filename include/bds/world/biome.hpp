@@ -96,4 +96,7 @@ BiomeLayers overworld_layers(std::uint32_t seed, int generator_type = 1);
 std::array<int, 100> raw_biomes(const BiomeLayers &layers, int x, int z);
 // BiomeSource::fillBiomeData 0x1dbb8c0: the 16 x 16 ids of a chunk, index x + z * 16.
 std::array<int, 256> chunk_biomes(const BiomeLayers &layers, int chunk_x, int chunk_z);
+// BiomeSource::getBiome(BlockPos) (vtable +0x38): the zoomed layer filled at
+// (x, z) with a 1 x 1 area (the original caches the result).
+int biome_at(const BiomeLayers &layers, int x, int z);
 } // namespace bds

@@ -308,13 +308,19 @@ void OverworldGenerator::build_surfaces(TerrainVolume &volume, int chunk_x, int 
         }
 }
 
-TerrainVolume OverworldGenerator::generate(int chunk_x, int chunk_z) const {
+TerrainVolume OverworldGenerator::generate_surface(int chunk_x, int chunk_z, Random &random) const {
     TerrainVolume volume;
-    Random random(0);
     random.set_seed(static_cast<std::uint32_t>(static_cast<std::int64_t>(chunk_x) * 0x14609048LL +
                                                static_cast<std::int64_t>(chunk_z) * 0x7ebe2d5LL));
     prepare_heights(volume, chunk_x, chunk_z);
     build_surfaces(volume, chunk_x, chunk_z, random);
+    return volume;
+}
+
+TerrainVolume OverworldGenerator::generate(int chunk_x, int chunk_z) const {
+    Random random(0);
+    auto volume = generate_surface(chunk_x, chunk_z, random);
+    carve(volume, chunk_x, chunk_z, random);
     return volume;
 }
 } // namespace bds
