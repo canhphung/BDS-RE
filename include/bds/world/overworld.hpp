@@ -48,6 +48,9 @@ class OverworldGenerator {
     // OverworldGenerator::buildSurfaces 0x1b37f80 with the chunk's biomes
     // (fillBiomeData) and the loadChunk Random.
     void build_surfaces(TerrainVolume &volume, int chunk_x, int chunk_z, Random &random) const;
+    // The same per-column dispatch used by build_surfaces; coordinates are
+    // world block coordinates, and noise is the caller's surface-noise value.
+    void build_surface_at(TerrainVolume &, int biome_id, int x, int z, float noise, Random &) const;
     // The loadChunk carvers (0x1b387a1..0x1b388c7, skipped when generator
     // +0x48 is set): UnderwaterLargeCaveFeature, UnderwaterCanyonFeature,
     // LargeCaveFeature, CanyonFeature, each ::apply on the chunk with the
@@ -68,5 +71,11 @@ class OverworldGenerator {
     std::unique_ptr<PerlinNoise> scale_, depth_, forest_;       // +0x70, +0x78, +0x80
     std::array<float, 25> biome_weights_{};                     // +0x88
     std::unique_ptr<PerlinSimplexNoise> swamp_noise_; // OverworldDecorator +0x220: (Random(2345), 1)
+    std::array<std::uint8_t,64> mesa_bands_{};
+    std::unique_ptr<PerlinSimplexNoise> mesa_band_noise_, pillar_noise_, pillar_roof_noise_, frozen_temperature_noise_;
+    void mesa_surface(const BiomeData &, TerrainVolume &, int x, int z, float noise, Random &) const;
+    void frozen_surface(const BiomeData &, TerrainVolume &, int x, int z, float noise, Random &) const;
+    int mesa_band(int x,int y,int z) const;
+    float frozen_temperature(const BiomeData &,int x,int z) const;
 };
 } // namespace bds

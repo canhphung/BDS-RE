@@ -29,6 +29,8 @@ def main():
     parser.add_argument("--gdb", default="gdb")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--ticks", type=int, default=200)
+    parser.add_argument("--timeout", type=int,
+                        help="Whole capture timeout in seconds, including native post-script oracles")
     parser.add_argument("--players", default="A")
     parser.add_argument("--port", type=int, default=19220)
     parser.add_argument("--seed", type=int, default=123)
@@ -53,6 +55,8 @@ def main():
     parser.add_argument("--drop-items", action="store_true",
                         help="Give/drop one dirt per spawned client for chunk/item order traces")
     args = parser.parse_args()
+    if args.timeout is not None and not 1<=args.timeout<=7200:
+        parser.error('timeout must be in [1, 7200] seconds')
     if not 1 <= args.lighting_cases <= 4096:
         parser.error("lighting-cases must be 1..4096")
     if args.grass_oracle and args.lighting_oracle:
@@ -175,7 +179,7 @@ def main():
             thread = threading.Thread(target=join, args=(name,), daemon=True)
             threads.append(thread)
             thread.start()
-        deadline = time.monotonic() + max(120, args.ticks * 2)
+        deadline = time.monotonic() + (args.timeout if args.timeout is not None else max(120, args.ticks * 2))
         while process.poll() is None:
             if errors or time.monotonic() >= deadline:
                 raise RuntimeError(f"trace did not finish: {errors}")

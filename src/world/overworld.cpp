@@ -1,5 +1,8 @@
 #include "bds/world/overworld.hpp"
+#include <algorithm>
+#include <bit>
 #include <cmath>
+#include <stdexcept>
 #include <cstring>
 #include <map>
 #include <string>
@@ -13,11 +16,14 @@ TerrainBlock parse_terrain_block(const char *text) {
     const std::string s(text);
     const auto colon = s.find(':');
     const auto &name = names.try_emplace(s.substr(0, colon), s.substr(0, colon)).first->second;
-    return {name.c_str(), static_cast<std::uint16_t>(colon == std::string::npos ? 0 : std::stoi(s.substr(colon + 1)))};
+    return {name.c_str(),
+            static_cast<std::uint16_t>(colon == std::string::npos ? 0 : std::stoi(s.substr(colon + 1)))};
 }
 
 namespace {
-float math_sqrt(float v) { return static_cast<float>(std::sqrt(static_cast<double>(v))); } // mce::Math::sqrt 0x26dd990
+float math_sqrt(float v) {
+    return static_cast<float>(std::sqrt(static_cast<double>(v)));
+} // mce::Math::sqrt 0x26dd990
 // mce::Math::clampedLerp 0x26de380.
 float clamped_lerp(float a, float b, float t) {
     if (0.0f > t)
@@ -42,6 +48,45 @@ OverworldGenerator::OverworldGenerator(std::uint32_t seed) : seed_(seed), layers
     forest_ = std::make_unique<PerlinNoise>(random, 8);
     Random swamp(2345); // OverworldDecorator::OverworldDecorator 0x1da31e0
     swamp_noise_ = std::make_unique<PerlinSimplexNoise>(swamp, 1);
+    // MesaBiome::generateBands 0x1dc88e0. Its one-octave noise consumes
+    // the same Random before the colored stripes are chosen.
+    mesa_bands_.fill(16); // sentinel: uncolored hardened clay
+    Random bands(seed);
+    mesa_band_noise_ = std::make_unique<PerlinSimplexNoise>(bands, 1);
+    for (int y = 0; y < 64; ++y) {
+        y += bands.next_int(5) + 1;
+        if (y < 64)
+            mesa_bands_[y] = 1;
+    }
+    for (const auto &[color, extra] : {std::pair{4, 1}, std::pair{12, 2}, std::pair{14, 1}}) {
+        const int count = bands.next_int(4) + 2;
+        for (int n = 0; n < count; ++n) {
+            const int width = bands.next_int(3) + extra;
+            const int start = bands.next_int(64);
+            for (int y = 0; y < width && start + y < 64; ++y)
+                mesa_bands_[start + y] = static_cast<std::uint8_t>(color);
+        }
+    }
+    const int whites = bands.next_int(3) + 3;
+    int start = 0;
+    for (int n = 0; n < whites; ++n) {
+        start += bands.next_int(16) + 4;
+        if (start >= 64)
+            continue;
+        mesa_bands_[start] = 0;
+        if (start > 1 && bands.next_boolean())
+            mesa_bands_[start - 1] = 8;
+        if (start < 63 && bands.next_boolean())
+            mesa_bands_[start + 1] = 8;
+    }
+    // MesaBiome::refreshBiome 0x1dc87e0 and OceanFrozenBiome::refreshBiome
+    // 0x1dcf520 both reset a separate Random(seed), then construct 4 + 1
+    // octaves. They have identical noise data, independent of the bands RNG.
+    Random pillars(seed);
+    pillar_noise_ = std::make_unique<PerlinSimplexNoise>(pillars, 4);
+    pillar_roof_noise_ = std::make_unique<PerlinSimplexNoise>(pillars, 1);
+    Random temperature(3456); // OceanFrozenBiome constructor 0x1dcef20
+    frozen_temperature_noise_ = std::make_unique<PerlinSimplexNoise>(temperature, 3);
     // Biome weights: 10 / sqrt(dx * dx + dz * dz + 0.2) for dx, dz in [-2, 2].
     for (int a = -2; a <= 2; ++a)
         for (int b = -2; b <= 2; ++b)
@@ -177,7 +222,7 @@ void place_bedrock(TerrainVolume &v, Random &random, int x, int z) {
 // OverworldBiome::buildSurfaceAt 0x1db5c10 with the biome's current top and
 // filler (the subclasses write them before calling it).
 void default_surface(const BiomeData &b, TerrainBlock biome_top, TerrainBlock biome_filler, TerrainVolume &v,
-                     Random &random, int x, int z, float noise, int sea_level) {
+                     Random &random, int x, int z, float noise, int sea_level, float temperature) {
     TerrainBlock top = biome_top, filler = biome_filler;
     int state = -1;
     const int run = static_cast<int>(noise / 3.0f + 3.0f + random.next_float() * 0.25f);
@@ -202,7 +247,7 @@ void default_surface(const BiomeData &b, TerrainBlock biome_top, TerrainBlock bi
             }
             // Biome::getTemperatureWorldGen 0x1dc1c50 is the plain temperature at y <= 64.
             if (y < sea_level && same_legacy(top, terrain_block::air))
-                top = 0.15f > b.temperature ? terrain_block::ice : terrain_block::water;
+                top = 0.15f > temperature ? terrain_block::ice : terrain_block::water;
             state = run;
             if (y >= sea_level - 1)
                 block = top;
@@ -224,88 +269,246 @@ void default_surface(const BiomeData &b, TerrainBlock biome_top, TerrainBlock bi
 }
 } // namespace
 
-void OverworldGenerator::build_surfaces(TerrainVolume &volume, int chunk_x, int chunk_z, Random &random) const {
+int OverworldGenerator::mesa_band(int x, int y, int z) const {
+    // MesaBiome::getBand 0x1dc9890: nearbyint (ties to even), not round.
+    const float n = mesa_band_noise_->value2d(static_cast<float>(x) * 1.0f / 512.0f,
+                                              static_cast<float>(z) * 1.0f / 512.0f) *
+                    2.0f;
+    const int shift = static_cast<int>(std::nearbyint(static_cast<double>(n)));
+    return mesa_bands_[static_cast<unsigned>(y + shift + 64) % 64];
+}
+void OverworldGenerator::mesa_surface(const BiomeData &b, TerrainVolume &v, int wx, int wz, float noise,
+                                      Random &random) const {
+    // MesaBiome::buildSurfaceAt 0x1dc9020. Bryce pillars are filled before
+    // the 15 original-stone-cell budget is tested, and do not consume it.
+    const int x = wx & 15, z = wz & 15;
+    place_bedrock(v, random, x, z);
+    float pillar = 0.0f;
+    if (b.subtype & 1) {
+        const float n = std::min(std::abs(noise), pillar_noise_->value2d(static_cast<float>(wx) * .25f,
+                                                                         static_cast<float>(wz) * .25f));
+        if (n > 0) {
+            const float roof = std::abs(pillar_roof_noise_->value2d(static_cast<float>(wx) * .001953125f,
+                                                                    static_cast<float>(wz) * .001953125f));
+            pillar = n * n * 2.5f;
+            const float limit = static_cast<float>(std::ceil(roof * 50.0f)) + 14.0f;
+            if (pillar > limit)
+                pillar = limit;
+            pillar = 64.0f + pillar;
+        }
+    }
+    const TerrainBlock clay = terrain_block::stained_hardened_clay;
+    const TerrainBlock plain = terrain_block::hardened_clay;
+    const TerrainBlock orange{clay.name, 1};
+    TerrainBlock top = clay, filler = parse_terrain_block(b.filler);
+    const int run = static_cast<int>(noise / 3.0f + 3.0f + random.next_float() * .25f);
+    const bool cosine = std::cos(noise / 3.0f * std::bit_cast<float>(0x40490fdbu)) > 0.0f;
+    int remaining = -1, stones = 0;
+    bool red_sand = false;
+    const auto band_block = [&](int color) {
+        return color < 16 ? TerrainBlock{clay.name, static_cast<std::uint16_t>(color)} : plain;
+    };
+    for (int y = 127; y > 0; --y) {
+        auto &block = v.at(x, y, z);
+        if (same_legacy(block, terrain_block::bedrock))
+            break;
+        bool created = false;
+        if ((same_legacy(block, terrain_block::air) || same_legacy(block, terrain_block::water) ||
+             same_legacy(block, terrain_block::flowing_water)) &&
+            y < static_cast<int>(pillar)) {
+            block = terrain_block::stone;
+            created = true;
+        }
+        if (stones >= 15)
+            continue;
+        if (same_legacy(block, terrain_block::air)) {
+            remaining = -1;
+            continue;
+        }
+        if (!same_legacy(block, terrain_block::stone))
+            continue;
+        if (remaining == -1) {
+            red_sand = false;
+            if (run <= 0) {
+                top = terrain_block::air;
+                filler = terrain_block::stone;
+            } else if (y >= kSeaLevel - 4 && y <= kSeaLevel + 1) {
+                top = clay;
+                filler = parse_terrain_block(b.filler);
+            }
+            remaining = run + std::max(0, y - kSeaLevel);
+            if (y >= kSeaLevel - 1) {
+                if (((static_cast<unsigned>(b.subtype) >> 8) & 1) && y > 86 + run * 2)
+                    block = cosine ? terrain_block::coarse_dirt : terrain_block::grass;
+                else if (y > kSeaLevel + 3 + run)
+                    block = band_block(y < 64 || y > 127 ? 1 : cosine ? 16 : mesa_band(wx, y, wz));
+                else {
+                    block = parse_terrain_block(b.top);
+                    red_sand = true;
+                }
+            } else
+                block = filler == clay ? orange : filler;
+        } else if (remaining > 0) {
+            --remaining;
+            block = red_sand ? orange : band_block(mesa_band(wx, y, wz));
+        }
+        if (!created)
+            ++stones;
+    }
+}
+float OverworldGenerator::frozen_temperature(const BiomeData &b, int x, int z) const {
+    // OceanFrozenBiome::getTemperatureWorldGen 0x1dcf620 at sea level
+    // (63 <= 64, so the native altitude adjustment is not entered).
+    float temperature = b.temperature;
+    const float base =
+        frozen_temperature_noise_->value2d(static_cast<float>(x) * .05f, static_cast<float>(z) * .05f);
+    const float detail = swamp_noise_->value2d(static_cast<float>(x) * .2f, static_cast<float>(z) * .2f);
+    if (.3f > base + detail) {
+        const float warm = swamp_noise_->value2d(static_cast<float>(x) * .09f, static_cast<float>(z) * .09f);
+        if (.8f > warm)
+            temperature = .2f;
+    }
+    return temperature;
+}
+void OverworldGenerator::frozen_surface(const BiomeData &b, TerrainVolume &v, int wx, int wz, float noise,
+                                        Random &random) const {
+    // OceanFrozenBiome::buildSurfaceAt 0x1dcfa80: iceberg pass, then the
+    // default builder on the same Random. The per-Y nextInt(5) is retained
+    // even when it cannot write bedrock.
+    const int x = wx & 15, z = wz & 15;
+    const float temperature = frozen_temperature(b, wx, wz);
+    float top = 0, bottom = 0;
+    const float n = std::min(
+        std::abs(noise), pillar_noise_->value2d(static_cast<float>(wx) * .1f, static_cast<float>(wz) * .1f));
+    if (n > 1.8f) {
+        const float scale = std::bit_cast<float>(0x3f79ffffu);
+        const float roof = std::abs(
+            pillar_roof_noise_->value2d(static_cast<float>(wx) * scale, static_cast<float>(wz) * scale));
+        top = n * n * .8f;
+        const float limit = static_cast<float>(std::ceil(40.0f * roof)) + 14.0f;
+        if (top > limit)
+            top = limit;
+        if (temperature > .1f)
+            top -= 2.0f;
+        bottom = static_cast<float>(kSeaLevel + 1) - top - 7.0f;
+        top = static_cast<float>(kSeaLevel + 1) + top;
+    }
+    int snow = 0;
+    const int max_snow = random.next_int(4) + 2;
+    const int snow_y = kSeaLevel + 18 + random.next_int(10);
+    place_bedrock(v, random, x, z);
+    const TerrainBlock packed{"packed_ice"}, snow_block{"snow"};
+    for (int y = 127; y >= 0; --y) {
+        auto &block = v.at(x, y, z);
+        if (same_legacy(block, terrain_block::bedrock))
+            break;
+        if (same_legacy(block, terrain_block::air) && y < static_cast<int>(top) && random.next_float() > .01f)
+            block = packed;
+        else if ((same_legacy(block, terrain_block::water) ||
+                  same_legacy(block, terrain_block::flowing_water)) &&
+                 y > static_cast<int>(bottom) && y < kSeaLevel && bottom != 0 && random.next_float() > .15f)
+            block = packed;
+        if (y <= random.next_int(5))
+            block = terrain_block::bedrock;
+        else if (block == packed && snow <= max_snow && y > snow_y) {
+            block = snow_block;
+            ++snow;
+        }
+    }
+    default_surface(b, parse_terrain_block(b.top), parse_terrain_block(b.filler), v, random, x, z, noise,
+                    kSeaLevel, temperature);
+}
+
+void OverworldGenerator::build_surfaces(TerrainVolume &volume, int chunk_x, int chunk_z,
+                                        Random &random) const {
     // buildSurfaces 0x1b37f80: the surface noise (+0x68) over the chunk at
     // scale 0.125, then Biome::buildSurfaceAt (vtable +0x90) per column, x
     // outer and z inner.
     float noise[256];
-    surface_->region2d(noise, static_cast<float>(chunk_x * 16), static_cast<float>(chunk_z * 16), 16, 16, 0.125f,
-                       0.125f, 1.0f, 0.5f);
+    surface_->region2d(noise, static_cast<float>(chunk_x * 16), static_cast<float>(chunk_z * 16), 16, 16,
+                       0.125f, 0.125f, 1.0f, 0.5f);
     const auto biomes = chunk_biomes(layers_, chunk_x, chunk_z);
     for (int x = 0; x < 16; ++x)
         for (int z = 0; z < 16; ++z) {
-            const auto *b = biome(biomes[static_cast<std::size_t>(x + z * 16)] & 255);
-            const float n = noise[x + z * 16];
-            const int wx = chunk_x * 16 + x, wz = chunk_z * 16 + z;
-            if (b->kind == BiomeClass::Mutated)
-                b = biome(b->parent); // MutatedBiome::buildSurfaceAt 0x1dba960
-            TerrainBlock top = b->top ? parse_terrain_block(b->top) : terrain_block::air;
-            TerrainBlock filler = b->filler ? parse_terrain_block(b->filler) : terrain_block::air;
-            switch (b->kind) {
-            case BiomeClass::Nether:
-            case BiomeClass::TheEnd:
-                continue; // Biome::buildSurfaceAt 0x1da06a0 does nothing
-            case BiomeClass::Taiga: // TaigaBiome::buildSurfaceAt 0x1da0ea0
-                if (b->subtype == 1 || b->subtype == 2) {
-                    top = terrain_block::grass;
-                    filler = terrain_block::dirt;
-                    if (static_cast<double>(n) > 1.75)
-                        top = terrain_block::coarse_dirt;
-                    else if (static_cast<double>(n) > -0.95)
-                        top = terrain_block::podzol;
-                }
-                break;
-            case BiomeClass::ExtremeHills: // ExtremeHillsBiome::buildSurfaceAt 0x1d8edc0
-                top = terrain_block::grass;
-                filler = terrain_block::dirt;
-                if ((-0.1f > n || n > 0.2f) && b->subtype == 2) {
-                    top = terrain_block::gravel;
-                    filler = terrain_block::gravel;
-                } else if (static_cast<double>(n) > 1.0 && b->subtype != 1) {
-                    top = terrain_block::stone;
-                    filler = terrain_block::stone;
-                }
-                break;
-            case BiomeClass::Savanna: // SavannaBiome::buildSurfaceAt 0x1dc5490
-                if (b->subtype & 1) {
-                    top = terrain_block::grass;
-                    filler = terrain_block::dirt;
-                    if (static_cast<double>(n) > 1.75) {
-                        top = terrain_block::stone;
-                        filler = terrain_block::stone;
-                    } else if (static_cast<double>(n) > -0.5)
-                        top = terrain_block::coarse_dirt;
-                }
-                break;
-            case BiomeClass::Swamp: { // SwampBiome::buildSurfaceAt 0x1da20b0
-                const float v = swamp_noise_->value2d(static_cast<float>(wx) * 0.25f, static_cast<float>(wz) * 0.25f);
-                // reverse_range(128): from y 127 down to the first block whose
-                // Material isType(0) (air) -- the original checks the air block,
-                // so with air above the surface it stops at y 127.
-                if (v > 0.0f)
-                    for (int y = TerrainVolume::height - 1; y >= 0; --y) {
-                        auto &block = volume.at(x, y, z);
-                        if (!same_legacy(block, terrain_block::air))
-                            continue;
-                        if (y == 62 && !same_legacy(block, terrain_block::water)) {
-                            block = terrain_block::water;
-                            if (0.12f > v)
-                                volume.at(x, y + 1, z) = terrain_block::waterlily;
-                        }
-                        break;
-                    }
-                break;
-            }
-            case BiomeClass::Mesa:
-            case BiomeClass::OceanFrozen:
-                // NOT TRANSLATED YET: MesaBiome::buildSurfaceAt 0x1dc9020 and
-                // OceanFrozenBiome::buildSurfaceAt 0x1dcfa80 (the default is used).
-                break;
-            default:
-                break;
-            }
-            default_surface(*b, top, filler, volume, random, x, z, n, kSeaLevel);
+            build_surface_at(volume, biomes[static_cast<std::size_t>(x + z * 16)] & 255, chunk_x * 16 + x,
+                             chunk_z * 16 + z, noise[x + z * 16], random);
         }
+}
+void OverworldGenerator::build_surface_at(TerrainVolume &volume, int biome_id, int wx, int wz, float n,
+                                          Random &random) const {
+    const int x = wx & 15, z = wz & 15;
+    const auto *b = biome(biome_id);
+    if (!b)
+        throw std::invalid_argument("unknown surface biome");
+    if (b->kind == BiomeClass::Mutated)
+        b = biome(b->parent); // MutatedBiome::buildSurfaceAt 0x1dba960
+    TerrainBlock top = b->top ? parse_terrain_block(b->top) : terrain_block::air;
+    TerrainBlock filler = b->filler ? parse_terrain_block(b->filler) : terrain_block::air;
+    switch (b->kind) {
+    case BiomeClass::Nether:
+    case BiomeClass::TheEnd:
+        return;             // Biome::buildSurfaceAt 0x1da06a0 does nothing
+    case BiomeClass::Taiga: // TaigaBiome::buildSurfaceAt 0x1da0ea0
+        if (b->subtype == 1 || b->subtype == 2) {
+            top = terrain_block::grass;
+            filler = terrain_block::dirt;
+            if (static_cast<double>(n) > 1.75)
+                top = terrain_block::coarse_dirt;
+            else if (static_cast<double>(n) > -0.95)
+                top = terrain_block::podzol;
+        }
+        break;
+    case BiomeClass::ExtremeHills: // ExtremeHillsBiome::buildSurfaceAt 0x1d8edc0
+        top = terrain_block::grass;
+        filler = terrain_block::dirt;
+        if ((-0.1f > n || n > 0.2f) && b->subtype == 2) {
+            top = terrain_block::gravel;
+            filler = terrain_block::gravel;
+        } else if (static_cast<double>(n) > 1.0 && b->subtype != 1) {
+            top = terrain_block::stone;
+            filler = terrain_block::stone;
+        }
+        break;
+    case BiomeClass::Savanna: // SavannaBiome::buildSurfaceAt 0x1dc5490
+        if (b->subtype & 1) {
+            top = terrain_block::grass;
+            filler = terrain_block::dirt;
+            if (static_cast<double>(n) > 1.75) {
+                top = terrain_block::stone;
+                filler = terrain_block::stone;
+            } else if (static_cast<double>(n) > -0.5)
+                top = terrain_block::coarse_dirt;
+        }
+        break;
+    case BiomeClass::Swamp: { // SwampBiome::buildSurfaceAt 0x1da20b0
+        const float v = swamp_noise_->value2d(static_cast<float>(wx) * 0.25f, static_cast<float>(wz) * 0.25f);
+        // reverse_range(128): from y 127 down to the first block whose
+        // Material isType(0) (air) -- the original checks the air block,
+        // so with air above the surface it stops at y 127.
+        if (v > 0.0f)
+            for (int y = TerrainVolume::height - 1; y >= 0; --y) {
+                auto &block = volume.at(x, y, z);
+                if (!same_legacy(block, terrain_block::air))
+                    continue;
+                if (y == 62 && !same_legacy(block, terrain_block::water)) {
+                    block = terrain_block::water;
+                    if (0.12f > v)
+                        volume.at(x, y + 1, z) = terrain_block::waterlily;
+                }
+                break;
+            }
+        break;
+    }
+    case BiomeClass::Mesa:
+        mesa_surface(*b, volume, wx, wz, n, random);
+        return;
+    case BiomeClass::OceanFrozen:
+        frozen_surface(*b, volume, wx, wz, n, random);
+        return;
+    default:
+        break;
+    }
+    default_surface(*b, top, filler, volume, random, x, z, n, kSeaLevel, b->temperature);
 }
 
 TerrainVolume OverworldGenerator::generate_surface(int chunk_x, int chunk_z, Random &random) const {
