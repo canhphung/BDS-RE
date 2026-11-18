@@ -140,6 +140,50 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
                 words.append(int(gdb.parse_and_eval('$eax')) & 0xFFFFFFFF)
             return False
 
+    class LeafGate(gdb.Breakpoint):
+        """Record the nextInt(2) gate's cell and whether _placeLeaf followed.
+
+        0x1b5a4f2 is the `call Random::nextInt(int)` for interior leaf cells;
+        the candidate is held in -0x54 (x), -0x84 (y) and -0xac (z). The
+        placement call is 0x1b5a54c, so a pending entry is closed when it is
+        reached before the next gate.
+        """
+
+        def stop(self):
+            if not leaf_gates_active[0]:
+                return False
+            rbp = int(gdb.parse_and_eval('$rbp'))
+            # 0x1b5a51a loads -0x84 into %esi (BlockPos x), 0x1b5a520 loads
+            # -0x54 into %edx (y) and 0x1b5a523 loads -0xac into %ecx (z).
+            x = struct.unpack('<i', mem(rbp - 0x84, 4))[0]
+            y = struct.unpack('<i', mem(rbp - 0x54, 4))[0]
+            z = struct.unpack('<i', mem(rbp - 0xac, 4))[0]
+            gates.append({'cell': [x, y, z], 'placed': False})
+            return False
+
+    class GateDraw(gdb.Breakpoint):
+        """Read the draw at 0x1b5a4f7, the `cmp $0,%eax` right after the call."""
+
+        def __init__(self):
+            super().__init__('*0x1b5a4f7', internal=True)
+
+        def stop(self):
+            if leaf_gates_active[0] and gates:
+                gates[-1]['draw'] = int(gdb.parse_and_eval('$eax')) & 0xFFFFFFFF
+            return False
+
+    class LeafPlacement(gdb.Breakpoint):
+        def __init__(self):
+            super().__init__('*0x1b5a54c', internal=True)
+
+        def stop(self):
+            if leaf_gates_active[0] and gates:
+                gates[-1]['placed'] = True
+            return False
+
+    leaf_gates_active = [False]
+    gates = []
+
     class Write(gdb.Breakpoint):
         def stop(self):
             p = int(gdb.parse_and_eval('$rsi'))
@@ -185,7 +229,10 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
         Query(0x1c58ad0, 'get_block', 'rsi'),      # BlockSource::getBlock(this, BlockPos)
         Query(0x1c60cb0, 'is_empty', 'rsi'),       # BlockSource::isEmptyBlock(this, BlockPos)
     ]
-    observers = [draw, write] + query_breakpoints
+    leaf_gate = LeafGate('*0x1b5a4f2', internal=True)
+    leaf_place = LeafPlacement()
+    gate_draw = GateDraw()
+    observers = [draw, write, leaf_gate, leaf_place, gate_draw] + query_breakpoints
     for bp in observers:
         bp.enabled = False
 
@@ -230,6 +277,8 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
         words.clear()
         writes.clear()
         queries.clear()
+        gates.clear()
+        leaf_gates_active[0] = True
         for bp in observers:
             bp.enabled = True
         call(0x1b59cf0, 'void(*)(void*,void*,int,int,int)',
@@ -255,6 +304,7 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
                                    f'{feature},{region},{pos},{rng},{tree_height}')) & 1)
         for bp in observers:
             bp.enabled = False
+        leaf_gates_active[0] = False
         for bp in one_shot:
             bp.delete()
         one_shot.clear()
@@ -263,7 +313,7 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
         cases.append({'at': list(at), 'seed': seed, 'height': tree_height,
                       'ground': ground, 'obstructed': n % 4 == 3, 'result': result,
                       'words': list(words), 'writes': list(writes),
-                      'queries': list(queries),
+                      'queries': list(queries), 'leaf_gates': list(gates),
                       'initial': [[*p, b] for p, b in zip(coords, before)],
                       'final': after, 'tail': tail})
         print('Native tree:', n, height, result, len(writes), 'writes',

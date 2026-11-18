@@ -368,13 +368,51 @@ Both readings were tried: "skip when the draw is zero" gives 62 cells
 because it does not record which cell each `nextInt(2)` belonged to, and the
 per-cell draw assignment is exactly what is missing.
 
-### What the next session needs
+### The gate decision data is now recorded
 
-Extend the tree oracle to record, for each `nextInt(2)` at `0x1b5a4f2`, the
-`BlockPos` locals it is about to test (`-0x54` x, `-0x84` y, `-0xac` z) and
-whether the call at `0x1b5a54c` followed. That turns the gate into a recorded
-decision table and the pass becomes a straight replay. The band, half-width,
-corner cut and edge rule measured above are already correct.
+Implementing that plan works: the oracle now logs, for every `nextInt(2)` at
+`0x1b5a4f2`, the candidate cell from the `BlockPos` locals
+(`-0x84` x, `-0x54` y, `-0xac` z — the registers `0x1b5a51a`, `0x1b5a520` and
+`0x1b5a523` load them into `esi`/`edx`/`ecx` for the `BlockPos` constructor),
+the draw value read at `0x1b5a4f7` (`cmp $0,%eax`), and whether `_placeLeaf` at
+`0x1b5a54c` followed.
+
+`tests/reference/tree_leaf_gates_bds_1.6.0.15.json` holds **128 gates across
+the 16 cases** and is 7 KB.
+
+### What the data shows, and why the rule is still open
+
+The draw does **not** decide the placement: across the 128 gates all four
+combinations occur —
+
+| draw | placed | count |
+|---:|---|---:|
+| 1 | true | 68 |
+| 0 | true | 41 |
+| 0 | false | 16 |
+| 1 | false | 3 |
+
+Attempts to model it purely algebraically all fail:
+
+- "place iff `draw != 0`" — 44 mismatches.
+- "edge unconditional, interior iff `draw != 0`" — 31 mismatches.
+- "corner always skipped, else `draw != 0`" — 71 mismatches.
+
+The counter-examples are revealing. `(rel-Y 4, half 2, |dx| 1, |dz| 1, draw 0)`
+places, while `(rel-Y 5, half 1, |dx| 1, |dz| 1, draw 0)` skips, and
+`(rel-Y 6, half 1, |dx| 1, |dz| 1, draw 1)` also skips. The same geometry
+therefore behaves differently depending on the layer, and the three
+`draw 1 / placed false` rows mean the decision depends on state the gate does
+not read at that instruction — most plausibly `_placeLeaf` itself returning
+false because an earlier cell on the same pass already wrote leaves there, so
+`placed` in this corpus means "_placeLeaf was called", not "a leaf cell
+appeared".
+
+That distinction is the missing piece: the corpus should record the `_placeLeaf`
+**return value** at `0x1b5a551` (or the leaf write count) alongside the call,
+so "called but wrote nothing" can be told apart from "not called". With that,
+the gate reduces to the draw test the disassembly shows and the geometry
+already measured. The 128-gate fixture is the input for that step.
 
 ## Plan for the session that translates it
 
