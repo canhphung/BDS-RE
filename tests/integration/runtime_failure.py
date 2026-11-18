@@ -30,7 +30,9 @@ def require(condition, message):
 
 with tempfile.TemporaryDirectory(prefix="bds-failure-") as directory:
     world = Path(directory) / "failure.snapshot"
-    blocks = [(-1, 64, 5, 7)]
+    # Use inert stone. Index 7 is now flowing water and legitimately needs
+    # a future tick deadline, which this age-exhaustion fixture cannot hold.
+    blocks = [(-1, 64, 5, 1)]
     world.write_bytes(snapshot(MAX - 3, blocks))
     result = subprocess.run([sys.argv[1], "--network", "0", "--world", str(world), "--ticks", "10", "--tick-ms", "1"],
                             input="", capture_output=True, text=True, timeout=10)

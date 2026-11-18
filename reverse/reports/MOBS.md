@@ -109,3 +109,59 @@ and movement/jump control are still missing. See
   original stores +0x1054 with the chunk); mob unique ids use the high half
   0xffffffff seen in the capture; the ticked-mob count for the 200 cap counts
   mobs in ticked chunks.
+
+## Mob damage, death and loot (src/game/mob_combat.cpp, src/game/loot.cpp)
+
+| Original | BDS-RE |
+|---|---|
+| Player::attack 0x22f1570 on a Mob (damage, ATTACK_STRONG/NODAMAGE at the AABB centre, crits, sprint push, weapon wear, exhaustion 0.3) | `Server::attack_mob` (from `use_on_actor`) |
+| Mob::_hurt 0x22b37f0 (hurt time / last hurt, setLastHurtByPlayer 0x22bf2f0: 400 ticks, setLastHurtByMob 0x22bf120: 60 ticks) | `Server::hurt_mob` |
+| Mob::actuallyHurt 0x22b44c0 (no armour for animals) | `Server::actually_hurt_mob` |
+| Mob::hurtEffects 0x22b3b60, Mob::knockback 0x22b4880 (the mob's own Random; motion sent by sendMotionPacketIfNeeded) | `Server::hurt_effects_mob`, `Server::send_mob_motion` |
+| Mob::die 0x22b4a00: resolveDeathLoot 0x22b4da0 on a copy of the actor Random, Actor::spawnAtLocation(item, -0.05) 0x21b8e40, ActorEvent DEATH, EventPacket MobKilled to the killer | `Server::die_mob` |
+| LootTable::getRandomItems 0x1d0faa0, LootPool::addRandomItems/addRandomItem, LootItem::_createItem, set_count / looting_enchant / furnace_smelt / set_data_from_color_index | `death_loot` (tables of the vanilla behavior pack, adults only) |
+| Mob::baseTick 0x22b1770 (hurt time, last attacker timers, death) and Mob::tickDeath 0x22b2970 (removal after 20 ticks, Animal::getExperienceReward level-Random draw, death particles on the actor Random) | `Server::base_tick_mob` |
+| Mob::isImmobile in Mob::aiStep 0x22b9f85: a dead mob skips its AI and stops | `Server::tick_mob` |
+| PanicGoal 0x23c8740..0x23c8d30 with RandomPos::getPosAvoid 0x231bbc0 (direction filter 0x231b7ca) | `GoalKind::Panic`, `random_stroll_position(direction)` |
+
+Evidence: `tools/re/scenarios.py mob_combat` drives a client against the
+original (summoned chicken and cow, punched once a second);
+`mob_combat_reference` repeats it on BDS-RE and compares the hit sound,
+HURT event, health attribute (2/4), DEATH event, MobKilled EventPacket and
+zero health byte for byte, the loot (one raw chicken, 0..2 feathers) and the
+RemoveActor after the death time.
+
+Not yet translated: fire and its smelted loot, Looting, the unique-id high
+half for dropped items (the original's item unique ids also carry 0xffffffff).
+
+## Experience orbs (src/game/experience_orb.cpp, src/game/experience_orb_server.cpp)
+
+| Original | BDS-RE |
+|---|---|
+| Mob::tickDeath 0x22b2970: getExperienceReward (vtable +0xa10), spawnOrbs at getPos with DropType 2 (3 for players) | `Server::base_tick_mob` |
+| ExperienceOrb::spawnOrbs 0x2405910 (doMobLoot, truncateExperienceAmount 0x2405750 pieces, ActorFactory::createSpawnedEntity ActorType 0x45, setValue 0x2405110) | `Server::spawn_orbs`, `truncate_experience_amount` |
+| ExperienceOrb::ExperienceOrb 0x24042f0, reloadHardcoded 0x24043b0 (level Random: yaw, motion x/y/z; size 0.25, flag 46 on, 48 off) | `make_orb` |
+| ExperienceOrb::normalTick 0x24045d0: LIFETIME 6000, gravity 0.04, lava bounce (nextGaussianFloat 0x1b30420), pushOutOfBlocks, move, friction, ground bounce ×-0.5 | `orb_physics` |
+| normalTick follow step: Level::fetchEntity, every 20 + uniqueId % 100 ticks Dimension::fetchNearestPlayer(orb, 8) 0x1d66f10; pull (delta/8, horizontal length > 0.225) or move and playerTouch; target Actor::getAttachPos(1) 0x21aaaa0 = AABB centre | `Server::tick_orb`, `orb_attract` |
+| ExperienceOrb::playerTouch 0x2405150 (alive, level Random nextInt(6) == 0, LevelEvent 1051, handleMending, addExperience, remove); Player::aiStep touches orbs as items | `Server::orb_touch` |
+| Player::addExperience 0x22f6750, getXpNeededForNextLevel 0x22ef140 / _computeLevelXp 0x22f69d0, addLevels 0x22f68a0 / _addLevels 0x22f48a0 (LEVELUP sound every 5 levels, at most once per 100 ticks) | `Server::add_experience`, `Server::add_levels`, `level_xp` |
+
+Evidence: the mob-combat-c1 level-Random trace shows the reward draw
+(caller 0x22b29ff), then exactly the four reloadHardcoded draws
+(0x240440c..0x24044e1) and one nextInt(6) per touch attempt from both the
+orb's tick (0x2404dfa) and Player::aiStep (0x22ec557). `mob_combat_reference`
+compares the orb's SetActorData (packAll) and AddActor attributes/metadata
+bytes, the whole-byte yaw, the pickup LevelEvent, and the two
+`player.experience` entries (reset to the minimum, then the 1/7 buff) with the
+original's packets 346, 351, 402 and 406.
+
+- INFERRED from the capture: the orb's full actor data reaches the players
+  around it when it spawns, its AddActor follows at the next
+  _updateNearbyEntities (the first tick after it ticked once), no
+  MoveActorDelta/SetActorMotion is ever sent for it, and its RemoveActor comes
+  a tick after the pickup (after the experience attributes).
+- INFERRED: Player::aiStep touches items before orbs; a removed orb is not
+  touched again; the player's Actor +0x208 tick count advances once per player
+  tick (used by the level-up sound gate).
+- Not translated: mending (no enchantments exist), the FIZZ sound's actor type
+  (lava never reaches an orb here), orb merging (none in 1.6), saving orbs.

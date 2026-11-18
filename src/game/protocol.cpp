@@ -189,13 +189,13 @@ void write_item_metadata(ByteWriter &out) {
     }
 }
 } // namespace
-Bytes block_update(World::Position p, BlockId id) {
+Bytes block_update(World::Position p, BlockId id, unsigned flags) {
     const auto &palette = protocol::internal_block_palette();
     require(id < palette.size());
     ByteWriter out;
     position(out, p);
     out.varint(protocol::runtime_id(palette[id].name, palette[id].data).value());
-    out.varint(3);
+    out.varint(flags);
     out.varint(0);
     return out.take();
 }
@@ -596,6 +596,58 @@ Bytes add_mob_actor(const MobView &m) {
         case 8: out.float32(0); out.float32(0); out.float32(0); break;
         }
     }
+    out.varint(0); // links
+    return out.take();
+}
+namespace {
+void write_orb_metadata(ByteWriter &out, int value) {
+    // ExperienceOrb constructor 0x24042f0: flags 1 << 46 (HAS_COLLISION; flag 48
+    // cleared by reloadHardcoded), data 15 (value, int), bounding box 0.25 x 0.25.
+    struct Entry {
+        unsigned key, type;
+        std::int64_t value;
+        float real;
+    };
+    const Entry entries[] = {{0, 7, std::int64_t{1} << 46, 0}, {1, 2, 1, 0}, {2, 2, 0, 0}, {3, 0, 0, 0},
+                             {4, 4, 0, 0}, {5, 7, -1, 0}, {7, 1, 300, 0}, {15, 2, value, 0},
+                             {22, 0, 0, 0}, {37, 7, 0, 0}, {38, 3, 0, 1.0f}, {42, 1, 300, 0},
+                             {43, 2, 0, 0}, {44, 0, 0, 0}, {45, 2, 0, 0}, {46, 2, 0, 0},
+                             {53, 3, 0, 0.25f}, {54, 3, 0, 0.25f}, {56, 8, 0, 0}, {57, 0, 0, 0},
+                             {58, 3, 0, 0.0f}, {59, 3, 0, 0.0f}, {69, 0, 0, 0}, {70, 4, 0, 0},
+                             {71, 4, 0, 0}, {72, 0, 1, 0}, {73, 0, 0, 0}, {74, 2, 0, 0},
+                             {75, 2, 0, 0}, {76, 2, 0, 0}, {77, 2, -1, 0}, {80, 0, 255, 0},
+                             {81, 0, 0, 0}};
+    out.varint(static_cast<std::uint32_t>(std::size(entries)));
+    for (const auto &e : entries) {
+        out.varint(e.key);
+        out.varint(e.type);
+        switch (e.type) {
+        case 0: out.byte(static_cast<std::uint8_t>(e.value)); break;
+        case 1: out.little_endian(static_cast<std::uint16_t>(e.value), 2); break;
+        case 2: out.signed_varint(static_cast<std::int32_t>(e.value)); break;
+        case 3: out.float32(e.real); break;
+        case 4: out.varint(0); break;
+        case 7: out.signed_varint64(e.value); break;
+        case 8: out.float32(0); out.float32(0); out.float32(0); break;
+        }
+    }
+}
+} // namespace
+Bytes orb_actor_data(std::uint64_t runtime, int value) {
+    ByteWriter out;
+    out.varint64(runtime);
+    write_orb_metadata(out, value);
+    return out.take();
+}
+Bytes add_orb_actor(std::int64_t unique, std::uint64_t runtime, Vec3 pos, Vec3 motion, float yaw, int value) {
+    ByteWriter out;
+    out.signed_varint64(unique);
+    out.varint64(runtime);
+    out.varint(69); // ActorType ExperienceOrb
+    for (float v : {pos.x, pos.y, pos.z, motion.x, motion.y, motion.z, 0.0f, yaw, 0.0f})
+        out.float32(v);
+    out.varint(0); // no attributes
+    write_orb_metadata(out, value);
     out.varint(0); // links
     return out.take();
 }

@@ -76,8 +76,9 @@ ctest --preset linux-debug
 This is not complete BDS gameplay parity. Navigation currently evaluates the
 host's cube palette: door/fence/hazard evaluators, flying/swimming navigation,
 restrictions and other navigation subclasses are not translated. Water physics
-is implemented for placed still-liquid cells; flowing-liquid simulation,
-waterlogging, Depth Strider equipment integration and gliding/ladder travel
+was initially implemented for placed still-liquid cells. The subsequent
+[water-flow translation](WATER_FLOW.md) adds propagation and native currents.
+Waterlogging, Depth Strider equipment integration and gliding/ladder travel
 remain separate work. The optional lava travel branch is not certified by this
 corpus: the sequential native lava scene did not enter that branch and was
 explicitly excluded from physics evidence.

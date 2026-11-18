@@ -56,8 +56,8 @@ void tick_clear_chunk(World &world, WorldLighting &lighting, int x, int z,
   // then isLightning=false; the rain+lightning mob branch is skipped.
   random.next_int(100000);
   // 0x1de5654..0x1de574d: advance weather-column LCG even in clear
-  // weather, then nextInt(16). This host has no water to freeze and rain=0
-  // skips the snow/handleRain branch at 0x1de583e.
+  // weather, then nextInt(16). The supported warm/clear scene skips freezing
+  // and the snow/handleRain branch at 0x1de583e.
   coordinates.next_column();
   random.next_int(16);
   const auto height = chunk->allocated_height();
@@ -67,7 +67,9 @@ void tick_clear_chunk(World &world, WorldLighting &lighting, int x, int z,
     const auto p = coordinates.next_position(static_cast<int>(height));
     const World::Position at{x * 16 + p[0], p[1], z * 16 + p[2]};
     const auto block = world.block(at);
-    if (tick_block_properties(block).tickable)
+    if (is_flowing_water(block))
+      world.tick_water(at); // dynamic ctor 0x1e9d93a sets random ticking
+    else if (tick_block_properties(block).tickable)
       tick_grass(source, at, random); // Block::tick -> GrassBlock::tick
     // Original extra-layer tick follows primary-layer tick at 0x1de5baf.
     // The current host has an empty extra layer for all supported blocks.

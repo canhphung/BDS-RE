@@ -38,7 +38,7 @@ Bytes cursor_inventory(const PlayerData &p);
 Bytes creative_inventory();
 Bytes armor_inventory(const PlayerData &p); // InventoryContent window 120
 Bytes armor_equipment(std::uint64_t runtime, const PlayerData &p); // MobArmorEquipment
-Bytes block_update(World::Position p, BlockId id);
+Bytes block_update(World::Position p, BlockId id, unsigned flags = 3);
 Bytes equipment(std::uint64_t runtime, const PlayerData &p);
 // AddPlayerPacket with the original's full player metadata and device id.
 Bytes add_player(const auth::Identity &identity, const protocol::StartGame &game,
@@ -95,6 +95,11 @@ struct MobView {
     bool tamed = false, saddled = false;
 };
 Bytes add_mob_actor(const MobView &mob);
+// Experience orb packets (capture mob-combat-c1 packets 346 and 351): the
+// orb's SynchedActorData::packAll as SetActorData, and AddActorPacket
+// (ActorType 69, no attributes) with the same metadata.
+Bytes orb_actor_data(std::uint64_t runtime, int value);
+Bytes add_orb_actor(std::int64_t unique, std::uint64_t runtime, Vec3 pos, Vec3 motion, float yaw, int value);
 // MobArmorEquipmentPacket with four empty slots.
 Bytes empty_armor_equipment(std::uint64_t runtime);                  // SetActorDataPacket
 Bytes add_item_actor(const ItemActor &a);                      // AddItemActorPacket::write 0x18b0680

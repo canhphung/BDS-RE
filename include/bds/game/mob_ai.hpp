@@ -44,6 +44,8 @@ struct Goal {
     int xz_dist = 10, y_dist = 7, interval = 120;
     Vec3 stroll_wanted;
     std::optional<World::Position> stroll_last_end;
+    // PanicGoal (+0xc speed, +0x10 wanted position).
+    Vec3 panic_wanted;
     // EatBlockGoal (+0xc eat animation tick).
     int eat_tick = 0;
 };
@@ -95,6 +97,13 @@ class MobSenses {
     // with LevelEvent 2001 (mobGriefing is the default true).
     virtual void eat_start() = 0;
     virtual std::optional<Vec3> stroll_position(int, int) { return std::nullopt; }
+    // Mob::getLastHurtByMob (vtable +0x898): the attacker's position
+    // (Actor::getPos), if the mob remembers one.
+    virtual std::optional<Vec3> last_attacker() const { return std::nullopt; }
+    virtual bool on_fire() const { return false; } // Actor::isOnFire
+    // RandomPos::getPosAvoid 0x231bbc0: generateRandomPos with the direction
+    // mob position minus `avoid`.
+    virtual std::optional<Vec3> avoid_position(int, int, Vec3) { return std::nullopt; }
     virtual bool navigation_done() const { return true; }
     virtual void navigate(Vec3, float) {}
     virtual void stop_navigation() {}

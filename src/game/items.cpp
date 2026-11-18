@@ -80,6 +80,12 @@ const ItemInfo table[] = {
     {313, "diamond_boots", 1, 429, ItemKind::Armor, 0, 3, 3, nullptr},
     {469, "turtle_helmet", 1, 275, ItemKind::Armor, 0, 0, 2, nullptr},
     {281, "bowl", 64, 0, ItemKind::Plain, 0, 0, 0, nullptr},
+    // Animal loot (loot_tables/entities): legacy ids of the original item
+    // registry. Wool is a block item (id 35, aux = colour) but has no block
+    // in BDS-RE's palette, so it is carried as a plain item.
+    {288, "feather", 64, 0, ItemKind::Plain, 0, 0, 0, nullptr},
+    {334, "leather", 64, 0, ItemKind::Plain, 0, 0, 0, nullptr},
+    {35, "wool", 64, 0, ItemKind::Plain, 0, 0, 0, nullptr},
     {260, "apple", 64, 0, ItemKind::Food, 0, 0, 0, &food_apple},
     {322, "golden_apple", 64, 0, ItemKind::Food, 0, 0, 0, &food_golden_apple},
     {466, "appleEnchanted", 64, 0, ItemKind::Food, 0, 0, 0, &food_appleEnchanted},

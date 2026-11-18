@@ -364,7 +364,9 @@ std::vector<GamePacket> Server::destroy(Session &s, const Transaction &t) {
         // Block::playerDestroy (0x1e558a0) runs only when Player::canDestroy
         // holds (stone by hand drops nothing) and calls spawnResources: grass
         // and dirt drop one dirt item entity.
-        spawn_item(b, {3, 1});
+        // LiquidBlock::getResourceCount (0x1e8f2c0) returns zero. Internal
+        // liquid indices must never be treated as item/block drop indices.
+        if (!is_water(id) && id != kStillLava) spawn_item(b, {3, 1});
         // Block::playerDestroy ends with Player::causeFoodExhaustion(EXHAUSTION_MINE).
         cause_food_exhaustion(s.game.runtime_id, s, 0.025f);
     }
@@ -386,6 +388,7 @@ void Server::add_item(ItemActor actor) {
     items_.push_back(std::move(actor));
 }
 void Server::tick_item(ItemActor &a) {
+    update_water_current(a, world_); // Actor::updateWaterState, before normalTick
     normal_tick(a, world_, [this](ItemActor &self) {
         // ItemActor::_mergeWithNeighbours (0x23feee0): items whose box meets
         // the box grown by 0.5 on every axis; Level::broadcastEntityEvent
@@ -543,6 +546,10 @@ void Server::tick_player(std::uint64_t id, Session &s) {
         for (auto &a : items_)
             if (!a.removed && a.added && area.intersects(a.bb))
                 touch(s, a);
+        // INFERRED order: items, then orbs (BlockSource::fetchEntities order).
+        for (auto &o : orbs_)
+            if (!o.removed && area.intersects(o.bb))
+                orb_touch(id, s, o);
     }
     // Player::normalTick -> Player::_applyExhaustion (0x22e9e20) with this
     // tick's movement: on ground, 0.01 (walk) or EXHAUSTION_SPRINT (sprint) per
@@ -563,6 +570,7 @@ void Server::tick_player(std::uint64_t id, Session &s) {
         send_for_entity(id, packet(PacketId::ActorEvent, actor_event(id, 66, 0)));
     }
     s.was_on_ground = p.on_ground; // 0x25fb074
+    ++s.tick_count; // INFERRED: Actor +0x208 counts the player's ticks
     p.health = s.attributes[kHealth];
     p.hunger = s.attributes[kHunger];
     p.saturation = s.attributes[kSaturation];
@@ -1011,6 +1019,10 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
     for (const auto &m : mobs_)
         if (!m.removed && chunks.contains(m.owner_chunk) && world_.chunk(m.owner_chunk.first, m.owner_chunk.second))
             scan.insert(m.runtime_id);
+    for (const auto &o : orbs_)
+        if (o.added && !o.gone && chunks.contains(o.owner_chunk) &&
+            world_.chunk(o.owner_chunk.first, o.owner_chunk.second))
+            scan.insert(o.runtime_id);
     for (auto entity : scan) {
         if (s.known.contains(entity))
             continue;
@@ -1071,6 +1083,15 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
                     enqueue(id, packet(PacketId::SetActorLink, link.take()));
                 }
             }
+        } else if (const auto orb = std::find_if(orbs_.begin(), orbs_.end(),
+                                                  [&](const ExperienceOrb &o) { return o.runtime_id == entity; });
+                   orb != orbs_.end()) {
+            // Actor::tryCreateAddActorPacket: the current position and motion,
+            // the rotation through PacketUtil::degreesToByte (capture: yaw
+            // 75.9375 = 54 * 360 / 256), no attributes.
+            const auto yaw = static_cast<std::int8_t>(static_cast<std::int32_t>(orb->yaw / 360.0f * 256.0f));
+            enqueue(id, packet(PacketId::AddActor, add_orb_actor(orb->unique_id, orb->runtime_id, orb->pos, orb->motion,
+                                                                 static_cast<float>(yaw) / 256.0f * 360.0f, orb->value)));
         } else
             for (const auto &a : items_)
                 if (a.runtime_id == entity) {
@@ -1092,6 +1113,9 @@ void Server::update_nearby(std::uint64_t id, Session &s) {
         for (const auto &m : mobs_)
             if (m.runtime_id == *it)
                 unique = m.unique_id;
+        for (const auto &o : orbs_)
+            if (o.runtime_id == *it)
+                unique = o.unique_id;
         if (auto other = sessions_.find(*it); other != sessions_.end())
             unique = other->second.game.unique_id;
         enqueue(id, packet(PacketId::RemoveActor, remove_actor(unique)));
@@ -1300,6 +1324,26 @@ class Server::Region final : public SpawnRegion {
     }
     Server &s_;
 };
+std::optional<std::uint64_t> Server::summon(std::uint32_t type, Vec3 at, bool adult) {
+    const auto &mobs = plains_mobs();
+    const auto data = std::find_if(mobs.begin(), mobs.end(), [&](const MobSpawnerData &d) { return d.type == type; });
+    if (data == mobs.end())
+        return std::nullopt;
+    Region region(*this);
+    const auto id = region.spawn_mob(*data, at.x, at.y, at.z, true);
+    if (id && adult)
+        for (auto &mob : mobs_)
+            if (mob.runtime_id == *id && mob.baby) {
+                mob.baby = false;
+                mob.scale = 1.0f;
+                mob.width = data->width;
+                mob.height = data->height;
+                const float half = mob.width / 2.0f;
+                mob.bb = {{at.x - half, at.y, at.z - half}, {at.x + half, at.y + mob.height, at.z + half}};
+                mob.brain = make_brain(type, false, mob.width, mob.height);
+            }
+    return id;
+}
 bool Server::tick_chunk_state(int chunk_x, int chunk_z) {
     auto &state = chunk_state_[{chunk_x, chunk_z}];
     if (state == 0) {
@@ -1369,12 +1413,26 @@ class Server::Senses final : public MobSenses {
         return random_stroll_position(s_.world_, s_.lighting_, mob_.pos, mob_.random, xz, y,
                                       clear_sky_darken(static_cast<int>(s_.level_tick_ % 24000)));
     }
+    std::optional<Vec3> last_attacker() const override {
+        if (!mob_.hurt_by_mob)
+            return std::nullopt;
+        const auto found = s_.sessions_.find(*mob_.hurt_by_mob);
+        if (found == s_.sessions_.end())
+            return std::nullopt;
+        const auto &p = s_.world_.players().at(found->second.key);
+        return Vec3{p.x, p.y, p.z}; // Actor::getPos (eye position for players)
+    }
+    std::optional<Vec3> avoid_position(int xz, int y, Vec3 avoid) override {
+        const Vec3 direction{mob_.pos.x - avoid.x, mob_.pos.y - avoid.y, mob_.pos.z - avoid.z};
+        return random_stroll_position(s_.world_, s_.lighting_, mob_.pos, mob_.random, xz, y,
+                                      clear_sky_darken(static_cast<int>(s_.level_tick_ % 24000)), &direction);
+    }
     bool in_liquid() const override { return travel_medium(mob_, s_.world_) != TravelMedium::Land; }
     void float_jump() override {
         mob_.jump_control.jump();
         const auto p = mob_.pos;
-        if (mob_.rider && s_.world_.block({int(std::floor(p.x)), int(std::floor(p.y + mob_.height * 0.85f)),
-                                           int(std::floor(p.z))}) == kStillWater)
+        if (mob_.rider && is_water(s_.world_.block({int(std::floor(p.x)), int(std::floor(p.y + mob_.height * 0.85f)),
+                                           int(std::floor(p.z))})))
             s_.dismount(*mob_.rider);
     }
     bool navigation_done() const override { return mob_.navigation.done(); }
@@ -1412,6 +1470,12 @@ class Server::Senses final : public MobSenses {
     MobActor &mob_;
 };
 void Server::tick_mob(MobActor &mob) {
+    // Actor::normalTick starts with Mob::baseTick (hurt time, last attacker
+    // timers, death and Mob::tickDeath).
+    base_tick_mob(mob);
+    if (mob.removed)
+        return;
+    update_water_current(mob, world_);
     // Actor::tick -> Mob::normalTick (0x22b2c60): Actor::normalTick runs the
     // components (SpawnActorComponent::tick, the egg timer), then aiStep ->
     // Mob::newServerAiStep (GoalSelector::tick, LookControl::tick), then the
@@ -1433,13 +1497,22 @@ void Server::tick_mob(MobActor &mob) {
     }
     tick_effects(mob.runtime_id, mob);
     position_rider(mob); // Actor::_manageRiders precedes Mob::normalTick.
-    Senses senses(*this, mob);
-    tick_goals(mob.brain, mob.pos, senses);
-    // Mob::newServerAiStep: goals, navigation, MoveControl, LookControl,
-    // JumpControl, in that order (0x22bad00).
-    mob.navigation.tick(world_, mob, mob.width, mob.height, mob.move_control);
-    mob.move_control.tick(mob, mob.brain, mob.attributes[kMovement], mob.jump_control);
-    tick_look(mob.brain, mob.pos);
+    // Mob::aiStep 0x22b9f85: an immobile mob (Mob::isImmobile: health <= 0)
+    // stops jumping, clears its inputs and motion and skips the AI step.
+    const bool immobile = mob.attributes[kHealth] <= 0.0f;
+    if (immobile) {
+        mob.jump_control.jumping = false;
+        mob.move_control.forward = 0.0f;
+        mob.motion = {};
+    } else {
+        Senses senses(*this, mob);
+        tick_goals(mob.brain, mob.pos, senses);
+        // Mob::newServerAiStep: goals, navigation, MoveControl, LookControl,
+        // JumpControl, in that order (0x22bad00).
+        mob.navigation.tick(world_, mob, mob.width, mob.height, mob.move_control);
+        mob.move_control.tick(mob, mob.brain, mob.attributes[kMovement], mob.jump_control);
+        tick_look(mob.brain, mob.pos);
+    }
     mob.jump_control.tick();
     if (mob.jump_delay > 0)
         --mob.jump_delay;
@@ -1513,6 +1586,7 @@ void Server::tick_mob(MobActor &mob) {
         std::copy(std::begin(rotation), std::end(rotation), mob.sent_rotation);
         mob.sent_on_ground = mob.on_ground;
     }
+    send_mob_motion(mob);
 }
 void Server::push_mob_entities(MobActor &mob) {
     // Mob::pushEntities 0x22bfa60: grow the box 0.2 in X/Z, fetch chunk
@@ -1585,6 +1659,14 @@ void Server::tick() {
                 actor.owner_chunk=target;
                 break;
             }
+        for (auto &orb : orbs_)
+            if (orb.runtime_id == id && !orb.removed) {
+                const auto target = TickChunkPosition{chunk_coordinate(static_cast<int>(std::floor(orb.pos.x))),
+                                                      chunk_coordinate(static_cast<int>(std::floor(orb.pos.z)))};
+                chunk_actors_.move(orb.owner_chunk, target, id);
+                orb.owner_chunk = target;
+                break;
+            }
         for (auto &actor : items_)
             if (actor.runtime_id == id && !actor.removed) {
                 const auto target = item_chunk(actor);
@@ -1650,6 +1732,7 @@ void Server::tick() {
                              [this](World::Position at,BlockId id,int) {
                                  broadcast(packet(PacketId::UpdateBlock,block_update(at,id)));
                              });
+            world_.tick_water_chunk(chunk.first, chunk.second);
             // LevelChunk::tick snapshots its actor pointers before iterating.
             // Block consumer call site: 0x1de452d.
             const auto actors = chunk_actors_.members(chunk);
@@ -1664,6 +1747,20 @@ void Server::tick() {
                         if(current!=mob->owner_chunk) pending_actor_moves_.push_back(id);
                         ++ticked_mobs_; // INFERRED: counted for getTickedMobCountPrevious
                         tick_mob(*mob);
+                    }
+                    continue;
+                }
+                if (const auto orb = std::find_if(orbs_.begin(), orbs_.end(),
+                                                  [&](const ExperienceOrb &o) { return o.runtime_id == id; });
+                    orb != orbs_.end()) {
+                    if (!orb->removed) {
+                        const auto current = TickChunkPosition{chunk_coordinate(static_cast<int>(std::floor(orb->pos.x))),
+                                                               chunk_coordinate(static_cast<int>(std::floor(orb->pos.z)))};
+                        if (!world_.chunk(current.first, current.second))
+                            continue;
+                        if (current != orb->owner_chunk)
+                            pending_actor_moves_.push_back(id);
+                        tick_orb(*orb);
                     }
                     continue;
                 }
@@ -1689,9 +1786,26 @@ void Server::tick() {
             }
         }
     });
+    for (const auto &update : world_.take_water_updates())
+        broadcast(packet(PacketId::UpdateBlock, block_update(update.position, update.block, update.flags)));
     for (const auto &actor : items_)
         if (actor.removed)
             chunk_actors_.erase(actor.owner_chunk, actor.runtime_id);
+    // Removed mobs (Mob::tickDeath -> Actor::remove) leave their chunk and
+    // the level after the players' _updateNearbyEntities sent RemoveActor.
+    for (const auto &mob : mobs_)
+        if (mob.removed)
+            chunk_actors_.erase(mob.owner_chunk, mob.runtime_id);
+    // A removed orb is still seen by the next tick's _updateNearbyEntities:
+    // the original sends its RemoveActor a tick after the pickup, after the
+    // player's experience attributes (capture mob-combat-c1 packets 402..407).
+    std::erase_if(orbs_, [](const ExperienceOrb &o) { return o.gone; });
+    for (auto &orb : orbs_)
+        if (orb.removed) {
+            chunk_actors_.erase(orb.owner_chunk, orb.runtime_id);
+            orb.gone = true;
+        }
+    std::erase_if(mobs_, [](const MobActor &m) { return m.removed; });
     std::erase_if(items_, [](const ItemActor &a) { return a.removed; });
     fresh_items_.clear();
     // Level::tick ends with Level::_saveSomeChunks (after the player worlds).
@@ -1721,7 +1835,7 @@ std::vector<GamePacket> Server::use(Session &s, const Transaction &t) {
         std::vector<GamePacket> out{packet(PacketId::InventoryContent, inventory(p)),
                                     packet(PacketId::InventoryContent, cursor_inventory(p))};
         const auto block = world_.block(target);
-        if (std::get<1>(target) >= 0 && std::get<1>(target) < 256 && block < 5)
+        if (std::get<1>(target) >= 0 && std::get<1>(target) < 256 && block < protocol::internal_block_palette().size())
             out.push_back(packet(PacketId::UpdateBlock, block_update(target, block)));
         return out;
     };

@@ -403,6 +403,31 @@ std::vector<GamePacket> Server::use_on_actor(std::uint64_t id, Session &s, const
         if (!s.sneaking)
             mount(id, t.target);
     }
+    const auto distance3 = [](float ax, float ay, float az, float bx, float by, float bz) {
+        return std::sqrt((ax - bx) * (ax - bx) + (ay - by) * (ay - by) + (az - bz) * (az - bz));
+    };
+    if (const auto mob = std::find_if(mobs_.begin(), mobs_.end(),
+                                      [&](const MobActor &m) { return m.runtime_id == t.target && !m.removed; });
+        mob != mobs_.end()) {
+        // Level::fetchEntity finds the mob; the same reach checks (error 7)
+        // against its position (Actor::getPos: the feet for a mob).
+        if (distance3(p.x, p.y, p.z, t.from[0], t.from[1], t.from[2]) > 6.0f ||
+            distance3(p.x, p.y, p.z, mob->pos.x, mob->pos.y, mob->pos.z) > 12.0f)
+            return inventory_resend(s);
+        const PlayerData before = p;
+        const float saved[3] = {p.x, p.y, p.z};
+        p.x = t.from[0];
+        p.y = t.from[1];
+        p.z = t.from[2];
+        if (t.action == 1)
+            attack_mob(id, s, *mob);
+        p.x = saved[0];
+        p.y = saved[1];
+        p.z = saved[2];
+        if (!predicted(before, p, t))
+            return inventory_resend(s);
+        return {};
+    }
     const auto target = sessions_.find(t.target);
     if (target == sessions_.end() || !target->second.active || t.target == id)
         return {};

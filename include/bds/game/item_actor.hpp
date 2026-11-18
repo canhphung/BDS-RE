@@ -77,7 +77,7 @@ AABB merge_area(const ItemActor &a);
 bool is_free(const ActorMotion &, const World &, Vec3 delta);
 void move(ActorMotion &a, const World &world, Vec3 delta);
 // Actor::pushOutOfBlocks (0x21bb8a0).
-void push_out_of_blocks(ItemActor &a, const World &world, Vec3 feet);
+void push_out_of_blocks(ActorMotion &a, const World &world, Vec3 feet);
 // ItemActor::normalTick (0x23fe8a0). `merge` is ItemActor::_mergeWithNeighbours,
 // called every 25 ticks of age.
 template <class Merge> void normal_tick(ItemActor &a, const World &world, Merge merge);

@@ -1,4 +1,5 @@
 #pragma once
+#include "bds/game/experience_orb.hpp"
 #include "bds/game/mob_ai.hpp"
 #include "bds/game/mob_motion.hpp"
 #include "bds/game/navigation.hpp"
@@ -91,8 +92,25 @@ class Server {
         std::int8_t sent_rotation[3]{}; // pitch, yaw, head yaw
         std::pair<int, int> owner_chunk{};
         bool removed = false;
+        // Damage state: Actor +0x20c hurt time, Mob +0x12c0 last hurt,
+        // +0x12c4/+0x12c8 damage/absorb remainders, +0x11d8 death time,
+        // +0x1358 death handled.
+        int hurt_time = 0, last_hurt = 0, damage_remainder = 0, absorb_remainder = 0;
+        int death_time = 0;
+        bool death_handled = false;
+        // Mob +0x1370/+0x1394 last hurt by mob (id, 60-tick timer) and
+        // +0x1378/+0x11d4 last hurt by player (id, 400-tick timer); the
+        // attackers here are players (runtime ids).
+        std::optional<std::uint64_t> hurt_by_mob, hurt_by_player;
+        int hurt_by_mob_time = 0, hurt_by_player_time = 0;
+        Vec3 sent_motion; // Actor +0x110: last SetActorMotion
     };
     const std::vector<MobActor> &mobs() const { return mobs_; }
+    const std::vector<ExperienceOrb> &orbs() const { return orbs_; }
+    // The `summon <entity> <x> <y> <z>` command for the vanilla animals
+    // (ActorFactory::createSpawnedEntity with the minecraft:entity_spawned
+    // event, no spawn rules). `adult` skips the baby roll (tests).
+    std::optional<std::uint64_t> summon(std::uint32_t type, Vec3 at, bool adult = false);
 
   private:
     struct Session : EffectState {
@@ -129,6 +147,9 @@ class Server {
         // std::random_device, never reseeded): drop throws, knockback roll.
         Random random{std::random_device{}()};
         int damage_remainder = 0, absorb_remainder = 0; // Mob +0x12c4, +0x12c8
+        int tick_count = 0;     // Actor +0x208
+        int experience = 0;     // Player +0x1414 (score of all collected experience)
+        int last_level_up = 0;  // Player +0x1a38: tick count of the last level-up sound
         std::uint64_t flags() const;
     };
     World &world_;
@@ -194,6 +215,21 @@ class Server {
     std::vector<GamePacket> release_item(std::uint64_t id, Session &s, const Transaction &t);
     std::vector<GamePacket> use_on_actor(std::uint64_t id, Session &s, const Transaction &t);
     void attack(std::uint64_t id, Session &s, std::uint64_t target);
+    // Mob damage and death (src/game/mob_combat.cpp).
+    void attack_mob(std::uint64_t id, Session &s, MobActor &mob);
+    bool hurt_mob(MobActor &mob, int cause, int damage, std::optional<std::uint64_t> attacker, bool knock = true);
+    void actually_hurt_mob(MobActor &mob, int cause, int damage);
+    bool hurt_effects_mob(MobActor &mob, int cause, int damage, std::optional<std::uint64_t> attacker, bool knock);
+    void die_mob(MobActor &mob, int cause, std::optional<std::uint64_t> killer);
+    void base_tick_mob(MobActor &mob);
+    void send_mob_motion(MobActor &mob);
+    // Experience orbs (src/game/experience_orb_server.cpp).
+    std::vector<ExperienceOrb> orbs_;
+    void spawn_orbs(Vec3 pos, int amount);
+    void tick_orb(ExperienceOrb &orb);
+    void orb_touch(std::uint64_t id, Session &s, ExperienceOrb &orb);
+    void add_experience(std::uint64_t id, Session &s, int amount);
+    void add_levels(std::uint64_t id, Session &s, int levels);
     void eat(std::uint64_t id, Session &s, const ItemStack &item);
     void drop(std::uint64_t id, Session &s, ItemStack item, bool randomly);
     void set_sprinting(Session &s, bool sprinting);

@@ -6,8 +6,8 @@
 
 namespace bds::game {
 namespace {
-// BDS-RE block ids: 0 air, 1 stone, 2 grass, 3 dirt, 4 bedrock (all non-air
-// blocks are full, solid, motion-blocking cubes with no liquid material).
+// Cube terrain plus primary-layer water/lava; aquatic spawn lists are not
+// translated. Liquid cells do not block motion.
 constexpr BlockId kGrass = 2, kBedrock = 4;
 World::Position above(World::Position p) { return {std::get<0>(p), std::get<1>(p) + 1, std::get<2>(p)}; }
 World::Position below(World::Position p) { return {std::get<0>(p), std::get<1>(p) - 1, std::get<2>(p)}; }
@@ -120,7 +120,7 @@ bool find_next_spawn_block_under(const SpawnRegion &region, World::Position &pos
     for (;;) {
         const auto block = region.block(pos);
         --y;
-        if (spawn_block_is_air(block)) // Material::isType(Air) || isType(Water)
+        if (spawn_block_is_air(block) || is_water(block)) // Material Air || Water
             break;
         if (y < 0)
             return false;
@@ -128,7 +128,7 @@ bool find_next_spawn_block_under(const SpawnRegion &region, World::Position &pos
     for (;;) {
         const auto block = region.block(pos);
         // BlockProperty 0x100 and half slabs recurse; no such block here.
-        if (!spawn_block_is_air(block)) // Material::getBlocksMotion
+        if (spawn_block_solid_blocking(block)) // Material::getBlocksMotion
             return true;                 // isType(Ice) or solid: found
         // MaterialType Any (0x28) skips the requested-material check.
         if (--y < 0)
@@ -282,7 +282,7 @@ void Spawner::spawn_mob_cluster(SpawnRegion &region, World::Position &pos, Spawn
     if (spawn_block_is_air(region.block(pos)))
         return;
     // c.water would use Block::getTypeToSpawn(WaterAnimal) on the block above;
-    // this world has no water.
+    // aquatic spawn lists remain outside the supported plains mob set.
     const auto *data = c.water ? nullptr : mob_to_spawn(region, pos, random);
     const auto up = above(pos);
     c.brightness = static_cast<int>(region.raw_brightness(up));
@@ -334,7 +334,9 @@ void Spawner::post_process_spawn_mobs(SpawnRegion &region, int chunk_x, int chun
     SpawnConditions c;
     c.surface = true;
     c.pos = pos;
-    // getLiquidBlock(above).material is water / lava: never in this world.
+    // getLiquidBlock(above).material is water / lava.
+    c.water=is_water(region.block(above(pos)));
+    c.lava=region.block(above(pos))==kStillLava;
     spawn_mob_cluster(region, pos, c, random);
 }
 
@@ -350,6 +352,8 @@ void Spawner::tick_spawn(SpawnRegion &region, int chunk_x, int chunk_z, Random &
     SpawnConditions c;
     c.surface = true;
     c.pos = pos;
+    c.water=is_water(region.block(above(pos)));
+    c.lava=region.block(above(pos))==kStillLava;
     // LevelChunk::getSpawningAreas: no hardcoded structure areas here.
     spawn_mob_cluster(region, pos, c, random);
     // Then every lower spawn block of the column, as underground spawns
@@ -359,6 +363,8 @@ void Spawner::tick_spawn(SpawnRegion &region, int chunk_x, int chunk_z, Random &
     while (find_next_spawn_block_under(region, pos)) {
         update_base_type_count(region, chunk_x, chunk_z);
         c.pos = pos;
+        c.water=is_water(region.block(above(pos)));
+        c.lava=region.block(above(pos))==kStillLava;
         c.surface = false;
         spawn_mob_cluster(region, pos, c, random);
     }

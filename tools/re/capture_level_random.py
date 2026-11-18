@@ -45,6 +45,7 @@ def main():
                         help="Extra gdb Python oracle sourced after the sequence probe (may use `state`)")
     parser.add_argument("--gdb-post-script", action="append", default=[], type=Path,
                         help="Native function oracle sourced at the final paused tick")
+    parser.add_argument("--scenario", help="Client scenario from tools/re/scenarios.py run by the first player")
     parser.add_argument("--packet-log", action="store_true",
                         help="Write every packet each client received to packets_<name>.json")
     parser.add_argument("--spawn-oracle", action="store_true",
@@ -137,6 +138,12 @@ def main():
                     process.stdin.flush()
                     commands_ready.set()
             sent_drop = False
+            if args.scenario and name == names[0]:
+                commands_ready.wait(60)
+                from scenarios import SCENARIOS
+                scenario_log = []
+                SCENARIOS[args.scenario](client, game, scenario_log)
+                (output / "scenario.json").write_text(json.dumps(scenario_log) + "\n")
             while not stopping.is_set() and process.poll() is None:
                 client.drain(.2)
                 if args.drop_items and commands_ready.is_set() and not sent_drop:

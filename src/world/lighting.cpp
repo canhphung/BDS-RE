@@ -15,6 +15,9 @@ const TickBlockProperties &tick_block_properties(BlockId block) {
         {2, 0, false, false, false, 1.0f, true},  // still water
         {14, 15, false, false, true, 1.0f, true}, // still lava
     }};
+    static constexpr TickBlockProperties flowing_water{2,0,false,false,true,1.0f,true};
+    if (is_flowing_water(block)) return flowing_water;
+    if (is_water(block)) return table[kStillWater];
     if (block >= table.size())
         throw std::out_of_range("block has no translated lighting/tick properties");
     return table[block];

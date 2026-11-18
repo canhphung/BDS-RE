@@ -117,8 +117,9 @@ test `item_actor_reference`; trace tool tools/reference/trace_item_actor.py):
   all active player ticking areas do not run normalTick. The host keeps an
   inactive record if the target column is absent (INFERRED); original NBT actor
   transfer/reload is not implemented.
-- Not modelled: saving item entities with the world, fall distance, lava/water/fire, unique-id high bits from the level's
-  world start count (BDS-RE uses one counter for runtime and unique ids).
+- Not modelled: saving item entities with the world, fall distance, lava/fire,
+  waterfall-specific item gravity and unique-id high bits from the level's world
+  start count (BDS-RE uses one counter for runtime and unique ids).
 
 Move/split/merge the supported block stacks between inventory and cursor. Closing
 the inventory returns cursor items to available inventory space. If full, remaining
@@ -312,3 +313,18 @@ new gameplay has been verified with the actual Minecraft client yet.
 The earlier M4 join path was confirmed by the user with Minecraft 1.6.0.14 after
 the native timestamp fix (Login, StartGame, PlayerSpawn and initialization). That
 observation does not establish verification of this new gameplay code.
+
+### Flowing water
+
+Primary-layer water now propagates using the BDS 1.6 liquid-depth rules:
+downward flow, horizontal slopes, source creation, neighbor wakes and draining
+after source removal. Scheduled updates use a five-tick delay; dynamic water
+also receives random block ticks. Currents push server-owned mobs and items.
+Chunks, lighting, client block updates and saved queue state follow the changes.
+
+The native comparison covers 78 function/current scenes and 120 consecutive
+original tick-queue steps. See [evidence and supported scope](../reverse/reports/WATER_FLOW.md).
+Buckets and a `setblock` command remain unimplemented; the simulation API uses
+`World::set_block(position, water_block(depth))` for flowing water. Existing
+still-water cells wake when an adjacent block changes. Waterlogging, lava
+reactions and freezing are outside this translation.

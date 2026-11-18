@@ -77,7 +77,7 @@ bool free(const World &w, PathNode p, PathNode size) {
     for (int x = p.x; x < p.x + size.x; ++x)
         for (int y = p.y; y < p.y + size.y; ++y)
             for (int z = p.z; z < p.z + size.z; ++z)
-                if (solid(w, x, y, z) || w.block({x, y, z}) == kStillWater ||
+                if (solid(w, x, y, z) || is_water(w.block({x, y, z})) ||
                     w.block({x, y, z}) == kStillLava)
                     return false;
     return true;
