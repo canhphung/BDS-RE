@@ -138,6 +138,37 @@ unconditionally, which is what desynchronised `#17`.
 The implementation is still uncommitted and `kelp_reference` is unregistered:
 `#41` onward does not replay yet.
 
+## Column count: the numbers the corpus pins
+
+Case 0, anchor `(-8,20,-8)`, seed 3163345183. The first candidate is
+`(-8,15,-6)` (`gz=2`, `gx=0`) and its column holds **6 kelp blocks** (y 15..20),
+so `height = 6`, which means `column = 5` because the native draw is
+`nextInt(3, column + 2)`:
+
+| assumed column | resulting `nextInt(3, column+2)` |
+|---:|---:|
+| **5** | **6** |
+| 6 | 5 |
+| 7 | 4 |
+| 8 | 4 |
+| 9 | 6 |
+
+But the first column pass in the corpus reads **eight** water cells (y 15..22,
+queries #25..#40, the last one false), not five. So `column` is NOT the number
+of water cells the pass visited: the pass and the count differ, and that gap is
+exactly where the translation still diverges (#58).
+
+Two candidates for the real rule, both checkable against the other seven
+columns of the same case (which hold 3, 4, 6, 3, 3, 4, 3 blocks):
+
+1. the count stops at a height cap derived from the anchor (five here);
+2. the count is the number of cells the pass visited **before** some offset,
+   e.g. the first non-water cell's index minus three.
+
+Deciding between them needs one more corpus read: the same case records eight
+columns, and their (water-run length, placed height) pairs are enough to fit the
+relation without touching the disassembly.
+
 ## Next
 
 Read the loop bounds and the column-growth branch (`0x1b54030..0x1b54432`) and
