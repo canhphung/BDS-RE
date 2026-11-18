@@ -390,6 +390,29 @@ from data alone — that is the next step, and it does not need disassembly.
 
 The pass is uncommitted and `kelp_reference` unregistered.
 
+## SeagrassFeature: structure started
+
+`SeagrassFeature::SeagrassFeature()` `0x1db4280`, `place` `0x1b6d090` (0xaa2
+bytes), plus one helper `_isNotIce` `0x1b6db40`. The block symbol is
+`VanillaBlocks::mSeaGrass` (capital G) at `0x34a8d80`, not `mSeagrass`.
+
+Dependencies the disassembly calls out: `isSolidBlockingBlock`,
+`getBlock`/`getLegacyBlock`, `isEmptyWaterBlock`, `Feature::_placeBlock`, six
+`nextGaussianInt`, four `nextInt`, four `SeaGrass::Type` constructions and
+`_isNotIce`.
+
+The head reads:
+
+- `0x1b6d0c1..0x1b6d13a`: copy the origin, `isSolidBlockingBlock`, then
+  `below()` and another `isSolidBlockingBlock`; a failure returns false.
+- `0x1b6d149..0x1b6d15a`: `nextInt(0x14) == 0` is a 1-in-20 gate.
+- `0x1b6d377..0x1b6d393`: a second `nextInt(0x14)` and a `Range<int,1>`
+  construction — so two 1-in-20 gates run in sequence on the success path.
+
+A corpus run is in flight (`tools/re/gdb_seagrass_cases.py`, derived from the
+kelp oracle with the constructor/place/symbol addresses swapped). The
+translation has not started.
+
 ## Next
 
 Read the loop bounds and the column-growth branch (`0x1b54030..0x1b54432`) and
