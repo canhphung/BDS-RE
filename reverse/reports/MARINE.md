@@ -403,6 +403,31 @@ predicts. The next step is to record, for each placed column, which word the
 native `nextInt(3, column+2)` consumed — the corpus already has the words, so
 this is a bookkeeping check rather than a new oracle run.
 
+### The height draw: column is NOT iterations+1
+
+Testing the height words directly settles it. For case 0 the eight placed
+columns have sizes `6, 4, 3, 4, 3, 6, 3, 3` and their height words are
+`w[4], w[13], w[18], w[23], w[28], w[37], w[42], w[47]`. All eight satisfy
+
+```
+3 + w % 4 == column_size
+```
+
+which is `nextInt(3, 7)`, i.e. a CONSTANT bound of 7 — not the
+`nextInt(3, column+2)` this file previously assumed, and not
+`column = iterations + 1`.
+
+That constant fits case 0 exactly but NOT case 1, whose column sizes are
+`3, 6, 6, 7, 4, 4, 5, 5` and include a 7 that `nextInt(3,7)` cannot produce.
+So the bound is not a universal constant either.
+
+The remaining work is therefore precise: find what the bound depends on. Case
+0's bound is 7 and it has eight placed columns with sizes up to 6; case 1
+reaches 7, so its bound is at least 8. A likely reading is that the bound is
+derived from the water depth the walk measured, and that the earlier
+`column = iterations + 1` estimate was fitting the wrong quantity — the walk
+length is not the bound, but it may feed it.
+
 ## KelpFeature: stopped (superseded by the confirmation above)
 
 Ten rounds went into this feature. What is solid:
