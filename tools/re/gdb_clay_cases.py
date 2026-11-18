@@ -157,6 +157,21 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
             queries.append(entry)
             return False
 
+    class AnchorMaterial(gdb.Breakpoint):
+        """Record the anchor's Material::isType(5) answer.
+
+        0x1b55892 is the `test $1,%al` right after `call Material::isType` at
+        0x1b5588d, so $al still holds the native answer there. Only the anchor
+        test reaches this site.
+        """
+
+        def stop(self):
+            for entry in reversed(queries):
+                if entry['kind'] == 'anchor_block' and 'is_water' not in entry:
+                    entry['is_water'] = int(gdb.parse_and_eval('$al')) & 1
+                    break
+            return False
+
     class QueryResult(gdb.Breakpoint):
         def __init__(self, address, entry):
             super().__init__(f'*{address:#x}', internal=True)
@@ -180,7 +195,8 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
     # rsi. Each getBlock in this feature is followed by the material test on
     # the returned block, so the recorded position is the cell being tested.
     query = Query(0x1c58ad0, 'rsi')
-    observers = [draw, write, query]
+    anchor_material = AnchorMaterial('*0x1b55892', internal=True)
+    observers = [draw, write, query, anchor_material]
     for bp in observers:
         bp.enabled = False
 

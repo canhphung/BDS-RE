@@ -111,19 +111,32 @@ int main(int argc, char **argv) {
             };
             std::vector<Json> observed;
             bds::ClayEnvironment environment;
-            environment.is_water = [&](Position p) {
-                check(next_query < recorded.size(), "more queries than the original");
+            // BlockSource::getBlock is called for the anchor first and then for
+            // every candidate cell; the corpus records both with the cell, and
+            // only the anchor row also carries the Material::isType(5) answer.
+            environment.block = [&](Position p) {
+                check(next_query < recorded.size(), "more getBlock calls than the original");
                 const auto &entry = recorded.at(next_query++);
-                check(entry.at(0).get<std::string>() == "material_is_water",
-                      "query kind differs");
                 check(entry.at(1).get<int>() == std::get<0>(p) &&
                           entry.at(2).get<int>() == std::get<1>(p) &&
                           entry.at(3).get<int>() == std::get<2>(p),
-                      "query position differs");
-                return entry.at(4).get<int>() != 0;
-            };
-            environment.block = [&](Position p) {
+                      "getBlock position differs at query " + std::to_string(next_query - 1) +
+                          ": expected (" + std::to_string(entry.at(1).get<int>()) + "," +
+                          std::to_string(entry.at(2).get<int>()) + "," +
+                          std::to_string(entry.at(3).get<int>()) + ") got (" +
+                          std::to_string(std::get<0>(p)) + "," + std::to_string(std::get<1>(p)) +
+                          "," + std::to_string(std::get<2>(p)) + ")");
                 return bds::ClayBlock{intern(name_at(p))};
+            };
+            environment.is_water = [&](Position p) {
+                // The anchor's isType answer belongs to the getBlock row that
+                // was just consumed; it is the previous entry.
+                check(next_query > 0, "is_water before any block query");
+                const auto &entry = recorded.at(next_query - 1);
+                check(entry.at(0).get<std::string>() == "anchor_block",
+                      "is_water is only defined for the anchor row");
+                check(entry.size() > 4, "the anchor row must carry the isType answer");
+                return entry.at(4).get<int>() != 0;
             };
             environment.place_block = [&](Position p, bds::ClayBlock block) {
                 observed.push_back(Json::array({std::get<0>(p), std::get<1>(p), std::get<2>(p),

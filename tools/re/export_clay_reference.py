@@ -45,15 +45,14 @@ if len(cases) < MINIMUM_CASES:
 
 if not any(case["writes"] for case in cases):
     raise SystemExit("oracle recorded no placements")
-KINDS = {"material_is_water"}
+KINDS = {"anchor_block", "candidate_block"}
 for case in cases:
     for dep in case["queries"]:
-        if not {"kind", "position", "result"} <= set(dep):
+        if not {"kind", "position"} <= set(dep):
             raise SystemExit("unexpected dependency shape")
         if dep["kind"] not in KINDS:
             raise SystemExit(f"unexpected dependency kind: {dep['kind']}")
-        if dep["result"] not in (0, 1):
-            raise SystemExit("dependency result is not boolean")
+
 
 # Intern every block name once.
 names = sorted({cell[3] for case in cases for cell in case["initial"]} |
@@ -81,7 +80,8 @@ for case in cases:
     # Dependency answers are kept in call order. The host test replays them, so
     # the translated feature sees the original's own predicate results rather
     # than a survival rule this project would have to invent.
-    queries = [[q["kind"], *q["position"], q["result"]] for q in case["queries"]]
+    queries = [[q["kind"], *q["position"],
+                q.get("is_water", q.get("result", 0))] for q in case["queries"]]
     compact.append({
         "at": case["at"], "seed": case["seed"], "size": case["size"],
         "scene": case["_scene"], "result": case["result"],
