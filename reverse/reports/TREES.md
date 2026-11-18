@@ -117,10 +117,23 @@ Reading its prologue precisely:
 - `0x1b5a094..0x1b5a0aa`: `_getBlock` then `_isFree`; a non-free cell aborts.
 - `0x1b5a146..0x1b5a16a`: on success, `_placeBlock` on `below()` with dirt.
 
-The translation is **not** written yet. It was started and then removed rather
-than committed half-verified: the exact `Range` bounds and the role of the
-`-0x5c`/`-0x64` locals need one more careful read, and the corpus is the tool
-that will confirm them. Nothing is registered. Inside `_placeTrunk` the first suspicious call is
+### Translated and verified
+
+`src/world/tree.cpp` now reproduces all 16 native cases: 8 placements, 919
+dependency answers, and zero Random draws — `_prepareSpawn` never touches the
+stream. Three details the corpus fixed:
+
+- **The Y loop runs `origin.y .. origin.y + height + 1`.** `range_incl`
+  (`0x1b3aec0`) stores `end = max + 1` and the native upper bound is
+  `origin.y + 1 + height`, so the loop covers `height + 2` layers, not
+  `height + 1`. The fixture's last 25 `get_block` rows are the extra top layer.
+- **The half-width condition is `>=`, not `<`.** `0x1b59f87` is
+  `cmp; jl` to *skip*, so the half-width becomes 2 when
+  `y >= origin.y + height - 1`. Reading it as a strict `<` put a 5x5 scan on
+  the wrong layers and desynchronised the stream on the second cell.
+- **`mayPlaceOn` queries the block at its own position**, so the corpus records
+  a nested `get_block` right after each `may_place_on` row; the test consumes
+  both to stay aligned. Inside `_placeTrunk` the first suspicious call is
 `_placeFallenTrunk` `0x1b5a8a0`, reached at `0x1b5ad4d` right after
 `Feature::_getManuallyPlaced` (`0x1b5ac50`, which only reads `+0x8` and cannot
 fault) and two `nextInt` draws. `_placeFallenTrunk` uses a static `mask` table
