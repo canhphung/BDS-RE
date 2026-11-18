@@ -226,6 +226,33 @@ tree path rather than the setup. The next session should narrow it by calling
 the sub-methods individually (`_prepareSpawn` alone, then `_placeTrunk` alone)
 and watching which one faults, instead of calling `place` as a unit.
 
+### Full `place(..., int)` corpus captured
+
+With the constructor type-id fix the four-argument body now runs, so its corpus
+is exported as `tests/reference/tree_place_bds_1.6.0.15.json`: 16 cases,
+**511 placements** (16 dirt, 47 log, 448 leaves), 144 Random words, 16
+`may_place_on` and 1,422 `get_block` answers.
+
+Reading the orchestration `0x1b5a2c2..0x1b5a30a` corrects an easy misreading:
+
+- `_prepareSpawn` is called first; false aborts the whole feature.
+- `_placeTrunk` is called next, and a **TRUE** return jumps to
+  `0x1b5a30f` — the leaf pass — while a **FALSE** return stores 1 and returns
+  immediately (`0x1b5a306..0x1b5a30a`). So "trunk placement failed" makes the
+  feature succeed early, which is the opposite of the intuitive reading.
+
+`_placeLeaf` is `0x1b59d60` (not `0x1b4c5e0`, which is a
+`FancyTreeFeature` destructor): it fetches the block, asks
+`Block::getMaterial` three times through `Material::isType`, then builds the
+leaf block with `Block::setBlockState<int>` and writes it. Those three
+`isType` answers are what decide whether a leaf cell is replaceable, and they
+are the next thing the oracle must record.
+
+The translation of `tree_place` is **not** written: the leaf pass and the
+`_addJungleFeatures`/`_addCocoaPlants` stage need their dependency answers in
+the corpus first, and writing them from the disassembly alone is what the
+earlier attempts showed goes wrong.
+
 ## Plan for the session that translates it
 
 1. `gdb_tree_cases.py` following the vegetation/clay oracle shape: construct a
