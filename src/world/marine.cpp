@@ -41,6 +41,8 @@ bool place_kelp(DecorationRegion &region, DecorationRegion::Position at, Random 
         const int gz = next_gaussian_int(random, 8);
         const int gx = next_gaussian_int(random, 8);
         const DecorationRegion::Position candidate{ox + gx, y, oz + gz};
+        // The below-test retries the SAME candidate without a new draw: the
+        // corpus repeats is_empty_water at the same cell (#22 then #25).
         const int cx = std::get<0>(candidate), cz = std::get<2>(candidate);
         if (!environment.is_empty_water(candidate)) {
             // Rejected candidate. The corpus shows a rejection at the candidate
@@ -53,14 +55,21 @@ bool place_kelp(DecorationRegion &region, DecorationRegion::Position at, Random 
                 (void)environment.block(candidate);
             continue;
         }
-        // Accepted: two reads of the candidate, then the cell below is tested
-        // and both cells are read (#19..#24 for the first candidate).
+        // Accepted: two reads of the candidate.
         (void)environment.block(candidate);
         (void)environment.block(candidate);
-        (void)environment.is_empty_water({cx, y - 1, cz});
-        (void)environment.block({cx, y - 1, cz});
-        (void)environment.block({cx, y, cz});
-        // Walk: climb from the candidate's own Y, no cap.
+        // 0x1b53ff3..0x1b541f6: a first walk tests the cell BELOW; when that
+        // cell is not water the walk aborts after reading both cells (#22..#24)
+        // and the SAME candidate is re-entered (#25). The second entry climbs
+        // from the candidate's own Y.
+        if (!environment.is_empty_water({cx, y - 1, cz})) {
+            (void)environment.block({cx, y - 1, cz});
+            (void)environment.block({cx, y, cz});
+            // Re-enter the same cell: the walk below re-reads it (#25/#26).
+        } else {
+            (void)environment.block({cx, y - 1, cz});
+            (void)environment.block({cx, y, cz});
+        }
         int iterations = 0;
         while (true) {
             const bool water = environment.is_empty_water({cx, y + iterations, cz});

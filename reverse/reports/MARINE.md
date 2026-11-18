@@ -274,6 +274,38 @@ the same cell. Its absence is why the write order after `#265` shifts by one.
 `false at 62/218` are off-column candidate rejections (3 reads). The three-read
 cases are exactly the candidates whose x/z differ from the anchor's.
 
+## The column triple, precisely
+
+Segmenting case 0 by candidate start (every `is_empty_water` at Y=15) gives
+pairs that repeat the SAME cell:
+
+| Segment | Cell | First answer |
+|---|---|---|
+| `19 -> 25` | `(-8,15,-6)` | 1 |
+| `25 -> 62` | `(-8,15,-6)` | 1 |
+| `62 -> 66` | `(-15,15,-8)` | 0 |
+| `66 -> 72` | `(-6,15,-5)` | 1 |
+| `72 -> 105` | `(-6,15,-5)` | 1 |
+
+So a placed column is entered twice at the same cell: the first entry aborts
+after the below-test fails (`#22..#24`), and the second entry performs the walk
+(`#25..#40`) and then places (`#41..#51`). The translation now does that and
+stays at `#265`.
+
+The two entries are read differently in the corpus, which is the last gap:
+
+- the FIRST entry (`#19..#21`) reads `is_empty_water(candidate)` then
+  `get_block(candidate)` twice;
+- the aborted below-test reads `get_block(y-1)`, `get_block(y)` (`#23`, `#24`);
+- the SECOND entry (`#25`, `#26`) reads `is_empty_water(candidate)` then
+  `get_block(candidate)` ONCE, and then continues into the walk at `y+1`
+  (`#27`, `#28`).
+
+At `#66..#72` the same shape appears but the second entry's `get_block` is
+missing (#73 is a `get_block`, #74 the next `is_empty_water`), so the read count
+on re-entry differs between the two columns. That single-read difference is what
+still shifts the stream before `#265`.
+
 ## Old notes
 
 For case 0's first accepted candidate the column holds **6** blocks and the
