@@ -435,7 +435,32 @@ from the kelp oracle.
    fan-out of `get_block` over `y-1`, `y`, `y-1`, `y+1`, `y-1`, ... which is the
    placement's neighbour reads.
 
-### Translation attempt: the first gate does not line up
+### Correction: the gate does not abort, and a draw is missing after it
+
+The first analysis of `0x1b6d149` was wrong. Following the `jne` target shows
+the nonzero branch at `0x1b6d753` ALSO builds `Range<int,1>(0x8)`, identical to
+the zero branch at `0x1b6d38e` apart from the stack slot. So `nextInt(0x14)`
+selects **which of two identical candidate loops runs** (short vs tall
+seagrass); it does not abort. Case 0 draws 2 and still places five blocks,
+which is consistent with that.
+
+The new blocker is one draw after the gate. Replaying from case 0's seed:
+
+```
+nextInt(0x14) = 2
+next_gaussian_int(8), next_gaussian_int(8) = (2, -1)
+```
+
+but the corpus's first candidate is at rel `(gx=2, gz=0)`, i.e. the z gaussian
+must be 0 while the translation gets -1. So exactly ONE extra Random word is
+consumed between the gate and the first gaussian — the shape `_isNotIce`
+`0x1b6db40` would produce, since the disassembly calls it three times.
+
+Confirming it needs one more corpus field: record `_isNotIce`'s own draws (or
+add a breakpoint on the generator inside it) so the word count between the gate
+and the first gaussian is known rather than inferred.
+
+### Superseded: first translation attempt
 
 A first pass was written and removed without being committed. Two facts it
 established:
