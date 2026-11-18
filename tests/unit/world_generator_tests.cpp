@@ -92,7 +92,27 @@ int main() {
                       << " iron in chunk (0,0)\n";
         }
 
-        std::cout << "OverworldGenerator runtime integration: chunk fill, determinism, edits and decoration pass\n";
+        // Trees: a land chunk must contain logs and leaves placed by the
+        // translated TreeFeature, mapped onto ids 51/52.
+        {
+            World forest;
+            forest.configure_terrain({3, 123});
+            forest.ensure_chunk(-3, -3);
+            const auto *chunk = forest.chunk(-3, -3);
+            std::size_t logs = 0, leaves = 0;
+            for (unsigned bx = 0; bx < 16; ++bx)
+                for (unsigned bz = 0; bz < 16; ++bz)
+                    for (unsigned y = 0; y < 128; ++y) {
+                        const auto id = chunk->block(bx, y, bz);
+                        if (id == 51) ++logs;
+                        if (id == 52) ++leaves;
+                    }
+            check(logs > 0, "the translated TreeFeature placed logs");
+            check(leaves > 0, "the translated TreeFeature placed leaves");
+            std::cout << "  trees: " << logs << " logs, " << leaves << " leaves in chunk (-3,-3)\n";
+        }
+
+        std::cout << "OverworldGenerator runtime integration: chunk fill, determinism, edits, decoration and trees pass\n";
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

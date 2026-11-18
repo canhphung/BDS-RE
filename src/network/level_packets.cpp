@@ -229,6 +229,10 @@ const std::vector<PaletteEntry> &internal_block_palette() {
         // Stone variants the ore decorator also uses (data 1, 3 and 5).
         for (const std::int16_t data : {1, 3, 5})
             result.push_back({"minecraft:stone", data});
+        // Tree blocks (ids 51..53): the base TreeFeature places these.
+        result.push_back({"minecraft:log", 0});
+        result.push_back({"minecraft:leaves", 0});
+        result.push_back({"minecraft:sapling", 0});
         return result;
     }();
     return palette;

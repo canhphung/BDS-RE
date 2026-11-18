@@ -4,6 +4,7 @@
 #include "bds/world/overworld.hpp"
 #include "bds/world/random.hpp"
 #include "bds/world/vegetation.hpp"
+#include "bds/world/tree.hpp"
 #include <cstdint>
 #include <vector>
 
@@ -23,6 +24,7 @@ struct DecorationStageResult {
     // Cells the features changed, in the order they were written.
     std::vector<DecorationRegion::Mutation> mutations;
     std::size_t ore_attempts = 0;
+    std::size_t trees_placed = 0;
 };
 
 struct DecorationStageSettings {

@@ -108,6 +108,59 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
         (void)place_reed(region, at, FeatureBlock{"reeds", 0}, ore_random, vegetation_environment);
     }
 
+    // TreeFeature::place 0x1b5a290 over the translated base class. The native
+    // caller is OverworldDecorator::decorate's tree stage, which is not
+    // translated (DECORATE.md), so the sites here are chosen from the surface
+    // the generator produced: a grass cell with room above. Height 5 is the
+    // value TreeFeature's own corpus uses; a real decorator derives it from the
+    // biome's tree density and the feature's trunk-height scale.
+    TreeEnvironment tree_environment;
+    tree_environment.max_height = [] { return 256; };
+    tree_environment.block = [&](DecorationRegion::Position p) {
+        const auto b = region.block(p);
+        return TreeBlock{b.name, b.data};
+    };
+    tree_environment.is_free = [](TreeBlock b) {
+        return std::strcmp(b.name, "air") == 0 || std::strcmp(b.name, "leaves") == 0;
+    };
+    tree_environment.is_empty = [](DecorationRegion::Position) { return true; };
+    tree_environment.may_place_on = [&](DecorationRegion::Position p, TreeBlock) {
+        const auto below = region.block({std::get<0>(p), std::get<1>(p) - 1, std::get<2>(p)});
+        return std::strcmp(below.name, "grass") == 0 || std::strcmp(below.name, "dirt") == 0;
+    };
+    tree_environment.place_block = [&](DecorationRegion::Position p, TreeBlock b) {
+        return region.set_block(p, TerrainBlock{b.name, b.data}, 3);
+    };
+    tree_environment.material_is = [&](DecorationRegion::Position p, int type) {
+        const auto name = region.block(p).name;
+        if (type == 0)
+            return std::strcmp(name, "air") == 0;
+        if (type == 7)
+            return std::strcmp(name, "leaves") == 0;
+        if (type == 9)
+            return std::strcmp(name, "grass") == 0;
+        return false;
+    };
+    // Four tree attempts on the chunk's surface, at fixed offsets so the stage
+    // stays deterministic and reproducible.
+    for (int i = 0; i < 4; ++i) {
+        const int tx = ox + 3 + i * 3, tz = oz + 4 + i * 2;
+        int surface_y = 0;
+        for (int y = 100; y >= 1; --y) {
+            const auto b = region.block({tx, y, tz});
+            if (std::strcmp(b.name, "grass") == 0 || std::strcmp(b.name, "dirt") == 0) {
+                surface_y = y + 1;
+                break;
+            }
+        }
+        if (surface_y == 0)
+            continue;
+        if (bds::tree_place(region, {tx, surface_y, tz}, 5, ore_random, tree_environment,
+                            /*manually_placed=*/false, /*type_flags=*/false,
+                            TreeBlock{"log", 0}, TreeBlock{"leaves", 0}, TreeBlock{"dirt", 0}))
+            ++result.trees_placed;
+    }
+
     result.mutations = region.take_mutations();
     return result;
 }

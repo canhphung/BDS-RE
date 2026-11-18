@@ -43,6 +43,10 @@ BlockId internal_id(const TerrainBlock &block) {
     if (std::strcmp(n, "clay") == 0) return 46;
     if (std::strcmp(n, "sand") == 0) return 47;
     if (std::strcmp(n, "stone") == 0) return block.data == 1 ? 48 : block.data == 3 ? 49 : block.data == 5 ? 50 : 1;
+    // Tree blocks, in the same order internal_block_palette appends them.
+    if (std::strcmp(n, "log") == 0) return 51;
+    if (std::strcmp(n, "leaves") == 0) return 52;
+    if (std::strcmp(n, "sapling") == 0) return 53;
     return 0;
 }
 } // namespace

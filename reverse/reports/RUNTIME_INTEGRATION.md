@@ -119,6 +119,28 @@ that are missing ([DECORATE.md](DECORATE.md)). The stage groups the verified
 features and says so in the file; it must be replaced by the real dispatcher,
 not extended.
 
+## Trees reach the world
+
+`decorate_generated_chunk` now also runs the verified `tree_place`
+(`TreeFeature::place` `0x1b5a290`) over the chunk's surface, at four fixed
+offsets, on cells whose block below is grass or dirt. `TreeEnvironment` is
+answered from the region itself (`is_free` accepts air and leaves,
+`may_place_on` accepts grass and dirt, `material_is` answers air/leaves/grass),
+and the writes go back through `DecorationRegion::set_block`.
+
+The palette grew by `log`, `leaves` and `sapling` (ids 51, 52, 53), appended
+after the ore entries, and `internal_id` maps them.
+
+Measured: chunk `(-3,-3)` of seed 123 contains **20 logs and 195 leaves** from
+four trees, alongside 35 gravel and 73 coal from the ore stage. Chunk `(0,0)`
+of the same seed is ocean, so it places no trees — which is correct and is why
+the test uses a land chunk.
+
+The tree SITES are not the native ones: the real placement comes from
+`OverworldDecorator::decorate`'s tree stage, which is untranslated. The stage
+chooses four deterministic offsets so the runtime has trees at all; a later
+dispatcher replaces the choice, not the feature.
+
 ## Still pending in step 5
 
 - `postProcess` and the decoration stages are **not** called from the runtime.
