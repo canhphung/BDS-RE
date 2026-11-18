@@ -60,6 +60,35 @@ its noise objects per chunk cost more than the generation itself.
 - generation is deterministic across two independent Worlds;
 - an edit placed with `set_block` survives later `ensure_chunk` calls.
 
+## postProcess runtime slice
+
+`src/world/post_process.cpp` adds `post_process_chunk`, called from
+`ensure_chunk` for kind 3. It is a **bounded** slice of
+`OverworldGenerator::postProcess` `0x1b38950`: it reproduces
+
+- the first seed derivation `0x1b38b5e` (seed a private Random with the level
+  seed, draw two `nextInt()`, make them odd, mix with the origin, xor the
+  level seed — the same arithmetic `Carver::apply` uses, in unsigned 32-bit);
+- the water-lake selection draws `0x1b38c54..0x1b38d51`: `nextInt(4)` gate,
+  `nextInt(3,12)`, `nextInt(128)`, `nextInt(3,12)`, plus the Desert /
+  DesertHills and generator-flag skips;
+- the lava-lake selection `0x1b38d5b..0x1b38e9b`, which runs only when the
+  water lake did not place: `nextInt(8)` gate, `nextInt(3,12)`,
+  `nextInt(0x78)+8`, `nextInt(w)`, `nextInt(3,12)`, and the `0x3c`/`0x40`
+  gates with `nextInt(10)`;
+- the second derivation `0x1b38ea5`.
+
+Every draw comes from the slice's **private** Random, so the level Random is
+untouched — the level-Random acceptance trace in
+`tests/reference/world_ticks_bds_1.6.0.15.json` depends on that, and
+`post_process` asserts it directly.
+
+The slice deliberately does **not** call the lake features (they need a
+material and sky-brightness reader this layer does not supply), the decorator
+dispatch, `MonsterRoomFeature` or `BonusChestFeature`. The translated ore, clay
+and vegetation features therefore still have no caller. `post_process` reports
+the region's mutations so a later wiring can apply them.
+
 ## Still pending in step 5
 
 - `postProcess` and the decoration stages are **not** called from the runtime.

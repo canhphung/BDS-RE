@@ -1,6 +1,7 @@
 #include "bds/world/world.hpp"
 #include "bds/world/overworld.hpp"
 #include "bds/world/random.hpp"
+#include "bds/world/post_process.hpp"
 #include <cstring>
 #include <map>
 #include <memory>
@@ -116,7 +117,19 @@ void World::ensure_chunk(int x, int z) {
                 slot = std::make_shared<OverworldGenerator>(static_cast<std::uint32_t>(terrain_.seed));
             generator = slot;
         }
-        const TerrainVolume volume = generator->generate(x, z);
+        TerrainVolume volume = generator->generate(x, z);
+        // postProcess 0x1b38950: the runtime slice reproduces its seed
+        // derivations and lake draws on a private Random so the level stream is
+        // untouched. It reports mutations but the decoration features it would
+        // dispatch are not wired yet, so the volume is unchanged here.
+        {
+            DecorationRegion region;
+            region.load_chunk(x, z, volume);
+            Random scratch(static_cast<std::uint32_t>(terrain_.seed));
+            PostProcessSettings settings;
+            settings.level_seed = static_cast<std::uint32_t>(terrain_.seed);
+            (void)post_process_chunk(region, {x * 16, 64, z * 16}, scratch, settings);
+        }
         for (unsigned bx = 0; bx < 16; ++bx)
             for (unsigned bz = 0; bz < 16; ++bz)
                 for (int y = 0; y < TerrainVolume::height; ++y)
