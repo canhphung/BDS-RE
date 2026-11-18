@@ -182,8 +182,10 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
 
         def stop(self):
             try:
+                self.entry['raw'] = int(gdb.parse_and_eval('$rax')) & 0xFFFFFFFF
                 self.entry['result'] = int(gdb.parse_and_eval('$al')) & 1
             except gdb.error:
+                self.entry['raw'] = 0
                 self.entry['result'] = 0
             self.enabled = False
             one_shot.append(self)
@@ -222,6 +224,39 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
         Query(0x1e6a5a0, 'may_place', 'rdx'),
         Query(0x1e6a540, 'may_place_on', 'rdx'),
     ]
+
+    # Extra queries whose result is not a bare boolean or whose argument is
+    # not a BlockPos. Each records whatever the C++ side needs to replay the
+    # native decision without inventing a rule.
+    class Value(gdb.Breakpoint):
+        """Record a native query's arguments and its returned integer value."""
+
+        def __init__(self, address, kind, register, extra_register=None):
+            super().__init__(f'*{address:#x}', internal=True)
+            self.kind, self.register, self.extra_register = kind, register, extra_register
+
+        def stop(self):
+            if not dependencies:
+                return False
+            pointer = int(gdb.parse_and_eval(f'${self.register}'))
+            entry = {'kind': self.kind,
+                     'position': list(struct.unpack('<iii', mem(pointer, 12)))}
+            if self.extra_register:
+                entry['argument'] = int(gdb.parse_and_eval(f'${self.extra_register}')) & 0xFF
+            dependencies[-1].append(entry)
+            Result(int(gdb.parse_and_eval('*(void**)$rsp')), entry)
+            return False
+
+    # BlockSource::getHeightmap 0x1c5ad20 returns a short height.
+    Value(0x1c5ad20, 'heightmap', 'rsi')
+    # Block::mayPlace(BlockSource&, BlockPos const&, signed char) 0x1e6a600:
+    # the face is the third argument (cl / rcx); vines call this per face.
+    Value(0x1e6a600, 'may_place_face', 'rdx', 'rcx')
+    # Block::hasProperty(BlockProperty) 0x1e6b6e0: the property index is rsi.
+    Value(0x1e6b6e0, 'has_property', 'rsi')
+    # BlockSource::getMaterial 0x1c5acf0 returns a Material*; record the pointer
+    # so the C++ side can compare it against the material it queries.
+    Value(0x1c5acf0, 'material', 'rsi')
     observers = [draw, write] + queries
     for bp in observers:
         bp.enabled = False

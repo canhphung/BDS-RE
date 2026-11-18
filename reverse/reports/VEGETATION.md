@@ -120,40 +120,49 @@ Read from the disassembly and corroborated by the word counts above:
   `isEmptyBlock` and vine `mayPlace(...,face)`, then sets the direction bit from
   `OPPOSITE_FACING`/`FACING_DIRECTION`.
 
-## First translation attempt and what the corpus caught
+## Translation complete
 
-`src/world/vegetation.cpp` was written against this corpus and then **removed
-again** because the corpus rejected it. Three concrete defects it exposed, all
-of which reading the disassembly alone had missed:
+`src/world/vegetation.cpp` now reproduces **all 70 cases**: 184 placements,
+15,304 Random words and 16,387 dependency answers. The corpus caught seven
+distinct defects that reading the disassembly alone had missed, and each is
+recorded at its site in the code:
 
-1. **Tall grass does not call `BlockSource::isEmptyBlock`.** At
-   `0x1b664d5..0x1b664f8` it calls `BlockSource::getBlock`, then compares the
-   result's `getLegacyBlock()` with `BedrockBlockTypes::mAir` inline. The corpus
-   ordered `can_survive` first, so the mismatch surfaced immediately as a
-   predicate-order failure.
-2. **Tall grass offsets from the descended position, not the anchor.** The loop
-   mutates the `BlockPos` copy at `-0x38(%rbp)` and `BlockPos::offset` at
-   `0x1b664cc` is called on `-0x18(%rbp)` (the original argument) with the
-   mutated Y from `-0x34(%rbp)`. The first attempt used the anchor for X/Z and
-   the descended Y inconsistently, so the first placement position was wrong.
-3. **The predicate vocabulary is per-feature, not uniform.** `pumpkin` uses
-   `isEmptyBlock` + `mayPlace`; `cactus` interleaves `is_empty` with
-   `can_survive` per column block; `vine` calls `mayPlace` once per face with a
-   `signed char` direction; `reed` never calls a survival predicate at all and
-   instead samples four neighbour materials. A single shared environment is
-   still the right shape, but each function must issue exactly the native calls
-   in the native order.
+1. **Tall grass does not call `BlockSource::isEmptyBlock`.** It calls
+   `getBlock` and compares the legacy identity with `BedrockBlockTypes::mAir`
+   inline (`0x1b664d5..0x1b664f8`), so its only observable predicate is the 90
+   `can_survive` calls.
+2. **Tall grass's descent is unobservable.** The loop mutates a copy of the
+   `BlockPos` (`-0x38`), but only tests the descended Y against zero
+   (`0x1b66450`) and places using the ORIGINAL argument (`-0x18` at
+   `0x1b664be`). It draws nothing, so it was left out with that reasoning
+   written down rather than silently reproduced.
+3. **Pumpkin draws X and Z with spread 8 and Y with spread 4.** The native order
+   at `0x1b524a6..0x1b524ee` is gaussian(8) -> `-0x48`, gaussian(8) -> `-0x4c`,
+   gaussian(4) -> `-0x50`, and `BlockPos::offset` takes x from `-0x48`, y from
+   `-0x50`, z from `-0x4c`. The naive X/Y/Z reading is wrong and the first
+   candidate lands elsewhere.
+4. **Cactus uses the ordinary Z/Y/X order**, not pumpkin's, and a false
+   `canSurvive` skips only that block's placement — the column counter still
+   advances (`0x1b5d522..0x1b5d52b`), which is why the corpus shows consecutive
+   `can_survive` rows.
+5. **Cactus's `canSurvive` internally queries four neighbour materials.** Those
+   rows appear after each `can_survive` in the corpus and are consumed by the
+   test's `can_survive` replay, not by the feature.
+6. **Reed has no air check below the candidate.** An earlier version invented
+   one; `0x1b5d0f9` goes straight from `below()` to the four `getMaterial`
+   queries. Reed also draws X first and pins Y to zero.
+7. **Reed's water condition is inverted relative to the obvious reading.**
+   `0x1b5d1f8`: `test $1,%al; jne 0x1b5d205; jmp 0x1b5d32b` — the column walk is
+   taken when `Material::isType(5)` SUCCEEDS, so a dry attempt is skipped. That
+   is exactly why the corpus records 20 attempts, 80 words and zero placements.
 
-Because the corpus already recorded the answers, these are correctness bugs
-rather than missing evidence: the next attempt can iterate until all 70 cases
-replay. The half-finished translation was deleted rather than committed, and no
-test was registered, so the tree stays green and nothing claims unverified
-behaviour.
+The reed column walk itself (`0x1b5d205..0x1b5d326`) is the one part not yet
+translated: no attempt in this corpus reaches it, so it is marked `TODO` in the
+code instead of being guessed. A corpus whose scene lets a reed attempt pass the
+material check is the next step for that function.
 
 ## Next
 
-Rewrite `src/world/vegetation.cpp` against this corpus (including the real
-facing tables) until all 70 cases — 184 placements, 15,304 words and 5,085
-dependency answers — replay exactly, then register `vegetation_reference`. Keep
-the general `OverworldGenerator::postProcess` orchestration unregistered until
+Trees, marine features and snow/ice covering (Phase 3 remainder), plus the reed
+column walk above. `OverworldGenerator::postProcess` stays unregistered until
 its remaining features exist — see [POSTPROCESS.md](POSTPROCESS.md).

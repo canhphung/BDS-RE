@@ -46,10 +46,11 @@ if {case["feature"] for case in cases} != set(FEATURES):
     raise SystemExit("unexpected feature set")
 if not any(case["writes"] for case in cases):
     raise SystemExit("oracle recorded no placements")
-KINDS = {"is_empty", "is_solid_blocking", "can_survive", "may_place", "may_place_on"}
+KINDS = {"is_empty", "is_solid_blocking", "can_survive", "may_place", "may_place_on",
+         "heightmap", "may_place_face", "has_property", "material"}
 for case in cases:
     for dep in case["dependencies"]:
-        if set(dep) != {"kind", "position", "result"}:
+        if not {"kind", "position", "result"} <= set(dep):
             raise SystemExit("unexpected dependency shape")
         if dep["kind"] not in KINDS:
             raise SystemExit(f"unexpected dependency kind: {dep['kind']}")
@@ -82,7 +83,8 @@ for case in cases:
     # Dependency answers are kept in call order. The host test replays them, so
     # the translated feature sees the original's own predicate results rather
     # than a survival rule this project would have to invent.
-    dependencies = [[dep["kind"], *dep["position"], dep["result"]]
+    dependencies = [[dep["kind"], *dep["position"], dep["result"],
+                     dep.get("raw", 0), dep.get("argument", 0)]
                     for dep in case["dependencies"]]
     compact.append({
         "feature": case["feature"], "at": case["at"], "seed": case["seed"],
