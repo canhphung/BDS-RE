@@ -522,6 +522,32 @@ which reads only the three vertical neighbours, the two z neighbours and the
 centre, while the full nine-read form belongs to the `may_place` fan-out of the
 column's first block. Separating those two shapes is the remaining work.
 
+### The fan-out is 9 reads for seven columns and 7 for the last
+
+Counting the `get_block` calls that immediately follow each `may_place` in case
+0 gives:
+
+| `may_place` index | column | reads after |
+|---:|---|---:|
+| 42 | `(-8,-6)` | 9 |
+| 89 | `(-6,-5)` | 9 |
+| 128 | `(-6,-10)` | 9 |
+| 165 | `(-9,-14)` | 9 |
+| 204 | `(-11,-7)` | 9 |
+| 245 | `(-4,-10)` | 9 |
+| 288 | `(-6,-8)` | 9 |
+| 325 | `(-5,-10)` | **7** |
+
+Seven of the eight columns read nine cells (`y-1, y, y+1, y-1, -z, +z, +x, -x,
+centre`); only the LAST column reads seven (`y-1, y, y+1, y-1, -z, +z, centre`).
+The last column is the tenth candidate, i.e. the final iteration of the
+`Range<int,1>(0xa)` loop.
+
+Place-loop itself (`0x1b5434a..0x1b543e8`) does not read neighbours at all: it
+calls `above(k)`, `isEmptyWaterBlock`, `setBlockState` and `_placeBlock`. So the
+seven-read form is the fan-out with the `+x`/`-x` pair omitted, and the omission
+correlates with the loop's last iteration rather than with the height.
+
 The implementation is removed again; the corpus and this analysis remain.
 
 ### Superseded: the constant-7 reading
