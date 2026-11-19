@@ -548,6 +548,25 @@ calls `above(k)`, `isEmptyWaterBlock`, `setBlockState` and `_placeBlock`. So the
 seven-read form is the fan-out with the `+x`/`-x` pair omitted, and the omission
 correlates with the loop's last iteration rather than with the height.
 
+### The last column's seven reads are not a different shape
+
+The seven-read form of the last column is `y-1, y, y+1, y-1, -z, +z, centre`.
+The nine-read form of the others is the same list with `+x, -x` inserted between
+`+z` and `centre`. So it is one list with two optional entries, not two
+different code shapes.
+
+The omission does not correlate with height: columns 3, 5 and 7 all have height
+3 and still read nine, while column 8 has height 3 and reads seven. It
+correlates with position in the candidate loop — column 8 is the tenth and final
+candidate — which suggests the `+x`/`-x` reads belong to a step that the final
+iteration skips, most plausibly the `Range` increment path taken after the last
+`may_place`.
+
+Two facts for whoever finishes this: the full list is
+`y-1, y, y+1, y-1, -z, +z, [+x, -x,] centre`, and `0x1b54420..0x1b54432` (the
+loop tail right after `_placeBlock`) is the place to look for the condition that
+drops the pair.
+
 The implementation is removed again; the corpus and this analysis remain.
 
 ### Superseded: the constant-7 reading
