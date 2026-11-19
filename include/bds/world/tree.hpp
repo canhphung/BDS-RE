@@ -81,19 +81,23 @@ bool tree_place(DecorationRegion &, DecorationRegion::Position origin, int heigh
 // place. MegaTreeFeature::place 0x1b55c70: height = nextInt(3) + 5. Both are
 // 0x65-byte wrappers; the constructor only sets the leaf/trunk type ids.
 int jungle_tree_height(Random &);
+// MegaTreeFeature::place 0x1b55c9b: nextInt(3) + 5, the height place passes to
+// the base. It does NOT read this+0x24.
+int mega_tree_height(Random &);
+
 // MegaTreeFeature::_calcTreeHeigth 0x1b55ce0: nextInt(3) + base_height
 // (this+0x24), then if height_interval (this+0x28) is greater than 1 another
-// nextInt(height_interval) is added.
-int mega_tree_height(Random &, int base_height, int height_interval);
+// nextInt(height_interval) is added. This is what the MegaPine/MegaJungle/...
+// subclasses use, not what place uses.
+int mega_tree_calc_height(Random &, int base_height, int height_interval);
 
 // MegaTreeFeature::place 0x1b55c70. The constructor 0x1b55bf0 fixes the base
 // leaf/trunk type ids to 2 and stores four ints at +0x24/+0x28/+0x2c/+0x30;
 // place draws the height from +0x24/+0x28 and delegates to the base place.
 bool mega_tree_place(DecorationRegion &, DecorationRegion::Position, Random &,
-                     const TreeEnvironment &, int base_height, int height_interval,
-                     bool manually_placed = false, bool type_flags = false,
-                     TreeBlock trunk = {"log", 2}, TreeBlock leaves = {"leaves", 2},
-                     TreeBlock dirt = {"dirt", 0});
+                     const TreeEnvironment &, bool manually_placed = false,
+                     bool type_flags = false, TreeBlock trunk = {"log", 2},
+                     TreeBlock leaves = {"leaves", 2}, TreeBlock dirt = {"dirt", 0});
 bool jungle_tree_place(DecorationRegion &, DecorationRegion::Position, Random &,
                        const TreeEnvironment &, bool manually_placed = false,
                        bool type_flags = false, TreeBlock trunk = {"log", 0},

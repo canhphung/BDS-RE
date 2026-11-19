@@ -550,8 +550,27 @@ So `MegaTreeFeature::place` delegates to the base only after
 as written (height + `tree_place`) is therefore wrong, and the fixture is kept
 unregistered until the real body exists.
 
-Both "thin wrapper" claims from the original plan are now disproven by
-measurement. The only genuinely thin parts are the two height helpers.
+### Correction: MegaTree IS a wrapper — the difference is the leafType branch
+
+Reading `MegaTreeFeature::place 0x1b55c70` again settles it: it is exactly
+`nextInt(3) + 5` (`0x1b55c9b..0x1b55ca3`) followed by a non-virtual call to
+`TreeFeature::place 0x1b5a290`. The height does NOT read `this+0x24`; that is
+`_calcTreeHeigth 0x1b55ce0`, which the MegaPine/MegaJungle subclasses use.
+
+So the earlier "not a wrapper" conclusion was wrong. The real difference is
+inside the BASE: `_placeTrunk 0x1b5ac96` compares `this+0x18` (leafType) with 2
+and, when equal, skips the trunk-height-scale computation entirely
+(`xorps`/`movss 0.0f` then `jmp 0x1b5ad2c`). With leafType 2 the scale is 0, so
+the trunk loop bound differs and the canopy is much wider.
+
+That explains the corpus: its writes are a single trunk column at the origin
+(y 4..12) plus a wide flat canopy at y 9..12, i.e. the base shape with a
+different scale — not a different body at all.
+
+`place` is therefore correctly implemented as `nextInt(3)+5` + `tree_place`; what
+is missing is threading the leafType id into `tree_place_trunk` so the `== 2`
+branch sets scale 0. Both height helpers are now split correctly
+(`mega_tree_height` for place, `mega_tree_calc_height` for _calcTreeHeigth).
 
 ### What the type ids do mechanically
 
@@ -692,8 +711,27 @@ So `MegaTreeFeature::place` delegates to the base only after
 as written (height + `tree_place`) is therefore wrong, and the fixture is kept
 unregistered until the real body exists.
 
-Both "thin wrapper" claims from the original plan are now disproven by
-measurement. The only genuinely thin parts are the two height helpers.
+### Correction: MegaTree IS a wrapper — the difference is the leafType branch
+
+Reading `MegaTreeFeature::place 0x1b55c70` again settles it: it is exactly
+`nextInt(3) + 5` (`0x1b55c9b..0x1b55ca3`) followed by a non-virtual call to
+`TreeFeature::place 0x1b5a290`. The height does NOT read `this+0x24`; that is
+`_calcTreeHeigth 0x1b55ce0`, which the MegaPine/MegaJungle subclasses use.
+
+So the earlier "not a wrapper" conclusion was wrong. The real difference is
+inside the BASE: `_placeTrunk 0x1b5ac96` compares `this+0x18` (leafType) with 2
+and, when equal, skips the trunk-height-scale computation entirely
+(`xorps`/`movss 0.0f` then `jmp 0x1b5ad2c`). With leafType 2 the scale is 0, so
+the trunk loop bound differs and the canopy is much wider.
+
+That explains the corpus: its writes are a single trunk column at the origin
+(y 4..12) plus a wide flat canopy at y 9..12, i.e. the base shape with a
+different scale — not a different body at all.
+
+`place` is therefore correctly implemented as `nextInt(3)+5` + `tree_place`; what
+is missing is threading the leafType id into `tree_place_trunk` so the `== 2`
+branch sets scale 0. Both height helpers are now split correctly
+(`mega_tree_height` for place, `mega_tree_calc_height` for _calcTreeHeigth).
 
 ### What the type ids do mechanically
 

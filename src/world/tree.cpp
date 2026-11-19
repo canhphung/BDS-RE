@@ -151,9 +151,16 @@ int jungle_tree_height(Random &random) {
     return random.next_int(0x7) + 4;
 }
 
-int mega_tree_height(Random &random, int base_height, int height_interval) {
-    // 0x1b55ce0: nextInt(3), then += this+0x24. If this+0x28 > 1, another
-    // nextInt(this+0x28) is added (0x1b55d12..0x1b55d2f).
+int mega_tree_height(Random &random) {
+    // MegaTreeFeature::place 0x1b55c9b..0x1b55ca0: nextInt(3) then + 5. This is
+    // the height `place` passes to the base, and it does NOT read this+0x24.
+    return random.next_int(0x3) + 5;
+}
+
+int mega_tree_calc_height(Random &random, int base_height, int height_interval) {
+    // MegaTreeFeature::_calcTreeHeigth 0x1b55ce0: nextInt(3) + this+0x24, and
+    // when this+0x28 > 1 another nextInt(this+0x28) is added. Used by the
+    // SUBCLASSES (MegaPine etc.), not by MegaTreeFeature::place.
     int height = random.next_int(0x3) + base_height;
     if (height_interval > 1)
         height += random.next_int(height_interval);
@@ -161,11 +168,11 @@ int mega_tree_height(Random &random, int base_height, int height_interval) {
 }
 
 bool mega_tree_place(DecorationRegion &region, DecorationRegion::Position origin,
-                     Random &random, const TreeEnvironment &environment, int base_height,
-                     int height_interval, bool manually_placed, bool type_flags, TreeBlock trunk,
-                     TreeBlock leaves, TreeBlock dirt) {
-    // 0x1b55c70: draw the height, then delegate to the base place 0x1b5a290.
-    const int height = mega_tree_height(random, base_height, height_interval);
+                     Random &random, const TreeEnvironment &environment, bool manually_placed,
+                     bool type_flags, TreeBlock trunk, TreeBlock leaves, TreeBlock dirt) {
+    // 0x1b55c70: nextInt(3) + 5 for the height, then delegate to the base place
+    // 0x1b5a290 with the constructor's type id 2 blocks.
+    const int height = mega_tree_height(random);
     return tree_place(region, origin, height, random, environment, manually_placed, type_flags,
                       trunk, leaves, dirt);
 }
