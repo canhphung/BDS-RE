@@ -567,7 +567,31 @@ Two facts for whoever finishes this: the full list is
 loop tail right after `_placeBlock`) is the place to look for the condition that
 drops the pair.
 
-The implementation is removed again; the corpus and this analysis remain.
+### Where the optional pair actually comes from
+
+`0x1b5424c..0x1b54304` is the per-block place step, in this order:
+
+```
+1b5424c  BlockPos::below()
+1b5425f  BlockSource::getBlock(below)
+1b54267  Block::getLegacyBlock
+1b5427d  Block::getLegacyBlock
+1b5428c  BlockLegacy::operator!=
+1b542b3  Block::mayPlace(BlockSource&, BlockPos const&)
+1b542dc  Block::setBlockState<int>(BlockState::Age)
+1b54304  Feature::_placeBlock
+```
+
+`mayPlace` is `Block::mayPlace` `0x1e6a5a0`, and its OWN implementation reads the
+cell, its four horizontal neighbours and the cell above/below — which is what
+the corpus's neighbour fan-out is. The loop tail `0x1b54420..0x1b54429` is only
+`Range::iterator::operator++` and a jump, with no branch.
+
+So the 9-vs-7 difference is inside `mayPlace`'s own neighbour scan, not in
+`place`'s own reads, and the last candidate taking the 7-read form means
+`mayPlace` returned after fewer probes there. Checking `Block::mayPlace`
+`0x1e6a5a0` against the two columns' block configuration is the remaining step —
+the corpus already records every probe it makes.
 
 ### Superseded: the constant-7 reading
 
