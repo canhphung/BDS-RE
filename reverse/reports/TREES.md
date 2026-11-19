@@ -856,6 +856,28 @@ assignment (`0x1b51213`) again is where the next attempt must start.
 With the current reading the replay reaches query 141 of 208 before diverging,
 i.e. through `_prepareSpawn`, the dirt write and the first five trunk cells.
 
+### The open contradiction
+
+`-0x34` (the `Range` argument) is assigned exactly once, at `0x1b51213`, from
+`nextInt(3) + nextInt(3) + 5`. For case 0 that is **6**. And yet the corpus's
+trunk occupies nine cells, `(-8,5..9)`, `(-9,10)`, `(-10,11..13)` — `i` from 0
+to 8.
+
+So either one of the two `nextInt(3)` draws is not what feeds the sum, or the
+corpus's nine cells are not all trunk-loop iterations. `_getMaterial` is called
+once per iteration and produces exactly one `get_block`, and insurance: if three
+of the nine reads belong to the leaf pass instead, the loop would be six and
+consistent — but the leaf pass starts only after the loop ends, at `0x1b514af`.
+
+The decisive experiment is cheap: capture a corpus case with a different seed and
+compare `height` (derivable from the writes' Y extent) against
+`nextInt(3)+nextInt(3)+5`. If they agree the loop bound is `height` and the extra
+cells belong to something else; if they disagree the sum is misread.
+
+That experiment plus a re-read of `0x1b51384` (which computes `-0x88 =
+origin.y + i`) and of the `-0x48`/`-0x4c` step accounting is what the next
+attempt should do first.
+
 ### `_placeLeafAt` 0x1b51e10
 
 ## Plan for the session that translates it
