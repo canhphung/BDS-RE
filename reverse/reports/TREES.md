@@ -450,6 +450,85 @@ The orchestration, read from `0x1b5a2c2..0x1b5a884`:
    corpus records that cell **twice**; the duplicate is deliberate, and it was
    the one write the earlier 65/66 attempt missed.
 
+## Tree subclasses: constructor table (all eight, read from the binary)
+
+Each constructor calls `TreeFeature::TreeFeature(Actor*, int leafType, int
+trunkType, bool) 0x1b59cf0`, whose ints land in `+0x18` (leafType) and `+0x1c`
+(trunkType). Values below are the actual register arguments.
+
+| Subclass | ctor | leafType | trunkType | Extra fields |
+|---|---|---:|---:|---|
+| `JungleTreeFeature` | `0x1b65d60` | 3 | 1 | — |
+| `SavannaTreeFeature` | `0x1b51170` | 0 | 0 | — |
+| `SwampTreeFeature` | `0x1b6bc60` | 0 | 0 | — |
+| `RoofTreeFeature` | `0x1b5b790` | 1 | 1 | — |
+| `FancyTreeFeature` | `0x1b4af60` | 0 | 0 | `+0x24 = 0xc`, `+0x28/%xmm2 = 0.618`, `+0x2c/%xmm1 = 0.381`, `+0x30/%xmm0 = 1.0` |
+| `MegaTreeFeature` | `0x1b55bf0(Actor*,int,int,int,int)` | 2 | 2 | `+0x24 = arg2`, `+0x28 = arg3`, `+0x2c = arg4`, `+0x30 = arg5` |
+| `MegaJungleTreeFeature` | `0x1b53380(Actor*,int,int,int,int)` | forwards all to MegaTree | | |
+| `MegaPineTreeFeature` | `0x1b4d6d0(Actor*,bool)` | via MegaTree `edx=0xd` | `ecx=0xf` | `r8d=0x1`, `r9d = bool` |
+
+The three Fancy floats were read from rodata: `0x281c5c8 = 1.0`,
+`0x2833350 = 0.381`, `0x2833354 = 0.618`.
+
+### What the type ids actually do — they change the block STATE
+
+This was measured, not assumed. The existing `jungle_tree` corpus was captured
+with `leafType = trunkType = 0` (the script hardcoded them), so it contains only
+`log:0` and `leaves:0`. Re-running the same oracle with Jungle's REAL
+constructor values (`0x1b65d60`, leafType 3, trunkType 1) produces a different
+world entirely:
+
+| Corpus | writes | `block_names` |
+|---|---:|---|
+| old (`leaf=0, trunk=0`) | 523 | `log:0`, `leaves:0` |
+| real (`leaf=3, trunk=1`) | **935** | `log:3`, `leaves:3`, `cocoa:1/2/3/5`, `vine:1/2/4/8` |
+
+So the type ids select the wood/leaf variant (jungle wood) and the cocoa/vine
+decoration follows from it. Any subclass translation MUST use its real
+constructor ids, and the old `jungle_tree` fixture is a fixture for the BASE
+feature, not for `JungleTreeFeature`.
+
+This also means `jungle_tree_place` in `src/world/tree.cpp` currently replays
+the wrong corpus: it is verified against leaf/trunk 0. The function itself is
+fine — it takes `trunk`/`leaves` as `TreeBlock` arguments, so data 3 flows
+through — but the TEST passes data 0 and the fixture was captured with 0. The
+fix is to re-export the fixture captured with the real ids and pass
+`TreeBlock{"log", 3}` / `TreeBlock{"leaves", 3}` in the test.
+
+### Oracle template for all eight subclasses
+
+`tools/re/gdb_tree_subclass_cases.py` and
+`tools/re/export_tree_subclass_reference.py` replace the per-subclass copies.
+They are driven by environment variables:
+
+| Variable | Meaning |
+|---|---|
+| `TREE_SUBCLASS_NAME` | label written into the fixture |
+| `TREE_OUT_NAME` | output file stem (`jungle` -> `jungle.json`) |
+| `TREE_CTOR` | constructor address |
+| `TREE_CTOR_MODE` | `base` (Actor*,leaf,trunk,bool) or `mega` (Actor*,int,int,int,int) |
+| `TREE_CTOR_LEAF`, `TREE_CTOR_TRUNK` | base type ids (base mode) |
+| `TREE_CTOR_EXTRA` | four ints for `+0x24/+0x28/+0x2c/+0x30` (mega mode) |
+| `TREE_PLACE` | `place(BlockSource&, BlockPos const&, Random&)` address |
+
+A run with the defaults reproduces the base `TreeFeature` shape; a run with
+Jungle's real ids produced the 935-write corpus above, which is the template's
+acceptance evidence.
+
+### What the type ids do mechanically
+
+`Block::setBlockState<int>` `0x1b4c580` passes the value to
+`BlockLegacy::setBlockState<int>(..., unsigned char)` as a **state index** on a
+block that is already fixed (`VanillaBlocks::mLog` for the trunk,
+`VanillaBlocks::mLeaves` for the leaf). So `leafType`/`trunkType` select a
+block STATE variant, not a different block.
+
+Both corpora captured so far (`tree_place`, `jungle_tree`) contain only
+`log:0` and `leaves:0`, so the variants do not surface there. A subclass whose
+type id is non-zero on a block with real state data (Roof leaf=1, Jungle
+leaf=3) is where this would show, and the corpus will record it — the exporters
+already carry the full `name:data` string.
+
 ## Tree subclasses: the two thin wrappers
 
 Two of the eight subclasses are 0x65-byte wrappers that only choose a height and
@@ -475,7 +554,86 @@ The other six (`FancyTreeFeature` `0x1b4aff0`, `SwampTreeFeature` `0x1b6bcb0`,
 bodies (0x4c3 to 0xea4 bytes) with their own leaf/trunk placement and are still
 untranslated.
 
-## Plan for the session that translates it## Tree subclasses: the two thin wrappers
+## Tree subclasses: constructor table (all eight, read from the binary)
+
+Each constructor calls `TreeFeature::TreeFeature(Actor*, int leafType, int
+trunkType, bool) 0x1b59cf0`, whose ints land in `+0x18` (leafType) and `+0x1c`
+(trunkType). Values below are the actual register arguments.
+
+| Subclass | ctor | leafType | trunkType | Extra fields |
+|---|---|---:|---:|---|
+| `JungleTreeFeature` | `0x1b65d60` | 3 | 1 | — |
+| `SavannaTreeFeature` | `0x1b51170` | 0 | 0 | — |
+| `SwampTreeFeature` | `0x1b6bc60` | 0 | 0 | — |
+| `RoofTreeFeature` | `0x1b5b790` | 1 | 1 | — |
+| `FancyTreeFeature` | `0x1b4af60` | 0 | 0 | `+0x24 = 0xc`, `+0x28/%xmm2 = 0.618`, `+0x2c/%xmm1 = 0.381`, `+0x30/%xmm0 = 1.0` |
+| `MegaTreeFeature` | `0x1b55bf0(Actor*,int,int,int,int)` | 2 | 2 | `+0x24 = arg2`, `+0x28 = arg3`, `+0x2c = arg4`, `+0x30 = arg5` |
+| `MegaJungleTreeFeature` | `0x1b53380(Actor*,int,int,int,int)` | forwards all to MegaTree | | |
+| `MegaPineTreeFeature` | `0x1b4d6d0(Actor*,bool)` | via MegaTree `edx=0xd` | `ecx=0xf` | `r8d=0x1`, `r9d = bool` |
+
+The three Fancy floats were read from rodata: `0x281c5c8 = 1.0`,
+`0x2833350 = 0.381`, `0x2833354 = 0.618`.
+
+### What the type ids do mechanically
+
+This was measured, not assumed. The existing `jungle_tree` corpus was captured
+with `leafType = trunkType = 0` (the script hardcoded them), so it contains only
+`log:0` and `leaves:0`. Re-running the same oracle with Jungle's REAL
+constructor values (`0x1b65d60`, leafType 3, trunkType 1) produces a different
+world entirely:
+
+| Corpus | writes | `block_names` |
+|---|---:|---|
+| old (`leaf=0, trunk=0`) | 523 | `log:0`, `leaves:0` |
+| real (`leaf=3, trunk=1`) | **935** | `log:3`, `leaves:3`, `cocoa:1/2/3/5`, `vine:1/2/4/8` |
+
+So the type ids select the wood/leaf variant (jungle wood) and the cocoa/vine
+decoration follows from it. Any subclass translation MUST use its real
+constructor ids, and the old `jungle_tree` fixture is a fixture for the BASE
+feature, not for `JungleTreeFeature`.
+
+This also means `jungle_tree_place` in `src/world/tree.cpp` currently replays
+the wrong corpus: it is verified against leaf/trunk 0. The function itself is
+fine — it takes `trunk`/`leaves` as `TreeBlock` arguments, so data 3 flows
+through — but the TEST passes data 0 and the fixture was captured with 0. The
+fix is to re-export the fixture captured with the real ids and pass
+`TreeBlock{"log", 3}` / `TreeBlock{"leaves", 3}` in the test.
+
+### Oracle template for all eight subclasses
+
+`tools/re/gdb_tree_subclass_cases.py` and
+`tools/re/export_tree_subclass_reference.py` replace the per-subclass copies.
+They are driven by environment variables:
+
+| Variable | Meaning |
+|---|---|
+| `TREE_SUBCLASS_NAME` | label written into the fixture |
+| `TREE_OUT_NAME` | output file stem (`jungle` -> `jungle.json`) |
+| `TREE_CTOR` | constructor address |
+| `TREE_CTOR_MODE` | `base` (Actor*,leaf,trunk,bool) or `mega` (Actor*,int,int,int,int) |
+| `TREE_CTOR_LEAF`, `TREE_CTOR_TRUNK` | base type ids (base mode) |
+| `TREE_CTOR_EXTRA` | four ints for `+0x24/+0x28/+0x2c/+0x30` (mega mode) |
+| `TREE_PLACE` | `place(BlockSource&, BlockPos const&, Random&)` address |
+
+A run with the defaults reproduces the base `TreeFeature` shape; a run with
+Jungle's real ids produced the 935-write corpus above, which is the template's
+acceptance evidence.
+
+### What the type ids do mechanically
+
+`Block::setBlockState<int>` `0x1b4c580` passes the value to
+`BlockLegacy::setBlockState<int>(..., unsigned char)` as a **state index** on a
+block that is already fixed (`VanillaBlocks::mLog` for the trunk,
+`VanillaBlocks::mLeaves` for the leaf). So `leafType`/`trunkType` select a
+block STATE variant, not a different block.
+
+Both corpora captured so far (`tree_place`, `jungle_tree`) contain only
+`log:0` and `leaves:0`, so the variants do not surface there. A subclass whose
+type id is non-zero on a block with real state data (Roof leaf=1, Jungle
+leaf=3) is where this would show, and the corpus will record it — the exporters
+already carry the full `name:data` string.
+
+## Tree subclasses: the two thin wrappers
 
 Two of the eight subclasses are 0x65-byte wrappers that only choose a height and
 delegate to the base `place`:
