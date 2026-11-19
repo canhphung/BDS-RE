@@ -26,6 +26,7 @@ struct DecorationStageResult {
     std::size_t ore_attempts = 0;
     std::size_t trees_placed = 0;
     std::size_t jungle_trees = 0;
+    std::size_t mega_trees = 0;
 };
 
 struct DecorationStageSettings {

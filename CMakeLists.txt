@@ -248,6 +248,10 @@ add_executable(jungle_tree_tests tests/unit/jungle_tree_tests.cpp)
 target_link_libraries(jungle_tree_tests PRIVATE bds_core bds_zlib)
 target_include_directories(jungle_tree_tests SYSTEM PRIVATE third_party)
 add_test(NAME jungle_tree COMMAND jungle_tree_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference/jungle_tree_bds_1.6.0.15.json)
+add_executable(mega_tree_tests tests/unit/mega_tree_tests.cpp)
+target_link_libraries(mega_tree_tests PRIVATE bds_core bds_zlib)
+target_include_directories(mega_tree_tests SYSTEM PRIVATE third_party)
+add_test(NAME mega_tree COMMAND mega_tree_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference/mega_tree_bds_1.6.0.15.json)
 
 
 add_executable(world_generator_tests tests/unit/world_generator_tests.cpp)

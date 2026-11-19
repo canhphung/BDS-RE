@@ -59,7 +59,8 @@ bool tree_prepare_spawn(DecorationRegion &, DecorationRegion::Position, int heig
 // `trunk` / `leaves` are the blocks the mapped-type lookups produce.
 bool tree_place_trunk(DecorationRegion &, DecorationRegion::Position, int height, Random &,
                       const TreeEnvironment &, bool manually_placed, bool type_flags,
-                      TreeBlock trunk = {"log", 0}, TreeBlock leaves = {"leaves", 0});
+                      TreeBlock trunk = {"log", 0}, TreeBlock leaves = {"leaves", 0},
+                      int leaf_type = 0);
 
 // The leaf-volume pass of place(...,int) 0x1b5a313..0x1b5a55d. `height` is the
 // same value the trunk stage received. Verified against
@@ -74,7 +75,7 @@ void tree_place_leaves(DecorationRegion &, DecorationRegion::Position origin, in
 bool tree_place(DecorationRegion &, DecorationRegion::Position origin, int height, Random &,
                 const TreeEnvironment &, bool manually_placed, bool type_flags,
                 TreeBlock trunk = {"log", 0}, TreeBlock leaves = {"leaves", 0},
-                TreeBlock dirt = {"dirt", 0});
+                TreeBlock dirt = {"dirt", 0}, int leaf_type = 0);
 
 // Tree subclasses that only pick a height and delegate to TreeFeature::place.
 // JungleTreeFeature::place 0x1b65db0: height = nextInt(7) + 4, then the base

@@ -173,8 +173,9 @@ bool mega_tree_place(DecorationRegion &region, DecorationRegion::Position origin
     // 0x1b55c70: nextInt(3) + 5 for the height, then delegate to the base place
     // 0x1b5a290 with the constructor's type id 2 blocks.
     const int height = mega_tree_height(random);
+    // MegaTreeFeature's constructor 0x1b55bf0 fixes leafType = trunkType = 2.
     return tree_place(region, origin, height, random, environment, manually_placed, type_flags,
-                      trunk, leaves, dirt);
+                      trunk, leaves, dirt, /*leaf_type=*/2);
 }
 
 bool jungle_tree_place(DecorationRegion &region, DecorationRegion::Position origin,
@@ -191,7 +192,8 @@ bool jungle_tree_place(DecorationRegion &region, DecorationRegion::Position orig
 
 bool tree_place(DecorationRegion &region, DecorationRegion::Position origin, int height,
                 Random &random, const TreeEnvironment &environment, bool manually_placed,
-                bool type_flags, TreeBlock trunk, TreeBlock leaves, TreeBlock dirt) {
+                bool type_flags, TreeBlock trunk, TreeBlock leaves, TreeBlock dirt,
+                int leaf_type) {
     // 0x1b5a2cc..0x1b5a2dd: _prepareSpawn first; false returns false.
     if (!tree_prepare_spawn(region, origin, height, environment, dirt))
         return false;
@@ -199,7 +201,7 @@ bool tree_place(DecorationRegion &region, DecorationRegion::Position origin, int
     // returns immediately, so a failed trunk placement makes the feature
     // SUCCEED early; only a TRUE return reaches the leaf pass.
     if (!tree_place_trunk(region, origin, height, random, environment, manually_placed,
-                          type_flags, trunk, leaves))
+                          type_flags, trunk, leaves, leaf_type))
         return true;
     // 0x1b5a30f onward: the leaf volume, whose band starts at
     // origin.y - 3 + height (0x1b5a313..0x1b5a319), then the jungle and cocoa
@@ -232,7 +234,7 @@ float tree_trunk_height_scale(bool fallen, bool type_flags, Random &random) {
 
 bool tree_place_trunk(DecorationRegion &region, DecorationRegion::Position at, int height,
                       Random &random, const TreeEnvironment &environment, bool manually_placed,
-                      bool type_flags, TreeBlock trunk, TreeBlock leaves) {
+                      bool type_flags, TreeBlock trunk, TreeBlock leaves, int leaf_type) {
     (void)region;
     (void)leaves;
     const int ox = std::get<0>(at), oy = std::get<1>(at), oz = std::get<2>(at);
@@ -244,7 +246,11 @@ bool tree_place_trunk(DecorationRegion &region, DecorationRegion::Position at, i
         fallen = random.next_int(0x50) == 0;
     // 0x1b5acad..0x1b5ad27: the trunk height scale is selected next, and the
     // nextInt(0xc) draw inside it is part of the stream.
-    const float scale = tree_trunk_height_scale(fallen, type_flags, random);
+    // 0x1b5ac96: when this+0x18 (leafType) is 2 the native code skips the whole
+    // scale selection (xorps/movss 0.0f then jmp 0x1b5ad2c), so NO nextInt(0xc)
+    // is drawn on that path.
+    const float scale = leaf_type == 2 ? 0.0f
+                                       : tree_trunk_height_scale(fallen, type_flags, random);
     (void)scale; // the corpus does not expose it: every case ends up placing
                  // `height` log blocks, so the scale does not change the writes.
     // 0x1b5ad2c..0x1b5ad52: a fallen trunk delegates to _placeFallenTrunk and

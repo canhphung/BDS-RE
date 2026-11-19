@@ -567,10 +567,16 @@ That explains the corpus: its writes are a single trunk column at the origin
 (y 4..12) plus a wide flat canopy at y 9..12, i.e. the base shape with a
 different scale — not a different body at all.
 
-`place` is therefore correctly implemented as `nextInt(3)+5` + `tree_place`; what
-is missing is threading the leafType id into `tree_place_trunk` so the `== 2`
-branch sets scale 0. Both height helpers are now split correctly
-(`mega_tree_height` for place, `mega_tree_calc_height` for _calcTreeHeigth).
+`place` is therefore correctly implemented as `nextInt(3)+5` + `tree_place`, and
+the leafType id is now threaded through: `tree_place_trunk` takes a `leaf_type`
+argument and skips the scale draw when it is 2.
+
+With that, `mega_tree` replays **16 cases, 510 placements, 152 Random words and
+1428 dependency answers** exactly. Both height helpers are split correctly
+(`mega_tree_height` for `place`, `mega_tree_calc_height` for `_calcTreeHeigth`).
+MegaTreeFeature is wired into the runtime alongside the base and Jungle
+features, rotating one of three, and a generated chunk around `(-3,-3)` of seed
+123 places one MegaTree each.
 
 ### What the type ids do mechanically
 
@@ -728,10 +734,16 @@ That explains the corpus: its writes are a single trunk column at the origin
 (y 4..12) plus a wide flat canopy at y 9..12, i.e. the base shape with a
 different scale — not a different body at all.
 
-`place` is therefore correctly implemented as `nextInt(3)+5` + `tree_place`; what
-is missing is threading the leafType id into `tree_place_trunk` so the `== 2`
-branch sets scale 0. Both height helpers are now split correctly
-(`mega_tree_height` for place, `mega_tree_calc_height` for _calcTreeHeigth).
+`place` is therefore correctly implemented as `nextInt(3)+5` + `tree_place`, and
+the leafType id is now threaded through: `tree_place_trunk` takes a `leaf_type`
+argument and skips the scale draw when it is 2.
+
+With that, `mega_tree` replays **16 cases, 510 placements, 152 Random words and
+1428 dependency answers** exactly. Both height helpers are split correctly
+(`mega_tree_height` for `place`, `mega_tree_calc_height` for `_calcTreeHeigth`).
+MegaTreeFeature is wired into the runtime alongside the base and Jungle
+features, rotating one of three, and a generated chunk around `(-3,-3)` of seed
+123 places one MegaTree each.
 
 ### What the type ids do mechanically
 
