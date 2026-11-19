@@ -161,9 +161,13 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
         // subclass end to end in the runtime.
         // Rotate the three verified tree features; the real selection comes
         // from the untranslated decorator dispatch, see above.
-        const int kind = i % 3;
+        const int kind = i % 4;
         const bool placed =
-            kind == 2
+            kind == 3
+                ? bds::savanna_tree_place(region, {tx, surface_y, tz}, ore_random,
+                                          tree_environment, TreeBlock{"log2"},
+                                          TreeBlock{"leaves2"}, TreeBlock{"dirt", 0})
+            : kind == 2
                 ? bds::mega_tree_place(region, {tx, surface_y, tz}, ore_random, tree_environment,
                                        /*manually_placed=*/false, /*type_flags=*/false,
                                        TreeBlock{"log", 2}, TreeBlock{"leaves", 2},
@@ -183,6 +187,8 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
             ++result.jungle_trees;
         if (kind == 2 && placed)
             ++result.mega_trees;
+        if (kind == 3 && placed)
+            ++result.savanna_trees;
     }
 
     result.mutations = region.take_mutations();

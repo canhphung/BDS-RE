@@ -990,8 +990,19 @@ filled. `_placeLeafAt` tests `_isFree`, which accepts `Material::isType(7)`
 duplicate write. A replay that treats every filled cell as blocked (the obvious
 test harness) suppresses those nine writes.
 
-That is the last piece: model "leaves are a free material" in the replay, not
-"any filled cell is blocked".
+That is the last piece, and with it **all 16 cases replay exactly: 675
+placements, 74 Random words, 1707 dependency answers**. `savanna_tree` is
+registered and `savanna_tree_place` is wired into `decoration_stage` alongside
+the base, Jungle and Mega features, rotating one of four. A generated chunk
+around `(-3,-3)` of seed 123 places one of each.
+
+### The lesson worth keeping
+
+Two thirds of the difficulty here was the MATERIAL MODEL, not the geometry.
+`_isFree` `0x1b5b680` accepts `Material::isType(0)` (air) and `isType(7)`
+(leaves) — so a leaf may be placed on a leaf and the corpus records a duplicate
+write at the same cell. Modelling "any filled cell blocks" silently dropped nine
+writes in case 12 and sent me looking for missing geometry that was not missing.
 
 ### The leaf volume is not a plain 3x3x3
 
