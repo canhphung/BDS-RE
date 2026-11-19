@@ -464,6 +464,39 @@ the feature/anchor rather than the walk. That is the one thing left to read.
 This is the closest the feature has come: the candidate cells, the accept map,
 the height words and the height values all line up for case 0.
 
+### THE HEIGHT BOUND, READ FROM THE BINARY
+
+`0x1b54208..0x1b54217` is
+
+```
+1b54208: mov $0x3,%esi          ; min = 3
+1b5420d: mov -0x28(%rbp),%rdi   ; &random
+1b54211: mov -0xc4(%rbp),%edx   ; max = the walk counter
+1b54217: call Random::nextInt(int, int)
+```
+
+There is **no `+2`**. The upper bound is the walk counter `-0xc4` itself, whose
+loop is `0x1b54167..0x1b541f1`:
+
+```
+1b54167: movl $0x0,-0xc4(%rbp)  ; counter = 0
+1b541bf: cmpl $0x10,-0xc4(%rbp) ; cap at 16
+1b541e8: add $0x1,%eax          ; increment after a water cell
+```
+
+So the sequence is: counter counts the water cells above the candidate, capped
+at 16; `column < 3` abandons the candidate before the draw; otherwise
+`height = nextInt(3, counter)`.
+
+This resolves everything. For case 0 the accepted candidates have a counter of
+**7**, so the bound is 7 and `nextInt(3,7)` gives the measured heights 6,4,3,4,
+3,6,3,3 exactly. For case 1 the counter reaches 8 for the seven-block column,
+so `nextInt(3,8)` can produce 7.
+
+Earlier readings of this file (`column = iterations + 1`, then `column = 5`,
+then a "constant bound of 7") were all approximating this one operand. The
+corpus data always fit; only the operand was misread.
+
 ### Superseded: the constant-7 reading
 
 Testing the height words directly settles it. For case 0 the eight placed
