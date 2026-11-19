@@ -876,6 +876,45 @@ Every value matches the corpus's trunk path `(-8,5..9)`, `(-9,10)`,
 The lesson is the same one this project keeps teaching: verify the INPUT before
 doubting the binary. A wrong seed produced a perfect-looking contradiction.
 
+### Case 0 now replays end to end; the body is multi-branch
+
+Working against the corpus got case 0 to replay completely, which pinned the
+canopy exactly:
+
+- a **3x3 plate** at `origin.y + height` (nine cells, not a 3x3x3 volume);
+- **four detached tips** at `(+-2, 0, 0)` and `(0, 0, +-2)` on the same layer,
+  giving the 13 cells the corpus records at y=14;
+- a **7x7 slab one level below** (`origin.y + height - 1`) with the four corners
+  cut AND the centre skipped, giving the 44 cells at y=13.
+
+The centre is still QUERIED (the corpus records the read) — `_placeLeafAt` looks
+at the trunk block there and `_isFree` rejects it, so nothing is placed. A replay
+that skips the cell instead of querying it desynchronises immediately.
+
+Two more details the corpus fixed:
+
+- the **dirt write is duplicated immediately after `_prepareSpawn`**
+  (`0x1b51299..0x1b512ba` writes `VanillaBlocks::mDirt`), so the write order is
+  dirt, dirt, log, ... — not a tail write as in the base feature;
+- `_isFree` rejects a cell for **both** material types a feature filled, so a
+  cell holding the trunk can never take a leaf.
+
+### Case 1 shows the body is multi-branch
+
+Case 0 alone is not the whole story. Case 1's trunk has **ten** log cells with two
+separate side branches:
+
+```
+(-8,7,-8) (-8,8,-8) (-8,9,-8) (-8,10,-8)
+(-7,11,-8) (-7,12,-8) (-7,13,-8) (-7,14,-8)
+(-9,9,-8) (-10,10,-8)      <- two extra branches off the main path
+```
+
+So `SavannaTreeFeature::place` builds a main leaning path plus additional limbs,
+which is the part of the 0xc47 bytes not yet read (the region after the slab at
+`0x1b518c0`). A replay that models only the single path reproduces case 0 and
+then produces 67 of case 1's 97 writes.
+
 ### The leaf volume is not a plain 3x3x3
 
 With the trunk path correct the replay reaches query 150, where the leaf pass
