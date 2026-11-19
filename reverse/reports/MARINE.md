@@ -497,6 +497,33 @@ Earlier readings of this file (`column = iterations + 1`, then `column = 5`,
 then a "constant bound of 7") were all approximating this one operand. The
 corpus data always fit; only the operand was misread.
 
+### With the right bound the pass reaches query 332 of 337
+
+Implementing `height = nextInt(3, counter)` with the cap and the `counter < 3`
+guard moves the pass from query 265 to **query 332** — only five queries short
+of the whole case-0 stream.
+
+The last divergence is the neighbour read order in the placement fan-out. The
+corpus's FIRST column reads
+
+```
+y-1, y, y+1, y-1, -z, +z, +x, -x, centre      (#43..#51, nine reads)
+```
+
+while the LAST column reads
+
+```
+y-1, y, y+1, y-1, -z, +z, centre              (#326..#332, seven reads)
+```
+
+so the `+x`/`-x` pair is absent in the last one. That is not a reordering: the
+shorter sequence is the PLACE-LOOP step for `k = 1` (the first post-write cell),
+which reads only the three vertical neighbours, the two z neighbours and the
+centre, while the full nine-read form belongs to the `may_place` fan-out of the
+column's first block. Separating those two shapes is the remaining work.
+
+The implementation is removed again; the corpus and this analysis remain.
+
 ### Superseded: the constant-7 reading
 
 Testing the height words directly settles it. For case 0 the eight placed
