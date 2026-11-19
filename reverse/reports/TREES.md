@@ -824,7 +824,39 @@ and when free it writes the leaf with `BlockState::MappedType` = leafType. Note
 `_isFree(Material)` tests `Material::isType(0)` or `isType(7)` only — a narrower
 test than `_placeLeaf`'s three-way check.
 
-The full body past `0x1b51300` is not yet read.
+### The trunk loop, read precisely
+
+`0x1b5132e` is `Range<int,1>(this->-0x34)` i.e. `Range(height)`, so `i` runs
+`0..height-1`. Per iteration (`0x1b51371..0x1b5142a`):
+
+1. `pos.y = origin.y + i`;
+2. if `i >= first_height` AND `steps > 0`, move `pos` by the `Direction` step for
+   `direction` (`Direction::STEP_X 0x2849d70`, `Direction::STEP_Z 0x2849d80`)
+   and decrement `steps`;
+3. if `_isFree(_getMaterial(pos))` place the trunk block there.
+
+The four draws at the head are:
+
+| Local | Expression | Case 0 value |
+|---|---|---|
+| height | `nextInt(3) + nextInt(3) + 5` | 6 |
+| `direction` (-0x44) | `nextInt(4)` | 3 |
+| `first_height` (-0x48) | `height - nextInt(4) - 1` | 2 |
+| `steps` (-0x4c) | `3 - nextInt(3)` | 2 |
+
+### Where the translation currently stands
+
+Case 0's real trunk path is nine blocks:
+`(-8,5..9)`, `(-9,10)`, `(-10,11..13)`. That is `height + steps + 1 = 9`
+levels, not `height = 6`, so the loop's real upper bound is larger than
+`Range(height)` — most likely the `Range` argument at `-0x34` is not `height`
+but `height + something`, or the loop is re-entered. Reading `-0x34`'s
+assignment (`0x1b51213`) again is where the next attempt must start.
+
+With the current reading the replay reaches query 141 of 208 before diverging,
+i.e. through `_prepareSpawn`, the dirt write and the first five trunk cells.
+
+### `_placeLeafAt` 0x1b51e10
 
 ## Plan for the session that translates it
 
