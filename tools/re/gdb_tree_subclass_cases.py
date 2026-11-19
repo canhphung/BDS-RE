@@ -332,7 +332,7 @@ void snapshot_region(void *region, const int *xyz, size_t count, const void **ou
             while len(values) < 4:
                 values.append(0)
             a, b, c, d = values
-            call(ctor_addr, 'void(*)(void*,void*,int,int,int,int,int)',
+            call(ctor_addr, 'void(*)(void*,void*,int,int,int,int)',
                  f'{feature},0,{a},{b},{c},{d}')
         else:
             call(ctor_addr, 'void(*)(void*,void*,int,int,int)',

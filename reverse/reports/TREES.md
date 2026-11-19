@@ -528,10 +528,30 @@ corpus that was taken for it hid this because it ran with type ids 0.
 
 That makes `jungle_tree_place` in `src/world/tree.cpp` incorrect as written: it
 delegates straight to `tree_place`. The Jungle body needs its own trace, the way
-Savanna and Swamp do. Task-2's "MegaTree is the second thin wrapper" premise is
-therefore also unconfirmed — MegaTree's wrapper does delegate directly, but its
-real ids will change the blocks the same way, so its corpus must be captured
-with the real ids too.
+Savanna and Swamp do.
+
+### MegaTreeFeature: also not a thin wrapper — measured
+
+`tools/re/gdb_tree_subclass_cases.py` with `TREE_CTOR_MODE=mega`,
+`TREE_CTOR=0x1b55bf0`, `TREE_CTOR_EXTRA=13,15,1,0` and `TREE_PLACE=0x1b55c70`
+produced `tests/reference/mega_tree_bds_1.6.0.15.json`: **16 cases, 510 writes,
+152 Random words**, with blocks `log:2` and `leaves:2` — the constructor's type
+id 2 does change the wood, as predicted.
+
+Replaying it through `tree_place` diverges at query 48. The corpus shows why:
+`#42..#47` read a 2x3 block of cells and `#48..#52` read five consecutive cells
+`(-10,11,-10)` to `(-10,11,-6)`, and the write groups are a 2x2 trunk (four
+columns of equal height) plus a wide flat canopy of single-block columns — not
+the base feature's single-column trunk with an octagonal dome.
+
+So `MegaTreeFeature::place` delegates to the base only after
+`_prepareTree`/`_checkIsFree`/`_makeDirtFloor` and it uses
+`_placeDoubleTrunkLeaves`, all of which are still untranslated. `mega_tree_place`
+as written (height + `tree_place`) is therefore wrong, and the fixture is kept
+unregistered until the real body exists.
+
+Both "thin wrapper" claims from the original plan are now disproven by
+measurement. The only genuinely thin parts are the two height helpers.
 
 ### What the type ids do mechanically
 
@@ -650,10 +670,30 @@ corpus that was taken for it hid this because it ran with type ids 0.
 
 That makes `jungle_tree_place` in `src/world/tree.cpp` incorrect as written: it
 delegates straight to `tree_place`. The Jungle body needs its own trace, the way
-Savanna and Swamp do. Task-2's "MegaTree is the second thin wrapper" premise is
-therefore also unconfirmed — MegaTree's wrapper does delegate directly, but its
-real ids will change the blocks the same way, so its corpus must be captured
-with the real ids too.
+Savanna and Swamp do.
+
+### MegaTreeFeature: also not a thin wrapper — measured
+
+`tools/re/gdb_tree_subclass_cases.py` with `TREE_CTOR_MODE=mega`,
+`TREE_CTOR=0x1b55bf0`, `TREE_CTOR_EXTRA=13,15,1,0` and `TREE_PLACE=0x1b55c70`
+produced `tests/reference/mega_tree_bds_1.6.0.15.json`: **16 cases, 510 writes,
+152 Random words**, with blocks `log:2` and `leaves:2` — the constructor's type
+id 2 does change the wood, as predicted.
+
+Replaying it through `tree_place` diverges at query 48. The corpus shows why:
+`#42..#47` read a 2x3 block of cells and `#48..#52` read five consecutive cells
+`(-10,11,-10)` to `(-10,11,-6)`, and the write groups are a 2x2 trunk (four
+columns of equal height) plus a wide flat canopy of single-block columns — not
+the base feature's single-column trunk with an octagonal dome.
+
+So `MegaTreeFeature::place` delegates to the base only after
+`_prepareTree`/`_checkIsFree`/`_makeDirtFloor` and it uses
+`_placeDoubleTrunkLeaves`, all of which are still untranslated. `mega_tree_place`
+as written (height + `tree_place`) is therefore wrong, and the fixture is kept
+unregistered until the real body exists.
+
+Both "thin wrapper" claims from the original plan are now disproven by
+measurement. The only genuinely thin parts are the two height helpers.
 
 ### What the type ids do mechanically
 
