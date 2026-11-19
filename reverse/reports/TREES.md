@@ -856,7 +856,43 @@ assignment (`0x1b51213`) again is where the next attempt must start.
 With the current reading the replay reaches query 141 of 208 before diverging,
 i.e. through `_prepareSpawn`, the dirt write and the first five trunk cells.
 
-### The open contradiction
+### RESOLVED: the seed was wrong, the formula is right
+
+The "contradiction" above was my own mistake: I evaluated
+`nextInt(3)+nextInt(3)+5` with the KELP case's seed instead of the savanna
+fixture's seed (`2280828816`). With the right seed:
+
+| Draw | Value | Corpus evidence |
+|---|---|---|
+| height = `nextInt(3)+nextInt(3)+5` | **9** | trunk is 9 cells, i = 0..8 |
+| `direction` = `nextInt(4)` | 1 | `Direction::STEP_X 0x2849d70 = {0,-1,0,1}`, so dx = -1: the trunk moves from x -8 to -9 to -10 |
+| `first_height` = `height-nextInt(4)-1` | 5 | trunk starts leaning at i = 5 |
+| `steps` = `3-nextInt(3)` | 2 | it leans twice (i = 5 and i = 6) |
+
+Every value matches the corpus's trunk path `(-8,5..9)`, `(-9,10)`,
+`(-10,11..13)` exactly. `Range(height)` is the loop bound after all, and
+`-0x34` is `height`.
+
+The lesson is the same one this project keeps teaching: verify the INPUT before
+doubting the binary. A wrong seed produced a perfect-looking contradiction.
+
+### The leaf volume is not a plain 3x3x3
+
+With the trunk path correct the replay reaches query 150, where the leaf pass
+begins. The corpus's leaves are not one cube:
+
+| Layer | Cells | Extent |
+|---|---:|---|
+| y = 14 (`origin.y + height`) | 13 | x -12..-8, z -10..-6 (a 3x3 plus four detached tips) |
+| y = 13 | 44 | x -13..-7, z -11..-5 (a much wider slab) |
+
+So the canopy has a small crown at the trunk top and a wide slab one level
+below. The `Range<int,1>(-1..1)` double loop seen at `0x1b514bf..0x1b51590` is
+only part of it; the four detached tips and the wide slab come from the code
+after `0x1b51619` (the three `BlockPos + operator+ -> _placeLeafAt` sequences)
+and from whatever builds the y=13 slab.
+
+That structure is what the next attempt must read next.
 
 `-0x34` (the `Range` argument) is assigned exactly once, at `0x1b51213`, from
 `nextInt(3) + nextInt(3) + 5`. For case 0 that is **6**. And yet the corpus's
