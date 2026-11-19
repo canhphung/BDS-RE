@@ -941,6 +941,36 @@ the branch is also not verified.
 That is precisely where the next attempt resumes: the loop head at `0x1b519a6`
 and the branch placement at `0x1b51a2e..0x1b51ac5`.
 
+### The branch loop, now read exactly
+
+`0x1b51ac5..0x1b51ae3` is the loop tail and it settles the accounting:
+
+```
+1b51ac5  -0x1e0 += 1
+1b51ad4  -0x1dc -= 1
+1b51ae3  jmp back to 0x1b5197d
+```
+
+so both counters advance every iteration of
+
+```
+while (-0x1e0 < height && -0x1dc > 0):
+    if (-0x1e0 >= 1): move by STEP(-0x1d4)
+    place trunk at (pos.x, origin.y + -0x1e0, pos.z) if _isFree
+```
+
+`-0x1e0` starts at `-0x1d8` (which is `first_height - nextInt(2) - 1`), and
+`-0x1dc` starts at `nextInt(3) + 1` and is the iteration budget.
+
+With that the replay reaches **63 of case 1's 97 writes** (`95` after the leaf
+volume is centred on the branch end instead of the trunk top), so only two cells
+are still missing there. Everything else — the main path, the plate, the tips,
+the slab, the double dirt write — is exact.
+
+Case 1 also confirms the branch's leaf volume is centred on the branch END
+(`origin.y + branch_y`), not on the main trunk top: its leaves sit at y 10 and 11
+while the main canopy is at 14 and 15.
+
 ### The leaf volume is not a plain 3x3x3
 
 With the trunk path correct the replay reaches query 150, where the leaf pass
