@@ -910,10 +910,36 @@ separate side branches:
 (-9,9,-8) (-10,10,-8)      <- two extra branches off the main path
 ```
 
-So `SavannaTreeFeature::place` builds a main leaning path plus additional limbs,
-which is the part of the 0xc47 bytes not yet read (the region after the slab at
-`0x1b518c0`). A replay that models only the single path reproduces case 0 and
-then produces 67 of case 1's 97 writes.
+So `SavannaTreeFeature::place` builds a main leaning path plus additional limbs.
+
+### The side-branch shape, read from `0x1b518f5..0x1b51ac5`
+
+After the slab the function builds ONE side branch:
+
+```
+0x1b518f5  nextInt(4)                        -> -0x1d4  (branch direction)
+0x1b51922  if (-0x1d4 == main direction) jump to the end, no branch at all
+0x1b5193d  nextInt(2)                        -> -0x1d8 = first_height - n - 1
+0x1b5195c  nextInt(3) + 1                    -> -0x1dc  (branch steps)
+0x1b5196a  reset -0x58/-0x50 from the origin, -0x1e0 = -0x1d8
+loop:      while (-0x1e0 < height && -0x1dc > 0):
+             if (-0x1e0 >= 1) move by STEP(-0x1d4) and ---0x1dc
+             place the trunk at (-0x58, origin.y + -0x1e0, -0x50) if _isFree
+0x1b51af2  a 3x3x3 leaf volume around the branch end (range_incl(-1,1) x3)
+```
+
+With that shape the replay reproduces **11 of the 16 cases exactly** (all of
+which are single-path or early-exit cases) and is short in the five cases that
+grow a branch: case 1 emits 89 of 97 writes, case 4 82 of 94, case 8 83 of 95,
+case 9 79 of 94 and case 12 82 of 95.
+
+So the branch loop's iteration accounting is still wrong — my attempt advanced
+the branch along `height` iterations instead of the native's
+`-0x1e0 = -0x1d8` downward-with-`-0x1dc`-budget scheme. The leaf volume after
+the branch is also not verified.
+
+That is precisely where the next attempt resumes: the loop head at `0x1b519a6`
+and the branch placement at `0x1b51a2e..0x1b51ac5`.
 
 ### The leaf volume is not a plain 3x3x3
 
