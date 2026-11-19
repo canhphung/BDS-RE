@@ -512,8 +512,26 @@ They are driven by environment variables:
 | `TREE_PLACE` | `place(BlockSource&, BlockPos const&, Random&)` address |
 
 A run with the defaults reproduces the base `TreeFeature` shape; a run with
-Jungle's real ids produced the 935-write corpus above, which is the template's
-acceptance evidence.
+Jungle's real ids produced the 935-write corpus above.
+
+### JungleTreeFeature is NOT a thin wrapper after all
+
+With the real ids the corpus diverges at query 124, and the queries just before
+it show why: `#118..#122` read five consecutive cells `(-6,13,-10)` to
+`(-6,13,-6)` — a vertical vine run hanging down a column — while the base
+`tree_place_trunk` vine pass only offers the four horizontal neighbours of each
+log with fixed data 8/2/1/4.
+
+So `JungleTreeFeature::place` does more than draw a height: it places jungle
+wood (`log:3`, `leaves:3`) and hangs vines down from the canopy. The 523-write
+corpus that was taken for it hid this because it ran with type ids 0.
+
+That makes `jungle_tree_place` in `src/world/tree.cpp` incorrect as written: it
+delegates straight to `tree_place`. The Jungle body needs its own trace, the way
+Savanna and Swamp do. Task-2's "MegaTree is the second thin wrapper" premise is
+therefore also unconfirmed — MegaTree's wrapper does delegate directly, but its
+real ids will change the blocks the same way, so its corpus must be captured
+with the real ids too.
 
 ### What the type ids do mechanically
 
@@ -616,8 +634,26 @@ They are driven by environment variables:
 | `TREE_PLACE` | `place(BlockSource&, BlockPos const&, Random&)` address |
 
 A run with the defaults reproduces the base `TreeFeature` shape; a run with
-Jungle's real ids produced the 935-write corpus above, which is the template's
-acceptance evidence.
+Jungle's real ids produced the 935-write corpus above.
+
+### JungleTreeFeature is NOT a thin wrapper after all
+
+With the real ids the corpus diverges at query 124, and the queries just before
+it show why: `#118..#122` read five consecutive cells `(-6,13,-10)` to
+`(-6,13,-6)` — a vertical vine run hanging down a column — while the base
+`tree_place_trunk` vine pass only offers the four horizontal neighbours of each
+log with fixed data 8/2/1/4.
+
+So `JungleTreeFeature::place` does more than draw a height: it places jungle
+wood (`log:3`, `leaves:3`) and hangs vines down from the canopy. The 523-write
+corpus that was taken for it hid this because it ran with type ids 0.
+
+That makes `jungle_tree_place` in `src/world/tree.cpp` incorrect as written: it
+delegates straight to `tree_place`. The Jungle body needs its own trace, the way
+Savanna and Swamp do. Task-2's "MegaTree is the second thin wrapper" premise is
+therefore also unconfirmed — MegaTree's wrapper does delegate directly, but its
+real ids will change the blocks the same way, so its corpus must be captured
+with the real ids too.
 
 ### What the type ids do mechanically
 

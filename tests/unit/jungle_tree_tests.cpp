@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
             const bool result = bds::jungle_tree_place(
                 region, origin, random, environment,
                 /*manually_placed=*/false, /*type_flags=*/false,
-                bds::TreeBlock{intern("log")}, bds::TreeBlock{intern("leaves")},
+                bds::TreeBlock{intern("log"), 3}, bds::TreeBlock{intern("leaves"), 3},
                 bds::TreeBlock{intern("dirt")});
             check(result == test.at("result").get<bool>(), "return value differs");
             check(observed_words == test.at("words").get<std::vector<std::uint32_t>>(),
