@@ -24,6 +24,14 @@ registers one test per fixture; the exceptions are listed below.
 - `seagrass_bds_1.6.0.15.json` — `SeagrassFeature::place` `0x1b6d090`, 14
   cases, 111 placements, 575 Random words. The oracle works and the corpus is
   complete; the translation has not started. See `reverse/reports/MARINE.md`.
+- `jungle_tree_real_ids_bds_1.6.0.15.json` — `JungleTreeFeature::place`
+  captured with the class's REAL constructor type ids (leafType 3, trunkType 1)
+  instead of 0. 16 cases, 935 writes, blocks `log:3`, `leaves:3`,
+  `cocoa:1/2/3/5`, `vine:1/2/4/8`. This is the corpus the Jungle translation
+  must satisfy; it diverges from the base feature at query 124 because Jungle
+  hangs vines down a column, so it is not registered until that body is
+  translated. The older `jungle_tree_bds_1.6.0.15.json` (523 writes, ids 0)
+  verifies the BASE TreeFeature path, not JungleTreeFeature.
 - `tree_leaf_gates_bds_1.6.0.15.json` — 128 recorded `nextInt(2)` gates with
   their candidate cell, draw and call decision, used to derive the leaf-volume
   rule. The rule is now verified end to end by `tree_place_leaves` (448 leaf
