@@ -784,6 +784,48 @@ The other six (`FancyTreeFeature` `0x1b4aff0`, `SwampTreeFeature` `0x1b6bcb0`,
 bodies (0x4c3 to 0xea4 bytes) with their own leaf/trunk placement and are still
 untranslated.
 
+## SavannaTreeFeature: trace started, corpus captured
+
+`SavannaTreeFeature::place 0x1b511c0` (0xc47) with one helper
+`_placeLeafAt 0x1b51e10` (0x8f). Constructor `0x1b51170` passes leafType 0,
+trunkType 0.
+
+Corpus `tests/reference/savanna_tree_bds_1.6.0.15.json`: **16 cases, 675 writes,
+74 Random words** — far fewer draws than the base feature, because the shape is
+largely deterministic once the trunk path is chosen. Blocks are `log2:0` and
+`leaves2:0`, i.e. savanna wood, and only `dirt:0` besides.
+
+### What the head of `place` does
+
+```
+0x1b511f1  nextInt(3)
+0x1b51202  nextInt(3)
+0x1b5120a  add                     ; height = nextInt(3) + nextInt(3) + 5
+0x1b51210  add $0x5
+0x1b5122d  TreeFeature::_prepareSpawn
+0x1b51250  BlockSource::getMaxHeight + a bound check
+0x1b51299  BlockPos::below()
+0x1b512ba  Feature::_placeBlock    ; dirt under the origin
+0x1b512ce  nextInt(4)              ; branch offset A
+0x1b512e8  nextInt(4)              ; branch offset B
+0x1b51308  nextInt(3)              ; two more draws feed the branch extents
+```
+
+So the height uses **two** draws, not the base feature's one, and the trunk is
+then built as a leaning path: the corpus's first case writes a trunk that walks
+from `(-8,-8)` up and sideways to `(-10,-8)`, with a wide flat canopy of
+`leaves2` layers above it — not the base feature's straight trunk plus octagonal
+dome.
+
+### `_placeLeafAt` 0x1b51e10
+
+`Feature::_getMaterial` then `TreeFeature::_isFree(Material const&) 0x1b5b680`,
+and when free it writes the leaf with `BlockState::MappedType` = leafType. Note
+`_isFree(Material)` tests `Material::isType(0)` or `isType(7)` only — a narrower
+test than `_placeLeaf`'s three-way check.
+
+The full body past `0x1b51300` is not yet read.
+
 ## Plan for the session that translates it
 
 1. `gdb_tree_cases.py` following the vegetation/clay oracle shape: construct a
