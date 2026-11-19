@@ -9,6 +9,7 @@
 
 #include "bds/world/tree.hpp"
 #include <array>
+#include <cmath>
 #include <cstdio>
 
 namespace bds {
@@ -188,6 +189,87 @@ bool jungle_tree_place(DecorationRegion &region, DecorationRegion::Position orig
     const int height = jungle_tree_height(random);
     return tree_place(region, origin, height, random, environment, manually_placed, type_flags,
                       trunk, leaves, dirt);
+}
+
+SavannaStep savanna_direction_step(int direction) {
+    static constexpr int step_x[4] = {0, -1, 0, 1};   // Direction::STEP_X 0x2849d70
+    static constexpr int step_z[4] = {1, 0, -1, 0};   // Direction::STEP_Z 0x2849d80
+    const int i = direction & 3;
+    return SavannaStep{step_x[i], step_z[i]};
+}
+
+bool savanna_place_leaf_at(DecorationRegion &region, DecorationRegion::Position at,
+                           const TreeEnvironment &environment, TreeBlock leaves) {
+    (void)region;
+    (void)environment.block(at);
+    if (!(environment.material_is(at, 0) || environment.material_is(at, 7)))
+        return false;
+    return environment.place_block(at, leaves);
+}
+
+bool savanna_tree_place(DecorationRegion &region, DecorationRegion::Position origin,
+                        Random &random, const TreeEnvironment &environment, TreeBlock trunk,
+                        TreeBlock leaves, TreeBlock dirt) {
+    const int ox = std::get<0>(origin), oy = std::get<1>(origin), oz = std::get<2>(origin);
+    const int height = random.next_int(0x3) + random.next_int(0x3) + 5;
+    if (!tree_prepare_spawn(region, origin, height, environment, dirt))
+        return false;
+    environment.place_block({ox, oy - 1, oz}, dirt);
+    const int direction = random.next_int(0x4);
+    const int first_height = height - random.next_int(0x4) - 1;
+    int steps = 3 - random.next_int(0x3);
+    const SavannaStep step = savanna_direction_step(direction);
+    int px = ox, pz = oz;
+    for (int i = 0; i < height; ++i) {
+        if (i >= first_height && steps > 0) { px += step.dx; pz += step.dz; --steps; }
+        const DecorationRegion::Position at{px, oy + i, pz};
+        (void)environment.block(at);
+        if (environment.material_is(at, 0) || environment.material_is(at, 7))
+            environment.place_block(at, trunk);
+    }
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dz = -1; dz <= 1; ++dz)
+            savanna_place_leaf_at(region, {px + dx, oy + height, pz + dz}, environment, leaves);
+    static constexpr int tips[4][2] = {{2, 0}, {-2, 0}, {0, 2}, {0, -2}};
+    for (const auto &tip : tips)
+        savanna_place_leaf_at(region, {px + tip[0], oy + height, pz + tip[1]}, environment, leaves);
+    for (int dx = -3; dx <= 3; ++dx)
+        for (int dz = -3; dz <= 3; ++dz) {
+            if (std::abs(dx) == 3 && std::abs(dz) == 3) continue;
+            savanna_place_leaf_at(region, {px + dx, oy + height - 1, pz + dz}, environment, leaves);
+        }
+    const int branch_direction = random.next_int(0x4);
+    if (branch_direction != direction) {
+        const int branch_first = first_height - random.next_int(0x2) - 1;
+        int budget = random.next_int(0x3) + 1;
+        const SavannaStep bstep = savanna_direction_step(branch_direction);
+        int bx = ox, bz = oz;
+        int branch_y = branch_first;
+        while (branch_y < height && budget > 0) {
+            if (branch_y >= 1) { bx += bstep.dx; bz += bstep.dz; }
+            const DecorationRegion::Position at{bx, oy + branch_y, bz};
+            (void)environment.block(at);
+            if (environment.material_is(at, 0) || environment.material_is(at, 7))
+                environment.place_block(at, trunk);
+            ++branch_y;
+            --budget;
+        }
+        // The corpus shows the branch canopy as a 3x3 plate at the branch end's
+        // own Y plus a wider 5x5 plate one level below (cells already filled by
+        // the trunk are rejected by _isFree, so the corner count follows).
+        for (int dx = -1; dx <= 1; ++dx)
+            for (int dz = -1; dz <= 1; ++dz)
+                savanna_place_leaf_at(region, {bx + dx, oy + branch_y, bz + dz}, environment,
+                                      leaves);
+        for (int dx = -2; dx <= 2; ++dx)
+            for (int dz = -2; dz <= 2; ++dz) {
+                if (std::abs(dx) == 2 && std::abs(dz) == 2)
+                    continue;
+                savanna_place_leaf_at(region, {bx + dx, oy + branch_y - 1, bz + dz}, environment,
+                                      leaves);
+            }
+    }
+    return true;
 }
 
 bool tree_place(DecorationRegion &region, DecorationRegion::Position origin, int height,

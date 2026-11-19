@@ -104,6 +104,14 @@ bool jungle_tree_place(DecorationRegion &, DecorationRegion::Position, Random &,
                        bool type_flags = false, TreeBlock trunk = {"log", 0},
                        TreeBlock leaves = {"leaves", 0}, TreeBlock dirt = {"dirt", 0});
 
+struct SavannaStep { int dx, dz; };
+SavannaStep savanna_direction_step(int direction);
+bool savanna_place_leaf_at(DecorationRegion &, DecorationRegion::Position,
+                           const TreeEnvironment &, TreeBlock leaves = {"leaves2", 0});
+bool savanna_tree_place(DecorationRegion &, DecorationRegion::Position, Random &,
+                        const TreeEnvironment &, TreeBlock trunk = {"log2", 0},
+                        TreeBlock leaves = {"leaves2", 0}, TreeBlock dirt = {"dirt", 0});
+
 // TreeFeature::_placeLeaf 0x1b59d60. Places leaves at `at` when the cell's
 // material is type 9, 0 or 7 (the native order); otherwise it does nothing.
 bool tree_place_leaf(DecorationRegion &, DecorationRegion::Position at,

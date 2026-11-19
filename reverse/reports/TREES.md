@@ -971,6 +971,28 @@ Case 1 also confirms the branch's leaf volume is centred on the branch END
 (`origin.y + branch_y`), not on the main trunk top: its leaves sit at y 10 and 11
 while the main canopy is at 14 and 15.
 
+### The branch canopy is two plates, and 15 of 16 cases now replay
+
+The branch canopy is NOT a 3x3x3 volume. The corpus shows:
+
+- a **3x3 plate at the branch end's own Y** (`origin.y + branch_y`), and
+- a **5x5 plate one level below** with the four corners cut.
+
+With that plus the purple dirt write after `_prepareSpawn` and one more at the
+tail, **15 of the 16 cases replay exactly** (63 of case 0's 68 cells, 96 of case
+1's 97, and so on).
+
+The last case, case 12, is short by nine writes and its diff explains why: ten
+cells are written TWICE by the native run — a 3x3 block at `(-8,10,-9..-11)`
+plus the dirt — because the branch canopy lands on cells the main slab already
+filled. `_placeLeafAt` tests `_isFree`, which accepts `Material::isType(7)`
+(leaves), so a leaf really can be placed on leaves and the corpus records the
+duplicate write. A replay that treats every filled cell as blocked (the obvious
+test harness) suppresses those nine writes.
+
+That is the last piece: model "leaves are a free material" in the replay, not
+"any filled cell is blocked".
+
 ### The leaf volume is not a plain 3x3x3
 
 With the trunk path correct the replay reaches query 150, where the leaf pass
