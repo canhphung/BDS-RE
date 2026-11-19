@@ -32,6 +32,12 @@ registers one test per fixture; the exceptions are listed below.
   hangs vines down a column, so it is not registered until that body is
   translated. The older `jungle_tree_bds_1.6.0.15.json` (523 writes, ids 0)
   verifies the BASE TreeFeature path, not JungleTreeFeature.
+- `swamp_tree_bds_1.6.0.15.json` — `SwampTreeFeature::place` `0x1b6bcb0`,
+  16 cases, 1687 writes, 4496 Random words. Oracle complete; translation not
+  started. See `reverse/reports/TREES.md`.
+- `roof_tree_bds_1.6.0.15.json` — `RoofTreeFeature::place` `0x1b5b7e0`,
+  16 cases, 1424 writes, 305 Random words. Oracle complete; translation not
+  started.
 - `tree_leaf_gates_bds_1.6.0.15.json` — 128 recorded `nextInt(2)` gates with
   their candidate cell, draw and call decision, used to derive the leaf-volume
   rule. The rule is now verified end to end by `tree_place_leaves` (448 leaf

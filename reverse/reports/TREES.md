@@ -996,6 +996,30 @@ registered and `savanna_tree_place` is wired into `decoration_stage` alongside
 the base, Jungle and Mega features, rotating one of four. A generated chunk
 around `(-3,-3)` of seed 123 places one of each.
 
+### Three of eight subclasses are done; the remaining corpora are captured
+
+| Subclass | Status | Corpus |
+|---|---|---|
+| `TreeFeature` (base) | DONE — 511 placements | `tree_place_bds_1.6.0.15.json` |
+| `JungleTreeFeature` | DONE — corpus is base-feature shaped (523), real ids captured separately | `jungle_tree_bds_1.6.0.15.json`, `jungle_tree_real_ids_bds_1.6.0.15.json` |
+| `MegaTreeFeature` | DONE — 510 placements | `mega_tree_bds_1.6.0.15.json` |
+| `SavannaTreeFeature` | DONE — 675 placements | `savanna_tree_bds_1.6.0.15.json` |
+| `SwampTreeFeature` | corpus ready, untranslated | `swamp_tree_bds_1.6.0.15.json` — **16 cases, 1687 writes, 4496 words**, 516 vine writes (types 1/2/4/8) plus 1112 leaves |
+| `RoofTreeFeature` | corpus ready, untranslated | `roof_tree_bds_1.6.0.15.json` — **16 cases, 1424 writes, 305 words**, 340 `log2:1`, 959 `leaves2:1`, 85 vine |
+| `FancyTreeFeature` | not captured | ctor `0x1b4af60`, place `0x1b4aff0`, 10 helpers |
+| `MegaPineTreeFeature` | not captured | ctor `0x1b4d6d0(Actor*,bool)`, place `0x1b4d740` |
+| `MegaJungleTreeFeature` | not captured | ctor `0x1b53380`, place `0x1b533e0` |
+
+What the two captured-but-untranslated corpora already tell the next session:
+
+- **Swamp** is dominated by vines hanging DOWN in columns (516 vine writes), so
+  its body is the base tree plus a vine-cascade pass — closer to
+  `SavannaTreeFeature`'s shape than to a wrapper. Its height is
+  `nextInt(4) + 5`, read at `0x1b6bcef..0x1b6bcf7`.
+- **Roof** writes a mix of `log2:1` and `leaves2:1` with a small vine pass. Its
+  head is two `nextInt` draws then `_prepareSpawn` then a `getMaxHeight` check —
+  the same opening as Savanna.
+
 ### The lesson worth keeping
 
 Two thirds of the difficulty here was the MATERIAL MODEL, not the geometry.
