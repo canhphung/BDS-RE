@@ -1177,10 +1177,34 @@ loop** matching `-0x150`, `-0x128` and `-0xf8`, followed by a plain
 a full 3-D volume (not four flat plates) whose innermost body runs the corner
 roll at `0x1b6c44b` on every iteration — hence hundreds of words.
 
-That nested-volume walk is the one thing still unread, and it is exactly what
-the next attempt needs from `0x1b6c28e..0x1b6c510`. With the head, the trunk,
-the `_addVine` cascade and the four face gates already pinned, this is the last
-blocking piece.
+That nested walk is now read, and it is the base dome loop with a larger base
+radius:
+
+```
+0x1b6c230..0x1b6c250  outer = range_incl(origin.y + height - 3, origin.y + height)
+0x1b6c2b8..0x1b6c300  half  = 3 - rel/2      // 3, 3, 2, 2
+0x1b6c395             inner = range_incl(...)
+0x1b6c44b             corner roll: nextInt(2), inside the innermost body
+```
+
+which reproduces the corpus exactly: 7x7 at the two lower layers and 5x5 at the
+two upper ones, with the layer counts 49/48/24/21 falling out because a corner
+that loses its `nextInt(2)` roll is skipped. It is `tree_place_leaves` with base
+3 instead of base 2, so `swamp_tree_place` can reuse `tree_place_leaf`.
+
+**A second, separate loop follows the canopy**: `0x1b6c510` runs
+`range<int,1>(height)`, and its body does `BlockPos::above(i)`, `_getMaterial`,
+`_isFree` `0x1b5b680` and `_placeBlock` (`0x1b6c5e6..0x1b6c65f`). That is a
+per-height pass around the trunk column, and it is what reads the ten
+off-canopy vine candidate cells the corpus shows at y = 5: `(-4,-3) (-4,3)
+(0,4) (1,-4) (2,-4) (4,3)` relative to the origin.
+
+So the shape is: waterlogged head -> one `nextInt(4)+5` height -> 8-log trunk ->
+7x7/7x7/5x5/5x5 dome with corner rolls -> a `range(height)` pass around the
+trunk -> four `nextInt(4)`-gated `_addVine` faces. A replay built from that
+already matches the trunk 8/8, the dirt 1/1 and 131 of 142 leaves with zero
+spurious writes. The vine writes (0 of 67) are the one part still open, and the
+ten candidate cells above are the evidence needed to finish them.
 
 ### The lesson worth keeping
 
