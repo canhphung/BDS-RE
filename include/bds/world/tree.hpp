@@ -41,6 +41,8 @@ struct TreeEnvironment {
     // Feature::_placeBlock 0x1b6ebd0. Returns the native bool: false when the
     // write did not change the cell (for example placing leaves on leaves).
     std::function<bool(DecorationRegion::Position, TreeBlock)> place_block;
+    // BlockSource::isSolidBlockingBlock 0x1c5aea0, used by the swamp canopy.
+    std::function<bool(DecorationRegion::Position)> is_solid_blocking;
     // Feature::_isEmptyBlock 0x1b6ece0, used by the vine pass.
     std::function<bool(DecorationRegion::Position)> is_empty;
     // Block::getMaterial 0x1e68cf0 through Material::isType 0x1c56be0, as
@@ -111,6 +113,13 @@ bool savanna_place_leaf_at(DecorationRegion &, DecorationRegion::Position,
 bool savanna_tree_place(DecorationRegion &, DecorationRegion::Position, Random &,
                         const TreeEnvironment &, TreeBlock trunk = {"log2", 0},
                         TreeBlock leaves = {"leaves2", 0}, TreeBlock dirt = {"dirt", 0});
+
+// SwampTreeFeature::_addVine 0x1b6cb60 and place 0x1b6bcb0.
+bool swamp_add_vine(DecorationRegion &, DecorationRegion::Position, int direction,
+                    const TreeEnvironment &, TreeBlock vine = {"vine", 0});
+bool swamp_tree_place(DecorationRegion &, DecorationRegion::Position, Random &,
+                      const TreeEnvironment &, TreeBlock trunk = {"log", 0},
+                      TreeBlock leaves = {"leaves", 0}, TreeBlock dirt = {"dirt", 0});
 
 // TreeFeature::_placeLeaf 0x1b59d60. Places leaves at `at` when the cell's
 // material is type 9, 0 or 7 (the native order); otherwise it does nothing.

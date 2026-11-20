@@ -256,6 +256,10 @@ add_executable(savanna_tree_tests tests/unit/savanna_tree_tests.cpp)
 target_link_libraries(savanna_tree_tests PRIVATE bds_core bds_zlib)
 target_include_directories(savanna_tree_tests SYSTEM PRIVATE third_party)
 add_test(NAME savanna_tree COMMAND savanna_tree_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference/savanna_tree_bds_1.6.0.15.json)
+add_executable(swamp_tree_tests tests/unit/swamp_tree_tests.cpp)
+target_link_libraries(swamp_tree_tests PRIVATE bds_core bds_zlib)
+target_include_directories(swamp_tree_tests SYSTEM PRIVATE third_party)
+add_test(NAME swamp_tree COMMAND swamp_tree_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference/swamp_tree_bds_1.6.0.15.json)
 
 
 add_executable(world_generator_tests tests/unit/world_generator_tests.cpp)

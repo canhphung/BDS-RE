@@ -33,8 +33,8 @@ registers one test per fixture; the exceptions are listed below.
   translated. The older `jungle_tree_bds_1.6.0.15.json` (523 writes, ids 0)
   verifies the BASE TreeFeature path, not JungleTreeFeature.
 - `swamp_tree_bds_1.6.0.15.json` — `SwampTreeFeature::place` `0x1b6bcb0`,
-  16 cases, 1687 writes, 4496 Random words. Oracle complete; translation not
-  started. See `reverse/reports/TREES.md`.
+  16 cases, 1687 writes, 4496 Random words. Replayed exactly by
+  `swamp_tree_tests`. See `reverse/reports/TREES.md`.
 - `roof_tree_bds_1.6.0.15.json` — `RoofTreeFeature::place` `0x1b5b7e0`,
   16 cases, 1424 writes, 305 Random words. Oracle complete; translation not
   started.

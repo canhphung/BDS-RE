@@ -99,7 +99,7 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
     };
     // Grass spread on the surface, then a flower and a reed attempt, matching
     // the feature set the vegetation corpus covers.
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 5; ++i) {
         const auto at = DecorationRegion::Position{ox + 2 + i * 4, 5, oz + 2 + i * 4};
         (void)place_tall_grass(region, at, feature_block(terrain_block::grass), ore_random,
                               vegetation_environment);
@@ -131,19 +131,32 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
     tree_environment.place_block = [&](DecorationRegion::Position p, TreeBlock b) {
         return region.set_block(p, TerrainBlock{b.name, b.data}, 3);
     };
+    tree_environment.is_solid_blocking = [&](DecorationRegion::Position p) {
+        const auto name = region.block(p).name;
+        return std::strcmp(name, "air") != 0 && std::strcmp(name, "leaves") != 0 &&
+               std::strcmp(name, "vine") != 0;
+    };
     tree_environment.material_is = [&](DecorationRegion::Position p, int type) {
         const auto name = region.block(p).name;
         if (type == 0)
             return std::strcmp(name, "air") == 0;
+        if (type == 2) // ground a swamp tree can stand on
+            return std::strcmp(name, "grass") == 0 || std::strcmp(name, "dirt") == 0;
+        if (type == 3)
+            return std::strcmp(name, "vine") == 0;
+        if (type == 4) // sand
+            return std::strcmp(name, "sand") == 0;
+        if (type == 5)
+            return std::strcmp(name, "grass") == 0 || std::strcmp(name, "dirt") == 0;
         if (type == 7)
             return std::strcmp(name, "leaves") == 0;
         if (type == 9)
-            return std::strcmp(name, "grass") == 0;
+            return std::strcmp(name, "log") == 0;
         return false;
     };
     // Four tree attempts on the chunk's surface, at fixed offsets so the stage
     // stays deterministic and reproducible.
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 5; ++i) {
         const int tx = ox + 3 + i * 3, tz = oz + 4 + i * 2;
         int surface_y = 0;
         for (int y = 100; y >= 1; --y) {
@@ -161,9 +174,13 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
         // subclass end to end in the runtime.
         // Rotate the three verified tree features; the real selection comes
         // from the untranslated decorator dispatch, see above.
-        const int kind = i % 4;
+        const int kind = i % 5;
         const bool placed =
-            kind == 3
+            kind == 4
+                ? bds::swamp_tree_place(region, {tx, surface_y, tz}, ore_random,
+                                        tree_environment, TreeBlock{"log"},
+                                        TreeBlock{"leaves"}, TreeBlock{"dirt", 0})
+            : kind == 3
                 ? bds::savanna_tree_place(region, {tx, surface_y, tz}, ore_random,
                                           tree_environment, TreeBlock{"log2"},
                                           TreeBlock{"leaves2"}, TreeBlock{"dirt", 0})
@@ -189,6 +206,8 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
             ++result.mega_trees;
         if (kind == 3 && placed)
             ++result.savanna_trees;
+        if (kind == 4 && placed)
+            ++result.swamp_trees;
     }
 
     result.mutations = region.take_mutations();

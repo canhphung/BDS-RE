@@ -3,8 +3,11 @@
 Reference: unchanged Linux BDS 1.6.0.15, SHA-256
 `69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad`.
 
-Status: **traced, not translated, no corpus yet.** Recorded so the next
-session can go straight to the oracle instead of re-reading the binary.
+Status: **the base class and five of the eight subclasses are translated and
+replay their corpora exactly** — `TreeFeature`, `JungleTreeFeature`,
+`MegaTreeFeature`, `SavannaTreeFeature` and `SwampTreeFeature` (1687
+placements). `RoofTreeFeature`'s corpus is captured; `FancyTreeFeature`,
+`MegaPineTreeFeature` and `MegaJungleTreeFeature` are not captured yet.
 
 ## Methods in `TreeFeature` and their sizes
 
@@ -1004,7 +1007,7 @@ around `(-3,-3)` of seed 123 places one of each.
 | `JungleTreeFeature` | DONE — corpus is base-feature shaped (523), real ids captured separately | `jungle_tree_bds_1.6.0.15.json`, `jungle_tree_real_ids_bds_1.6.0.15.json` |
 | `MegaTreeFeature` | DONE — 510 placements | `mega_tree_bds_1.6.0.15.json` |
 | `SavannaTreeFeature` | DONE — 675 placements | `savanna_tree_bds_1.6.0.15.json` |
-| `SwampTreeFeature` | corpus ready, untranslated | `swamp_tree_bds_1.6.0.15.json` — **16 cases, 1687 writes, 4496 words**, 516 vine writes (types 1/2/4/8) plus 1112 leaves |
+| `SwampTreeFeature` | **DONE — 1687 placements, 4496 words, 6282 answers** | `swamp_tree_bds_1.6.0.15.json` |
 | `RoofTreeFeature` | corpus ready, untranslated | `roof_tree_bds_1.6.0.15.json` — **16 cases, 1424 writes, 305 words**, 340 `log2:1`, 959 `leaves2:1`, 85 vine |
 | `FancyTreeFeature` | not captured | ctor `0x1b4af60`, place `0x1b4aff0`, 10 helpers |
 | `MegaPineTreeFeature` | not captured | ctor `0x1b4d6d0(Actor*,bool)`, place `0x1b4d740` |
@@ -1540,3 +1543,64 @@ attempt should do first.
 and snow features (see [DECORATE.md](DECORATE.md)). The tree family is the
 largest single consumer, so translating it unblocks both the decorator and the
 `postProcess` integration that step 5 needs.
+
+## SwampTreeFeature: COMPLETE
+
+`SwampTreeFeature::place 0x1b6bcb0` and its helper `_addVine 0x1b6cb60` are
+translated and replay the whole corpus exactly: **16 of 16 cases, 1687
+placements, 4496 Random words, 6282 dependency answers**. `swamp_tree` is
+registered in CMake and `swamp_tree_place` is wired into `decoration_stage`
+alongside the base, Jungle, Mega and Savanna features, rotating one of five.
+
+### The full body, in order
+
+1. `height = nextInt(4) + 5` — ONE draw, at `0x1b6bcef`.
+2. **Anchor test** `0x1b6bd1b..0x1b6bdec`: read `origin.below()`;
+   `_getMaterial(...).isType(5)` succeeds, otherwise read the block again and
+   compare `getLegacyBlock()` with `VanillaBlockTypes::mLog`; on success drop the
+   origin one cell.
+3. **Ceiling test** `0x1b6be0d..0x1b6be1d`: `origin.y + height` must be below
+   `BlockSource::getMaxHeight`.
+4. **Anchor-cell test**: read `origin` itself; if it is not air, return false.
+   That is exactly the three-query cases (3, 7, 11, 15).
+5. **Clearance walk** `0x1b6be2c..0x1b6c10b`: for every layer `y` from
+   `origin.y + 1` to `origin.y + height + 1` the half-width is
+   `1` when `y <= origin.y + height - 2` and `3` otherwise
+   (`0x1b6bea1..0x1b6bed5` computes the 0/1/3 select). Every cell of that square
+   is read once; `isSolidBlockingBlock` or a non-air material clears `grows`.
+6. **Ground-material test** `0x1b6c10b..0x1b6c119`: the block under the origin
+   must be a material a swamp tree accepts. The corpus splits perfectly on it —
+   grass and dirt proceed, sand and stone return false, and the sand cases spend
+   their last recorded query re-reading `origin.below()`.
+7. **Dirt** `0x1b6c22b`.
+8. **Canopy dome**, written BEFORE the trunk (the corpus's write order is
+   dirt -> leaves -> log -> vine): four layers at `origin.y + height - 3 .. +0`,
+   `half = 2 - rel/2` giving 3, 3, 2, 2; a corner survives only when
+   `nextInt(2) != 0` AND `rel != 0`; any other cell needs
+   `!isSolidBlockingBlock`.
+9. **Trunk column** of `height` logs, overwriting the canopy cells it occupies
+   (case 0 writes `(-8,10..12,-8)` twice, once as a leaf and once as a log).
+10. **Vine rim walk** `0x1b6c551..0x1b6caf3`: the same three nested loops run
+    again; each cell that is now a LEAF tests its four horizontal neighbours,
+    each behind its own `nextInt(4)` gate, and a survivor gets a cascade.
+11. `_addVine` places one vine with the caller's direction, then up to four more
+    straight down. The loop reads the cell BEFORE testing the count, so it
+    always consumes one read past the last cell it writes — that extra read is
+    what made the query stream one short until it was modelled.
+
+### Two facts only the disassembly could give
+
+- **The corner condition is `rel != 0`, not a random test alone**, so corners
+  are skipped on the TOP canopy layer. That is why the top 5x5 keeps 21 of 25
+  while the layer below loses exactly one to `nextInt(2)`.
+- **The clearance walk's 0/1/3 half-width select** reproduces the recorded query
+  counts arithmetically: `3 + sum((2r+1)^2)` equals 205 for cases 2/10/14, 178
+  for case 6 and the four stone cases stop at 3. No other model fits.
+
+### The dependency harness lesson
+
+The corpus's query answers are all zero; the world each case ran against is
+`scenes[case.scene]`, a zlib+base64 `<hhhH>` cell list. The test decodes those
+scenes, answers every `get_block` from them, and applies each `place_block` as
+the replay runs, so the translated feature sees the same world the original did
+including the cells it has just written.

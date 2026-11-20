@@ -28,6 +28,7 @@ struct DecorationStageResult {
     std::size_t jungle_trees = 0;
     std::size_t mega_trees = 0;
     std::size_t savanna_trees = 0;
+    std::size_t swamp_trees = 0;
 };
 
 struct DecorationStageSettings {

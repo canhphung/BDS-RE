@@ -10,6 +10,7 @@
 #include "bds/world/tree.hpp"
 #include <array>
 #include <cmath>
+#include <cmath>
 #include <cstdio>
 
 namespace bds {
@@ -267,6 +268,138 @@ bool savanna_tree_place(DecorationRegion &region, DecorationRegion::Position ori
                     continue;
                 savanna_place_leaf_at(region, {bx + dx, oy + branch_y - 1, bz + dz}, environment,
                                       leaves);
+            }
+    }
+    return true;
+}
+
+bool swamp_add_vine(DecorationRegion &region, DecorationRegion::Position at, int direction,
+                    const TreeEnvironment &environment, TreeBlock vine) {
+    (void)region;
+    // 0x1b6cb60: one vine with the caller's direction, then up to four more
+    // straight down while _getMaterial reports isType(0).
+    environment.place_block(at, TreeBlock{vine.name, static_cast<std::uint16_t>(direction)});
+    int y = std::get<1>(at) - 1;
+    for (int count = 4;; --count, --y) {
+        const DecorationRegion::Position pos{std::get<0>(at), y, std::get<2>(at)};
+        // The READ comes first (0x1b6cbf0) and the count test second
+        // (0x1b6cc14), so the loop always reads one cell past the last one it
+        // places. That extra read is visible in the corpus.
+        (void)environment.block(pos);
+        if (!environment.material_is(pos, 0))
+            break;
+        if (count <= 0)
+            break;
+        environment.place_block(pos, TreeBlock{vine.name, static_cast<std::uint16_t>(direction)});
+    }
+    return true;
+}
+
+bool swamp_tree_place(DecorationRegion &region, DecorationRegion::Position origin,
+                      Random &random, const TreeEnvironment &environment, TreeBlock trunk,
+                      TreeBlock leaves, TreeBlock dirt) {
+    const int ox = std::get<0>(origin), oy = std::get<1>(origin), oz = std::get<2>(origin);
+    // 0x1b6bcef..0x1b6bcf7: height = nextInt(4) + 5 — ONE draw.
+    const int height = random.next_int(0x4) + 5;
+    // 0x1b6bd1b..0x1b6bdec: anchor test on origin.below().
+    (void)environment.block({ox, oy - 1, oz});
+    const bool solid_ground = environment.material_is({ox, oy - 1, oz}, 5);
+    if (!solid_ground)
+        (void)environment.block({ox, oy - 1, oz});
+    if (oy + height >= environment.max_height())
+        return false;
+    // 0x1b6be2c..0x1b6c10b: clearance walk. r is 0 at the anchor layer, 1 up to
+    // height-2, and 3 above that (0x1b6bea1..0x1b6bed5 selects 0/1/3).
+    // The anchor layer is a single cell, and if it is not air the feature
+    // returns IMMEDIATELY with the three reads already spent (cases 3, 7, 11 and
+    // 15 are exactly 3 queries: below, below-or-log, origin).
+    {
+        const DecorationRegion::Position at{ox, oy, oz};
+        (void)environment.block(at);
+        if (!environment.material_is(at, 0))
+            return false;
+    }
+    bool grows = true;
+    for (int y = oy + 1; y <= oy + height + 1; ++y) {
+        const int r = (y <= oy + height - 2 ? 1 : 3);
+        for (int dx = -r; dx <= r; ++dx)
+            for (int dz = -r; dz <= r; ++dz) {
+                const DecorationRegion::Position at{ox + dx, y, oz + dz};
+                (void)environment.block(at);
+                if (environment.is_solid_blocking && environment.is_solid_blocking(at)) {
+                    grows = false;
+                } else if (!environment.material_is(at, 0)) {
+                    grows = false;
+                }
+            }
+    }
+    if (!grows)
+        return false;
+    // 0x1b6c10b..0x1b6c119: the anchor material must support a swamp tree.
+    (void)environment.block({ox, oy - 1, oz});
+    if (!environment.material_is({ox, oy - 1, oz}, 2))
+        return false;
+    // 0x1b6c22b: dirt under the origin.
+    environment.place_block({ox, oy - 1, oz}, dirt);
+    // Canopy dome BEFORE the trunk (the corpus's write order).
+    for (int layer = 0; layer < 4; ++layer) {
+        const int y = oy + height - 3 + layer;
+        const int rel = layer - 3;
+        const int half = 2 - rel / 2;
+        for (int dx = -half; dx <= half; ++dx)
+            for (int dz = -half; dz <= half; ++dz) {
+                const DecorationRegion::Position at{ox + dx, y, oz + dz};
+                if (std::abs(dx) == half && std::abs(dz) == half) {
+                    if (random.next_int(0x2) == 0 || rel == 0)
+                        continue;
+                } else if (environment.is_solid_blocking &&
+                           environment.is_solid_blocking(at)) {
+                    continue;
+                }
+                (void)environment.block(at);
+                if (environment.material_is(at, 0) || environment.material_is(at, 7) ||
+                    environment.material_is(at, 9))
+                    environment.place_block(at, leaves);
+            }
+    }
+    // Trunk column AFTER the canopy.
+    for (int i = 0; i < height; ++i) {
+        const DecorationRegion::Position at{ox, oy + i, oz};
+        (void)environment.block(at);
+        if (environment.material_is(at, 0) || environment.material_is(at, 7) ||
+            environment.material_is(at, 9))
+            environment.place_block(at, trunk);
+    }
+    // Vine rim walk.
+    for (int layer = 0; layer < 4; ++layer) {
+        const int y = oy + height - 3 + layer;
+        const int rel = layer - 3;
+        const int half = 2 - rel / 2;
+        for (int dx = -half; dx <= half; ++dx)
+            for (int dz = -half; dz <= half; ++dz) {
+                const DecorationRegion::Position at{ox + dx, y, oz + dz};
+                (void)environment.block(at);
+                if (!environment.material_is(at, 7))
+                    continue;
+                // Order of the four _addVine sites is west, east, north, south
+                // of the LEAF, and the direction data is fixed by the corpus:
+                //   vine at leaf+(-1,0) -> data 8
+                //   vine at leaf+(+1,0) -> data 2
+                //   vine at leaf+(0,-1) -> data 1
+                //   vine at leaf+(0,+1) -> data 4
+                static constexpr struct {
+                    int dx, dz, direction;
+                } sides[4] = {{-1, 0, 8}, {1, 0, 2}, {0, -1, 1}, {0, 1, 4}};
+                for (const auto &side : sides) {
+                    if (random.next_int(0x4) != 0)
+                        continue;
+                    const DecorationRegion::Position vine_at{std::get<0>(at) + side.dx, y,
+                                                            std::get<2>(at) + side.dz};
+                    (void)environment.block(vine_at);
+                    if (!environment.material_is(vine_at, 0))
+                        continue;
+                    swamp_add_vine(region, vine_at, side.direction, environment);
+                }
             }
     }
     return true;

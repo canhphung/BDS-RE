@@ -44,9 +44,12 @@ not extended.
 `_prepareSpawn` `0x1b59e30` (8 placements, 919 answers), `_placeTrunk`
 `0x1b5ac20` (87 placements, 40 words), `_placeLeaf` `0x1b59d60` (30 cases),
 the leaf volume (448 cells) and `place` `0x1b5a290` (511 placements). Plus
-`JungleTreeFeature` `0x1b65db0` (523 placements through the subclass) wired into
-the runtime. Six subclasses remain, from `FancyTreeFeature` `0x1b4aff0` to
-`RoofTreeFeature` `0x1b5b7e0`.
+`JungleTreeFeature` `0x1b65db0` (523 placements through the subclass),
+`MegaTreeFeature` `0x1b55c70` (510 placements), `SavannaTreeFeature` `0x1b511c0`
+(675 placements) and `SwampTreeFeature` `0x1b6bcb0` (1687 placements, 516 of
+them vines) wired into the runtime. Four subclasses remain: `FancyTreeFeature`
+`0x1b4aff0`, `RoofTreeFeature` `0x1b5b7e0`, `MegaPineTreeFeature` `0x1b4d740`
+and `MegaJungleTreeFeature` `0x1b533e0`.
 
 **Marine:** none translated, but two corpora are captured and analysed:
 - `kelp_bds_1.6.0.15.json` — 14 cases, 583 placements, 683 words. The draw
@@ -96,8 +99,11 @@ chunk `(0,0)` of seed 123), clay, vegetation, trees (20 logs + 195 leaves in
    the candidate body.
 2. **Finish Seagrass** (`MARINE.md`): map is complete; resolve which Random the
    `nextInt(0x14)` gate uses.
-3. **Tree subclasses**, easiest first: `MegaTreeFeature`'s height wrapper is
-   already translated; `JungleTreeFeature` is the template that worked.
+3. **Tree subclasses**, easiest first: base, Jungle, MegaTree, Savanna and Swamp
+   are done and replay their corpora exactly; `RoofTreeFeature` and
+   `SwampTreeFeature` corpora are captured. Use the parameterised oracle
+   (`TREE_SUBCLASS_NAME` / `TREE_CTOR` / `TREE_PLACE`) and the scene-decoding
+   test harness Swamp established.
 4. Only then attempt `OverworldDecorator::decorate`, and only after enough
    features exist that no stub is needed.
 5. MonsterRoom and mob spawning need a block-entity/spawner layer that does not
