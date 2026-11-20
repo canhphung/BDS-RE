@@ -1549,8 +1549,42 @@ for (dx in range_incl(-extent, extent))
         if (_isFree(_getMaterial(source, p))) _placeBlock(source, p, block)
 ```
 
-So a foliage layer is a rounded disc of radius `shape`. The nine helpers still
-unread are `_makeTrunk`, `_makeBranches`, `_limb` and `_trimBranches`.
+So a foliage layer is a rounded disc of radius `shape`.
+
+### `_makeTrunk(BlockSource&, BlockPos const&, int) 0x1b4b9c0` (0x17f) — complete
+
+Four `_limb` calls from the trunk base to `pos.above(n)`, in the order
+north/east/south/west, each with `VanillaBlocks::mLog` (`0x34a8618`):
+
+```
+top = pos.above(n)
+_limb(source, pos, top,                        mLog)   // 0x1b4ba1f
+_limb(source, pos.east(),  top.east(),         mLog)   // 0x1b4ba77
+_limb(source, pos.south(), top.east().south(), mLog)   // 0x1b4bade
+_limb(source, pos.east(),  top.south(),        mLog)   // 0x1b4bb31
+```
+
+(The exact corner expressions are what the `east()`/`south()` call sequence at
+`0x1b4ba4b..0x1b4bb31` builds; the four limbs thicken the trunk into 2x2.)
+
+### `_limb(BlockSource&, BlockPos const&, BlockPos const&, Block const&) 0x1b4c070` (0x244) — partial
+
+```
+delta = BlockPos(0,0,0).offset(-end.x, -end.y, -end.z)   // 0x1b4c0ce
+steps = _getSteps(delta)                                  // 0x1b4c0de
+fx = delta.x/(float)steps; fy = ...; fz = ...             // same shape as _checkLine
+for (i in range_incl(0, steps - 1))                       // 0x1b4c122
+    p = end.offset(...)                                   // 0x1b4c1be
+    dir = max(abs(dx), abs(dz))                           // 0x1b4c1d5..0x1b4c1ff
+    block = base->setBlockState(BlockState::Direction, dir)  // 0x1b4c26d
+    _placeBlock(source, p, block)                         // 0x1b4c292
+```
+
+So `_limb` draws a 3-D Bresenham line of `mLog` with a `Direction` state chosen
+from the dominant horizontal axis. That is why the corpus contains `log:0`,
+`log:4` and `log:8`: the three direction states.
+
+`_makeBranches 0x1b4bb40` and `_trimBranches 0x1b4c2c0` are still unread.
 
 Addresses for the next attempt, all confirmed by `nm`:
 
