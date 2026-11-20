@@ -14,8 +14,9 @@ order the server ran them:
   chunk (ChunkViewSource bounds min + 1), with the state (LevelChunk +0x68)
   and heightmap (+0xd18, 256 shorts, index z * 16 + x) of each loaded chunk
   of the area;
-- {"e": "decorate", "t", "biome"}: the Biome::decorate vcall 0x1b3955e
-  (rdi = the Biome at LevelChunk::getMax);
+- {"e": "decorate", "t", "biome", "plains_flowers", "plains_grass"}: the
+  Biome::decorate vcall 0x1b3955e (rdi = the Biome at LevelChunk::getMax),
+  with the plains decorator's current flower and grass counts;
 - {"e": "end", "t"}: postProcess 0x1b39804, after tickAllPendingTicks;
 - {"e": "set", "t", "x", "y", "z", "b", "l"}: a write of block "name:data"
   at world position x, y, z on layer l (0 setBlock, 1 setExtraBlock), with
@@ -199,8 +200,15 @@ class Begin(gdb.Breakpoint):
 
 
 class Decorate(gdb.Breakpoint):
+    # Also records the plains decorator's flower/grass counts (+0x1e8, +0x1ec):
+    # PlainsBiome::Decorator::decorate rewrites them per chunk and
+    # OverworldDecorator::decorate 0x1da5615 reads the plains grass count
+    # for every biome (VanillaBiomes::mPlains 0x348a748, decorator +0xc0).
     def stop(self):
-        emit({"e": "decorate", "t": thread(), "biome": struct.unpack("<i", mem(r("rdi") + 0x88, 4))[0]})
+        plains = q(q(0x348a748) + 0xc0)
+        flowers, grass = struct.unpack("<2i", mem(plains + 0x1e8, 8))
+        emit({"e": "decorate", "t": thread(), "biome": struct.unpack("<i", mem(r("rdi") + 0x88, 4))[0],
+              "plains_flowers": flowers, "plains_grass": grass})
         return False
 
 

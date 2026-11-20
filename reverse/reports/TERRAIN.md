@@ -245,14 +245,24 @@ taken as 0 (INFERRED).
 | OverworldDecorator::decorateOres 0x1da6de0 (decorator vtable +8) | decoration.cpp `decorate_ores` through `GenRegionView` |
 | decorate 0x1da52c2..0x1da559b: sand disks (+0x204), clay (+0x208), gravel disks (+0x200) at x/z nextInt(16), y getAboveTopSolidBlock | `run_post_process` |
 | SandFeature::place 0x1b6b8e0 (+0x18 block, +0x20 radius); ClayFeature through clay.cpp `place_clay` | `sand_feature_place` |
+| decorate 0x1da559b..0x1da595b: tree count (nextInt(10) == 0 -> nextFloat(trees) and the plains decorator's grass count; else trees + max(0, nextInt(10) - 7), or one against nextFloat), _getRandomTreePosition 0x1da50c0, the tree, then TallGrassFeature::place(pos, 23, 3) | `run_post_process` |
+| OverworldDecorator::getTreeFeature 0x1da4e70, ForestBiome 0x1dc3cc0, PlainsBiome 0x1dccbe0 | `pick_tree` |
+| OakFeature::place 0x1dae2f0 (nextInt(3) + 4), BirchFeature::place 0x1b59c20, TreeFeature::place through tree.cpp | `place_tree` |
+| TreeFeature::_placeFallenTrunk 0x1b5a8a0 (and _placeTrunk returns !fallen, 0x1b5b0ff) | tree.cpp `tree_place_fallen_trunk` |
+| TreeFeature::_isFree 0x1b5a190, BlockSource::isSolidBlockingBlock 0x1c5ae40 / BlockLegacy 0x1e56e90, TallGrass::canSurvive 0x1e9d340 / BushBlock::canSurvive 0x1e800d0 | `tree_environment`, `vegetation_environment` |
 | per-biome decorator fields and features, dumped by the oracle (tests/reference/decorators_bds_1.6.0.15.json, `tools/re/make_decorator_table.py`) | src/world/decorator_data.cpp |
 
 The double plant's two halves go through a WorldChangeTransaction whose
 unordered_map makes apply() write the upper half first.
 
 All 192 recorded calls (seed 123) match up to Biome::decorate, and through
-the biome decorators' own stage, decorateOres and the sand/clay/gravel disks
-(980,291 of 1,101,314 writes of these calls, in order); the committed fixture keeps 7 of them
+the biome decorators' own stage, decorateOres, the sand/clay/gravel disks and
+the trees (1,022,804 of 1,101,314 writes of these calls, in order): every
+write run_post_process makes matches the original's. It stops where an
+untranslated piece comes: 80 calls at a FancyTreeFeature, 15 at the
+seagrass loop; 97 complete the tree stage. The plains decorator's grass
+count is shared state of the original (one decorator object for all
+chunks); the oracle records its value at every decorate call.; the committed fixture keeps 7 of them
 (plain chunks, dungeons, water lakes).
 
 ## Not yet translated

@@ -42,6 +42,8 @@ def main():
             active[e["t"]] = {"x": cx, "z": cz, "area": e.get("area", {}), "prior": prior, "writes": []}
         elif kind == "decorate" and e["t"] in active:
             active[e["t"]]["biome"] = e["biome"]
+            if "plains_grass" in e:
+                active[e["t"]]["plains_grass"] = e["plains_grass"]
             active[e["t"]]["decorate_at"] = len(active[e["t"]]["writes"])
         elif kind == "end" and e["t"] in active:
             call = active.pop(e["t"])

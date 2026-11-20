@@ -57,6 +57,11 @@ struct VegetationEnvironment {
 // the descent limit is the constant 0x5a.
 bool place_tall_grass(DecorationRegion &, DecorationRegion::Position, FeatureBlock grass,
                       Random &, const VegetationEnvironment &);
+// TallGrassFeature::place(BlockSource&, BlockPos const&, Random&, int, int)
+// 0x1b663c0 itself: `count` attempts (r8) with gaussian(`spread`) x/z (r9).
+// OverworldDecorator::decorate 0x1da5926 calls it with (23, 3) after a tree.
+bool place_tall_grass(DecorationRegion &, DecorationRegion::Position, FeatureBlock grass,
+                      Random &, const VegetationEnvironment &, int count, int spread);
 
 // FlowerFeature::place 0x1b5ef70 -> _placeMushroom 0x1b5efc0.
 bool place_flower(DecorationRegion &, DecorationRegion::Position, FeatureBlock flower,

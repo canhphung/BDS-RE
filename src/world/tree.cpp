@@ -431,6 +431,47 @@ bool tree_place(DecorationRegion &region, DecorationRegion::Position origin, int
     return true;
 }
 
+void tree_place_fallen_trunk(DecorationRegion &region, DecorationRegion::Position origin, Random &random,
+                             const TreeEnvironment &environment, int height, int wood_type) {
+    (void)region;
+    // TreeFeature::_placeFallenTrunk 0x1b5a8a0. A direction nextInt(4) + 2
+    // (Facing north, south, west, east), a length of height - 2, a start
+    // nextInt(2) + 2 steps away at that column's heightmap.
+    static constexpr int kStep[6][2] = {{0, 0}, {0, 0}, {0, -1}, {0, 1}, {-1, 0}, {1, 0}}; // Facing::DIRECTION x, z
+    static constexpr int kAxis[6] = {0, 0, 2, 2, 1, 1}; // 0x28338d0, BlockState::Direction
+    const int direction = random.next_int(4) + 2;
+    const int length = height - 2;
+    const int distance = random.next_int(2) + 2;
+    const int sx = kStep[direction][0], sz = kStep[direction][1];
+    int x = std::get<0>(origin) + sx * distance, z = std::get<2>(origin) + sz * distance;
+    const int y = environment.heightmap({x, 0, z});
+    if (y > std::get<1>(origin) + 1)
+        return;
+    // Every cell must be empty; more than two in a row without a solid
+    // blocking block below gives up.
+    int unsupported = 0;
+    for (int i = 0, cx = x, cz = z; i < length; ++i, cx += sx, cz += sz) {
+        if (!environment.is_empty({cx, y, cz}))
+            return;
+        if (!environment.is_solid_blocking({cx, y - 1, cz})) {
+            if (++unsupported > 2)
+                return;
+        } else
+            unsupported = 0;
+    }
+    // VanillaBlocks::mLog with MappedType this+0x18 and Direction (axis << 2).
+    const TreeBlock log{"log", static_cast<std::uint16_t>(wood_type | (kAxis[direction] << 2))};
+    for (int i = 0; i < length; ++i, x += sx, z += sz) {
+        environment.place_block({x, y, z}, log);
+        if (random.next_int(10) != 0)
+            continue;
+        if (!environment.is_empty({x, y + 1, z}))
+            continue;
+        const bool brown = 0.5f > random.next_float();
+        environment.place_block({x, y + 1, z}, TreeBlock{brown ? "brown_mushroom" : "red_mushroom", 0});
+    }
+}
+
 float tree_trunk_height_scale(bool fallen, bool type_flags, Random &random) {
     // 0x1b5acb1..0x1b5ad27 selects one of three rodata floats:
     //   fallen                 -> 0x2828668 = 0.75
@@ -472,10 +513,7 @@ bool tree_place_trunk(DecorationRegion &region, DecorationRegion::Position at, i
     // then forces the loop bound to 1.
     int bound = height;
     if (fallen) {
-        // _placeFallenTrunk 0x1b5a8a0 is not translated (it never places on the
-        // corpus arenas). Reproducing its draws keeps the stream aligned.
-        (void)random.next_int(0x8);
-        (void)random.next_int(0x4);
+        tree_place_fallen_trunk(region, at, random, environment, height, leaf_type);
         bound = 1;
     }
     // 0x1b5ad59..0x1b5ae4d: for i in [0, bound) place a log at above(i) when
@@ -518,6 +556,8 @@ bool tree_place_trunk(DecorationRegion &region, DecorationRegion::Position at, i
             }
         }
     }
-    return true;
+    // 0x1b5b0ff: the result is !fallen, so a fallen tree skips the leaf pass
+    // (TreeFeature::place then returns true at once).
+    return !fallen;
 }
 } // namespace bds

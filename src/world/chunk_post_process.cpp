@@ -4,6 +4,9 @@
 #include "bds/world/clay.hpp"
 #include "bds/world/decoration.hpp"
 #include "bds/world/decorator_data.hpp"
+#include "bds/world/tree.hpp"
+#include "bds/world/vegetation.hpp"
+#include <algorithm>
 #include <cstring>
 
 namespace bds {
@@ -360,6 +363,120 @@ DecoratorCounts plains_pre_decorate(GenRegion &region, Random &random, int ox, i
     return counts;
 }
 
+// The native answers of the BlockSource / Block queries tree.cpp and
+// vegetation.cpp ask through their environments.
+TreeEnvironment tree_environment(GenRegion &region) {
+    TreeEnvironment env;
+    env.max_height = [] { return GenChunk::height; }; // BlockSource::getMaxHeight 0x1b50550 (+0x30)
+    // _prepareSpawn asks VanillaBlocks::mSapling's mayPlaceOn: BushBlock::mayPlaceOn.
+    env.may_place_on = [&region](DecorationRegion::Position p, TreeBlock) {
+        return bush_may_place_on(region, std::get<0>(p), std::get<1>(p), std::get<2>(p));
+    };
+    env.block = [&region](DecorationRegion::Position p) {
+        const auto &b = region.block(std::get<0>(p), std::get<1>(p), std::get<2>(p));
+        return TreeBlock{b.name, b.data};
+    };
+    // TreeFeature::_isFree(Block) 0x1b5a190: air or leaves material, or grass / dirt.
+    env.is_free = [](TreeBlock b) {
+        const auto &info = block_info(b.name);
+        return info.material == material_type::Air || info.material == material_type::Leaves ||
+               std::strcmp(b.name, "grass") == 0 || std::strcmp(b.name, "dirt") == 0;
+    };
+    env.place_block = [&region](DecorationRegion::Position p, TreeBlock b) {
+        return place_block(region, std::get<0>(p), std::get<1>(p), std::get<2>(p), TerrainBlock{b.name, b.data});
+    };
+    env.is_empty = [&region](DecorationRegion::Position p) {
+        return region.is_empty(std::get<0>(p), std::get<1>(p), std::get<2>(p));
+    };
+    // BlockSource::isSolidBlockingBlock 0x1c5ae40 -> BlockLegacy 0x1e56e90:
+    // Material::isSolidBlocking (not +5, blocks motion) and BlockProperty
+    // 0x200000 or 0x100000.
+    env.is_solid_blocking = [&region](DecorationRegion::Position p) {
+        const auto &b = region.info(std::get<0>(p), std::get<1>(p), std::get<2>(p));
+        return !b.never_buildable && b.blocks_motion && (b.has_property(0x200000) || b.has_property(0x100000));
+    };
+    env.heightmap = [&region](DecorationRegion::Position p) { return region.heightmap(std::get<0>(p), std::get<2>(p)); };
+    env.material_is = [&region](DecorationRegion::Position p, int type) {
+        return region.info(std::get<0>(p), std::get<1>(p), std::get<2>(p)).material == type;
+    };
+    return env;
+}
+
+VegetationEnvironment vegetation_environment(GenRegion &region) {
+    VegetationEnvironment env;
+    env.block = [&region](DecorationRegion::Position p) {
+        const auto &b = region.block(std::get<0>(p), std::get<1>(p), std::get<2>(p));
+        return FeatureBlock{b.name, b.data};
+    };
+    env.is_empty = [&region](DecorationRegion::Position p) {
+        return region.is_empty(std::get<0>(p), std::get<1>(p), std::get<2>(p));
+    };
+    // TallGrass::canSurvive 0x1e9d340 / BushBlock::canSurvive 0x1e800d0:
+    // mayPlaceOn (vtable +0x248) of the block below.
+    env.can_survive = [&region](DecorationRegion::Position p, FeatureBlock b) {
+        const int x = std::get<0>(p), y = std::get<1>(p), z = std::get<2>(p);
+        if (std::strcmp(b.name, "tallgrass") == 0 || std::strcmp(b.name, "red_flower") == 0 ||
+            std::strcmp(b.name, "yellow_flower") == 0)
+            return bush_may_place_on(region, x, y - 1, z);
+        return false; // NOT TRANSLATED YET for the other blocks
+    };
+    env.material_is = [&region](DecorationRegion::Position p, int type) {
+        return region.info(std::get<0>(p), std::get<1>(p), std::get<2>(p)).material == type;
+    };
+    env.heightmap = [&region](DecorationRegion::Position p) { return region.heightmap(std::get<0>(p), std::get<2>(p)); };
+    env.place_block = [&region](DecorationRegion::Position p, FeatureBlock b) {
+        place_block(region, std::get<0>(p), std::get<1>(p), std::get<2>(p), TerrainBlock{b.name, b.data});
+    };
+    return env;
+}
+
+// The tree features the decorators hand out (decorator members, dumped).
+enum class TreeKind { Oak, Birch, TallBirch, Unsupported };
+// OverworldDecorator::getTreeFeature 0x1da4e70: FancyTree (+0x140) one in 10,
+// else Oak (+0xe0). ForestBiome::Decorator::getTreeFeature 0x1dc3cc0 and
+// PlainsBiome::Decorator::getTreeFeature 0x1dccbe0 override it.
+TreeKind pick_tree(const BiomeData &b, Random &random) {
+    if (b.kind == BiomeClass::Plains)
+        return random.next_int(3) == 0 ? TreeKind::Unsupported /* FancyTree */ : TreeKind::Oak;
+    if (b.kind == BiomeClass::Forest) {
+        if (b.subtype == 3 && random.next_int(3) == 0)
+            return TreeKind::Unsupported; // RoofTreeFeature (+0xf8)
+        if (b.subtype == 2)
+            return TreeKind::Birch; // +0xf0
+        if (random.next_int(5) == 0)
+            return TreeKind::Birch;
+        if (b.subtype == 4)
+            return random.next_boolean() ? TreeKind::TallBirch /* +0x198 */ : TreeKind::Birch;
+    } else if (b.kind != BiomeClass::Plains && b.kind != BiomeClass::Biome && b.kind != BiomeClass::River &&
+               b.kind != BiomeClass::Ocean) {
+        return TreeKind::Unsupported; // the other decorators' getTreeFeature: NOT TRANSLATED YET
+    }
+    return random.next_int(10) == 0 ? TreeKind::Unsupported /* FancyTree */ : TreeKind::Oak;
+}
+
+// OakFeature::place 0x1dae2f0 (height nextInt(3) + 4, leaf and trunk type 0;
+// the base TreeFeature::place 0x1b5a230 would use + 5) and
+// BirchFeature::place 0x1b59c20 (nextInt(3) + 5, + nextInt(7) for the tall
+// one at +0x21; types 2), both into TreeFeature::place 0x1b5a290.
+bool place_tree(DecorationRegion &view, TreeKind kind, DecorationRegion::Position at, Random &random,
+                const TreeEnvironment &env) {
+    switch (kind) {
+    case TreeKind::Oak: {
+        const int height = random.next_int(3) + 4;
+        return tree_place(view, at, height, random, env, false, false, {"log", 0}, {"leaves", 0}, {"dirt", 0}, 0);
+    }
+    case TreeKind::Birch:
+    case TreeKind::TallBirch: {
+        int height = random.next_int(3) + 5;
+        if (kind == TreeKind::TallBirch)
+            height += random.next_int(7);
+        return tree_place(view, at, height, random, env, false, false, {"log", 2}, {"leaves", 2}, {"dirt", 0}, 2);
+    }
+    default:
+        return false;
+    }
+}
+
 // The verified features of decoration.cpp / tree.cpp / vegetation.cpp work on
 // a DecorationRegion; this one reads and writes the GenRegion, so every call
 // is a LevelChunk::setBlock as in the original.
@@ -388,7 +505,8 @@ const BiomeData &decorating_biome(int id) {
 }
 } // namespace
 
-PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int chunk_x, int chunk_z) {
+PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int chunk_x, int chunk_z,
+                                   PostProcessState &state) {
     PostProcessReport report;
     Random random(0); // ThreadData +0x41810, reseeded below
     const auto reseed = [&] {
@@ -454,7 +572,10 @@ PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int ch
         forest_pre_decorate(region, random, ox, oz, decorating.subtype);
     else if (decorating.kind == BiomeClass::Plains)
         counts = plains_pre_decorate(region, random, ox, oz, decorating.id == 129, decorator_noise, false);
-    (void)counts;
+    if (counts.flowers >= 0) { // the plains decorator's fields, shared by every chunk
+        state.plains_flowers = counts.flowers;
+        state.plains_grass = counts.grass;
+    }
     report.stage = "biome decorator";
     // OverworldDecorator::decorate 0x1da5250 starts with decorateOres
     // (decorator vtable +8; MesaBiome's decorator adds gold).
@@ -498,6 +619,52 @@ PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int ch
         sand_feature_place(region, x, y, z, random, terrain_block::gravel, data->gravel_radius);
     }
     report.stage = "disks";
+    // Tree and grass counts 0x1da559b..0x1da5709. With nextInt(10) == 0 the
+    // trees are nextFloat(trees) and the grass count is the plains
+    // decorator's (VanillaBiomes::mPlains, decorator +0x1ec).
+    int grass = decorating.kind == BiomeClass::Plains ? state.plains_grass : data->grass;
+    int flowers = decorating.kind == BiomeClass::Plains ? state.plains_flowers : data->flowers;
+    (void)flowers;
+    int trees = 0;
+    if (data->trees > 0.0f) {
+        if (random.next_int(10) == 0) {
+            trees = static_cast<int>(random.next_float(data->trees));
+            grass = state.plains_grass;
+        } else if (data->trees >= 1.0f) {
+            const int base = static_cast<int>(data->trees);
+            trees = base + std::max(0, random.next_int(10) - 7);
+        } else if (data->trees > 0.0f) {
+            const float f = random.next_float();
+            trees = data->trees > f ? 1 : 0;
+        }
+    }
+    (void)grass;
+    if (data->field_218 > 0) {
+        // NOT TRANSLATED YET: the +0x218 loop of SeagrassFeature (+0x1d0) at
+        // (x, 54, z) 0x1da5709..0x1da5838.
+        report.stage = "tree counts (seagrass loop not translated)";
+        return report;
+    }
+    // The tree loop 0x1da5838..0x1da595b: the decorator's getTreeFeature
+    // (vtable +0x10), _getRandomTreePosition 0x1da50c0 (z then x, 1 +
+    // nextInt(14), y = heightmap), _placeFeature, then (unless the legacy
+    // flag) TallGrassFeature(tallgrass:1)::place(pos, random, 23, 3).
+    const auto tree_env = tree_environment(region);
+    const auto plant_env = vegetation_environment(region);
+    for (int i = 0; i < trees; ++i) {
+        const TreeKind kind = pick_tree(decorating, random);
+        const int z = oz + 1 + random.next_int(14);
+        const int x = ox + 1 + random.next_int(14);
+        const int y = region.heightmap(x, z);
+        if (!place_tree(view, kind, {x, y, z}, random, tree_env)) {
+            if (kind == TreeKind::Unsupported) {
+                report.stage = "trees (an untranslated tree feature was picked)";
+                return report;
+            }
+        }
+        place_tall_grass(view, {x, y, z}, FeatureBlock{"tallgrass", 1}, random, plant_env, 23, 3);
+    }
+    report.stage = "trees";
     return report;
 }
 } // namespace bds

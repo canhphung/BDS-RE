@@ -39,6 +39,11 @@ int next_gaussian_int(Random &random, int n) {
 
 bool place_tall_grass(DecorationRegion &region, DecorationRegion::Position at, FeatureBlock grass,
                       Random &random, const VegetationEnvironment &environment) {
+    return place_tall_grass(region, at, grass, random, environment, 0x5a, 0x8);
+}
+
+bool place_tall_grass(DecorationRegion &region, DecorationRegion::Position at, FeatureBlock grass,
+                      Random &random, const VegetationEnvironment &environment, int count, int spread) {
     (void)region;
     // 0x1b663c0 copies the BlockPos (0x1b663f3) into -0x38 and descends that
     // copy while the cell is air or has BlockProperty 0x20 and its Y is above
@@ -49,12 +54,12 @@ bool place_tall_grass(DecorationRegion &region, DecorationRegion::Position at, F
     // changes any placement, and the native corpus confirms it: the only
     // predicates recorded for tall grass are 90 can_survive calls.
     // 0x1b66570 passes r8 = 0x5a (90 loop iterations) and r9 = 0x8 (spread).
-    for (int i = 0; i < 0x5a; ++i) {
+    for (int i = 0; i < count; ++i) {
         // 0x1b6648f..0x1b664c8: gaussian(spread) -> Z (r8d), gaussian(4) -> Y
         // (ecx), gaussian(spread) -> X (edx).
-        const int dz = next_gaussian_int(random, 0x8);
+        const int dz = next_gaussian_int(random, spread);
         const int dy = next_gaussian_int(random, 4);
-        const int dx = next_gaussian_int(random, 0x8);
+        const int dx = next_gaussian_int(random, spread);
         const auto p = offset_by(at, Offset{dx, dy, dz});
         // 0x1b664d5..0x1b664f8: getBlock, then legacy identity against
         // BedrockBlockTypes::mAir. This is not BlockSource::isEmptyBlock.

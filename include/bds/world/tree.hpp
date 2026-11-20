@@ -45,6 +45,8 @@ struct TreeEnvironment {
     std::function<bool(DecorationRegion::Position)> is_solid_blocking;
     // Feature::_isEmptyBlock 0x1b6ece0, used by the vine pass.
     std::function<bool(DecorationRegion::Position)> is_empty;
+    // BlockSource::getHeightmap 0x1c5ad20, used by _placeFallenTrunk.
+    std::function<int(DecorationRegion::Position)> heightmap;
     // Block::getMaterial 0x1e68cf0 through Material::isType 0x1c56be0, as
     // _placeLeaf 0x1b59d60 asks it: the feature calls isType(9), isType(0) and
     // isType(7) in that order and stops at the first true answer.
@@ -64,6 +66,11 @@ bool tree_place_trunk(DecorationRegion &, DecorationRegion::Position, int height
                       TreeBlock trunk = {"log", 0}, TreeBlock leaves = {"leaves", 0},
                       int leaf_type = 0);
 
+// TreeFeature::_placeFallenTrunk 0x1b5a8a0: a log lying next to the tree,
+// along a random horizontal direction, with an occasional mushroom on top.
+// `wood_type` is this+0x18 (the MappedType of VanillaBlocks::mLog).
+void tree_place_fallen_trunk(DecorationRegion &, DecorationRegion::Position origin, Random &,
+                             const TreeEnvironment &, int height, int wood_type);
 // The leaf-volume pass of place(...,int) 0x1b5a313..0x1b5a55d. `height` is the
 // same value the trunk stage received. Verified against
 // tests/reference/tree_place_bds_1.6.0.15.json.

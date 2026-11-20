@@ -58,6 +58,7 @@ int main(int argc, char **argv) {
     const auto seed = reference.at("seed").get<std::uint32_t>();
     const OverworldGenerator generator(seed);
     std::map<std::pair<int, int>, GenChunk> cache;
+    PostProcessState state;
     int failures = 0, heightmap_failures = 0;
     std::size_t matched_total = 0, total = 0;
     for (const auto &call : reference.at("calls")) {
@@ -86,7 +87,9 @@ int main(int argc, char **argv) {
                 region.add(std::move(chunk));
             }
         replay(region, call.at("prior"));
-        const auto report = run_post_process(region, seed, cx, cz);
+        if (call.contains("plains_grass"))
+            state.plains_grass = call.at("plains_grass"); // the shared decorator's value at this call
+        const auto report = run_post_process(region, seed, cx, cz, state);
         const auto &expected = call.at("writes");
         std::size_t matched = 0;
         while (matched < expected.size() && matched < region.writes.size()) {
