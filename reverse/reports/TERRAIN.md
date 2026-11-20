@@ -243,13 +243,16 @@ taken as 0 (INFERRED).
 | PlainsBiome::Decorator::decorate 0x1dcc850 (decorator noise picks the flower/grass counts, double grass, sunflowers for biome 129) | `plains_pre_decorate` |
 | DoublePlantFeature::place 0x1b56cc0, Random::nextGaussianInt 0x1b52610, DoublePlantBlock::mayPlace 0x1f13390, placeAt 0x1f13c90, BlockLegacy::mayPlace 0x1e56480, BushBlock::mayPlaceOn 0x1e80360, BlockSource::getLiquidBlock 0x1c5a380, isEmptyWaterBlock 0x1c60d00 | `double_plant_feature_place` and helpers |
 | OverworldDecorator::decorateOres 0x1da6de0 (decorator vtable +8) | decoration.cpp `decorate_ores` through `GenRegionView` |
+| decorate 0x1da52c2..0x1da559b: sand disks (+0x204), clay (+0x208), gravel disks (+0x200) at x/z nextInt(16), y getAboveTopSolidBlock | `run_post_process` |
+| SandFeature::place 0x1b6b8e0 (+0x18 block, +0x20 radius); ClayFeature through clay.cpp `place_clay` | `sand_feature_place` |
+| per-biome decorator fields and features, dumped by the oracle (tests/reference/decorators_bds_1.6.0.15.json, `tools/re/make_decorator_table.py`) | src/world/decorator_data.cpp |
 
 The double plant's two halves go through a WorldChangeTransaction whose
 unordered_map makes apply() write the upper half first.
 
 All 192 recorded calls (seed 123) match up to Biome::decorate, and through
-the biome decorators' own stage and decorateOres (958,845 of 1,101,314
-writes of these calls, in order); the committed fixture keeps 7 of them
+the biome decorators' own stage, decorateOres and the sand/clay/gravel disks
+(980,291 of 1,101,314 writes of these calls, in order); the committed fixture keeps 7 of them
 (plain chunks, dungeons, water lakes).
 
 ## Not yet translated

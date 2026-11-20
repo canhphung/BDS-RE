@@ -1,7 +1,9 @@
 // OverworldGenerator::postProcess 0x1b38950 and the features it places,
 // translated from BDS 1.6.0.15 (Linux). Addresses are cited per function.
 #include "bds/world/chunk_post_process.hpp"
+#include "bds/world/clay.hpp"
 #include "bds/world/decoration.hpp"
+#include "bds/world/decorator_data.hpp"
 #include <cstring>
 
 namespace bds {
@@ -280,6 +282,29 @@ bool double_plant_feature_place(GenRegion &region, int px, int py, int pz, Rando
     return placed;
 }
 
+// SandFeature::place 0x1b6b8e0 (ctor 0x1b6b890: +0x18 block, +0x20 radius):
+// only on water; a disk of radius nextInt(radius - 2) + 2, two blocks up and
+// down, replacing dirt and grass.
+bool sand_feature_place(GenRegion &region, int px, int py, int pz, Random &random, const TerrainBlock &block,
+                        int radius) {
+    if (region.info(px, py, pz).material != material_type::Water)
+        return false;
+    const int r = random.next_int(radius - 2) + 2;
+    const int h = 2;
+    for (int x = px - r; x <= px + r; ++x)
+        for (int z = pz - r; z <= pz + r; ++z) {
+            const int dx = x - px, dz = z - pz;
+            if (dx * dx + dz * dz > r * r)
+                continue;
+            for (int y = py - h; y <= py + h; ++y) {
+                const auto &b = region.block(x, y, z);
+                if (legacy_is(b, "dirt") || legacy_is(b, "grass"))
+                    place_block(region, x, y, z, block);
+            }
+        }
+    return true;
+}
+
 // ---- Biome decorators -------------------------------------------------------
 
 // ForestBiome::Decorator::decorate 0x1dc3ee0 before the base decorate.
@@ -435,6 +460,44 @@ PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int ch
     // (decorator vtable +8; MesaBiome's decorator adds gold).
     decorate_ores(view, {ox, 0, oz}, random, decorating.kind == BiomeClass::Mesa);
     report.stage = "ores";
+    const auto *data = decorator_data(decorating.id);
+    if (!data)
+        return report;
+    // Sand disks (+0x204, feature +0x10), clay (+0x208, +0x8), gravel disks
+    // (+0x200, +0x18): x and z from nextInt(16) (x first), y from
+    // getAboveTopSolidBlock(x, z, false, false).
+    const auto surface_column = [&](int &x, int &y, int &z) {
+        x = ox + random.next_int(16);
+        z = oz + random.next_int(16);
+        y = region.above_top_solid(x, z, false, false);
+    };
+    for (int i = 0; i < data->sand; ++i) {
+        int x, y, z;
+        surface_column(x, y, z);
+        sand_feature_place(region, x, y, z, random, terrain_block::sand, data->sand_radius);
+    }
+    ClayEnvironment clay;
+    clay.block = [&](DecorationRegion::Position p) {
+        const auto &b = region.block(std::get<0>(p), std::get<1>(p), std::get<2>(p));
+        return ClayBlock{b.name, b.data};
+    };
+    clay.is_water = [&](DecorationRegion::Position p) {
+        return region.info(std::get<0>(p), std::get<1>(p), std::get<2>(p)).material == material_type::Water;
+    };
+    clay.place_block = [&](DecorationRegion::Position p, ClayBlock b) {
+        place_block(region, std::get<0>(p), std::get<1>(p), std::get<2>(p), TerrainBlock{b.name, b.data});
+    };
+    for (int i = 0; i < data->clay; ++i) {
+        int x, y, z;
+        surface_column(x, y, z);
+        place_clay(view, {x, y, z}, data->clay_size, random, clay);
+    }
+    for (int i = 0; i < data->gravel; ++i) {
+        int x, y, z;
+        surface_column(x, y, z);
+        sand_feature_place(region, x, y, z, random, terrain_block::gravel, data->gravel_radius);
+    }
+    report.stage = "disks";
     return report;
 }
 } // namespace bds

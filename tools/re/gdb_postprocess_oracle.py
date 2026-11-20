@@ -142,12 +142,48 @@ def dump_blocks():
         json.dump(sorted(rows, key=lambda r: r.get("name", "")), f, indent=0)
 
 
+def dump_decorators():
+    # Biome::mBiomes 0x348b670 (vector<unique_ptr<Biome>>); OverworldBiome
+    # +0xc0 = unique_ptr<OverworldDecorator> (OverworldBiome::decorate
+    # 0x1db5a70), MutatedBiome +0xc0 = its parent Biome. Per decorator: class,
+    # raw bytes 0..0x230 and, for every 8-byte slot that points at an object
+    # with a known vtable, that object's class and raw bytes 0..0x60.
+    begin, end = struct.unpack("<QQ", mem(0x348b670, 16))
+    rows = []
+    for slot in range(begin, end, 8):
+        biome = q(slot)
+        if not biome:
+            continue
+        entry = {"id": struct.unpack("<i", mem(biome + 0x88, 4))[0], "biome_class": VTABLES.get(q(biome))}
+        try:
+            decorator = q(biome + 0xc0)
+            cls = VTABLES.get(q(decorator)) if decorator else None
+            if cls and cls.endswith("Decorator"):
+                raw = mem(decorator, 0x230)
+                members = {}
+                for offset in range(8, 0x230, 8):
+                    pointer = struct.unpack_from("<Q", raw, offset)[0]
+                    try:
+                        member_class = VTABLES.get(q(pointer)) if pointer > 0x10000 else None
+                    except gdb.MemoryError:
+                        member_class = None
+                    if member_class:
+                        members[hex(offset)] = {"class": member_class, "raw": mem(pointer, 0x60).hex()}
+                entry.update({"decorator_class": cls, "raw": raw.hex(), "members": members})
+        except gdb.MemoryError as error:
+            entry["error"] = str(error)
+        rows.append(entry)
+    with open(OUT.replace(".jsonl", "_decorators.json"), "w") as f:
+        json.dump(rows, f, indent=0)
+
+
 class Begin(gdb.Breakpoint):
     # postProcess: -0x48 = &ChunkPos of the centre chunk (LevelChunk::getPosition).
     def stop(self):
         if not dumped:
             dumped.append(1)
             dump_blocks()
+            dump_decorators()
         x, z = struct.unpack("<2i", mem(q(r("rbp") - 0x48), 8))
         area = {}
         for dx in (-1, 0, 1):
