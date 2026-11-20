@@ -1418,6 +1418,43 @@ vines is not written yet). So the remaining work is:
 Everything before that — head, canopy, trunk, vine walk — is now confirmed by
 exact query counts on half the corpus.
 
+### SOLVED: the clearance walk, and the anchor-material gate
+
+The missing second early-out is a **clearance walk** between the head and the
+dirt write (`0x1b6be2c..0x1b6c10b`), and it explains the query counts exactly.
+For every layer `y` from `origin.y` to `origin.y + height + 1` the half-width is
+
+```
+r = 0        when y == origin.y
+r = 1        when y <= origin.y + height - 2
+r = 3        otherwise
+```
+
+which `0x1b6bea1..0x1b6bed5` computes as a 0/1/3 select on the layer index. Each
+cell of that square is read once and tested (`_isFree`, then
+`getMaterial().isType(0)`), and the result is ANDed into the `grows` flag at
+`[rbp-0x69]`.
+
+Verified numerically against all 16 cases: `3 + sum((2r+1)^2)` over those layers
+reproduces the recorded query count EXACTLY for every case that stops early —
+205 for cases 2, 10, 14; 178 for case 6; and the four stone-anchor cases (3, 7,
+11, 15) stop at the head's 3 reads.
+
+The anchor material then decides the rest, and the corpus splits perfectly:
+
+| block under origin | result | queries |
+|---|---|---|
+| grass, dirt | true | head + clearance + canopy + trunk + vines + tail |
+| sand | false | head + clearance, then one final `get_block(origin.below)` |
+| stone | false | 3 (head only) |
+
+With that implemented, **all 16 return values are correct** and the eight
+`result=false` cases consume exactly their recorded query streams (3/3, 178/178,
+205/205). The eight `result=true` cases are correct too, but stop short of the
+final count (690/699, 695/709, 706/720, ...) because the post-vine tail pass is
+still unwritten — that tail is the only remaining work, and it is the same
+`get_block`/`material_is` shape as the loops already translated.
+
 `0x1b6c693`, `0x1b6c743` and `0x1b6c7c9` are three more nested `range_incl`
 loops (y, x, z) whose body does `_getMaterial`, `Material::isType`, and then
 `BlockPos::west()/east()/north()/south()` before reaching the four `_addVine`
