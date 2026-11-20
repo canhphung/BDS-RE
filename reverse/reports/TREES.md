@@ -1348,6 +1348,31 @@ and vine work, then the last `get_block` fails and the feature returns false
 with **zero** writes because the caller discards the region. So the replay has
 to buffer its writes and commit them only when that last read says yes.
 
+**Confirmed by building it**: with the canopy written before the trunk, case 0
+replays to exactly **218 writes** and cases 9 and 13 to exactly 233 and 232 —
+the write order was the missing piece for those three. Case 0's query stream
+also matches to the last read.
+
+### Two remaining obstacles, both in the harness not the feature
+
+1. **Every query answer in the corpus is 0.** All 6282 `get_block` rows across
+   the 16 cases carry `raw = 0`, so the corpus does NOT encode what the world
+   contained; the world has to be rebuilt from `scenes[case.scene]`, the zlib +
+   base64 `<hhhH>` cell list. A harness that answers every query with 0 makes
+   the feature see an all-air world, which is why the leaf/trunk material tests
+   then diverge. The scene decoder already exists for the other corpora; it
+   needs wiring into the swamp test.
+2. **The head gate is not what the sketch assumed.** `0x1b6bd32..0x1b6bdb9`
+   is: `_getMaterial(origin.below).isType(5)` OR
+   `_getBlock(origin.below).getLegacyBlock() == VanillaBlockTypes::mLog`; when
+   the first is true the second read is skipped, and only when the whole test is
+   true does the code take `origin = origin.below()` (`0x1b6bddb`) and continue.
+   The three-query cases (3, 7, 11, 15) stop exactly there because the cell
+   itself is stone (`self=stone:0`), so the gate fails on the first read.
+   Modelling it as `_prepareSpawn` or as a bare `max_height` test is wrong.
+
+Both are mechanical, and the geometry plus the write order are now settled.
+
 `0x1b6c693`, `0x1b6c743` and `0x1b6c7c9` are three more nested `range_incl`
 loops (y, x, z) whose body does `_getMaterial`, `Material::isType`, and then
 `BlockPos::west()/east()/north()/south()` before reaching the four `_addVine`
