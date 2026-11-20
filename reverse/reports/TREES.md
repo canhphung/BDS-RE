@@ -1627,10 +1627,54 @@ from fields `+0x0` and `+0x8`, which `_makeBranches` combines with the passed-in
 | `_makeBranches` | `0x1b4bb40` | 0xf3 | complete |
 | `FoliageCoords::getBranchBase` | `0x1b4af40` | 0x11 | complete |
 
-The only piece still to pin down is the body of `place` itself between
-`0x1b4b0f3` and `0x1b4b4e3` (the `range` loop that fills the `FoliageCoords`
-vector with `_getTreeShape` and two `nextFloat()` draws per iteration). Everything
-it calls is translated-able from the notes above.
+### `place` body — complete structure
+
+```
+height = nextInt(this+0x24) + 5                       0x1b4b01d
+if (!_checkLocation(source, pos, radius)) return false 0x1b4b03b
+radius = (int)(height * this+0x28)                    0x1b4b05d
+if (radius >= height) radius = height - 1             0x1b4b075
+count  = (int)(powf(this+0x34 * height / 13.0f, .) + 1.382f)   0x1b4b0a3
+if (count < 1) count = 1                              0x1b4b0cc
+top    = pos.y + radius                               0x1b4b0de
+bottom = height - this+0x3c                           0x1b4b0f1
+foliage = vector<FoliageCoords>()                     0x1b4b0f4
+foliage.push_back(FoliageCoords(pos.above(?), ?))     0x1b4b104..0x1b4b121
+                                                      -- the trunk-top entry
+
+for (i in range(count)):                              0x1b4b15c
+    shape = _getTreeShape(height, i)                  0x1b4b13d
+    yaw   = nextFloat() * 2pi-ish                     0x1b4b1e9
+    pitch = nextFloat()                                0x1b4b212
+    dx = (int)(sin(yaw) * shape-ish)                   0x1b4b251
+    dz = (int)(cos(yaw) * shape-ish)                   0x1b4b291
+    p  = base.offset(dx, 0, dz).above(...)             0x1b4b2da..0x1b4b2f8
+    if (_checkLine(source, ?, p) == -1):               0x1b4b316
+        r = sqrt(...)                                  0x1b4b37c
+        p2 = BlockPos(...)                             0x1b4b3f9
+        if (_checkLine(source, ?, p2) == -1)           0x1b4b417
+            foliage.push_back(FoliageCoords(p2, ...))  0x1b4b433..0x1b4b45c
+
+_makeFoliage(source, foliage)                          0x1b4b49e
+_makeTrunk(source, pos, height)                        0x1b4b4b5
+_makeBranches(source, foliage, pos, height)            0x1b4b4d1
+~vector()                                              0x1b4b4de
+return true
+```
+
+That is the complete call graph. A translation can now be written: the trunk is
+four Bresenham limbs with log direction states, the foliage is per-branch-base
+stacks of four rounded discs, and the branch tips are chosen by two `nextFloat`
+draws per iteration from a `_getTreeShape`-sized offset.
+
+### Risk for the next attempt
+
+`place` draws `nextFloat()` twice per loop iteration and `_getTreeShape` returns a
+float that feeds `sin`/`cos` before a `(int)` truncation, so the translation must
+reproduce x87/SSE float rounding exactly. `Random::nextFloat` is already
+translated; the risk is in the `sin`/`cos`/`sqrt`/`powf` call sites, where the
+original uses the platform libm. The corpus has only 182 words for 16 cases, which
+bounds how much can drift before the replay diverges.
 
 Addresses for the next attempt, all confirmed by `nm`:
 
