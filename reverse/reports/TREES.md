@@ -1693,3 +1693,34 @@ Addresses for the next attempt, all confirmed by `nm`:
 | `_getFoliageShape` | `0x1b4bfe0` | 0x84 |
 | `_limb` | `0x1b4c070` | 0x244 |
 | `_trimBranches` | `0x1b4c2c0` | 0x31 |
+
+### Fancy place: the first two dependency sequences, measured
+
+Implementing the call graph as read produced a replay that stops after two
+queries, so the corpus itself is the better oracle for the opening. Case 0
+(`at = (-8,5,-8)`, height = `nextInt(12)+5` = 10) opens with a **vertical scan**:
+
+```
+(-8,4,-8)  <- _checkLocation reads origin.below()
+(-8,5,-8) (-8,6,-8) ... (-8,20,-8)   <- 16 more reads straight up
+(-5,16,-8) (-5,17,-8) (-5,18,-8) ... <- then the branch tips
+```
+
+That is 17 reads straight up from `origin.y - 1` to `origin.y + 15`, i.e. the
+`_checkLine` in `_checkLocation` walks far more than `radius - 1`: the caller
+passes a **radius that is not zero**, and the scan reaches `origin.y + 15` for
+height 10. The current translation passes `radius = 0`, so it asks
+`above(-1)` and stops after two reads — that is the immediate bug to fix.
+
+The eight failing cases stop after exactly ONE query (`get_block(origin.below)`)
+and their scenes have `below = stone` (cases 3, 7, 11, 15) or `sand` (2, 6, 10,
+14), while the eight succeeding cases have `below = grass` or `dirt`. So
+`_checkLocation`'s ground test is exactly `dirt|grass|farmland`, confirming the
+`0x34a7768/0x34a7770/0x34a7950` comparison chain.
+
+What is still needed: the value of the `radius` argument `place` hands to
+`_checkLocation` (`0x1b4b03b`). It is loaded from `[rbp-0x2c]` before the call and
+that slot is written by `nextInt`'s result plus 5 at `0x1b4b026..0x1b4b029`, then
+`radius = (int)(height * 0.618)` at `0x1b4b05d` happens AFTER the call. So the
+scan length must come from the *height*, not from the post-call radius; pinning
+that ordering from `0x1b4b02c..0x1b4b05d` is the next step.
