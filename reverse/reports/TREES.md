@@ -1318,6 +1318,36 @@ That is a much better position than before: the geometry is complete, and what
 is left is the exact gating (how many of the four neighbour rolls really fire)
 and the early-out.
 
+### The corpus reveals the write ORDER, and that is the last clue
+
+Case 0's `writes` array is in native call order, and its runs are
+
+```
+dirt (1)  ->  leaves (142)  ->  log (8)  ->  vine (67)
+```
+
+So the **canopy is written BEFORE the trunk**. That is not cosmetic: the three
+cells `(-8,10,-8)`, `(-8,11,-8)` and `(-8,12,-8)` each appear TWICE in the
+corpus — once as a leaf at indices 25, 74 and 109, and once as a log at indices
+148, 149 and 150. The leaves go down first and the trunk column then overwrites
+them, which is exactly the 3-write gap that a trunk-first replay cannot produce
+(215 vs 218).
+
+Consequently the order inside `place` is:
+
+1. the two `get_block(origin.below)` reads and the height draw
+2. **dirt** under the origin
+3. **the canopy dome** (the `0x1b6c230..0x1b6c510` loops)
+4. **the trunk column** (which re-writes the cells the canopy just filled)
+5. **the vine rim walk** (`0x1b6c551..0x1b6caf3`)
+6. a final `get_block(origin.below)` whose answer decides the return value
+   (`0x1b6cb3f` sets the byte to 1 on the success path)
+
+That final read is the eight early-out cases: they do their whole canopy, trunk
+and vine work, then the last `get_block` fails and the feature returns false
+with **zero** writes because the caller discards the region. So the replay has
+to buffer its writes and commit them only when that last read says yes.
+
 `0x1b6c693`, `0x1b6c743` and `0x1b6c7c9` are three more nested `range_incl`
 loops (y, x, z) whose body does `_getMaterial`, `Material::isType`, and then
 `BlockPos::west()/east()/north()/south()` before reaching the four `_addVine`
