@@ -1517,9 +1517,40 @@ bottom  = height - this+0x3c
 
 Then a `range` loop that pushes `FoliageCoords(pos.above(i), ...)` entries, calls
 `_getTreeShape`, draws `nextFloat()` twice per iteration, and finally calls
-`_makeFoliage`, `_makeTrunk`, `_makeBranches`. The nine helpers
-`_makeTrunk`/`_makeBranches`/`_foliageCluster`/`_crossection`/`_getFoliageShape`/
-`_limb`/`_makeFoliage`/`_trimBranches` are not read yet.
+`_makeFoliage`, `_makeTrunk`, `_makeBranches`.
+
+### `_makeFoliage 0x1b4b920` (0x91) — complete
+
+A plain `for (coords : foliage) _foliageCluster(source, coords)`.
+
+### `_foliageCluster 0x1b4bcd0` (0xc4) — complete
+
+```
+for (i in range(this+0x3c))                 // 0..3
+    _crossection(source, coords.pos.above(i), _getFoliageShape(i), mLeaves)
+```
+
+### `_getFoliageShape(int i) 0x1b4bfe0` (0x84) — complete
+
+```
+if (i < 0 || i >= this+0x3c) return -1.0f;   // 0x2824708
+if (i == 0 || i == this+0x3c - 1) return 2.0f;  // 0x2828640
+return 3.0f;                                  // 0x2829838
+```
+
+### `_crossection(BlockSource&, BlockPos const&, float shape, Block const&) 0x1b4bda0` (0x23f) — complete
+
+```
+extent = (int)(0.618f + shape)               // 0x2833354
+for (dx in range_incl(-extent, extent))
+  for (dz in range_incl(-extent, extent))
+    if (powf(abs(dx) + 0.5f, 2) + powf(abs(dz) + 0.5f, 2) <= shape * shape)
+        p = pos.offset(dx, 0, dz)
+        if (_isFree(_getMaterial(source, p))) _placeBlock(source, p, block)
+```
+
+So a foliage layer is a rounded disc of radius `shape`. The nine helpers still
+unread are `_makeTrunk`, `_makeBranches`, `_limb` and `_trimBranches`.
 
 Addresses for the next attempt, all confirmed by `nm`:
 
