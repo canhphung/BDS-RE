@@ -1206,6 +1206,99 @@ already matches the trunk 8/8, the dirt 1/1 and 131 of 142 leaves with zero
 spurious writes. The vine writes (0 of 67) are the one part still open, and the
 ten candidate cells above are the evidence needed to finish them.
 
+### SwampTreeFeature: the canopy, read from the disassembly at last
+
+The exact inner body, from `gdb` on `0x1b6c2a9..0x1b6c460`:
+
+```
+[rbp-0x3c]  = height
+[rbp-0x34]  = origin.y
+[rbp-0x38]  = origin.z?  (see below)
+[rbp-0x104] = the outer Range iterator's value -> y
+[rbp-0x108] = y - (origin.y + height)          -> rel   (0 on the TOP layer)
+[rbp-0x10c] = 2 - rel/2                        -> half
+[rbp-0x138] = x - origin.x
+[rbp-0x160] = z - origin.z
+
+outer = range_incl(origin.y + height - 3, origin.y + height)
+half  = 2 - rel/2                              // C truncation: rel -3..0 -> 3,3,2,2
+```
+
+and the corner test is
+
+```
+if (abs(x - origin.x) == half && abs(z - origin.z) == half) {   // a CORNER
+    if (nextInt(2) == 0) skip;          // 0x1b6c44b, 0x1b6c450..0x1b6c453
+    if ([rbp-0x108] != 0) skip;         // 0x1b6c459: rel != 0
+}
+// fall-through and every non-corner:
+if (isSolidBlockingBlock(pos)) skip;    // 0x1b6c494
+_placeBlock(pos, mLeaves);              // 0x1b6c4c3
+```
+
+Two things this settles that the corpus alone could not:
+
+* `-0x108` is the **rel** of the current layer, and the second corner condition is
+  `rel != 0`. So corners exist on every layer EXCEPT the top one, which is why
+  the top 5x5 layer is missing all four corners (21 of 25) while the layer below
+  loses only one (`nextInt(2)`).
+* A cell is gated on `BlockSource::isSolidBlockingBlock 0x1c5aea0`, **not** on
+  the material test. A replay that substitutes `_isFree` will accept corners the
+  original rejects.
+
+### SwampTreeFeature: the canopy is DONE, the vines are a nested rim walk
+
+Reading `0x1b6c2a9..0x1b6c460` from `gdb` settled the canopy exactly, and a
+replay now produces **every trunk, dirt and leaf cell in all 16 cases with zero
+spurious writes**. The remaining shortfall per case equals the vine count
+exactly (67, 47, 44, 56, 57, 86, 74, 85), so the canopy is finished.
+
+The exact inner body:
+
+```
+[rbp-0x3c]  = height
+[rbp-0x34]  = origin.y
+[rbp-0x104] = outer Range value -> y
+[rbp-0x108] = y - (origin.y + height)   -> rel, 0 on the TOP layer
+[rbp-0x10c] = 2 - rel/2                 -> half
+[rbp-0x138] = x - origin.x
+[rbp-0x160] = z - origin.z
+
+outer: range_incl(origin.y + height - 3, origin.y + height)
+half : 2 - rel/2                        // truncation -> 3, 3, 2, 2
+corner (abs(dx)==half && abs(dz)==half):
+    skip if nextInt(2) == 0             // 0x1b6c44b, 0x1b6c453
+    skip if [rbp-0x108] != 0            // 0x1b6c459 -> rel != 0
+otherwise:
+    skip if isSolidBlockingBlock(pos)   // 0x1b6c494, NOT _isFree
+    _placeBlock(pos, mLeaves)           // 0x1b6c4c3
+```
+
+Two facts the corpus alone could not give:
+
+* the second corner condition is `rel != 0`, so corners are skipped on the TOP
+  layer only — that is why the top 5x5 keeps 21 of 25 while the layer below
+  loses exactly one to `nextInt(2)`;
+* the cell test is `BlockSource::isSolidBlockingBlock 0x1c5aea0`, not the
+  material test. Substituting `_isFree` accepts cells the original rejects.
+
+### The vines are a nested rim walk, not four faces
+
+`0x1b6c693`, `0x1b6c743` and `0x1b6c7c9` are three more nested `range_incl`
+loops (y, x, z) whose body does `_getMaterial`, `Material::isType`, and then
+`BlockPos::west()/east()/north()/south()` before reaching the four `_addVine`
+sites at `0x1b6c958`, `0x1b6c9e1`, `0x1b6ca6a`, `0x1b6caf3`. So the vines come
+from walking a rim volume around the canopy and, per cell, testing its four
+horizontal neighbours — which is why the corpus's columns sit on the canopy rim
+and why there are so many (67 in case 0).
+
+Two cases (2, 3, 6, 7, 10, 11, 14, 15) return `result=false` with **zero**
+writes after ~205 queries, and their query stream ends with a third
+`get_block(origin.below)`. That is the early-out: the feature does its canopy
+reads first and only then decides, so a failed anchor still burns the whole
+canopy walk — an implementation that checks the ground up front will diverge on
+the query stream even though it writes nothing.
+
 ### The lesson worth keeping
 
 Two thirds of the difficulty here was the MATERIAL MODEL, not the geometry.
