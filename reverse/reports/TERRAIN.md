@@ -273,9 +273,23 @@ chunks); the oracle records its value at every decorate call.; the committed fix
 
 ## Not yet translated
 
-Biome::decorate (OverworldDecorator::decorate 0x1da5250 and the biome
-decorators) inside the native postProcess and the end of postProcess
-(snow/ice, _fixWaterAlongEdges, seasons, pending ticks), the BlockSource
-events for loaded chunks, the marine features and four tree subclasses, and
-the structures (their postProcess calls sit between the lakes and the
-dungeons). See docs/handoff/world_generation.md for the per-feature state.
+In the native post-process, in stream order:
+
+- FancyTreeFeature (stops 80 of the 192 recorded calls), RoofTreeFeature and
+  the other biomes' getTreeFeature; the seagrass (+0x218) and kelp (+0x20c)
+  loops (marine biomes); HugeMushroomFeature, dead bushes, waterlilies,
+  mushroom counts and cactus for biomes that have them; the other biome
+  decorators (Swamp, Taiga, Desert, Jungle, Savanna, Mesa, Ice, ExtremeHills,
+  oceans) and the roofed-forest grid;
+- the liquid stage: SpringFeature::place 0x1b65ec0 (stone above/below,
+  three stone and one empty neighbour) calls Block::tick 0x1e68dd0 at once,
+  so the springs, _fixWaterAlongEdges 0x1b39870 and the final
+  BlockTickingQueue::tickAllPendingTicks need LiquidBlockDynamic's flow
+  (including lava meeting water: obsidian). In the recorded calls every write
+  after the pumpkin stage is liquid flow;
+- snow and ice (WeatherHelpers::shouldFreeze / shouldSnow per column),
+  seasons;
+- the BlockSource events for loaded neighbours, and the structures (their
+  postProcess calls sit between the lakes and the dungeons).
+
+See docs/handoff/world_generation.md for the per-feature state.

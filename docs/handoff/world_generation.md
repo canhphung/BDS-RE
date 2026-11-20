@@ -84,6 +84,20 @@ terrain. Default stays kind 2.
   the verified features and picks deterministic sites because the real
   dispatcher is missing. It must be replaced by the dispatcher, not extended.
 
+## Native post-process (later work)
+
+`src/world/chunk_post_process.cpp` (`run_post_process`) is the translation of
+`OverworldGenerator::postProcess` 0x1b38950 and `OverworldDecorator::decorate`
+0x1da5250 themselves, over `GenRegion` (src/world/gen_region.cpp, a model of
+BlockSource/LevelChunk). It reuses the verified features above through
+`GenRegionView` (a DecorationRegion subclass) and native environment
+callbacks. It is checked end to end: `tools/re/capture_terrain.py
+--postprocess` records every LevelChunk::setBlock of the original in time
+order, and `postprocess_reference` replays each recorded call and compares
+the write sequence. For 192 recorded calls (seed 123) every write it makes
+matches; it currently reaches the pumpkin stage and stops at the first
+untranslated piece (see TERRAIN.md "Not yet translated").
+
 ## Working rules this branch established
 
 - Translate, never infer. Every constant comes from the binary; a guessed table
