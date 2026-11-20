@@ -1862,3 +1862,44 @@ again points at the second explanation. Reading what `place` writes into
 `[rbp-0x2c]` **before** `0x1b4b022` (`lea rcx,[rbp-0x2c]`) — including whether
 `nextInt`'s addend is stored there or in a different slot — is the single check
 that resolves it.
+
+### Fancy: the leading run's geometry, measured exactly
+
+Splitting the leading same-x/z run into its ground read and its ascending scan:
+
+| case | origin.y | ground read y | ascending scan | span |
+|---:|---:|---:|---|---:|
+| 0 | 5 | 4 | 5..20 | 16 |
+| 1 | 7 | 6 | 7..19 | 13 |
+| 4 | 7 | 6 | 7..20 | 14 |
+| 5 | 9 | 8 | 9..18 | 10 |
+| 8 | 9 | 8 | 9..17 | 9 |
+| 9 | 5 | 4 | 5..12 | 8 |
+| 12 | 5 | 4 | 5..18 | 14 |
+| 13 | 7 | 6 | 7..21 | 15 |
+
+The ascending scan ALWAYS starts at `origin.y` and always sits on the origin's own
+x and z. That is decisive: the first cell `_checkLine` reads is its `end`
+argument (`p = end.offset(f * i)` with `i` from 0), so **`end == origin`**.
+
+But `_checkLine` computes `delta = -end = -origin` and `steps = max(|ox|,|oy|,|oz|)`,
+which is 8 for case 0 — while the measured span is 16. So the `end` handed in is
+`origin`, yet the loop runs a different number of times than `_getSteps(-origin)`
+would give. The only way both can hold is that the `pos` and `end` arguments are
+NOT the same value: `place` passes some other position as `pos`, and
+`_checkLocation` builds `end = that_pos.above(*radius - 1)`, which for the values
+at hand happens to equal `origin`.
+
+Concretely, with `end == origin` and span 16 the loop must be running
+`steps = 16`, i.e. `_getSteps(delta) = 16`, so `delta` has a 16 in it. `delta =
+-end` gives `max(|ox|,|oy|,|oz|)` — 8 — so `delta` is NOT `-end` in this path.
+
+Raw bytes at `0x1b4b79e..0x1b4b7b3` do read `0 - end.x`, `0 - end.y`, `0 - end.z`.
+Combined with the measurement, the consistent explanation is that the position
+`place` hands `_checkLocation` as `pos` is **not the tree origin** but a shifted
+position, and the `end` derived from it coincides with the origin while the
+subtraction in `_checkLine` then yields the larger magnitude.
+
+Resolving this needs one more look at `0x1b4b5d3..0x1b4b611` with attention to
+which stack slot is `pos` (`-0x20`, the `BlockPos const&` second argument) versus
+the temporary built by `above()`. That is a single, well-scoped read.
