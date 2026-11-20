@@ -363,6 +363,44 @@ DecoratorCounts plains_pre_decorate(GenRegion &region, Random &random, int ox, i
     return counts;
 }
 
+// BlockLegacy::canProvideSupport 0x1e54bf0 for the upward face (1): BlockProperty
+// 0x80000, 0x200000 or 0x80. Properties 1 and 2 (slab / stairs halves) and the
+// height-state path read block states and are NOT TRANSLATED: they return
+// false here, and the only caller (PumpkinFeature, which first requires grass
+// below) never reaches them.
+bool can_provide_support_up(const BlockInfo &b) {
+    return b.has_property(0x80000) || b.has_property(0x200000) || b.has_property(0x80);
+}
+
+// PumpkinBlock::mayPlace 0x1e9a780: air or a replaceable material, and the
+// block below provides upward support (BlockSupportType 2).
+bool pumpkin_may_place(const GenRegion &region, int x, int y, int z) {
+    const auto &here = region.info(x, y, z);
+    if (!(here.material == material_type::Air || here.replaceable))
+        return false;
+    return can_provide_support_up(region.info(x, y - 1, z));
+}
+
+// ReedBlock::mayPlace 0x1e361e0 (ReedBlock::canSurvive 0x1e36a70 calls it):
+// reeds below; else grass, dirt, sand or podzol below, no liquid here, and
+// water (or frosted ice) in the liquid layer of a neighbour of the block below.
+bool reed_may_place(const GenRegion &region, int x, int y, int z) {
+    const auto &below = region.block(x, y - 1, z);
+    if (legacy_is(below, "reeds"))
+        return true;
+    if (!legacy_is(below, "grass") && !legacy_is(below, "dirt") && !legacy_is(below, "sand") &&
+        !legacy_is(below, "podzol"))
+        return false;
+    if (block_info(region.liquid_block(x, y, z).name).liquid)
+        return false;
+    for (const auto [dx, dz] : {std::pair{-1, 0}, std::pair{1, 0}, std::pair{0, -1}, std::pair{0, 1}}) {
+        const auto &liquid = region.liquid_block(x + dx, y - 1, z + dz);
+        if (block_info(liquid.name).material == material_type::Water || legacy_is(liquid, "frosted_ice"))
+            return true;
+    }
+    return false;
+}
+
 // The native answers of the BlockSource / Block queries tree.cpp and
 // vegetation.cpp ask through their environments.
 TreeEnvironment tree_environment(GenRegion &region) {
@@ -418,16 +456,39 @@ VegetationEnvironment vegetation_environment(GenRegion &region) {
         if (std::strcmp(b.name, "tallgrass") == 0 || std::strcmp(b.name, "red_flower") == 0 ||
             std::strcmp(b.name, "yellow_flower") == 0)
             return bush_may_place_on(region, x, y - 1, z);
+        if (std::strcmp(b.name, "reeds") == 0)
+            return reed_may_place(region, x, y, z);
         return false; // NOT TRANSLATED YET for the other blocks
     };
     env.material_is = [&region](DecorationRegion::Position p, int type) {
         return region.info(std::get<0>(p), std::get<1>(p), std::get<2>(p)).material == type;
     };
     env.heightmap = [&region](DecorationRegion::Position p) { return region.heightmap(std::get<0>(p), std::get<2>(p)); };
+    // Block::mayPlaceOn 0x1e6a540 (vtable +0x248) of the block placed:
+    // MushroomBlock::mayPlaceOn 0x1e33360 asks Block::isSolid (BlockLegacy +0xaa).
+    env.may_place_on = [&region](DecorationRegion::Position p, FeatureBlock b) {
+        const int x = std::get<0>(p), y = std::get<1>(p), z = std::get<2>(p);
+        if (std::strcmp(b.name, "brown_mushroom") == 0 || std::strcmp(b.name, "red_mushroom") == 0)
+            return region.info(x, y, z).solid;
+        return false; // NOT TRANSLATED YET for the other blocks
+    };
+    // Block::mayPlace 0x1e6a5a0 (vtable +0x240).
+    env.may_place = [&region](DecorationRegion::Position p, FeatureBlock b) {
+        const int x = std::get<0>(p), y = std::get<1>(p), z = std::get<2>(p);
+        if (std::strcmp(b.name, "pumpkin") == 0)
+            return pumpkin_may_place(region, x, y, z);
+        return false; // NOT TRANSLATED YET for the other blocks
+    };
     env.place_block = [&region](DecorationRegion::Position p, FeatureBlock b) {
         place_block(region, std::get<0>(p), std::get<1>(p), std::get<2>(p), TerrainBlock{b.name, b.data});
     };
     return env;
+}
+
+// OverworldDecorator::_getRandomHeight 0x1da4f10: nextInt(2 x heightmap), or 0.
+int random_height(const GenRegion &region, Random &random, int x, int z) {
+    const int h = region.heightmap(x, z) * 2;
+    return h != 0 ? random.next_int(h) : 0;
 }
 
 // The tree features the decorators hand out (decorator members, dumped).
@@ -475,6 +536,45 @@ bool place_tree(DecorationRegion &view, TreeKind kind, DecorationRegion::Positio
     default:
         return false;
     }
+}
+
+// FlowerFeature::placeFlower 0x1b5f230: 64 tries at gaussian (z 8, y 4,
+// x 8) offsets, an empty cell where the flower's canSurvive (vtable +0x300,
+// BushBlock::canSurvive: mayPlaceOn below) holds.
+void flower_feature_place(GenRegion &region, int px, int py, int pz, const TerrainBlock &flower, Random &random) {
+    for (int i = 0; i < 64; ++i) {
+        const int dz = next_gaussian_int(random, 8), dy = next_gaussian_int(random, 4),
+                  dx = next_gaussian_int(random, 8);
+        const int x = px + dx, y = py + dy, z = pz + dz;
+        if (!region.is_empty(x, y, z))
+            continue;
+        if (!bush_may_place_on(region, x, y - 1, z))
+            continue;
+        place_block(region, x, y, z, flower);
+    }
+}
+
+// The decorator's getRandomFlowerBlock (vtable +0x20).
+TerrainBlock random_flower(const BiomeData &b, Random &random, int x, int z, const PerlinSimplexNoise &noise) {
+    if (b.kind == BiomeClass::Forest && b.subtype == 1) {
+        // ForestBiome::Decorator::getRandomFlowerBlock 0x1dc3dc0 (flower forest).
+        const float n = noise.value2d(static_cast<float>(x) / 48.0f, static_cast<float>(z) / 48.0f);
+        float v = (n + 1.0f) / 2.0f;
+        v = v < 0.0f ? 0.0f : (v > 0.9999f ? 0.9999f : v); // mce::Math::clamp
+        const int data = static_cast<int>(v * 9.0f);
+        return TerrainBlock{"red_flower", static_cast<std::uint16_t>(data == 1 ? 0 : data)};
+    }
+    if (b.kind == BiomeClass::Plains) {
+        // PlainsBiome::Decorator::getRandomFlowerBlock 0x1dcc6f0.
+        const float n = noise.value2d(static_cast<float>(x) / 200.0f, static_cast<float>(z) / 200.0f);
+        if (static_cast<double>(n) < -0.8)
+            return TerrainBlock{"red_flower", static_cast<std::uint16_t>(random.next_int(4) + 4)};
+        if (random.next_int(3) > 0) {
+            const int t = random.next_int(3);
+            return TerrainBlock{"red_flower", static_cast<std::uint16_t>(t == 0 ? 0 : (t == 1 ? 3 : 8))};
+        }
+    }
+    return TerrainBlock{"yellow_flower", 0}; // OverworldDecorator::getRandomFlowerBlock 0x1da4ef0
 }
 
 // The verified features of decoration.cpp / tree.cpp / vegetation.cpp work on
@@ -623,8 +723,7 @@ PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int ch
     // trees are nextFloat(trees) and the grass count is the plains
     // decorator's (VanillaBiomes::mPlains, decorator +0x1ec).
     int grass = decorating.kind == BiomeClass::Plains ? state.plains_grass : data->grass;
-    int flowers = decorating.kind == BiomeClass::Plains ? state.plains_flowers : data->flowers;
-    (void)flowers;
+    const int flowers = decorating.kind == BiomeClass::Plains ? state.plains_flowers : data->flowers;
     int trees = 0;
     if (data->trees > 0.0f) {
         if (random.next_int(10) == 0) {
@@ -638,7 +737,6 @@ PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int ch
             trees = data->trees > f ? 1 : 0;
         }
     }
-    (void)grass;
     if (data->field_218 > 0) {
         // NOT TRANSLATED YET: the +0x218 loop of SeagrassFeature (+0x1d0) at
         // (x, 54, z) 0x1da5709..0x1da5838.
@@ -665,6 +763,81 @@ PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int ch
         place_tall_grass(view, {x, y, z}, FeatureBlock{"tallgrass", 1}, random, plant_env, 23, 3);
     }
     report.stage = "trees";
+    if (data->huge_mushrooms > 0) {
+        report.stage = "trees (huge mushrooms not translated)";
+        return report; // NOT TRANSLATED YET: 0x1da595b..0x1da5a79, HugeMushroomFeature (+0x90)
+    }
+    // Flowers 0x1da5a79..0x1da5c20: x, z nextInt(16), y = nextInt(heightmap
+    // + 32), the decorator's flower, then FlowerFeature (+0x78) placeFlower
+    // only when that position's material is NOT air (Material::operator!= of
+    // Material::getMaterial(0)).
+    for (int i = 0; i < flowers; ++i) {
+        const int dx = random.next_int(16), dz = random.next_int(16);
+        const int y = random.next_int(region.heightmap(ox + dx, oz + dz) + 32);
+        const auto flower = random_flower(decorating, random, ox + dx, oz + dz, decorator_noise);
+        if (region.info(ox + dx, y, oz + dz).material != material_type::Air)
+            flower_feature_place(region, ox + dx, y, oz + dz, flower, random);
+    }
+    report.stage = "flowers";
+    // Grass 0x1da5c20..0x1da5d31 (skipped with the legacy flag): x, z
+    // nextInt(16), y = _getRandomHeight, the decorator's getGrassFeature
+    // (vtable +0x18; OverworldDecorator::getGrassFeature 0x1da4ed0: +0x130,
+    // INFERRED tallgrass:1) placed through its 3-argument place (90, 8).
+    for (int i = 0; i < grass; ++i) {
+        const int dx = random.next_int(16), dz = random.next_int(16);
+        const int y = random_height(region, random, ox + dx, oz + dz);
+        if (decorating.kind != BiomeClass::Forest && decorating.kind != BiomeClass::Plains &&
+            decorating.kind != BiomeClass::Biome && decorating.kind != BiomeClass::River) {
+            report.stage = "flowers (this decorator's grass feature is not translated)";
+            return report;
+        }
+        place_tall_grass(view, {ox + dx, y, oz + dz}, FeatureBlock{"tallgrass", 1}, random, plant_env);
+    }
+    report.stage = "grass";
+    // Dead bushes (+0x1f0, DeadBushFeature +0xc8) 0x1da5d31..0x1da5e6e,
+    // waterlilies (+0x1e0) and mushrooms (+0x1f4): NOT TRANSLATED YET for a
+    // non-zero count.
+    if (data->dead_bushes > 0 || data->waterlily > 0 || data->mushrooms > 0) {
+        report.stage = "grass (dead bush / waterlily / mushroom counts not translated)";
+        return report;
+    }
+    // Always: one in 4 a brown mushroom (FlowerFeature +0x80) at the heightmap,
+    // one in 8 a red one (+0x88) at _getRandomHeight 0x1da6202..0x1da638e.
+    if (random.next_int(4) == 0) {
+        const int dx = random.next_int(16), dz = random.next_int(16);
+        const int y = random_height(region, random, ox + dx, oz + dz);
+        place_flower(view, {ox + dx, y, oz + dz}, FeatureBlock{"brown_mushroom", 0}, random, plant_env);
+    }
+    if (random.next_int(8) == 0) {
+        const int dx = random.next_int(16), dz = random.next_int(16);
+        const int y = random_height(region, random, ox + dx, oz + dz);
+        place_flower(view, {ox + dx, y, oz + dz}, FeatureBlock{"red_mushroom", 0}, random, plant_env);
+    }
+    // One in 18: +0x20c kelp (+0x1a8) at (nextInt(35), 43, nextInt(35)).
+    if (random.next_int(18) == 0 && data->field_20c > 0) {
+        report.stage = "mushrooms (kelp not translated)";
+        return report;
+    }
+    report.stage = "mushrooms";
+    // Reeds: +0x1f8 and 10 more, at _getRandomHeight (ReedsFeature +0x98).
+    for (int i = 0; i < data->reeds + 10; ++i) {
+        const int dx = random.next_int(16), dz = random.next_int(16);
+        const int y = random_height(region, random, ox + dx, oz + dz);
+        place_reed(view, {ox + dx, y, oz + dz}, FeatureBlock{"reeds", 0}, random, plant_env);
+    }
+    report.stage = "reeds";
+    // One in 32 a pumpkin patch at _getRandomSurfacePosition (PumpkinFeature +0xb0).
+    if (random.next_int(32) == 0) {
+        const int z = oz + random.next_int(16), x = ox + random.next_int(16);
+        const int h = region.heightmap(x, z);
+        const int y = h != 0 ? random.next_int(h) : 0;
+        place_pumpkin(view, {x, y, z}, FeatureBlock{"pumpkin", 0}, random, plant_env, FeatureBlock{"grass", 0});
+    }
+    report.stage = "pumpkins";
+    if (data->cactus > 0) {
+        report.stage = "pumpkins (cactus not translated)";
+        return report;
+    }
     return report;
 }
 } // namespace bds

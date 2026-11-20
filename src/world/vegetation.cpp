@@ -241,16 +241,16 @@ bool place_reed(DecorationRegion &region, DecorationRegion::Position at, Feature
         // zero placements on dry ground.
         if (!wet)
             continue;
-        // The native tail at 0x1b5d205..0x1b5d326 draws nextInt(3)+1 and then
-        // nextInt(width)+2 and walks a canSurvive column. The oracle never
-        // reaches it for this corpus because no attempt survives the water
-        // check, so it is NOT translated here rather than guessed: the corpus
-        // holds 80 words (20 attempts x 2 gaussians + 20 width draws) and zero
-        // can_survive rows, which is exactly the pre-column path.
-        //
-        // TODO(reed-column): translate 0x1b5d205..0x1b5d326 against a corpus
-        // whose scene lets an attempt pass the material check.
-        environment.place_block(p, reed);
+        // 0x1b5d205..0x1b5d326: a height of nextInt(nextInt(3) + 1) + 2, then a
+        // reed at each level whose Block::canSurvive 0x1e69f10 holds (a failed
+        // level is skipped, not the end of the column).
+        const int width = random.next_int(3) + 1;
+        const int height = random.next_int(width) + 2;
+        for (int k = 0; k < height; ++k) {
+            const DecorationRegion::Position q{std::get<0>(p), std::get<1>(p) + k, std::get<2>(p)};
+            if (environment.can_survive(q, reed))
+                environment.place_block(q, reed);
+        }
     }
     return true;
 }

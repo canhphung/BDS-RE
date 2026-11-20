@@ -250,6 +250,11 @@ taken as 0 (INFERRED).
 | OakFeature::place 0x1dae2f0 (nextInt(3) + 4), BirchFeature::place 0x1b59c20, TreeFeature::place through tree.cpp | `place_tree` |
 | TreeFeature::_placeFallenTrunk 0x1b5a8a0 (and _placeTrunk returns !fallen, 0x1b5b0ff) | tree.cpp `tree_place_fallen_trunk` |
 | TreeFeature::_isFree 0x1b5a190, BlockSource::isSolidBlockingBlock 0x1c5ae40 / BlockLegacy 0x1e56e90, TallGrass::canSurvive 0x1e9d340 / BushBlock::canSurvive 0x1e800d0 | `tree_environment`, `vegetation_environment` |
+| decorate 0x1da5a79..0x1da5d31: flowers (heightmap + 32, placeFlower only where the material is NOT air), grass (_getRandomHeight 0x1da4f10, getGrassFeature +0x130, INFERRED tallgrass:1) | `run_post_process` |
+| FlowerFeature::placeFlower 0x1b5f230; getRandomFlowerBlock: OverworldDecorator 0x1da4ef0, ForestBiome 0x1dc3dc0, PlainsBiome 0x1dcc6f0 | `flower_feature_place`, `random_flower` |
+| decorate 0x1da6202..0x1da67cf: the always-drawn brown (1/4) and red (1/8) mushrooms (FlowerFeature::place / _placeMushroom via vegetation.cpp, MushroomBlock::mayPlaceOn 0x1e33360), the 1/18 kelp draw, reeds (+0x1f8 + 10), the 1/32 pumpkin | `run_post_process` |
+| ReedsFeature::place column 0x1b5d205..0x1b5d326, ReedBlock::mayPlace 0x1e361e0 / canSurvive 0x1e36a70 | vegetation.cpp `place_reed`, `reed_may_place` |
+| PumpkinBlock::mayPlace 0x1e9a780, BlockLegacy::canProvideSupport 0x1e54bf0 (upward face; the slab/stairs state paths are not translated) | `pumpkin_may_place` |
 | per-biome decorator fields and features, dumped by the oracle (tests/reference/decorators_bds_1.6.0.15.json, `tools/re/make_decorator_table.py`) | src/world/decorator_data.cpp |
 
 The double plant's two halves go through a WorldChangeTransaction whose
@@ -257,10 +262,11 @@ unordered_map makes apply() write the upper half first.
 
 All 192 recorded calls (seed 123) match up to Biome::decorate, and through
 the biome decorators' own stage, decorateOres, the sand/clay/gravel disks and
-the trees (1,022,804 of 1,101,314 writes of these calls, in order): every
-write run_post_process makes matches the original's. It stops where an
-untranslated piece comes: 80 calls at a FancyTreeFeature, 15 at the
-seagrass loop; 97 complete the tree stage. The plains decorator's grass
+the trees, flowers, grass, mushrooms, reeds and pumpkins (1,023,966 of
+1,101,314 writes of these calls, in order): every write run_post_process
+makes matches the original's. It stops where an untranslated piece comes:
+80 calls at a FancyTreeFeature, 15 at the seagrass loop; 96 run through the
+pumpkin stage. The plains decorator's grass
 count is shared state of the original (one decorator object for all
 chunks); the oracle records its value at every decorate call.; the committed fixture keeps 7 of them
 (plain chunks, dungeons, water lakes).
