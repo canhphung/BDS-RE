@@ -1,0 +1,20 @@
+{
+  "bedrock_server.exe": {
+    "sha256": "a36f050d622c520f795dc45764c43eb237ef5666eec641107d4c37ba33650461",
+    "size": 13427200,
+    "machine": "0x8664 x86-64",
+    "pdb_link_name": "F:\\DarwinWork\\63\\s\\BuildOutput\\v141\\Apps\\x64\\Minecraft.Windows\\Win32.Server.Publish\\bedrock_server.pdb",
+    "rsds_guid": "093aad0719a72d45afa79fe3abd628fe",
+    "rsds_age": 1
+  },
+  "bedrock_server.pdb": {
+    "sha256": "4ac304b50bbe76d9643793ecf73737432f56f3bc07afea5ccbdae170b405df19",
+    "size": 137097216,
+    "guid": "093aad0719a72d45afa79fe3abd628fe",
+    "age": 1,
+    "signature": 1535457991
+  },
+  "exe_pdb_match": true,
+  "match_method": "PE debug directory RSDS record vs PDB info stream (MSF 7.00) GUID+Age, parsed independently",
+  "protocol_282_check": "NetworkProtocolVersion @SharedConstants is at PDB public ?NetworkProtocolVersion@SharedConstants@@3HB section 2 offset 225040 -> EXE bytes 1a01 = 282"
+}

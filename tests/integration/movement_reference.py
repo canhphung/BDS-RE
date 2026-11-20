@@ -28,7 +28,8 @@ with tempfile.TemporaryDirectory(prefix="bds-movement-") as directory:
     work = Path(directory)
     port = free_port()
     (work / "server.properties").write_text(
-        f"server-port={port}\nserver-portv6={free_port()}\nonline-mode=false\nlevel-name=Movement\nview-distance=8\n")
+        f"server-port={port}\nserver-portv6={free_port()}\nonline-mode=false\nlevel-name=Movement\n"
+        "view-distance=8\nlevel-seed=123\n")
     server = subprocess.Popen([sys.argv[1], "--root", str(work)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT, text=True)
     try:

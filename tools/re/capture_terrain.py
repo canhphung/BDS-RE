@@ -41,7 +41,14 @@ def main():
     parser.add_argument("--timeout", type=int, default=1500)
     parser.add_argument("--layer-oracle", action="store_true",
                         help="Stop once and call every biome layer (gdb_layer_oracle.py) instead")
+    parser.add_argument("--postprocess", action="store_true",
+                        help="Record chunk loads, postProcess calls and every block write "
+                             "(gdb_postprocess_oracle.py) instead of the generation stages")
+    parser.add_argument("--center", type=int, nargs=2, metavar=("CHUNK_X", "CHUNK_Z"),
+                        help="After spawn, teleport to this chunk to capture distant biomes")
     args = parser.parse_args()
+    if not 1<=args.chunks<=4096 or not 1<=args.view<=32 or args.timeout<=0:
+        parser.error('chunks/view/timeout outside supported bounds')
     runtime, output = args.runtime.resolve(), args.output.resolve()
     if hashlib.sha256((runtime / "bedrock_server").read_bytes()).hexdigest() != ORIGINAL_SHA256:
         parser.error("unexpected original binary")
@@ -74,6 +81,11 @@ def main():
         env["LAYER_ORACLE_BIN"] = str(runtime / "bedrock_server")
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_layer_oracle.py")),
                     "-ex", "run", "-ex", "python layer_dump()", "-ex", "kill", "--args", "./bedrock_server"]
+    elif args.postprocess:
+        env["POSTPROCESS_ORACLE_OUT"] = str(output / "postprocess.jsonl")
+        env["POSTPROCESS_ORACLE_BIN"] = str(runtime / "bedrock_server")
+        command += ["-ex", "source " + str(Path(__file__).with_name("gdb_postprocess_oracle.py")),
+                    "-ex", "run", "--args", "./bedrock_server"]
     else:
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_terrain_oracle.py")),
                     "-ex", "run", "--args", "./bedrock_server"]
@@ -88,7 +100,9 @@ def main():
                 log.write(line)
                 log.flush()
 
-    threading.Thread(target=collect, daemon=True).start()
+    reader=threading.Thread(target=collect, daemon=True)
+    reader.start()
+    client=None
     try:
         deadline = time.monotonic() + 180
         while not any("IPv4 supported" in line for line in lines):
@@ -106,21 +120,46 @@ def main():
             print("layers:", (output / "layers.json").exists(), flush=True)
             return
         game = spawn(client)
+        if args.center:
+            client.drain(2.0) # let SetLocalPlayerAsInitialized reach the native Level
+            x,z=args.center
+            process.stdin.write(f'tp @a {x*16+8} 120 {z*16+8}\n')
+            process.stdin.flush()
         deadline = time.monotonic() + args.timeout
+        next_teleport=time.monotonic()+5
         while time.monotonic() < deadline:
             client.drain(1.0)
-            if sum(1 for p in client.log if p["id"] == 0x3a) >= args.chunks:
+            if args.center and time.monotonic()>=next_teleport:
+                process.stdin.write(f'tp @a {x*16+8} 120 {z*16+8}\n')
+                process.stdin.flush()
+                next_teleport=time.monotonic()+5
+            chunks=[p for p in client.log if p["id"]==0x3a]
+            if args.center:
+                from make_terrain_reference import chunk_biomes
+                chunks=[p for p in chunks if max(abs(a-b) for a,b in
+                        zip(chunk_biomes(p['body'])[:2],args.center))<=args.view+1]
+            if len(chunks) >= args.chunks:
                 break
+        if len(chunks)<args.chunks:
+            raise RuntimeError(f'capture timed out: {len(chunks)} of {args.chunks} target chunk packets')
+        if any('Traceback' in line or 'Python Exception' in line for line in lines):
+            raise RuntimeError('native terrain oracle failed')
+        target_count=len(chunks)
         chunks = [p for p in client.log if p["id"] == 0x3a]
         (output / "chunks.json").write_text(json.dumps(chunks) + "\n")
         (output / "metadata.json").write_text(json.dumps({
             "binary_sha256": ORIGINAL_SHA256, "properties": properties, "spawn": game.get("position"),
-            "chunk_packets": len(chunks),
+            "chunk_packets": len(chunks), "target_chunk": args.center,"target_packets":target_count,
+            "requested_packets":args.chunks,"complete":True,
             "generator": "tools/re/capture_terrain.py with tools/re/gdb_terrain_oracle.py"}, indent=1) + "\n")
         print(f"chunks: {len(chunks)}", flush=True)
     finally:
-        os.killpg(process.pid, 9)
+        if client is not None:client.close()
+        if process.poll() is None:
+            try:os.killpg(process.pid,9)
+            except ProcessLookupError:pass
         process.wait()
+        reader.join(timeout=2)
 
 
 if __name__ == "__main__":
