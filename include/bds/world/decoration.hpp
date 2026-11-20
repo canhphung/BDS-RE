@@ -15,11 +15,14 @@ class DecorationRegion {
         TerrainBlock block;
         int flags;
     };
+    virtual ~DecorationRegion() = default;
     void load_chunk(int x, int z, const TerrainVolume &);
     void load_empty_chunk(int x, int z);
     bool has_chunk(int x, int z) const { return chunks_.contains({x, z}); }
-    TerrainBlock block(Position) const;
-    bool set_block(Position, TerrainBlock, int flags = 3);
+    // Virtual so the native post-process (chunk_post_process.cpp) can run the
+    // same features over its GenRegion.
+    virtual TerrainBlock block(Position) const;
+    virtual bool set_block(Position, TerrainBlock, int flags = 3);
     std::vector<Mutation> take_mutations() { return std::exchange(mutations_, {}); }
 
   private:

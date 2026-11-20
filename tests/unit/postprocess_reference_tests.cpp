@@ -99,10 +99,12 @@ int main(int argc, char **argv) {
         }
         matched_total += matched;
         total += expected.size();
-        // Every write before Biome::decorate is translated (lakes, the second
-        // reseed, dungeons); decoration comes next.
+        // Translated so far: everything before Biome::decorate (lakes, the
+        // reseeds, dungeons), the forest / plains decorators' own stage and
+        // decorateOres. The test requires all of our writes to match the
+        // original's and to reach at least the decoration start.
         const std::size_t want = call.at("decorate_at").get<std::size_t>();
-        const bool ok = matched >= want && (want < expected.size() || region.writes.size() == expected.size());
+        const bool ok = matched >= want && matched == region.writes.size();
         if (report_only || !ok) {
             std::cout << "chunk " << cx << "," << cz << " stage " << report.stage << ": " << matched << " / "
                       << expected.size() << " writes match (ours " << region.writes.size() << ")";

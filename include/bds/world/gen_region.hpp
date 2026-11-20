@@ -52,6 +52,10 @@ class GenRegion {
     const TerrainBlock &extra_block(int x, int y, int z) const; // LevelChunk::getExtraBlock 0x1de2b60
     const BlockInfo &info(int x, int y, int z) const { return block_info(block(x, y, z).name); }
     bool is_empty(int x, int y, int z) const; // BlockSource::isEmptyBlock 0x1c60cb0
+    // BlockSource::getLiquidBlock 0x1c5a380: the extra block unless it is air.
+    const TerrainBlock &liquid_block(int x, int y, int z) const;
+    // BlockSource::isEmptyWaterBlock 0x1c60d00: the block's material is Water.
+    bool is_empty_water(int x, int y, int z) const;
     // BlockSource::setBlock 0x1c59bb0 (false outside the height or the area)
     // and LevelChunk::setBlock 0x1de2560 with its extra-layer handling.
     bool set_block(int x, int y, int z, const TerrainBlock &block, int flags);

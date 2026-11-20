@@ -101,6 +101,15 @@ const TerrainBlock &GenRegion::extra_block(int x, int y, int z) const {
 
 bool GenRegion::is_empty(int x, int y, int z) const { return is_air(block(x, y, z)); }
 
+const TerrainBlock &GenRegion::liquid_block(int x, int y, int z) const {
+    const auto &extra = extra_block(x, y, z);
+    return is_air(extra) ? block(x, y, z) : extra;
+}
+
+bool GenRegion::is_empty_water(int x, int y, int z) const {
+    return info(x, y, z).material == material_type::Water;
+}
+
 void GenRegion::set_extra_block(int x, int y, int z, const TerrainBlock &b) {
     auto *c = chunk(x >> 4, z >> 4);
     if (!c || y < 0 || y >= GenChunk::height)
