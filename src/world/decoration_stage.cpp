@@ -124,6 +124,9 @@ DecorationStageResult decorate_generated_chunk(const TerrainVolume &volume, int 
         return std::strcmp(b.name, "air") == 0 || std::strcmp(b.name, "leaves") == 0;
     };
     tree_environment.is_empty = [](DecorationRegion::Position) { return true; };
+    // _placeFallenTrunk asks BlockSource::getHeightmap; this stage has no
+    // LevelChunk heightmap and answers like its vegetation environment.
+    tree_environment.heightmap = vegetation_environment.heightmap;
     tree_environment.may_place_on = [&](DecorationRegion::Position p, TreeBlock) {
         const auto below = region.block({std::get<0>(p), std::get<1>(p) - 1, std::get<2>(p)});
         return std::strcmp(below.name, "grass") == 0 || std::strcmp(below.name, "dirt") == 0;
