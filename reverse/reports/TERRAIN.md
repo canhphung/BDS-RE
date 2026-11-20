@@ -139,7 +139,7 @@ six captures (2,514 chunks: five runs of seed 123 and one of server
 `level-seed=1` into RandomSeed -1997048360 (level.dat), which
 `make_terrain_reference.py` now reads instead of server.properties.
 
-## Post-processing (src/world/gen_region.cpp, src/world/decoration.cpp)
+## Post-processing (src/world/gen_region.cpp, src/world/chunk_post_process.cpp)
 
 Oracle: `capture_terrain.py --postprocess` loads
 `tools/re/gdb_postprocess_oracle.py`, which records in time order every
@@ -157,10 +157,10 @@ write sequence with the original's.
 
 | Original | BDS-RE |
 |---|---|
-| postProcess 0x1b38950: Random (ThreadData +0x41810) seeded like the carvers from the chunk position; biome at LevelChunk::getMax | `post_process` |
-| water lake (not Desert/DesertHills, nextInt(4) == 0, nextInt(3, 12) / nextInt(128) / nextInt(3, 12)); lava lake (nextInt(8) == 0, y = nextInt(nextInt(120) + 8), only y >= 60, above 63 one in 10) | `post_process` |
+| postProcess 0x1b38950: Random (ThreadData +0x41810) seeded like the carvers from the chunk position; biome at LevelChunk::getMax | `run_post_process` |
+| water lake (not Desert/DesertHills, nextInt(4) == 0, nextInt(3, 12) / nextInt(128) / nextInt(3, 12)); lava lake (nextInt(8) == 0, y = nextInt(nextInt(120) + 8), only y >= 60, above 63 one in 10) | `run_post_process` |
 | LakeFeature::place 0x1b5dc70, _check 0x1b5e980, Feature::_placeBlock 0x1b6ebd0 (setBlock flags 3) | `LakeFeature` |
-| second reseed 0x1b38ea5, 8 dungeon attempts (origin + nextInt(16) + 8, nextInt(128)) | `post_process` |
+| second reseed 0x1b38ea5, 8 dungeon attempts (origin + nextInt(16) + 8, nextInt(128)) | `run_post_process` |
 | MonsterRoomFeature::place 0x1b549a0, _getFacingDataId 0x1b55340, _getRandomEntityId 0x1b55590 | `MonsterRoomFeature` |
 | BlockSource::setBlock 0x1c59bb0, LevelChunk::setBlock 0x1de2560 (extra layer), setExtraBlock 0x1de2980 | `GenRegion::set_block` |
 | BlockSource::getHeightmap 0x1c5ad20, getAboveTopSolidBlock 0x1c5ab40 / LevelChunk 0x1de8120, isTopSolid 0x1de8070, recomputeHeightMap 0x1de9520 | `GenRegion` |

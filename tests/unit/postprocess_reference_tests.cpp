@@ -6,7 +6,7 @@
 // usage: postprocess_reference_tests <reference.json> [--report]
 // Without --report every call must match up to the stages translated so far
 // (the writes before Biome::decorate, "decorate_at").
-#include "bds/world/decoration.hpp"
+#include "bds/world/chunk_post_process.hpp"
 #include "nlohmann/json.hpp"
 #include <cstring>
 #include <fstream>
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
                 region.add(std::move(chunk));
             }
         replay(region, call.at("prior"));
-        const auto report = post_process(region, seed, cx, cz);
+        const auto report = run_post_process(region, seed, cx, cz);
         const auto &expected = call.at("writes");
         std::size_t matched = 0;
         while (matched < expected.size() && matched < region.writes.size()) {

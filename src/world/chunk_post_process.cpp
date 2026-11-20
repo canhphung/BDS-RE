@@ -1,6 +1,6 @@
 // OverworldGenerator::postProcess 0x1b38950 and the features it places,
 // translated from BDS 1.6.0.15 (Linux). Addresses are cited per function.
-#include "bds/world/decoration.hpp"
+#include "bds/world/chunk_post_process.hpp"
 #include <cstring>
 
 namespace bds {
@@ -220,7 +220,7 @@ class MonsterRoomFeature {
 };
 } // namespace
 
-PostProcessReport post_process(GenRegion &region, std::uint32_t seed, int chunk_x, int chunk_z) {
+PostProcessReport run_post_process(GenRegion &region, std::uint32_t seed, int chunk_x, int chunk_z) {
     PostProcessReport report;
     Random random(0); // ThreadData +0x41810, reseeded below
     const auto reseed = [&] {
