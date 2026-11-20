@@ -1282,7 +1282,41 @@ Two facts the corpus alone could not give:
 * the cell test is `BlockSource::isSolidBlockingBlock 0x1c5aea0`, not the
   material test. Substituting `_isFree` accepts cells the original rejects.
 
-### The vines are a nested rim walk, not four faces
+### The vines are a nested rim walk — READ EXACTLY
+
+`0x1b6c551..0x1b6caf3` repeats the canopy's **same three nested loops**, with the
+same bounds:
+
+```
+outer: range_incl(origin.y + height - 3, origin.y + height)   (0x1b6c680..0x1b6c693)
+rel   = y - (origin.y + height)
+half  = 2 - rel/2                                             (0x1b6c702..0x1b6c727)
+inner: x and z in range_incl(-half, +half)
+```
+
+The body (0x1b6c820..0x1b6c8cf) is:
+
+```
+pos = BlockPos(origin.x + dx, y, origin.z + dz)
+if (!_getMaterial(pos).isType(7)) continue       // 0x1b6c876: must be a LEAF
+p_west  = pos.west();   p_east  = pos.east()
+p_north = pos.north();  p_south = pos.south()
+// then the four _addVine sites, each behind its own nextInt(4) gate
+```
+
+So vines are produced by walking **every leaf cell** and offering each of its
+four horizontal neighbours to `_addVine`, one 1-in-4 roll per direction. That is
+why the corpus's columns sit on the canopy rim and why case 0 has 67 of them.
+
+**Replay status with all of that implemented**: every case reaches
+`miss = 0` — the replay produces a superset that CONTAINS every native cell.
+The remaining differences are only extra vine writes (case 0 is 215 vs 218 with
+3 native duplicates at the trunk column explaining the gap, case 1 is 203 vs 191)
+plus the eight early-out cases.
+
+That is a much better position than before: the geometry is complete, and what
+is left is the exact gating (how many of the four neighbour rolls really fire)
+and the early-out.
 
 `0x1b6c693`, `0x1b6c743` and `0x1b6c7c9` are three more nested `range_incl`
 loops (y, x, z) whose body does `_getMaterial`, `Material::isType`, and then
