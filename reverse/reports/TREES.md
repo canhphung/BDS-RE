@@ -1736,3 +1736,41 @@ adds the origin back into the delta, or `place` passes a different position than
 `origin` and the difference is the `+ 0x3c`-style offset. Comparing the 17-read
 length against `height + 7` and `2 * height - 3` for the other cases is the
 cheapest way to identify the exact expression before writing more code.
+
+### Fancy: the measured vertical runs (round 3 data)
+
+For each succeeding case, the count of leading `get_block` reads that share the
+origin's x and z, with the height the seed implies:
+
+| case | height | origin.y | vertical reads | first y | last y | origin.y+height |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 10 | 5 | 17 | 4 | 20 | 15 |
+| 1 | 14 | 7 | 14 | 6 | 19 | 21 |
+| 4 | 10 | 7 | 15 | 6 | 20 | 17 |
+| 5 | 14 | 9 | 22 | 8 | 18 | 23 |
+| 8 | 12 | 9 | 10 | 8 | 17 | 21 |
+| 9 | 5 | 5 | 14 | 4 | 12 | 10 |
+| 12 | 14 | 5 | 15 | 4 | 18 | 19 |
+| 13 | 11 | 7 | 16 | 6 | 21 | 18 |
+
+Every run starts at `origin.y - 1` (the `_checkLocation` ground read) and the
+second read is always `origin.y`, so the ground test is confirmed. Beyond that the
+length does NOT track the height: case 5 has the most reads (22) with a mid-range
+height, and case 8 has the fewest (10) with a larger height. Reading the run as one
+`_checkLine` therefore does not fit.
+
+Two explanations remain, and the data prefers the second:
+
+1. `_checkLocation`'s `_checkLine(origin, origin.above(radius - 1))` alone would
+   contribute `radius - 1` reads, which is far short of every count here.
+2. The leading same-x/z run is the **concatenation of several separate scans** that
+   happen to be collinear: `_checkLocation`'s one, plus the per-iteration
+   `_checkLine` calls in `place`'s foliage loop when a branch tip lands back on the
+   trunk column. Case 5's 22 against case 8's 10 is most easily explained that way,
+   because the foliage loop's tip positions depend on `nextFloat()` and
+   `_getTreeShape`, not on the height.
+
+Pinning this needs the query stream segmented by *position pattern* rather than by
+a contiguous run: the foliage loop's scans are the ones whose endpoints are the
+`offset(sin, 0, cos)` points documented earlier. Doing that segmentation is the
+concrete next step; it needs no new oracle run.
