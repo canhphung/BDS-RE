@@ -8,6 +8,7 @@ prepareHeights, after buildSurfaces and after the carvers for a sample of chunks
 zlib/base64 uint16 cells in BlockVolume order (x * 16 + z) * 128 + y).
 """
 import json
+import hashlib
 import struct
 import sys
 from pathlib import Path
@@ -74,6 +75,11 @@ def main():
     run = Path(sys.argv[1])
     out = Path(sys.argv[2])
     samples = int(sys.argv[3]) if len(sys.argv) > 3 else 24
+    metadata=json.loads((run/'metadata.json').read_text())
+    log=(run/'gdb.log').read_text()
+    if (metadata['binary_sha256']!='69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad'
+            or 'Traceback' in log or 'Python Exception' in log):
+        raise ValueError('invalid/failed native terrain capture')
     raw, volumes = [], {}
     for line in (run / "terrain.jsonl").read_text().splitlines():
         e = json.loads(line)
@@ -84,11 +90,20 @@ def main():
     chunks = [dict(zip(("x", "z", "biomes"), chunk_biomes(p["body"])))
               for p in json.loads((run / "chunks.json").read_text())]
     keys = sorted(k for k, v in volumes.items() if len(v) == 3)
+    target=metadata.get('target_chunk')
+    if target:
+        # Distant-biome captures also contain initial spawn chunks. Select
+        # actual volumes nearest the requested target, not spawn-only samples.
+        keys=sorted(keys,key=lambda p:(max(abs(p[0]-target[0]),abs(p[1]-target[1])),p))[:samples]
     step = max(1, len(keys) // samples)
     sample = [{"x": k[0], "z": k[1], **volumes[k]} for k in keys[::step][:samples]]
+    if len(sample)!=samples:
+        raise ValueError('not enough complete native height/surface/carver triples')
     out.write_text(json.dumps({"binary_sha256": "69142612b2a87b0ff6d63f64dd0f07ca94d647b09659590fdadc0900af41c4ad",
                                "seed": level_seed(run),
                                "generator": "tools/re/capture_terrain.py + tools/re/make_terrain_reference.py",
+                               "source_sha256": hashlib.sha256((run/'terrain.jsonl').read_bytes()).hexdigest(),
+                               "target_chunk":target,
                                "raw_biomes": raw, "chunk_biomes": chunks, "volumes": sample}) + "\n")
     print(f"{len(raw)} raw grids, {len(chunks)} chunks, {len(sample)} volumes -> {out}")
 

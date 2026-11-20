@@ -71,6 +71,8 @@ original: all match.
 | loadChunk 0x1b38610: Random seeded with x * 0x14609048 + z * 0x7ebe2d5 | `generate` |
 | buildSurfaces 0x1b37f80: surface noise at scale 0.125 (freq 1, amp 0.5), Biome::buildSurfaceAt per column (x outer) | `build_surfaces` |
 | OverworldBiome::buildSurfaceAt 0x1db5c10, _placeBedrock 0x1db5b00; Taiga 0x1da0ea0, ExtremeHills 0x1d8edc0, Savanna 0x1dc5490, Swamp 0x1da20b0, Mutated 0x1dba960 | `default_surface` and the class cases |
+| MesaBiome::refreshBiome 0x1dc87e0, generateBands 0x1dc88e0, buildSurfaceAt 0x1dc9020, getBand 0x1dc9890 | Seeded clay bands, Bryce pillars, forested plateaus and the native 15-original-stone-cell budget |
+| OceanFrozenBiome::refreshBiome 0x1dcf520, getTemperatureWorldGen 0x1dcf620, buildSurfaceAt 0x1dcfa80 | Warm patches, packed-ice icebergs, snow caps and the subsequent default-surface pass |
 
 Findings: the biome blend of getHeights is 3 x 3 (`range_incl(-1, 1)`) with the
 inner weights of the 5 x 5 table; the min-limit noise is divided by 256 and
@@ -83,6 +85,46 @@ filler before the default builder reads them.
 `terrain_reference` regenerates 24 chunks and compares the BlockVolume after
 prepareHeights and after buildSurfaces with the original's: all 2 x 786,432
 cells match (`generate_surface`).
+
+### Mesa and Frozen Ocean completion
+
+`build_surface_at` is the same per-column dispatcher called by
+`build_surfaces`, not a separate test implementation. Native refresh methods
+seed their own Randoms, independent of the chunk Random: Mesa's one-octave
+band noise is built before generating the bands; both Mesa's pillar noises and
+Frozen Ocean's iceberg noises reset another Random(seed), then build 4 + 1
+octaves. Immutable identical noise data is shared within the RE generator.
+
+Mesa colors use 16 as the plain-hardened-clay sentinel. Band offsets round
+with `nearbyint` (ties to even). Bryce-generated stone does not consume the
+15-cell budget; filling a pillar happens before the budget check. Forested
+plateaus use the constructor's flag at byte +0x1b1, not the unrelated high
+bytes of the subtype dump.
+
+Frozen Ocean uses a separate temperature noise `(3456, 3)` and the decorator
+noise `(2345, 1)` to identify warm patches. Its roof-coordinate multiplier is
+the actual float **0x3f79ffff**, not rounded to 0.9765625. Every visited Y draws
+`nextInt(5)`, including cells too high for bedrock. After the iceberg pass the
+default builder runs again, on the same Random, using the virtual temperature.
+
+`special_surfaces_reference` compares **576 native columns**, all six Mesa
+classes and both Frozen Ocean classes, three seeds, 19,759 Random words and
+eight subsequent `nextInt()` outputs per column. This includes underwater
+surfaces, Bryce, forest/coarse dirt, ceilings/gaps, icebergs and snow caps.
+`tools/re/gdb_special_surfaces.py` executes the native builders directly;
+`export_special_surfaces.py` validates trace completion, hashes and GDB errors.
+
+Natural captures also teleport the reference client to distant biomes of seed
+123. `capture_terrain.py --center 292 324` samples Mesa; `--center -92 20`
+samples Frozen Ocean. Initialization may reach the level after the first
+teleport command, so the runner retries until target chunk packets arrive and
+fails on timeout. `make_terrain_reference.py` selects the complete native stage
+triples nearest that target rather than sampling initial spawn chunks.
+
+`terrain_reference_mesa` and `terrain_reference_frozen` each compare **24
+natural chunks** after heights, surfaces and carvers, plus **211,960 biome
+cells** in the two captures. All match. The original height field and carver
+algorithms remain the same.
 
 ## Carvers (src/world/caves.cpp)
 
@@ -135,9 +177,27 @@ original's volume after the carvers. The fixtures hold 24 chunks of seed 123
 (21 of them carved, 17,318 changed cells) and 25 ocean chunks with
 underwater carving (`terrain_ocean_bds_1.6.0.15.json`); every chunk of the
 six captures (2,514 chunks: five runs of seed 123 and one of server
-`level-seed=1`) matches after the carvers. Note: the original hashed
-`level-seed=1` into RandomSeed -1997048360 (level.dat), which
-`make_terrain_reference.py` now reads instead of server.properties.
+`level-seed=1`) matches after the carvers.
+
+Correction (2026-11-18): the earlier note that the original "hashed
+`level-seed=1` into RandomSeed -1997048360" was wrong. A one-character seed is
+shorter than the native minimum, so `LevelSettings::parseSeedString` falls back
+to `Level::createRandomSeed()` and **every fresh world gets a different seed**.
+-1997048360 was one such random draw. `make_terrain_reference.py` reads the
+actual seed from `level.dat`, which is still the right thing to do. See
+[SEED.md](SEED.md).
+
+## Phase 3 decoration
+
+The first completed component is `OreFeature` and the default/Mesa
+`OverworldDecorator::decorateOres` sequence. It includes dirt, gravel, all three
+stone variants and the mineral veins, the rare extra-gravel branch and Mesa's
+additional high-altitude gold. See [DECORATION.md](DECORATION.md) for addresses,
+native evidence and the boundaries of this component.
+
+The per-feature translations (lakes, clay, vegetation, trees, bonus chest)
+have their own reports (LAKES.md, CLAY.md, VEGETATION.md, TREES.md,
+CHEST_ROOM.md); the native dispatcher that calls them is below.
 
 ## Post-processing (src/world/gen_region.cpp, src/world/chunk_post_process.cpp)
 
@@ -152,8 +212,8 @@ blocks_bds_1.6.0.15.json, generated into src/world/block_data.cpp by
 virtual canContainLiquid evaluated by the original.
 `tools/re/make_postprocess_reference.py` keeps, per call, the earlier writes
 into its area and its own writes; `postprocess_reference` rebuilds the area
-from the generator, replays the earlier writes and compares post_process's
-write sequence with the original's.
+from the generator, replays the earlier writes and compares
+run_post_process's write sequence with the original's.
 
 | Original | BDS-RE |
 |---|---|
@@ -183,8 +243,9 @@ fixture keeps 7 of them (plain chunks, dungeons, water lakes).
 
 ## Not yet translated
 
-MesaBiome / OceanFrozenBiome surfaces (the default builder is used for them),
-Biome::decorate and the end of postProcess (snow/ice, _fixWaterAlongEdges,
-seasons, pending ticks), the BlockSource events for loaded chunks, and the
-structures (their postProcess calls sit between the lakes and the dungeons);
-the server still uses the old independent terrain.
+Biome::decorate (OverworldDecorator::decorate 0x1da5250 and the biome
+decorators) inside the native postProcess and the end of postProcess
+(snow/ice, _fixWaterAlongEdges, seasons, pending ticks), the BlockSource
+events for loaded chunks, the marine features and four tree subclasses, and
+the structures (their postProcess calls sit between the lakes and the
+dungeons). See docs/handoff/world_generation.md for the per-feature state.

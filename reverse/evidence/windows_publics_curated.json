@@ -1,0 +1,500 @@
+{
+  "source_pdb": {
+    "sha256": "4ac304b50bbe76d9643793ecf73737432f56f3bc07afea5ccbdae170b405df19",
+    "guid": "07ad3a09a719452dafa79fe3abd628fe",
+    "age": 1
+  },
+  "scope": "MSVC public symbol records (S_PUB32) for functions documented in reverse/reports; section:offset are PE image coordinates, not Linux ELF virtual addresses. Presence/absence does not establish a Linux-to-Windows function identity by itself.",
+  "total_public_records": 54073,
+  "resolved": 55,
+  "symbols": {
+    "Level::tick": [
+      {
+        "decorated": "?tick@Level@@UEAAXXZ",
+        "size": 36,
+        "section": 1,
+        "offset": 5836656
+      }
+    ],
+    "LevelChunk::tick": [
+      {
+        "decorated": "?tick@LevelChunk@@QEAAXAEAVBlockSource@@AEBUTick@@@Z",
+        "size": 68,
+        "section": 1,
+        "offset": 5664960
+      }
+    ],
+    "LevelChunk::tickBlocks": [
+      {
+        "decorated": "?tickBlocks@LevelChunk@@QEAAXAEAVBlockSource@@@Z",
+        "size": 64,
+        "section": 1,
+        "offset": 5668496
+      }
+    ],
+    "Spawner::tick": [
+      {
+        "decorated": "?tick@Spawner@@QEAAXAEAVBlockSource@@AEAVLevelChunk@@@Z",
+        "size": 72,
+        "section": 1,
+        "offset": 6612672
+      }
+    ],
+    "Spawner::tickDespawn": [],
+    "Spawner::postProcessSpawnMobs": [
+      {
+        "decorated": "?postProcessSpawnMobs@Spawner@@QEAAXAEAVBlockSource@@HHAEAVRandom@@@Z",
+        "size": 84,
+        "section": 1,
+        "offset": 6614640
+      }
+    ],
+    "MobSpawnRules::getSpawnCount": [
+      {
+        "decorated": "?getSpawnCount@MobSpawnRules@@QEBAHAEBVSpawnConditions@@AEAVBlockSource@@AEAVRandom@@AEBVMobSpawnerData@@@Z",
+        "size": 124,
+        "section": 1,
+        "offset": 4677152
+      }
+    ],
+    "WeighedRandom::getRandomItem": [],
+    "Mob::newServerAiStep": [
+      {
+        "decorated": "?newServerAiStep@Mob@@MEAAXXZ",
+        "size": 44,
+        "section": 1,
+        "offset": 3793504
+      }
+    ],
+    "Mob::aiStep": [
+      {
+        "decorated": "?aiStep@Mob@@UEAAXXZ",
+        "size": 36,
+        "section": 1,
+        "offset": 3789584
+      }
+    ],
+    "Mob::travel": [
+      {
+        "decorated": "?travel@Mob@@UEAAXMMM@Z",
+        "size": 40,
+        "section": 1,
+        "offset": 3775264
+      }
+    ],
+    "Mob::baseTick": [
+      {
+        "decorated": "?baseTick@Mob@@UEAAXXZ",
+        "size": 40,
+        "section": 1,
+        "offset": 3762416
+      }
+    ],
+    "Mob::tickDeath": [
+      {
+        "decorated": "?tickDeath@Mob@@MEAAXXZ",
+        "size": 40,
+        "section": 1,
+        "offset": 3764800
+      }
+    ],
+    "GoalSelector::tick": [
+      {
+        "decorated": "?tick@GoalSelector@@QEAAXXZ",
+        "size": 44,
+        "section": 1,
+        "offset": 2646096
+      }
+    ],
+    "RandomStrollGoal::canUse": [
+      {
+        "decorated": "?canUse@RandomStrollGoal@@UEAA_NXZ",
+        "size": 52,
+        "section": 1,
+        "offset": 2693648
+      }
+    ],
+    "LookAtActorGoal::canUse": [
+      {
+        "decorated": "?canUse@LookAtActorGoal@@UEAA_NXZ",
+        "size": 48,
+        "section": 1,
+        "offset": 2654704
+      }
+    ],
+    "RandomLookAroundGoal::canUse": [
+      {
+        "decorated": "?canUse@RandomLookAroundGoal@@UEAA_NXZ",
+        "size": 56,
+        "section": 1,
+        "offset": 2693184
+      }
+    ],
+    "SpawnActorComponent::tick": [],
+    "Actor::move": [
+      {
+        "decorated": "?move@Actor@@UEAAXAEBVVec3@@@Z",
+        "size": 48,
+        "section": 1,
+        "offset": 3333648
+      }
+    ],
+    "Actor::moveRelative": [
+      {
+        "decorated": "?moveRelative@Actor@@UEAAXMMMM@Z",
+        "size": 48,
+        "section": 1,
+        "offset": 3363920
+      }
+    ],
+    "Actor::push": [
+      {
+        "decorated": "?push@Actor@@UEAAXAEAV1@_N@Z",
+        "size": 44,
+        "section": 1,
+        "offset": 3365664
+      },
+      {
+        "decorated": "?push@Actor@@UEAAXAEBVVec3@@@Z",
+        "size": 48,
+        "section": 1,
+        "offset": 3366096
+      }
+    ],
+    "Random::nextInt": [
+      {
+        "decorated": "?nextInt@Random@@QEAAHHH@Z",
+        "size": 44,
+        "section": 1,
+        "offset": 1821568
+      }
+    ],
+    "Random::nextFloat": [],
+    "Random::_genRandReal2": [],
+    "Random::nextGaussian": [
+      {
+        "decorated": "?nextGaussian@Random@@QEAAMXZ",
+        "size": 44,
+        "section": 1,
+        "offset": 2243440
+      }
+    ],
+    "Level::_saveSomeChunks": [
+      {
+        "decorated": "?_saveSomeChunks@Level@@AEAAXXZ",
+        "size": 48,
+        "section": 1,
+        "offset": 5839456
+      }
+    ],
+    "MainChunkSource::getRandomChunk": [
+      {
+        "decorated": "?getRandomChunk@MainChunkSource@@UEAA?AV?$shared_ptr@VLevelChunk@@@std@@AEAVRandom@@@Z",
+        "size": 104,
+        "section": 1,
+        "offset": 5693344
+      }
+    ],
+    "Dimension::backgroundTickSeasons": [],
+    "LargeCaveFeature::apply": [
+      {
+        "decorated": "?apply@LargeCaveFeature@@QEAAXAEAVBlockVolume@@AEBVChunkPos@@AEAVDimension@@AEAVRandom@@@Z",
+        "size": 108,
+        "section": 1,
+        "offset": 6456640
+      }
+    ],
+    "CanyonFeature::apply": [
+      {
+        "decorated": "?apply@CanyonFeature@@QEAAXAEAVBlockVolume@@AEBVChunkPos@@AEAVDimension@@AEAVRandom@@@Z",
+        "size": 104,
+        "section": 1,
+        "offset": 6451696
+      }
+    ],
+    "LargeCaveFeature::carve": [
+      {
+        "decorated": "?carve@LargeCaveFeature@@MEBA_NAEAVBlockVolume@@AEAVBiomeSource@@AEAVRandom@@AEBVChunkPos@@AEBVVec3@@4HHHHHHMM@Z",
+        "size": 128,
+        "section": 1,
+        "offset": 6459248
+      }
+    ],
+    "CanyonFeature::carve": [
+      {
+        "decorated": "?carve@CanyonFeature@@MEBA_NAEAVBlockVolume@@AEAVBiomeSource@@AEAVRandom@@AEBVChunkPos@@AEBVVec3@@4HHHHHHMMV?$span@$$CBM$0?0@gsl@@@Z",
+        "size": 148,
+        "section": 1,
+        "offset": 6454192
+      }
+    ],
+    "OverworldGenerator::loadChunk": [
+      {
+        "decorated": "?loadChunk@OverworldGenerator@@UEAAXAEAVLevelChunk@@_N@Z",
+        "size": 72,
+        "section": 1,
+        "offset": 6483760
+      }
+    ],
+    "OverworldGenerator::prepareHeights": [
+      {
+        "decorated": "?prepareHeights@OverworldGenerator@@UEAAXAEAVBlockVolume@@HH@Z",
+        "size": 80,
+        "section": 1,
+        "offset": 6481536
+      }
+    ],
+    "OverworldGenerator::getHeights": [
+      {
+        "decorated": "?getHeights@OverworldGenerator@@AEAAXPEAMPEAPEAVBiome@@HHH@Z",
+        "size": 76,
+        "section": 1,
+        "offset": 6488016
+      }
+    ],
+    "OverworldGenerator::buildSurfaces": [
+      {
+        "decorated": "?buildSurfaces@OverworldGenerator@@QEAAXAEAUThreadData@1@AEAVBlockVolume@@AEAVLevelChunk@@AEBVChunkPos@@@Z",
+        "size": 124,
+        "section": 1,
+        "offset": 6482464
+      }
+    ],
+    "OverworldGenerator::postProcess": [
+      {
+        "decorated": "?postProcess@OverworldGenerator@@UEAA_NAEAVChunkViewSource@@@Z",
+        "size": 80,
+        "section": 1,
+        "offset": 6484272
+      }
+    ],
+    "ImprovedNoise::_noise": [],
+    "PerlinNoise::getRegion": [
+      {
+        "decorated": "?getRegion@PerlinNoise@@QEBAXPEAMAEBVVec3@@HHH1@Z",
+        "size": 64,
+        "section": 1,
+        "offset": 6445424
+      }
+    ],
+    "SimplexNoise::_getValue": [
+      {
+        "decorated": "?_getValue@SimplexNoise@@QEBAMAEBVVec2@@@Z",
+        "size": 60,
+        "section": 1,
+        "offset": 6449488
+      },
+      {
+        "decorated": "?_getValue@SimplexNoise@@QEBAMAEBVVec3@@@Z",
+        "size": 60,
+        "section": 1,
+        "offset": 6450256
+      }
+    ],
+    "PathFinder::findPath": [
+      {
+        "decorated": "?findPath@PathFinder@@AEAA?AV?$unique_ptr@VPath@@U?$default_delete@VPath@@@std@@@std@@PEAVActor@@MMMM@Z",
+        "size": 120,
+        "section": 1,
+        "offset": 6545376
+      },
+      {
+        "decorated": "?findPath@PathFinder@@AEAA?AV?$unique_ptr@VPath@@U?$default_delete@VPath@@@std@@@std@@PEAVActor@@PEAVNode@@11M@Z",
+        "size": 128,
+        "section": 1,
+        "offset": 6549232
+      }
+    ],
+    "PathNavigation::_createPath": [],
+    "MoveControl::tick": [
+      {
+        "decorated": "?tick@MoveControl@@UEAAXXZ",
+        "size": 44,
+        "section": 1,
+        "offset": 2494832
+      }
+    ],
+    "JumpControl::tick": [
+      {
+        "decorated": "?tick@JumpControl@@UEAAXXZ",
+        "size": 44,
+        "section": 1,
+        "offset": 2493568
+      }
+    ],
+    "GrassBlock::tick": [
+      {
+        "decorated": "?tick@GrassBlock@@UEBAXAEAVBlockSource@@AEBVBlockPos@@AEAVRandom@@@Z",
+        "size": 84,
+        "section": 1,
+        "offset": 5161712
+      }
+    ],
+    "LiquidBlockDynamic::_tick": [
+      {
+        "decorated": "?_tick@LiquidBlockDynamic@@AEBA_NAEAVBlockSource@@AEBVBlockPos@@AEAVRandom@@_N@Z",
+        "size": 96,
+        "section": 1,
+        "offset": 5211344
+      }
+    ],
+    "LiquidBlock::getTickDelay": [],
+    "BlockTickingQueue::add": [
+      {
+        "decorated": "?add@BlockTickingQueue@@QEAAXAEAVBlockSource@@AEBVBlockPos@@AEBVBlock@@HH@Z",
+        "size": 92,
+        "section": 1,
+        "offset": 5610288
+      }
+    ],
+    "BlockTickingQueue::tickPendingTicks": [
+      {
+        "decorated": "?tickPendingTicks@BlockTickingQueue@@QEAA_NAEAVBlockSource@@AEBUTick@@H_N@Z",
+        "size": 92,
+        "section": 1,
+        "offset": 5610928
+      }
+    ],
+    "ItemActor::normalTick": [
+      {
+        "decorated": "?normalTick@ItemActor@@UEAAXXZ",
+        "size": 48,
+        "section": 1,
+        "offset": 3724752
+      }
+    ],
+    "ExperienceOrb::normalTick": [
+      {
+        "decorated": "?normalTick@ExperienceOrb@@UEAAXXZ",
+        "size": 52,
+        "section": 1,
+        "offset": 3699712
+      }
+    ],
+    "ExperienceOrb::spawnOrbs": [
+      {
+        "decorated": "?spawnOrbs@ExperienceOrb@@SAXAEAVBlockSource@@AEBVVec3@@HW4DropType@1@PEAVPlayer@@@Z",
+        "size": 100,
+        "section": 1,
+        "offset": 3703456
+      }
+    ],
+    "Player::tickWorld": [
+      {
+        "decorated": "?tickWorld@Player@@UEAAHAEBUTick@@@Z",
+        "size": 52,
+        "section": 1,
+        "offset": 3986528
+      }
+    ],
+    "ServerPlayer::tickWorld": [
+      {
+        "decorated": "?tickWorld@ServerPlayer@@UEAAHAEBUTick@@@Z",
+        "size": 60,
+        "section": 1,
+        "offset": 1989792
+      }
+    ],
+    "ServerPlayer::_updateNearbyEntities": [
+      {
+        "decorated": "?_updateNearbyEntities@ServerPlayer@@AEAAXXZ",
+        "size": 60,
+        "section": 1,
+        "offset": 2008832
+      }
+    ],
+    "GameMode::destroyBlock": [
+      {
+        "decorated": "?destroyBlock@GameMode@@UEAA_NAEBVBlockPos@@C@Z",
+        "size": 64,
+        "section": 1,
+        "offset": 4096240
+      }
+    ],
+    "ServerNetworkHandler::handle": [
+      {
+        "decorated": "?handle@ServerNetworkHandler@@UEAAXAEBVNetworkIdentifier@@AEBVPlayerSkinPacket@@@Z",
+        "size": 100,
+        "section": 1,
+        "offset": 1157904
+      },
+      {
+        "decorated": "?handle@ServerNetworkHandler@@UEAAXAEBVNetworkIdentifier@@AEBVLabTablePacket@@@Z",
+        "size": 96,
+        "section": 1,
+        "offset": 1161088
+      },
+      {
+        "decorated": "?handle@ServerNetworkHandler@@UEAAXAEBVNetworkIdentifier@@AEBVNpcRequestPacket@@@Z",
+        "size": 100,
+        "section": 1,
+        "offset": 1160784
+      },
+      {
+        "decorated": "?handle@ServerNetworkHandler@@UEAAXAEBVNetworkIdentifier@@AEBVItemFrameDropItemPacket@@@Z",
+        "size": 104,
+        "section": 1,
+        "offset": 1153424
+      }
+    ],
+    "ConnectionRequest::verify": [
+      {
+        "decorated": "?verify@ConnectionRequest@@QEAA_NAEBV?$vector@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@@std@@_J@Z",
+        "size": 212,
+        "section": 1,
+        "offset": 842016
+      }
+    ],
+    "WebToken::verify": [
+      {
+        "decorated": "?verify@WebToken@@QEBA_NAEBV?$vector@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@@std@@@Z",
+        "size": 200,
+        "section": 1,
+        "offset": 551104
+      }
+    ],
+    "UnverifiedCertificate::verify": [
+      {
+        "decorated": "?verify@UnverifiedCertificate@@QEBA?AV?$unique_ptr@VCertificate@@U?$default_delete@VCertificate@@@std@@@std@@AEBV?$vector@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@@3@@Z",
+        "size": 284,
+        "section": 1,
+        "offset": 536464
+      }
+    ],
+    "Certificate::validate": [
+      {
+        "decorated": "?validate@Certificate@@QEAA_N_J@Z",
+        "size": 48,
+        "section": 1,
+        "offset": 537936
+      }
+    ],
+    "BlockPalette::initFromBlockDefinitions": [],
+    "PropertiesSettings::PropertiesSettings": [],
+    "ServerInstance::_update": [
+      {
+        "decorated": "?_update@ServerInstance@@AEAAXXZ",
+        "size": 48,
+        "section": 1,
+        "offset": 1975792
+      }
+    ],
+    "ServerLevel::tick": [
+      {
+        "decorated": "?tick@ServerLevel@@UEAAXXZ",
+        "size": 44,
+        "section": 1,
+        "offset": 1983584
+      }
+    ],
+    "Minecraft::update": [
+      {
+        "decorated": "?update@Minecraft@@QEAA_N_N@Z",
+        "size": 44,
+        "section": 1,
+        "offset": 6825856
+      }
+    ],
+    "GameSession::tick": []
+  }
+}
