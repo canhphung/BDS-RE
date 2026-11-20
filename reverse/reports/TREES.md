@@ -1434,3 +1434,107 @@ The corpus's query answers are all zero; the world each case ran against is
 scenes, answers every `get_block` from them, and applies each `place_block` as
 the replay runs, so the translated feature sees the same world the original did
 including the cells it has just written.
+
+## FancyTreeFeature: corpus captured, five helpers read
+
+`FancyTreeFeature` is the largest of the eight subclasses and the only one built
+from float geometry: `place 0x1b4aff0` uses `Random::nextFloat`, `mce::Math::sin`,
+`cos`, `sqrt` and `powf`, and carries a `std::vector<FoliageCoords>` of branch
+bases. The corpus is now captured:
+
+`fancy_tree_bds_1.6.0.15.json` — **16 cases, 5032 writes, 182 Random words, 5517
+dependency answers**. Blocks: 4732 `leaves:0`, 182 `log:0`, 73 `log:4`, 45
+`log:8`. Eight cases return true (934/713/729/724/219/163/715/835 writes) and
+eight return false after a single word and a single query.
+
+### Constructor `0x1b4af60` (0x90 bytes) — complete
+
+Calls `TreeFeature::TreeFeature(Actor*, 0, 0, false)` then sets:
+
+| Offset | Value |
+|---|---|
+| `+0x24` | `0xc` (12) — the `nextInt` bound for height |
+| `+0x28` | `0.618` (`0x2833354`) |
+| `+0x2c` | `0.381` (`0x2833350`) |
+| `+0x30`, `+0x34` | `1.0` (`0x281c5c8`) |
+| `+0x38` | `1` |
+| `+0x3c` | `4` |
+| `+0x40` | `6` |
+
+### `_getTreeShape(int a, int b) 0x1b4b670` (0xf7) — complete
+
+```
+if (a * 0.3 > b)              return -1.0f;
+t   = a / 2.0f
+d   = t - b
+r   = sqrt(t*t - d*d)
+if (d == 0) r = t
+else if (abs(d) < t) ...      // branch at 0x1b4b72e..0x1b4b740
+return 0.5f * r
+```
+
+Constants: `0.3` at `0x2828678`, `2.0` at `0x2828640`, `-1.0` at `0x2824708`,
+`0.5` at `0x281cd14`.
+
+### `_checkLocation(BlockSource&, BlockPos const&, int&) 0x1b4b500` (0x163) — complete
+
+```
+below = _getBlock(pos.below()).getLegacyBlock()
+if (below != mDirt && below != mGrass && below != mFarmland) return false;
+length = _checkLine(source, pos, pos.above(*radius - 1));
+if (length == -1) return true;
+if (length < this+0x40) return false;
+*radius = length;
+return true;
+```
+
+### `_getSteps(BlockPos const&) 0x1b4bc40` (0x8a) — complete
+
+`max(abs(x), abs(y), abs(z))`.
+
+### `_checkLine(BlockSource&, BlockPos const&, BlockPos const&) 0x1b4b770` (0x1ad) — complete
+
+```
+delta = BlockPos(0,0,0).offset(-end.x, -end.y, -end.z)
+steps = _getSteps(delta)
+fx = delta.x / (float)steps; fy = delta.y / (float)steps; fz = delta.z / (float)steps
+for (i in range_incl(0, steps - 1)):
+    p = end.offset((int)(fx * i), (int)(fy * i), (int)(fz * i))
+    if (!_isFree(_getBlock(source, p))) return i
+return -1
+```
+
+### `place 0x1b4aff0` head (0x504 total) — partially read
+
+```
+height  = nextInt(this+0x24) + 5                      // 0x1b4b01d..0x1b4b029
+if (!_checkLocation(source, pos, &radius)) return false
+radius  = (int)(height * this+0x28); if (radius >= height) radius = height - 1
+count   = (int)(powf(this+0x34 * height / 13.0f, ?) + 1.382f); if (count < 1) count = 1
+top     = pos.y + radius
+bottom  = height - this+0x3c
+```
+
+Then a `range` loop that pushes `FoliageCoords(pos.above(i), ...)` entries, calls
+`_getTreeShape`, draws `nextFloat()` twice per iteration, and finally calls
+`_makeFoliage`, `_makeTrunk`, `_makeBranches`. The nine helpers
+`_makeTrunk`/`_makeBranches`/`_foliageCluster`/`_crossection`/`_getFoliageShape`/
+`_limb`/`_makeFoliage`/`_trimBranches` are not read yet.
+
+Addresses for the next attempt, all confirmed by `nm`:
+
+| Helper | Address | Size |
+|---|---|---|
+| `place` | `0x1b4aff0` | 0x504 |
+| `_getTreeShape` | `0x1b4b670` | 0xf7 |
+| `_checkLocation` | `0x1b4b500` | 0x163 |
+| `_checkLine` | `0x1b4b770` | 0x1ad |
+| `_getSteps` | `0x1b4bc40` | 0x8a |
+| `_makeFoliage` | `0x1b4b920` | 0x91 |
+| `_makeTrunk` | `0x1b4b9c0` | 0x17f |
+| `_makeBranches` | `0x1b4bb40` | 0xf3 |
+| `_foliageCluster` | `0x1b4bcd0` | 0xc4 |
+| `_crossection` | `0x1b4bda0` | 0x23f |
+| `_getFoliageShape` | `0x1b4bfe0` | 0x84 |
+| `_limb` | `0x1b4c070` | 0x244 |
+| `_trimBranches` | `0x1b4c2c0` | 0x31 |
