@@ -1903,3 +1903,45 @@ subtraction in `_checkLine` then yields the larger magnitude.
 Resolving this needs one more look at `0x1b4b5d3..0x1b4b611` with attention to
 which stack slot is `pos` (`-0x20`, the `BlockPos const&` second argument) versus
 the temporary built by `above()`. That is a single, well-scoped read.
+
+### Fancy: `_checkLine`'s inner offset is ROUNDED, not truncated
+
+Reading the loop body at `0x1b4b858..0x1b4b8b1` corrects the earlier note. Each
+coordinate is
+
+```
+xmm2 = 0.5f + (float)i * fx      ; 0x281cd14 == 0.5f, 0x1b4b879..0x1b4b881
+dx   = (int)xmm2                 ; cvttss2si, 0x1b4b885
+... same for dy, dz (0x1b4b88e..0x1b4b8ac)
+p    = end.offset(dx, dy, dz)    ; 0x1b4b8b1
+```
+
+So the step is `(int)(0.5f + i * f)` — **round-half-up**, not the plain
+`(int)(i * f)` the earlier entry assumed. The same `+0.5f` pattern appears in
+`place`'s tip computation, which is why that code looked like `sin(...) + 0.5f`.
+
+That is a real correction: with truncation the walk lands on different cells
+whenever `i * f` is negative or fractional, and a replay built on truncation will
+diverge on exactly those cells.
+
+### Fancy: why the leading ascending run still does not fit `_checkLine`
+
+`_checkLocation` passes `end = pos.above(*radius - 1)` and `_checkLine` reads its
+`end` FIRST (`i == 0` gives `end + (int)0.5 = end`). The measured ascending run
+starts at `origin.y`, which would require `*radius - 1 == 0`, i.e. `*radius == 1`
+— but `place` hands the *height* slot as `radius` (`0x1b4b022` is
+`lea rcx,[rbp-0x2c]` and `[rbp-0x2c]` was just filled with `nextInt+5` at
+`0x1b4b029`).
+
+Meanwhile the cell `origin.above(height - 1)` DOES appear in the corpus — for case
+0, `(-8,14,-8)` is query **#22**, not #0..16.
+
+The only reading consistent with both facts is that queries #1..#16 are produced by
+something other than this `_checkLine`, and `_checkLine`'s own scans are the later
+short runs. Given the run-length census (16 runs of length 5 in case 0, matching a
+per-tip vertical walk of the four foliage layers plus one), the short runs are the
+`place`-loop scans and the long ascending run belongs to a helper not yet
+attributed.
+
+Attributing the ascending run is the remaining blocker; the fix for `_checkLine`
+itself (the `+0.5f` rounding) is now settled and can be written.
