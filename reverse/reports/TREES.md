@@ -1719,8 +1719,20 @@ and their scenes have `below = stone` (cases 3, 7, 11, 15) or `sand` (2, 6, 10,
 `0x34a7768/0x34a7770/0x34a7950` comparison chain.
 
 What is still needed: the value of the `radius` argument `place` hands to
-`_checkLocation` (`0x1b4b03b`). It is loaded from `[rbp-0x2c]` before the call and
-that slot is written by `nextInt`'s result plus 5 at `0x1b4b026..0x1b4b029`, then
-`radius = (int)(height * 0.618)` at `0x1b4b05d` happens AFTER the call. So the
-scan length must come from the *height*, not from the post-call radius; pinning
-that ordering from `0x1b4b02c..0x1b4b05d` is the next step.
+`_checkLocation` (`0x1b4b03b`). Read exactly: `0x1b4b022` is
+`lea rcx,[rbp-0x2c]` and `[rbp-0x2c]` is the slot that `0x1b4b026..0x1b4b029`
+fills with `nextInt(this+0x24) + 5`. So the reference handed to `_checkLocation`
+IS the height local, and the `radius = (int)(height * 0.618)` computation at
+`0x1b4b051..0x1b4b066` runs only AFTER the call returns.
+
+`_checkLocation` therefore does `_checkLine(source, pos, pos.above(*radius - 1))`
+with `*radius == height`. For case 0 that is `above(9)`, i.e. `(-8,14,-8)`, and
+`_checkLine`'s own `_getSteps` on `(0,-9,0)` is 9, so it reads 9 cells:
+`(-8,5,-8)` .. `(-8,13,-8)`.
+
+The corpus instead shows **17** reads straight up, `(-8,4,-8)` .. `(-8,20,-8)`.
+So one of the two endpoints is not what this reading assumes: either `_checkLine`
+adds the origin back into the delta, or `place` passes a different position than
+`origin` and the difference is the `+ 0x3c`-style offset. Comparing the 17-read
+length against `height + 7` and `2 * height - 3` for the other cases is the
+cheapest way to identify the exact expression before writing more code.
