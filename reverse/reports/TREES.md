@@ -547,11 +547,9 @@ Replaying it through `tree_place` diverges at query 48. The corpus shows why:
 columns of equal height) plus a wide flat canopy of single-block columns — not
 the base feature's single-column trunk with an octagonal dome.
 
-So `MegaTreeFeature::place` delegates to the base only after
-`_prepareTree`/`_checkIsFree`/`_makeDirtFloor` and it uses
-`_placeDoubleTrunkLeaves`, all of which are still untranslated. `mega_tree_place`
-as written (height + `tree_place`) is therefore wrong, and the fixture is kept
-unregistered until the real body exists.
+So the first reading suggested `MegaTreeFeature::place` delegated to the base
+only after `_prepareTree`/`_checkIsFree`/`_makeDirtFloor`. That turned out to be
+wrong and is kept only as reasoning history.
 
 ### Correction: MegaTree IS a wrapper — the difference is the leafType branch
 
@@ -614,177 +612,9 @@ That also re-verifies the whole base path on a second independent corpus.
 constructor takes four type ids that map to block pairs this project has not
 assembled, so it is not wired into a test.
 
-The other six (`FancyTreeFeature` `0x1b4aff0`, `SwampTreeFeature` `0x1b6bcb0`,
-`SavannaTreeFeature` `0x1b511c0`, `MegaPineTreeFeature` `0x1b4d740`,
-`MegaJungleTreeFeature` `0x1b533e0`, `RoofTreeFeature` `0x1b5b7e0`) have real
-bodies (0x4c3 to 0xea4 bytes) with their own leaf/trunk placement and are still
-untranslated.
-
-## Tree subclasses: constructor table (all eight, read from the binary)
-
-Each constructor calls `TreeFeature::TreeFeature(Actor*, int leafType, int
-trunkType, bool) 0x1b59cf0`, whose ints land in `+0x18` (leafType) and `+0x1c`
-(trunkType). Values below are the actual register arguments.
-
-| Subclass | ctor | leafType | trunkType | Extra fields |
-|---|---|---:|---:|---|
-| `JungleTreeFeature` | `0x1b65d60` | 3 | 1 | — |
-| `SavannaTreeFeature` | `0x1b51170` | 0 | 0 | — |
-| `SwampTreeFeature` | `0x1b6bc60` | 0 | 0 | — |
-| `RoofTreeFeature` | `0x1b5b790` | 1 | 1 | — |
-| `FancyTreeFeature` | `0x1b4af60` | 0 | 0 | `+0x24 = 0xc`, `+0x28/%xmm2 = 0.618`, `+0x2c/%xmm1 = 0.381`, `+0x30/%xmm0 = 1.0` |
-| `MegaTreeFeature` | `0x1b55bf0(Actor*,int,int,int,int)` | 2 | 2 | `+0x24 = arg2`, `+0x28 = arg3`, `+0x2c = arg4`, `+0x30 = arg5` |
-| `MegaJungleTreeFeature` | `0x1b53380(Actor*,int,int,int,int)` | forwards all to MegaTree | | |
-| `MegaPineTreeFeature` | `0x1b4d6d0(Actor*,bool)` | via MegaTree `edx=0xd` | `ecx=0xf` | `r8d=0x1`, `r9d = bool` |
-
-The three Fancy floats were read from rodata: `0x281c5c8 = 1.0`,
-`0x2833350 = 0.381`, `0x2833354 = 0.618`.
-
-### What the type ids do mechanically
-
-This was measured, not assumed. The existing `jungle_tree` corpus was captured
-with `leafType = trunkType = 0` (the script hardcoded them), so it contains only
-`log:0` and `leaves:0`. Re-running the same oracle with Jungle's REAL
-constructor values (`0x1b65d60`, leafType 3, trunkType 1) produces a different
-world entirely:
-
-| Corpus | writes | `block_names` |
-|---|---:|---|
-| old (`leaf=0, trunk=0`) | 523 | `log:0`, `leaves:0` |
-| real (`leaf=3, trunk=1`) | **935** | `log:3`, `leaves:3`, `cocoa:1/2/3/5`, `vine:1/2/4/8` |
-
-So the type ids select the wood/leaf variant (jungle wood) and the cocoa/vine
-decoration follows from it. Any subclass translation MUST use its real
-constructor ids, and the old `jungle_tree` fixture is a fixture for the BASE
-feature, not for `JungleTreeFeature`.
-
-This also means `jungle_tree_place` in `src/world/tree.cpp` currently replays
-the wrong corpus: it is verified against leaf/trunk 0. The function itself is
-fine — it takes `trunk`/`leaves` as `TreeBlock` arguments, so data 3 flows
-through — but the TEST passes data 0 and the fixture was captured with 0. The
-fix is to re-export the fixture captured with the real ids and pass
-`TreeBlock{"log", 3}` / `TreeBlock{"leaves", 3}` in the test.
-
-### Oracle template for all eight subclasses
-
-`tools/re/gdb_tree_subclass_cases.py` and
-`tools/re/export_tree_subclass_reference.py` replace the per-subclass copies.
-They are driven by environment variables:
-
-| Variable | Meaning |
-|---|---|
-| `TREE_SUBCLASS_NAME` | label written into the fixture |
-| `TREE_OUT_NAME` | output file stem (`jungle` -> `jungle.json`) |
-| `TREE_CTOR` | constructor address |
-| `TREE_CTOR_MODE` | `base` (Actor*,leaf,trunk,bool) or `mega` (Actor*,int,int,int,int) |
-| `TREE_CTOR_LEAF`, `TREE_CTOR_TRUNK` | base type ids (base mode) |
-| `TREE_CTOR_EXTRA` | four ints for `+0x24/+0x28/+0x2c/+0x30` (mega mode) |
-| `TREE_PLACE` | `place(BlockSource&, BlockPos const&, Random&)` address |
-
-A run with the defaults reproduces the base `TreeFeature` shape; a run with
-Jungle's real ids produced the 935-write corpus above.
-
-### JungleTreeFeature is NOT a thin wrapper after all
-
-With the real ids the corpus diverges at query 124, and the queries just before
-it show why: `#118..#122` read five consecutive cells `(-6,13,-10)` to
-`(-6,13,-6)` — a vertical vine run hanging down a column — while the base
-`tree_place_trunk` vine pass only offers the four horizontal neighbours of each
-log with fixed data 8/2/1/4.
-
-So `JungleTreeFeature::place` does more than draw a height: it places jungle
-wood (`log:3`, `leaves:3`) and hangs vines down from the canopy. The 523-write
-corpus that was taken for it hid this because it ran with type ids 0.
-
-That makes `jungle_tree_place` in `src/world/tree.cpp` incorrect as written: it
-delegates straight to `tree_place`. The Jungle body needs its own trace, the way
-Savanna and Swamp do.
-
-### MegaTreeFeature: also not a thin wrapper — measured
-
-`tools/re/gdb_tree_subclass_cases.py` with `TREE_CTOR_MODE=mega`,
-`TREE_CTOR=0x1b55bf0`, `TREE_CTOR_EXTRA=13,15,1,0` and `TREE_PLACE=0x1b55c70`
-produced `tests/reference/mega_tree_bds_1.6.0.15.json`: **16 cases, 510 writes,
-152 Random words**, with blocks `log:2` and `leaves:2` — the constructor's type
-id 2 does change the wood, as predicted.
-
-Replaying it through `tree_place` diverges at query 48. The corpus shows why:
-`#42..#47` read a 2x3 block of cells and `#48..#52` read five consecutive cells
-`(-10,11,-10)` to `(-10,11,-6)`, and the write groups are a 2x2 trunk (four
-columns of equal height) plus a wide flat canopy of single-block columns — not
-the base feature's single-column trunk with an octagonal dome.
-
-So `MegaTreeFeature::place` delegates to the base only after
-`_prepareTree`/`_checkIsFree`/`_makeDirtFloor` and it uses
-`_placeDoubleTrunkLeaves`, all of which are still untranslated. `mega_tree_place`
-as written (height + `tree_place`) is therefore wrong, and the fixture is kept
-unregistered until the real body exists.
-
-### Correction: MegaTree IS a wrapper — the difference is the leafType branch
-
-Reading `MegaTreeFeature::place 0x1b55c70` again settles it: it is exactly
-`nextInt(3) + 5` (`0x1b55c9b..0x1b55ca3`) followed by a non-virtual call to
-`TreeFeature::place 0x1b5a290`. The height does NOT read `this+0x24`; that is
-`_calcTreeHeigth 0x1b55ce0`, which the MegaPine/MegaJungle subclasses use.
-
-So the earlier "not a wrapper" conclusion was wrong. The real difference is
-inside the BASE: `_placeTrunk 0x1b5ac96` compares `this+0x18` (leafType) with 2
-and, when equal, skips the trunk-height-scale computation entirely
-(`xorps`/`movss 0.0f` then `jmp 0x1b5ad2c`). With leafType 2 the scale is 0, so
-the trunk loop bound differs and the canopy is much wider.
-
-That explains the corpus: its writes are a single trunk column at the origin
-(y 4..12) plus a wide flat canopy at y 9..12, i.e. the base shape with a
-different scale — not a different body at all.
-
-`place` is therefore correctly implemented as `nextInt(3)+5` + `tree_place`, and
-the leafType id is now threaded through: `tree_place_trunk` takes a `leaf_type`
-argument and skips the scale draw when it is 2.
-
-With that, `mega_tree` replays **16 cases, 510 placements, 152 Random words and
-1428 dependency answers** exactly. Both height helpers are split correctly
-(`mega_tree_height` for `place`, `mega_tree_calc_height` for `_calcTreeHeigth`).
-MegaTreeFeature is wired into the runtime alongside the base and Jungle
-features, rotating one of three, and a generated chunk around `(-3,-3)` of seed
-123 places one MegaTree each.
-
-### What the type ids do mechanically
-
-`Block::setBlockState<int>` `0x1b4c580` passes the value to
-`BlockLegacy::setBlockState<int>(..., unsigned char)` as a **state index** on a
-block that is already fixed (`VanillaBlocks::mLog` for the trunk,
-`VanillaBlocks::mLeaves` for the leaf). So `leafType`/`trunkType` select a
-block STATE variant, not a different block.
-
-Both corpora captured so far (`tree_place`, `jungle_tree`) contain only
-`log:0` and `leaves:0`, so the variants do not surface there. A subclass whose
-type id is non-zero on a block with real state data (Roof leaf=1, Jungle
-leaf=3) is where this would show, and the corpus will record it — the exporters
-already carry the full `name:data` string.
-
-## Tree subclasses: the two thin wrappers
-
-Two of the eight subclasses are 0x65-byte wrappers that only choose a height and
-delegate to the base `place`:
-
-| Subclass | `place` | Height | Constructor |
-|---|---|---|---|
-| `JungleTreeFeature` | `0x1b65db0` | `nextInt(7) + 4` (`0x1b65ddb..0x1b65de0`) | `0x1b65d60`, leafType 3 / trunkType 1 |
-| `MegaTreeFeature` | `0x1b55c70` | `nextInt(3) + 5` (`0x1b55c9b..0x1b55ca0`) | `0x1b55bf0`, four ints |
-
-`JungleTreeFeature` is translated and verified: `jungle_tree_place` draws the
-height and calls the verified base, and `jungle_tree` replays the native corpus
-captured THROUGH the subclass — **16 cases, 523 placements, 160 Random words**.
-That also re-verifies the whole base path on a second independent corpus.
-
-`MegaTreeFeature`'s height wrapper is translated (`mega_tree_height`) but its
-constructor takes four type ids that map to block pairs this project has not
-assembled, so it is not wired into a test.
-
-The other six (`FancyTreeFeature` `0x1b4aff0`, `SwampTreeFeature` `0x1b6bcb0`,
-`SavannaTreeFeature` `0x1b511c0`, `MegaPineTreeFeature` `0x1b4d740`,
-`MegaJungleTreeFeature` `0x1b533e0`, `RoofTreeFeature` `0x1b5b7e0`) have real
-bodies (0x4c3 to 0xea4 bytes) with their own leaf/trunk placement and are still
+(`FancyTreeFeature` `0x1b4aff0`, `MegaPineTreeFeature` `0x1b4d740`,
+`MegaJungleTreeFeature` `0x1b533e0` and `RoofTreeFeature` `0x1b5b7e0`) have real
+bodies (0x4c3 to 0x6ea bytes) with their own leaf/trunk placement and are still
 untranslated.
 
 ## SavannaTreeFeature: trace started, corpus captured
