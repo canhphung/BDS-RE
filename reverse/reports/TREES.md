@@ -1825,3 +1825,40 @@ leading scan length must come from `_checkLine`'s own `_getSteps`, the len-5 run
 from a vertical `_checkLine` per accepted tip, and the single reads from
 `_crossection`. Getting those three counts right per case is a much tighter target
 than matching 1028 reads at once.
+
+### Fancy: `_checkLine` verified byte-for-byte, and the open question
+
+Raw bytes at `0x1b4b79e..0x1b4b815` confirm the loop exactly:
+
+```
+r9d = 0 - end.x ; r10d = 0 - end.y ; r8d = 0 - end.z      (0x1b4b7a1..0x1b4b7b3)
+delta = BlockPos(0,0,0).offset(-end.x, -end.y, -end.z)    (0x1b4b7c4)
+steps = _getSteps(delta)                                  (0x1b4b7d1)
+fx = delta.x/steps ; fy = delta.y/steps ; fz = delta.z/steps  (0x1b4b7d9..0x1b4b80d)
+range_incl(steps)                                          (0x1b4b815)
+```
+
+and `_checkLocation`'s call is
+`_checkLine(this, source, pos, pos.above(*radius - 1))` (bytes at
+`0x1b4b5d3..0x1b4b616`, with `r8d = *radius - 1` at `0x1b4b5e7`).
+
+So the FIRST cell `_checkLine` reads is its `end` argument, because the loop
+index runs 0..steps-1 and `p = end.offset(f*i)`. For case 0 with `*radius` taken
+as the height (10) that first read is `pos.above(9)`, and the corpus indeed
+contains `(-8,14,-8)` — but at query **#22**, not at #0.
+
+That is the remaining puzzle, stated precisely: the corpus's first 17 reads are
+`(-8,4,-8)` followed by 16 reads ASCENDING to `(-8,20,-8)`, which cannot be this
+`_checkLine` walk (it descends from `end`). So either
+
+* `_checkLocation` is not the first thing that reads, or
+* the `radius` reference is read before `place` writes the height into it, so
+  `*radius - 1` is a different value, making `end` something the ascending run
+  can start from.
+
+The ascending run's length varies independently of `height + radius`
+(case 9: 14 reads with `height + radius` = 8; case 5: 22 reads with 22), which
+again points at the second explanation. Reading what `place` writes into
+`[rbp-0x2c]` **before** `0x1b4b022` (`lea rcx,[rbp-0x2c]`) — including whether
+`nextInt`'s addend is stored there or in a different slot — is the single check
+that resolves it.
