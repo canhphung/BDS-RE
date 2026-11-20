@@ -1774,3 +1774,54 @@ Pinning this needs the query stream segmented by *position pattern* rather than 
 a contiguous run: the foliage loop's scans are the ones whose endpoints are the
 `offset(sin, 0, cos)` points documented earlier. Doing that segmentation is the
 concrete next step; it needs no new oracle run.
+
+### Fancy: the query stream SEGMENTS cleanly, and that settles the shape
+
+Splitting case 0's 1028 `get_block` reads into maximal runs of constant `(x, z)`
+gives a very sharp structure:
+
+| run length | count | meaning |
+|---:|---:|---|
+| 17 | 1 | `_checkLocation`: the ground read plus its `_checkLine` up the trunk column |
+| **5** | **16** | one `_checkLine` per **branch tip**, walking the four foliage layers plus one |
+| 1 | 922 | `_crossection` cells of the foliage discs |
+| 3, 2 | 4 | partial runs where a scan stopped early |
+
+Across the eight succeeding cases the len-5 count tracks the branch count:
+
+| case | total runs | len-5 runs | leading scan |
+|---:|---:|---:|---:|
+| 0 | 943 | 16 | 17 |
+| 1 | 721 | 11 | 14 |
+| 4 | 726 | 12 | 15 |
+| 5 | 719 | 10 | 22 |
+| 8 | 217 | 2 | 10 |
+| 9 | 160 | 1 | 14 |
+| 12 | 716 | 12 | 15 |
+| 13 | 835 | 14 | 16 |
+
+So my earlier reading of the leading run as a *single* height-driven scan was the
+mistake: it is the `_checkLocation` scan, whose length is set by `_getSteps` on
+whatever endpoint `_checkLocation` hands `_checkLine`, and it varies independently
+of the height because the endpoint depends on the radius the feature computes.
+
+The len-5 runs are the important discovery: each branch tip gets a 5-step vertical
+`_checkLine`, which is exactly the `_makeFoliage`/`_foliageCluster` layer count
+(`this+0x3c == 4`) plus one. And the 922 single reads are the `_crossection`
+discs, each cell read once before the `_isFree` test — which matches the
+`_crossection` translation exactly (one `_getMaterial` per candidate cell).
+
+That means the shape is:
+
+```
+_checkLocation              -> ground read + 1 scan        (the long leading run)
+place loop per branch tip   -> 2 float draws + 2 _checkLine (the len-5 runs)
+_makeFoliage                -> _crossection per layer      (the single reads)
+_makeTrunk / _makeBranches  -> _limb, which also reads     (interleaved)
+```
+
+The concrete next step is to make the replay emit exactly this segmentation: the
+leading scan length must come from `_checkLine`'s own `_getSteps`, the len-5 runs
+from a vertical `_checkLine` per accepted tip, and the single reads from
+`_crossection`. Getting those three counts right per case is a much tighter target
+than matching 1028 reads at once.
