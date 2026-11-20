@@ -1136,10 +1136,51 @@ to be non-solid. That explains the corpus's layer counts (49, 48, 24, 21): the
 corners of the 7x7 layers are gated by `nextInt(2)`, and the trunk/vine cells
 fail the solid test.
 
-Everything needed is now pinned: the head (no `_prepareSpawn`, two
-`get_block(below)`), `height = nextInt(4)+5`, the 8-log trunk, the
-7x7/7x7/5x5/5x5 canopy with its corner gate, the four `_addVine` faces, and the
-cascade itself. A translation can be written from this without further reading.
+### Correction: the vine faces are gated by nextInt(4), not by material alone
+
+Building the replay disproved one reading. Each of the four `_addVine` sites is
+reached through
+
+```
+pos = <canopy>.south()/west()/north()/east()
+if (nextInt(4) != 0) goto skip          // 0x1b6c8d4..0x1b6c8e5
+if (!_getMaterial(pos).isType(0)) goto skip
+_addVine(pos, VINE_x)
+```
+
+so a face only gets a cascade on a **1-in-4 roll**, and the block used is the
+canopy's own face cell (`south()`/`west()`/`north()`/`east()` of the top
+position), which is why the corpus's 21 columns sit on the canopy rim.
+
+With that gate, a replay of the trunk, the dirt, the 8 logs and the canopy
+already matches: **log 8/8, dirt 1/1, leaves 131 of 142 and no spurious
+writes**. What is still missing is the vine volume (0 of 67) and the last 11
+leaves — and that is where the real work is.
+
+### The canopy is a TRIPLE-nested volume, which is where 573 words go
+
+`place` has only **six** `Random::nextInt` call sites:
+
+```
+0x1b6bcef   height = nextInt(4) + 5
+0x1b6c44b   the corner roll, INSIDE three nested Range loops
+0x1b6c8dd   vine face gate (south)
+0x1b6c966   vine face gate (west)
+0x1b6c9ef   vine face gate (south/north)
+0x1b6ca78   vine face gate (east)
+```
+
+Yet case 0 consumes **573 words**. The reason is the three back-edges at
+`0x1b6c4df`, `0x1b6c4f5` and `0x1b6c50b`: the canopy walk is a **triple nested
+loop** matching `-0x150`, `-0x128` and `-0xf8`, followed by a plain
+`range<int,1>(int)` at `0x1b6c513` and a further `Range` walk. So the canopy is
+a full 3-D volume (not four flat plates) whose innermost body runs the corner
+roll at `0x1b6c44b` on every iteration — hence hundreds of words.
+
+That nested-volume walk is the one thing still unread, and it is exactly what
+the next attempt needs from `0x1b6c28e..0x1b6c510`. With the head, the trunk,
+the `_addVine` cascade and the four face gates already pinned, this is the last
+blocking piece.
 
 ### The lesson worth keeping
 
