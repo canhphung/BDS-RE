@@ -1020,6 +1020,53 @@ What the two captured-but-untranslated corpora already tell the next session:
   head is two `nextInt` draws then `_prepareSpawn` then a `getMaxHeight` check —
   the same opening as Savanna.
 
+### SwampTreeFeature: head traced, corpus in place
+
+`SwampTreeFeature::place` `0x1b6bcb0` (0xea4), helper `_addVine` `0x1b6cb60`
+(0x11e). The task note that said `0x1b6bc60` was `_addVine` was wrong: that is
+the constructor.
+
+**Head of `place`:**
+
+```
+0x1b6bce1  copy origin
+0x1b6bce6  height = nextInt(4) + 5          (ONE draw, unlike Savanna's two)
+0x1b6bd1b  below() -> _getMaterial -> isType(5)
+0x1b6bd77  below() -> _getBlock -> getLegacyBlock
+0x1b6bd9b  compare with VanillaBlockTypes::mLog (0x34a77e0)
+0x1b6bdce  below() again
+0x1b6be0d  BlockSource::getMaxHeight
+0x1b6be2c  range_incl(-0x34, -0x34 + 1)      -> a 2-value leaf plate
+```
+
+So the opening is a waterlogged-tolerant variant of the base: it accepts the
+cell when the material below is type 5 OR when the block below is a log, then
+carries on down to `getMaxHeight` before the trunk loop.
+
+**`_addVine` 0x1b6cb60** is fully understood and short:
+
+```
+setBlockState(VineBlock, VineDirectionBits, data) -> _placeBlock     (first vine)
+count = 4
+pos = below(pos)
+while (_getMaterial(pos) isType(0) && count > 0):
+    _placeBlock(pos, same vine block)
+    pos = below(pos)
+    --count
+```
+
+i.e. the given cell gets a vine with the caller's direction data, then up to four
+more vines hang straight down while the cells stay free.
+
+**Corpus** `swamp_tree_bds_1.6.0.15.json`: 16 cases, **1687 writes, 4496 Random
+words**; 51 log, 1112 leaves and **516 vines** (data 1/2/4/8 distributed
+136/112/139/129), plus 8 dirt. Case 0 alone is 218 writes over 699 dependency
+answers and 573 words.
+
+That is the largest of the eight subclasses and the only one with a vine
+cascade, so it is the next natural target now that its corpus and its two
+hardest pieces (`_addVine` and the waterlogged opening) are read.
+
 ### The lesson worth keeping
 
 Two thirds of the difficulty here was the MATERIAL MODEL, not the geometry.
