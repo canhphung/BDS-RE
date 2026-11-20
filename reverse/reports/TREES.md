@@ -1584,7 +1584,53 @@ So `_limb` draws a 3-D Bresenham line of `mLog` with a `Direction` state chosen
 from the dominant horizontal axis. That is why the corpus contains `log:0`,
 `log:4` and `log:8`: the three direction states.
 
-`_makeBranches 0x1b4bb40` and `_trimBranches 0x1b4c2c0` are still unread.
+### `_trimBranches(int a, int b) 0x1b4c2c0` (0x31) — complete
+
+```
+return (float)b >= (float)a * this_float0x??      // 0x1b4c2e4 ucomiss + setae
+```
+
+It is a one-line predicate: does `b` reach `a * f` for the feature's float at the
+offset the caller passes in `xmm0`. In `_makeBranches` the arguments are
+`_trimBranches(coordsHeight, y - coords.y)`, i.e. "is this branch long enough".
+
+### `_makeBranches(BlockSource&, vector<FoliageCoords> const&, BlockPos const&, int) 0x1b4bb40` (0xf3) — complete
+
+```
+for (coords : foliage):                       // 0x1b4bb70..0x1b4bc1f
+    base = BlockPos(0,0,0)                    // 0x1b4bbcd
+    base = coords.getBranchBase()             // +0x0 x, +0x8 z
+    if (!_trimBranches(coordsHeight, y - coords.y)) continue
+    _limb(source, base, BlockPos(...), VanillaBlocks::mLog)
+```
+
+`FoliageCoords::getBranchBase 0x1b4af40` (0x11) returns the coordinate pair built
+from fields `+0x0` and `+0x8`, which `_makeBranches` combines with the passed-in
+`y` into the branch end point.
+
+### All twelve helpers are now read
+
+| Helper | Address | Size | Status |
+|---|---|---:|---|
+| `place` | `0x1b4aff0` | 0x504 | head + structure |
+| `_getTreeShape` | `0x1b4b670` | 0xf7 | complete |
+| `_checkLocation` | `0x1b4b500` | 0x163 | complete |
+| `_checkLine` | `0x1b4b770` | 0x1ad | complete |
+| `_getSteps` | `0x1b4bc40` | 0x8a | complete |
+| `_makeFoliage` | `0x1b4b920` | 0x91 | complete |
+| `_foliageCluster` | `0x1b4bcd0` | 0xc4 | complete |
+| `_getFoliageShape` | `0x1b4bfe0` | 0x84 | complete |
+| `_crossection` | `0x1b4bda0` | 0x23f | complete |
+| `_makeTrunk` | `0x1b4b9c0` | 0x17f | complete |
+| `_limb` | `0x1b4c070` | 0x244 | complete |
+| `_trimBranches` | `0x1b4c2c0` | 0x31 | complete |
+| `_makeBranches` | `0x1b4bb40` | 0xf3 | complete |
+| `FoliageCoords::getBranchBase` | `0x1b4af40` | 0x11 | complete |
+
+The only piece still to pin down is the body of `place` itself between
+`0x1b4b0f3` and `0x1b4b4e3` (the `range` loop that fills the `FoliageCoords`
+vector with `_getTreeShape` and two `nextFloat()` draws per iteration). Everything
+it calls is translated-able from the notes above.
 
 Addresses for the next attempt, all confirmed by `nm`:
 
