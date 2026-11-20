@@ -1101,11 +1101,45 @@ cells, distributed around the canopy rim rather than in four neat sides:
 (3,1) y12..13    (3,3) y11       (4,1) y7..11
 ```
 
-So `place` walks the canopy rim and, for each cell that passes its test, calls
-`_addVine` with a direction data chosen from the row. Reading exactly which rim
-cells are tested and how the data value is picked is what the next attempt needs
-from `0x1b6be42..0x1b6c800`; everything else (trunk, canopy radii, `_addVine`,
-the waterlogged head) is already pinned.
+### The vine pass: four directions, each with its own `_addVine`
+
+`_addVine 0x1b6cb60` is called exactly **four** times, at `0x1b6c958`,
+`0x1b6c9e1`, `0x1b6ca6a` and `0x1b6caf3`, and each call site loads a different
+`VineBlock::VINE_*` direction:
+
+| Call site | Direction |
+|---|---|
+| `0x1b6c958` | `VineBlock::VINE_EAST` `0x34a6f70` |
+| `0x1b6c9e1` | `VineBlock::VINE_WEST` `0x34a6f74` |
+| `0x1b6ca6a` | `VineBlock::VINE_SOUTH` `0x34a6f68` |
+| `0x1b6caf3` | `VineBlock::VINE_NORTH` `0x34a6f6c` |
+
+Each is guarded the same way: `_getMaterial(pos)` then `Material::isType(0)`,
+and only when the cell is free does `_addVine(pos, direction)` run. So the 21
+vine columns in the corpus are the SIDE cells of the canopy that happen to be
+free, one cascade per side, not a rim walk — the four calls are the four faces.
+
+### The canopy plate, read from `0x1b6c400..0x1b6c4d3`
+
+The plate walk distinguishes corners from edges:
+
+```
+if (abs(dx) == r && abs(dz) == r):        // a corner
+    if (nextInt(2) != 0 && -0x108 != 0) skip
+else:                                      // an edge or interior cell
+    if (isSolidBlockingBlock(pos)) skip
+place mLeaves
+```
+
+so a corner takes two random conditions while a non-corner only needs the cell
+to be non-solid. That explains the corpus's layer counts (49, 48, 24, 21): the
+corners of the 7x7 layers are gated by `nextInt(2)`, and the trunk/vine cells
+fail the solid test.
+
+Everything needed is now pinned: the head (no `_prepareSpawn`, two
+`get_block(below)`), `height = nextInt(4)+5`, the 8-log trunk, the
+7x7/7x7/5x5/5x5 canopy with its corner gate, the four `_addVine` faces, and the
+cascade itself. A translation can be written from this without further reading.
 
 ### The lesson worth keeping
 
