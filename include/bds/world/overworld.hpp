@@ -23,7 +23,8 @@ inline const TerrainBlock air{"air"}, stone{"stone"}, water{"water"}, bedrock{"b
     dirt{"dirt"}, coarse_dirt{"dirt", 1}, podzol{"podzol"}, gravel{"gravel"}, sand{"sand"}, sandstone{"sandstone"},
     ice{"ice"}, waterlily{"waterlily"}, lava{"lava"}, flowing_water{"flowing_water"},
     flowing_lava{"flowing_lava"}, magma{"magma"}, obsidian{"obsidian"}, red_sandstone{"red_sandstone"},
-    hardened_clay{"hardened_clay"}, stained_hardened_clay{"stained_hardened_clay"}, mycelium{"mycelium"};
+    hardened_clay{"hardened_clay"}, stained_hardened_clay{"stained_hardened_clay"}, mycelium{"mycelium"},
+    cobblestone{"cobblestone"}, mossy_cobblestone{"mossy_cobblestone"}, mob_spawner{"mob_spawner"};
 }
 // "name:data" (the biome table's surface blocks) as a TerrainBlock.
 TerrainBlock parse_terrain_block(const char *text);

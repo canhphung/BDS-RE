@@ -139,8 +139,52 @@ six captures (2,514 chunks: five runs of seed 123 and one of server
 `level-seed=1` into RandomSeed -1997048360 (level.dat), which
 `make_terrain_reference.py` now reads instead of server.properties.
 
+## Post-processing (src/world/gen_region.cpp, src/world/decoration.cpp)
+
+Oracle: `capture_terrain.py --postprocess` loads
+`tools/re/gdb_postprocess_oracle.py`, which records in time order every
+chunk load, each postProcess call (with the state and heightmap of its 3 x 3
+area at the start), the Biome::decorate vcall, and every
+LevelChunk::setBlock / setExtraBlock call (all block writes go through
+them). It also dumps the BlockLegacy registry (tests/reference/
+blocks_bds_1.6.0.15.json, generated into src/world/block_data.cpp by
+`tools/re/make_block_table.py`), including the results of the no-argument
+virtual canContainLiquid evaluated by the original.
+`tools/re/make_postprocess_reference.py` keeps, per call, the earlier writes
+into its area and its own writes; `postprocess_reference` rebuilds the area
+from the generator, replays the earlier writes and compares post_process's
+write sequence with the original's.
+
+| Original | BDS-RE |
+|---|---|
+| postProcess 0x1b38950: Random (ThreadData +0x41810) seeded like the carvers from the chunk position; biome at LevelChunk::getMax | `post_process` |
+| water lake (not Desert/DesertHills, nextInt(4) == 0, nextInt(3, 12) / nextInt(128) / nextInt(3, 12)); lava lake (nextInt(8) == 0, y = nextInt(nextInt(120) + 8), only y >= 60, above 63 one in 10) | `post_process` |
+| LakeFeature::place 0x1b5dc70, _check 0x1b5e980, Feature::_placeBlock 0x1b6ebd0 (setBlock flags 3) | `LakeFeature` |
+| second reseed 0x1b38ea5, 8 dungeon attempts (origin + nextInt(16) + 8, nextInt(128)) | `post_process` |
+| MonsterRoomFeature::place 0x1b549a0, _getFacingDataId 0x1b55340, _getRandomEntityId 0x1b55590 | `MonsterRoomFeature` |
+| BlockSource::setBlock 0x1c59bb0, LevelChunk::setBlock 0x1de2560 (extra layer), setExtraBlock 0x1de2980 | `GenRegion::set_block` |
+| BlockSource::getHeightmap 0x1c5ad20, getAboveTopSolidBlock 0x1c5ab40 / LevelChunk 0x1de8120, isTopSolid 0x1de8070, recomputeHeightMap 0x1de9520 | `GenRegion` |
+
+Findings: postProcess reseeds the same Random again after the lakes, so the
+dungeons do not depend on the lake draws. The lake blob centre is
+`((16, 8, 16) - size - (2, 4, 2) + (1, 2, 1) + size / 2)` with each component
+then multiplied by its own nextFloat (Java scales only the free range); lava
+lakes below y 60 are skipped. The dungeon walls are written from py + 3 down
+to py - 1, so its ceiling is only tested; chest offsets draw z before x and
+each chest draws its loot seed (`loot_tables/chests/simple_dungeon.json`).
+LevelChunk::_lightingCallbacks (heightmap updates) and the BlockSource
+events (neighbour updates) only run for chunks in state 8, so during
+post-processing the heightmap stays as loadChunk computed it. The water lakes
+recorded place no grass rim: the sky brightness of the not yet lit chunks is
+taken as 0 (INFERRED).
+
+All 192 recorded calls (seed 123) match up to Biome::decorate; the committed
+fixture keeps 7 of them (plain chunks, dungeons, water lakes).
+
 ## Not yet translated
 
 MesaBiome / OceanFrozenBiome surfaces (the default builder is used for them),
-postProcess and structures; the server still uses the old independent
-terrain.
+Biome::decorate and the end of postProcess (snow/ice, _fixWaterAlongEdges,
+seasons, pending ticks), the BlockSource events for loaded chunks, and the
+structures (their postProcess calls sit between the lakes and the dungeons);
+the server still uses the old independent terrain.

@@ -41,6 +41,9 @@ def main():
     parser.add_argument("--timeout", type=int, default=1500)
     parser.add_argument("--layer-oracle", action="store_true",
                         help="Stop once and call every biome layer (gdb_layer_oracle.py) instead")
+    parser.add_argument("--postprocess", action="store_true",
+                        help="Record chunk loads, postProcess calls and every block write "
+                             "(gdb_postprocess_oracle.py) instead of the generation stages")
     args = parser.parse_args()
     runtime, output = args.runtime.resolve(), args.output.resolve()
     if hashlib.sha256((runtime / "bedrock_server").read_bytes()).hexdigest() != ORIGINAL_SHA256:
@@ -74,6 +77,11 @@ def main():
         env["LAYER_ORACLE_BIN"] = str(runtime / "bedrock_server")
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_layer_oracle.py")),
                     "-ex", "run", "-ex", "python layer_dump()", "-ex", "kill", "--args", "./bedrock_server"]
+    elif args.postprocess:
+        env["POSTPROCESS_ORACLE_OUT"] = str(output / "postprocess.jsonl")
+        env["POSTPROCESS_ORACLE_BIN"] = str(runtime / "bedrock_server")
+        command += ["-ex", "source " + str(Path(__file__).with_name("gdb_postprocess_oracle.py")),
+                    "-ex", "run", "--args", "./bedrock_server"]
     else:
         command += ["-ex", "source " + str(Path(__file__).with_name("gdb_terrain_oracle.py")),
                     "-ex", "run", "--args", "./bedrock_server"]
