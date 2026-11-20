@@ -1064,8 +1064,48 @@ words**; 51 log, 1112 leaves and **516 vines** (data 1/2/4/8 distributed
 answers and 573 words.
 
 That is the largest of the eight subclasses and the only one with a vine
-cascade, so it is the next natural target now that its corpus and its two
-hardest pieces (`_addVine` and the waterlogged opening) are read.
+cascade.
+
+### SwampTreeFeature: what a working replay needs (measured, not guessed)
+
+Case 0's dependency stream opens with **two `get_block(origin.below)`** and NO
+`may_place_on` at all — so `SwampTreeFeature::place` does **not** call
+`_prepareSpawn`. That was the first thing an implementation gets wrong: keeping
+`tree_prepare_spawn` makes the replay stop after four queries and emit zero
+writes.
+
+Case 0's blocks by layer (origin `(-8,5,-8)`):
+
+| y | contents |
+|---:|---|
+| 4 | 1 dirt (the anchor write) |
+| 5..12 | 1 log per layer — a single straight trunk of 8 |
+| 6..9 | trunk log plus 6-8 vines per layer, hanging around it |
+| 10 | 49 leaves (a full 7x7) + 1 log + 10 vines |
+| 11 | 48 leaves + 1 log + 5 vines |
+| 12 | 24 leaves + 1 log + 9 vines |
+| 13 | 21 leaves + 9 vines |
+
+The canopy is 7x7 at `origin.y + height` and `+1`, then 5x5 at `+2` and `+3`;
+the layers come out 49, 48, 24 and 21 because trunk and vine cells are already
+occupied and `_isFree` rejects them.
+
+The drones are the vines: **21 separate vine columns**, each hanging 1 to 5
+cells, distributed around the canopy rim rather than in four neat sides:
+
+```
+(-4,-3) y6..10   (-4,1) y7..11   (-4,3) y6..10   (-3,0) y12..13
+(-2,-3) y12      (-2,2) y12..13  (-1,-3) y12..13 (0,3) y12..13
+(0,4) y6..10     (1,-4) y6..10   (1,3) y12..13   (2,-4) y6..10
+(2,-2) y13       (2,2) y13       (2,4) y7..11    (3,-2) y12
+(3,1) y12..13    (3,3) y11       (4,1) y7..11
+```
+
+So `place` walks the canopy rim and, for each cell that passes its test, calls
+`_addVine` with a direction data chosen from the row. Reading exactly which rim
+cells are tested and how the data value is picked is what the next attempt needs
+from `0x1b6be42..0x1b6c800`; everything else (trunk, canopy radii, `_addVine`,
+the waterlogged head) is already pinned.
 
 ### The lesson worth keeping
 
