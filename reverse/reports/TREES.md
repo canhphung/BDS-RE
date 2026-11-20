@@ -1373,6 +1373,51 @@ also matches to the last read.
 
 Both are mechanical, and the geometry plus the write order are now settled.
 
+### The `raw` column is the block identity — the missing key
+
+The corpus's `raw` field on each query IS the native block value, not a checksum.
+Mapping it through every case's scene gives **11 distinct values and zero
+conflicts**:
+
+```
+56737152 -> air      56972400 -> stone    58033136 -> grass
+58038544 -> dirt     58072288 -> sand
+58074752 / 58080224 / 58330352 / 58330688 / 58331360 / 58332704 -> air
+```
+
+The last six are air cells the tree had already written (the pointer differs, the
+block does not), so a single air mapping is enough. With `raw` decoded the scene
+becomes a real simulated world: start from `scenes[case.scene]`, answer every
+`get_block` from it, and apply each `place_block` as the replay runs.
+
+### What a scene-driven replay already gets right
+
+Built that way the head is
+
+```
+read origin.below()                 # 0x1b6bd1b
+material_is(below, 5) ?             # 0x1b6bd3f, MaterialType 5
+  yes -> base = origin.below()      # 0x1b6bddb
+  no  -> read the block again       # 0x1b6bd8e, compare with mLog
+read origin itself                  # the free-cell gate
+```
+
+and the eight `result=false` cases then consume **exactly** the recorded number
+of queries: 3/3 for the four stone-anchor cases (3, 7, 11, 15), 178/178 for case
+6, and 205/205 for cases 2, 10 and 14. That is a strong signal the head and the
+canopy walk are right, because a wrong early-out would break those counts.
+
+What is still wrong is the RETURN VALUE and the query tail of the eight
+`result=true` cases (they stop around 489 of 699 because the tail loop after the
+vines is not written yet). So the remaining work is:
+
+1. the final decision that makes cases 2/6/10/14 return false after a full
+   canopy walk (their anchor is sand, while 0/1/4/5 are grass and dirt), and
+2. the post-vine loop that consumes the last ~200 queries of the true cases.
+
+Everything before that — head, canopy, trunk, vine walk — is now confirmed by
+exact query counts on half the corpus.
+
 `0x1b6c693`, `0x1b6c743` and `0x1b6c7c9` are three more nested `range_incl`
 loops (y, x, z) whose body does `_getMaterial`, `Material::isType`, and then
 `BlockPos::west()/east()/north()/south()` before reaching the four `_addVine`
